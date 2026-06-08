@@ -32,7 +32,7 @@ cron, queue worker, 운영자 수동 실행 모두 동일 진입점 사용
   }
   server.note_2: "결제 대상 구독 조회 및 잠금\nstatus=active AND nextBillingDate<=today\n한 회원의 여러 상품 구독이 같은 날 도래해도 subscription 또는 invoice 단위로 각각 잠금"
   server.note_3: "청구 회차 인보이스 생성\ninvoice.status = pending\nproductCode, plan amount, billingPeriod, orderId, idempotencyKey 확정"
-  server.note_4: "공통 기본 billingKey 복호화\nbillingMethod.active\n회원의 기본 결제수단이 없거나 비활성이면 해당 구독 결제 시도 없이 실패 처리"
+  server.note_4: "기본 결제수단 토큰 복호화\nbillingMethod.active\n회원의 기본 결제수단이 없거나 비활성이면 해당 구독 결제 시도 없이 실패 처리"
   server -> toss: |md
 자동결제 승인 요청
 

@@ -1,0 +1,55 @@
+diagram: {
+  shape: sequence_diagram
+  label: "해지 예약 만료 처리"
+
+  scheduler: "스케줄러"
+  scheduler.style.fill: "#fff8e6"
+  scheduler.style.stroke: "#9a5b00"
+  server: "우리 서버"
+  server.style.fill: "#eaf8f3"
+  server.style.stroke: "#1c7c66"
+  client: "웹 클라이언트"
+  client.style.fill: "#e8f3ff"
+  client.style.stroke: "#2457a6"
+
+  scheduler -> server: |md
+만료 대상 구독 조회
+
+**POST /internal/subscription-billing/run**
+
+status=cancel_scheduled, currentPeriodEnd <= now 또는 cancelAt <= now
+| {
+    style.stroke: "#1c7c66"
+    style.font-color: "#334155"
+    style.font-size: 18
+    style.italic: false
+  }
+  server.note_2: "대상 구독 잠금 및 상태 재검증\nstatus == cancel_scheduled && currentPeriodEnd <= now\n기간 종료 전이거나 이미 active/canceled로 바뀐 구독은 제외"
+  server.note_3: "최종 종료 상태 저장\ncancel_scheduled -> canceled\ncanceledAt=now, accessUntil=currentPeriodEnd, nextBillingDate=null 유지"
+  server.note_4: "권한 회수 및 감사 로그 저장\nentitlement disabled, auditLog.cancel_expired\n상태 전이와 권한 회수는 같은 트랜잭션 경계에서 처리"
+  server.note_5: "알림 작업 예약\ntemplate=subscription_canceled_after_period\n알림 실패는 구독 상태를 되돌리지 않고 재시도 큐 또는 운영 로그에 남김"
+  client -> server: |md
+구독 최신 상태 조회
+
+**GET /subscriptions/me**
+
+만료 후에는 resumeAvailable=false, 재구독 CTA 표시
+| {
+    style.stroke: "#1c7c66"
+    style.font-color: "#334155"
+    style.font-size: 18
+    style.italic: false
+  }
+  server -> client: |md
+종료 상태와 재구독 안내 반환
+
+status=canceled, resumeAvailable=false, resubscribeUrl
+
+subscriptions-resume으로 되돌릴 수 없고 신규 구독 또는 재구독으로 안내
+| {
+    style.stroke: "#2457a6"
+    style.font-color: "#334155"
+    style.font-size: 18
+    style.italic: false
+  }
+}

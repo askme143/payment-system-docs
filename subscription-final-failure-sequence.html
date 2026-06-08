@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>구독 재개 플로우</title>
+  <title>구독 결제 최종 실패 후 구독 종료 플로우</title>
   <style>
     :root {
       --bg: #f5f7fb;
@@ -294,8 +294,8 @@
 <header>
   <div class="wrap hero">
     <p class="eyebrow">Sequence Diagram</p>
-    <h1>구독 재개 플로우</h1>
-    <p class="lead">기간 종료 전 해지 예약을 철회해 구독을 active 상태로 되돌리고 다음 정기 결제일을 복구하는 흐름입니다.</p>
+    <h1>구독 결제 최종 실패 후 구독 종료 플로우</h1>
+    <p class="lead">정기 결제 재시도가 모두 실패하면 별도 유예 기간 없이 구독을 canceled로 종료하고, 다시 이용하려면 새 구독을 시작하도록 안내하는 흐름입니다.</p>
     <div class="search-panel">
       <input type="search" data-doc-search aria-label="문서 검색" placeholder="API, 상태, 컬렉션, 플로우 검색">
     </div>
@@ -305,49 +305,63 @@
 <main class="wrap" id="content">
   <section>
     <h2>사용 API</h2>
-    <div class="grid"><div class="box"><a href="./all-api-doc.html#subscriptions-resume"><code>POST /subscriptions/{subscriptionId}/resume</code></a><p>해지 예약 또는 결제 실패 상태의 구독을 재개합니다.</p></div><div class="box"><a href="./all-api-doc.html#subscriptions-me"><code>GET /subscriptions/me</code></a><p>현재 회원의 상품별 구독 목록, 이용 기간, 다음 결제일, 공통 기본 결제수단 표시 정보를 조회합니다.</p></div><div class="box"><a href="./all-api-doc.html#internal-billing-run"><code>POST /internal/subscription-billing/run</code></a><p>다음 결제일이 도래한 구독을 찾아 정기 자동결제를 실행합니다.</p></div></div>
+    <div class="grid"><div class="box"><a href="./all-api-doc.html#invoices-detail"><code>GET /invoices/{invoiceId}</code></a><p>단일 인보이스의 금액, 결제 시도, 실패 사유, 영수증 정보를 조회합니다.</p></div><div class="box"><a href="./all-api-doc.html#internal-billing-retry"><code>POST /internal/subscription-billing/{invoiceId}/retry</code></a><p>실패한 구독 결제를 수동 또는 배치로 재시도합니다.</p></div></div>
   </section>
-  <section id="subscription-resume-cancel-scheduled">
-  <h2>해지 예약 철회</h2>
-  <p>cancel_scheduled 상태의 구독을 기간 종료 전에 다시 active로 복구하고 정기 과금 배치가 다음 결제일을 조회할 수 있게 합니다.</p>
+  <section id="final-failure-cancel">
+  <h2>최종 실패 후 즉시 구독 종료</h2>
+  <p>마지막 자동 재시도까지 실패하면 인보이스를 final_failed로 확정하고 구독을 canceled로 종료한 뒤 재구독 안내 메일을 발송합니다.</p>
   <div class="diagram"><div class="d2-diagram">
-  <div class="d2-toolbar"><a href="diagrams/subscription-resume-subscription-resume-cancel-scheduled.d2">D2 원본</a></div>
+  <div class="d2-toolbar"><a href="diagrams/subscription-final-failure-final-failure-cancel.d2">D2 원본</a></div>
   <pre class="d2-source"><code>diagram: {
   shape: sequence_diagram
-  label: &quot;해지 예약 철회&quot;
+  label: &quot;최종 실패 후 즉시 구독 종료&quot;
 
-  client: &quot;웹 클라이언트&quot;
-  client.style.fill: &quot;#e8f3ff&quot;
-  client.style.stroke: &quot;#2457a6&quot;
-  server: &quot;우리 서버&quot;
-  server.style.fill: &quot;#eaf8f3&quot;
-  server.style.stroke: &quot;#1c7c66&quot;
   scheduler: &quot;스케줄러&quot;
   scheduler.style.fill: &quot;#fff8e6&quot;
   scheduler.style.stroke: &quot;#9a5b00&quot;
+  server: &quot;우리 서버&quot;
+  server.style.fill: &quot;#eaf8f3&quot;
+  server.style.stroke: &quot;#1c7c66&quot;
+  email: &quot;이메일 발송 시스템&quot;
+  email.style.fill: &quot;#f8fafc&quot;
+  email.style.stroke: &quot;#65758a&quot;
+  client: &quot;웹 클라이언트&quot;
+  client.style.fill: &quot;#e8f3ff&quot;
+  client.style.stroke: &quot;#2457a6&quot;
 
-  client -&gt; server: |md
-구독 재개 요청
+  scheduler -&gt; server: |md
+마지막 재시도 결과 처리
 
-**POST /subscriptions/{subscriptionId}/resume**
+**POST /internal/subscription-billing/{invoiceId}/retry**
 
-resumeReason, Idempotency-Key, session
+maxAttempts 도달 또는 재시도 불가 실패 코드
 | {
     style.stroke: &quot;#1c7c66&quot;
     style.font-color: &quot;#334155&quot;
     style.font-size: 18
     style.italic: false
   }
-  server.note_2: &quot;회원과 구독 소유권 검증\nsession.userId == subscription.userId\n현재 회원 소유 구독만 재개 가능&quot;
-  server.note_3: &quot;재개 가능 상태 확인\nstatus == cancel_scheduled\n이미 canceled이면 신규 구독 또는 별도 복구 정책으로 안내&quot;
-  server.note_4: &quot;기간 종료 전 여부 확인\nnow &lt; currentPeriodEnd\n기간 종료 후에는 해지 예약 철회 불가&quot;
-  server.note_5: &quot;구독 상태와 청구 일정 복구\nstatus=active, cancelAt=null\nnextBillingDate 복구&quot;
-  server -&gt; client: |md
-재개 결과 반환
+  server.note_2: &quot;최종 실패 조건 검증\ninvoice.status=failed AND attemptCount &gt;= maxAttempts\n이미 paid 또는 canceled이면 상태 변경 없이 종료&quot;
+  server.note_3: &quot;최종 실패와 구독 종료 저장\ninvoice=final_failed, subscription=canceled\nstatus=canceled, cancelReason=payment_final_failed, canceledAt=now&quot;
+  server.note_4: &quot;다음 과금 대상에서 제외\nnextBillingDate=null\n정기 과금 배치가 종료된 구독을 다시 청구하지 않도록 정리&quot;
+  server -&gt; email: |md
+구독 종료 안내 메일 발송 요청
 
-status=active, resumeAvailable=false
+template=subscription_canceled_payment_failed
 
-프론트는 구독 상세 화면의 해지 예정 배지를 제거
+invoiceId, failureReason, canceledAt, resubscribeUrl 포함
+| {
+    style.stroke: &quot;#65758a&quot;
+    style.font-color: &quot;#334155&quot;
+    style.font-size: 18
+    style.italic: false
+  }
+  email -&gt; client: |md
+결제 실패로 구독 종료 안내
+
+구독 종료 / 재구독 링크 / 미납 회차 안내
+
+취소됐으니 다시 이용하려면 새 구독을 시작하라는 문구를 명확히 표시
 | {
     style.stroke: &quot;#2457a6&quot;
     style.font-color: &quot;#334155&quot;
@@ -355,23 +369,11 @@ status=active, resumeAvailable=false
     style.italic: false
   }
   client -&gt; server: |md
-현재 구독 상태 조회
+종료된 인보이스 상세 조회
 
-**GET /subscriptions/me**
+**GET /invoices/{invoiceId}**
 
-복구된 nextBillingDate와 결제수단 표시
-| {
-    style.stroke: &quot;#1c7c66&quot;
-    style.font-color: &quot;#334155&quot;
-    style.font-size: 18
-    style.italic: false
-  }
-  scheduler -&gt; server: |md
-정기 과금 배치 실행
-
-**POST /internal/subscription-billing/run**
-
-active이고 nextBillingDate가 도래하면 다시 결제 후보
+회원 화면은 결제 실패 사유와 재구독 CTA만 표시
 | {
     style.stroke: &quot;#1c7c66&quot;
     style.font-color: &quot;#334155&quot;
@@ -384,7 +386,7 @@ active이고 nextBillingDate가 도래하면 다시 결제 후보
 </section>
   <section id="states">
   <h2>상태 요약</h2>
-  <div class="table-scroll"><table><thead><tr><th>시점</th><th>구독 상태</th><th>결제 상태</th><th>설명</th></tr></thead><tbody><tr><td>재개 요청 전</td><td><code>cancel_scheduled</code></td><td><code>paid</code></td><td>회원은 남은 기간을 이용 중이지만 다음 결제일은 제거되어 있습니다.</td></tr><tr><td>재개 성공 직후</td><td><code>active</code></td><td><code>paid</code></td><td>해지 예약이 철회되고 다음 결제일이 복구됩니다.</td></tr><tr><td>다음 과금 배치 시점</td><td><code>active</code></td><td><code>pending</code></td><td>nextBillingDate가 도래하면 정기 과금 배치가 구독을 다시 결제 후보로 조회합니다.</td></tr></tbody></table></div>
+  <div class="table-scroll"><table><thead><tr><th>시점</th><th>구독 상태</th><th>결제 상태</th><th>설명</th></tr></thead><tbody><tr><td>최종 실패 전</td><td><code>past_due</code></td><td><code>final_failed</code></td><td>마지막 재시도가 실패했고 구독 종료 조건을 검증합니다.</td></tr><tr><td>구독 종료 후</td><td><code>canceled</code></td><td><code>final_failed</code></td><td>구독은 즉시 종료되고 다음 과금일은 제거됩니다.</td></tr><tr><td>재이용</td><td><code>new subscription required</code></td><td><code>-</code></td><td>다시 이용하려면 기존 구독 복구가 아니라 새 구독을 시작합니다.</td></tr></tbody></table></div>
 </section>
 </main>
 <script>

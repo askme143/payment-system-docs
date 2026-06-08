@@ -13,6 +13,30 @@ diagram: {
   toss.style.stroke: "#7b4bc4"
 
   client -> server: |md
+구독 가능한 플랜 목록 조회
+
+**GET /plans**
+
+상품, 결제 주기, 판매 상태 기준으로 선택 가능한 플랜 표시
+| {
+    style.stroke: "#1c7c66"
+    style.font-color: "#334155"
+    style.font-size: 18
+    style.italic: false
+  }
+  client -> server: |md
+선택한 플랜 상세 확인
+
+**GET /plans/{planId}**
+
+가격, 주기, 권한, 판매 가능 상태를 체크아웃 직전에 재확인
+| {
+    style.stroke: "#1c7c66"
+    style.font-color: "#334155"
+    style.font-size: 18
+    style.italic: false
+  }
+  client -> server: |md
 구독 체크아웃 생성 요청
 
 **POST /subscriptions/checkout**
@@ -24,8 +48,8 @@ planId, successUrl, failUrl
     style.font-size: 18
     style.italic: false
   }
-  server.note_2: "상품별 중복 구독 검증\nUNIQUE active(userId, productCode)\n같은 상품의 활성 구독은 거부하고 다른 상품의 활성 구독은 허용"
-  server.note_3: "주문 및 구독 대기 상태 생성\npending_billing_auth\norderId, customerKey, amount 계산"
+  server.note_4: "상품별 중복 구독 검증\nUNIQUE active(userId, productCode)\n같은 상품의 활성 구독은 거부하고 다른 상품의 활성 구독은 허용"
+  server.note_5: "주문 및 구독 대기 상태 생성\npending_billing_auth\norderId, customerKey, amount 계산"
   server -> client: |md
 토스 SDK 호출 데이터 반환
 
@@ -38,7 +62,7 @@ successUrl에는 subscriptionId 포함
     style.font-size: 18
     style.italic: false
   }
-  client.note_5: "프론트가 구독 컨텍스트 보관\nsubscriptionId\nsessionStorage, URL state, route state 등"
+  client.note_7: "프론트가 구독 컨텍스트 보관\nsubscriptionId\nsessionStorage, URL state, route state 등"
   client -> toss: |md
 빌링 인증 요청
 
@@ -123,7 +147,7 @@ paymentKey, status=DONE, approvedAt
     style.font-size: 18
     style.italic: false
   }
-  server.note_13: "성공 분기\n결제 paid, 인보이스 paid, 구독 active\nnextBillingDate 생성"
+  server.note_15: "성공 분기\n결제 paid, 인보이스 paid, 구독 active\nnextBillingDate 생성"
   server -> client: |md
 구독 활성화 결과 반환
 

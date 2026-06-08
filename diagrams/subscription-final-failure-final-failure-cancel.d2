@@ -1,0 +1,69 @@
+diagram: {
+  shape: sequence_diagram
+  label: "최종 실패 후 즉시 구독 종료"
+
+  scheduler: "스케줄러"
+  scheduler.style.fill: "#fff8e6"
+  scheduler.style.stroke: "#9a5b00"
+  server: "우리 서버"
+  server.style.fill: "#eaf8f3"
+  server.style.stroke: "#1c7c66"
+  email: "이메일 발송 시스템"
+  email.style.fill: "#f8fafc"
+  email.style.stroke: "#65758a"
+  client: "웹 클라이언트"
+  client.style.fill: "#e8f3ff"
+  client.style.stroke: "#2457a6"
+
+  scheduler -> server: |md
+마지막 재시도 결과 처리
+
+**POST /internal/subscription-billing/{invoiceId}/retry**
+
+maxAttempts 도달 또는 재시도 불가 실패 코드
+| {
+    style.stroke: "#1c7c66"
+    style.font-color: "#334155"
+    style.font-size: 18
+    style.italic: false
+  }
+  server.note_2: "최종 실패 조건 검증\ninvoice.status=failed AND attemptCount >= maxAttempts\n이미 paid 또는 canceled이면 상태 변경 없이 종료"
+  server.note_3: "최종 실패와 구독 종료 저장\ninvoice=final_failed, subscription=canceled\nstatus=canceled, cancelReason=payment_final_failed, canceledAt=now"
+  server.note_4: "다음 과금 대상에서 제외\nnextBillingDate=null\n정기 과금 배치가 종료된 구독을 다시 청구하지 않도록 정리"
+  server -> email: |md
+구독 종료 안내 메일 발송 요청
+
+template=subscription_canceled_payment_failed
+
+invoiceId, failureReason, canceledAt, resubscribeUrl 포함
+| {
+    style.stroke: "#65758a"
+    style.font-color: "#334155"
+    style.font-size: 18
+    style.italic: false
+  }
+  email -> client: |md
+결제 실패로 구독 종료 안내
+
+구독 종료 / 재구독 링크 / 미납 회차 안내
+
+취소됐으니 다시 이용하려면 새 구독을 시작하라는 문구를 명확히 표시
+| {
+    style.stroke: "#2457a6"
+    style.font-color: "#334155"
+    style.font-size: 18
+    style.italic: false
+  }
+  client -> server: |md
+종료된 인보이스 상세 조회
+
+**GET /invoices/{invoiceId}**
+
+회원 화면은 결제 실패 사유와 재구독 CTA만 표시
+| {
+    style.stroke: "#1c7c66"
+    style.font-color: "#334155"
+    style.font-size: 18
+    style.italic: false
+  }
+}

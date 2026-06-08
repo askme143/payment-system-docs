@@ -8,16 +8,21 @@
     :root {
       --bg: #f5f7fb;
       --surface: #ffffff;
+      --surface-2: #fbfcfe;
       --ink: #17202a;
-      --muted: #65758a;
+      --muted: #526174;
       --line: #d8e0ea;
       --accent: #1c7c66;
       --blue: #2457a6;
+      --blue-soft: #e8f3ff;
       --danger: #b42318;
       --soft: #e5f4ef;
-      --shadow: 0 14px 34px rgba(20, 35, 55, 0.08);
+      --warning: #9a5b00;
+      --warning-soft: #fff5dd;
+      --shadow: 0 12px 28px rgba(20, 35, 55, 0.07);
       --code-bg: #111827;
       --code-ink: #e5e7eb;
+      --focus: #8b5cf6;
     }
     * { box-sizing: border-box; }
     html { scroll-behavior: smooth; }
@@ -28,15 +33,30 @@
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
       line-height: 1.58;
     }
+    .skip-link {
+      position: absolute;
+      left: 16px;
+      top: 12px;
+      z-index: 10;
+      transform: translateY(-140%);
+      padding: 10px 12px;
+      color: #ffffff;
+      background: var(--ink);
+      border-radius: 6px;
+      transition: transform 160ms ease;
+    }
+    .skip-link:focus { transform: translateY(0); }
     header {
-      background: var(--surface);
+      background:
+        linear-gradient(135deg, rgba(232, 243, 255, 0.9), rgba(229, 244, 239, 0.76)),
+        var(--surface);
       border-bottom: 1px solid var(--line);
     }
     .wrap {
       width: min(1180px, calc(100% - 36px));
       margin: 0 auto;
     }
-    .hero { padding: 42px 0 28px; }
+    .hero { padding: 46px 0 30px; }
     .eyebrow {
       margin: 0 0 10px;
       color: var(--accent);
@@ -55,6 +75,22 @@
       color: var(--muted);
       font-size: 18px;
     }
+    .search-panel {
+      max-width: 760px;
+      margin-top: 22px;
+    }
+    .search-panel input {
+      width: 100%;
+      min-height: 48px;
+      padding: 0 16px;
+      color: var(--ink);
+      background: rgba(255, 255, 255, 0.92);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      box-shadow: var(--shadow);
+      font: inherit;
+    }
+    .search-panel input::placeholder { color: #718096; }
     main { padding: 28px 0 54px; }
     .layout {
       display: grid;
@@ -85,8 +121,18 @@
       line-height: 1.35;
       overflow-wrap: anywhere;
       word-break: break-word;
+      cursor: pointer;
+      transition: color 160ms ease, background-color 160ms ease;
     }
     nav a:hover { color: var(--ink); background: var(--soft); }
+    a:focus-visible,
+    button:focus-visible,
+    input:focus-visible,
+    summary:focus-visible {
+      outline: 3px solid var(--focus);
+      outline: 3px solid color-mix(in srgb, var(--focus), transparent 45%);
+      outline-offset: 2px;
+    }
     section {
       margin-bottom: 24px;
       padding: 24px;
@@ -94,11 +140,14 @@
       border: 1px solid var(--line);
       border-radius: 8px;
       box-shadow: var(--shadow);
+      scroll-margin-top: 18px;
     }
     h2 { margin: 0 0 16px; font-size: 24px; letter-spacing: 0; }
     h3 { margin: 22px 0 8px; font-size: 18px; letter-spacing: 0; }
+    h4 { margin: 14px 0 8px; font-size: 16px; letter-spacing: 0; }
     p { margin: 0 0 14px; }
-    a { color: var(--blue); font-weight: 800; text-decoration: none; }
+    a { color: var(--blue); font-weight: 800; text-decoration: none; text-underline-offset: 3px; }
+    a:hover { text-decoration: underline; }
     code { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 0.95em; }
     pre {
       margin: 10px 0 0;
@@ -110,19 +159,51 @@
       font-size: 13px;
       line-height: 1.5;
     }
-    table { width: 100%; border-collapse: collapse; font-size: 14px; }
+    .table-scroll {
+      width: 100%;
+      overflow-x: auto;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+    }
+    table { width: 100%; min-width: 680px; border-collapse: collapse; font-size: 14px; }
     th, td { padding: 11px 12px; text-align: left; vertical-align: top; border-bottom: 1px solid var(--line); }
-    th { color: var(--muted); background: #fbfcfe; font-weight: 800; }
-    .top-links { display: flex; flex-wrap: wrap; gap: 14px; margin-top: 16px; }
+    th { color: var(--muted); background: var(--surface-2); font-weight: 800; }
+    tr:last-child td { border-bottom: 0; }
+    .top-links { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 16px; }
+    .top-links a {
+      display: inline-flex;
+      align-items: center;
+      min-height: 38px;
+      padding: 7px 12px;
+      color: var(--ink);
+      background: rgba(255, 255, 255, 0.82);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      cursor: pointer;
+      transition: border-color 160ms ease, background-color 160ms ease;
+    }
+    .top-links a:hover {
+      background: #ffffff;
+      border-color: color-mix(in srgb, var(--blue), var(--line) 55%);
+      text-decoration: none;
+    }
     .grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
     .sequence-group { margin-top: 20px; }
     .sequence-group:first-of-type { margin-top: 0; }
     .sequence-group > p { color: var(--muted); }
     .card, .box {
       padding: 16px;
-      background: #fbfcfe;
+      background: var(--surface-2);
       border: 1px solid var(--line);
       border-radius: 8px;
+    }
+    .card {
+      transition: border-color 160ms ease, box-shadow 160ms ease, background-color 160ms ease;
+    }
+    .card:has(a):hover {
+      background: #ffffff;
+      border-color: color-mix(in srgb, var(--blue), var(--line) 56%);
+      box-shadow: 0 10px 22px rgba(20, 35, 55, 0.08);
     }
     .status {
       display: inline-flex;
@@ -135,11 +216,15 @@
       font-size: 12px;
       font-weight: 900;
     }
+    .status-planned {
+      color: var(--warning);
+      background: var(--warning-soft);
+    }
     .note {
       margin-top: 14px;
       padding: 13px 15px;
       color: #7a4a00;
-      background: #fff5dd;
+      background: var(--warning-soft);
       border: 1px solid #eed39a;
       border-radius: 8px;
     }
@@ -157,7 +242,7 @@
       gap: 10px;
       padding: 10px 12px;
       border-bottom: 1px solid var(--line);
-      background: #fbfcfe;
+      background: var(--surface-2);
     }
     .d2-toolbar a {
       font-size: 13px;
@@ -175,7 +260,7 @@
     }
     .d2-details {
       border-top: 1px solid var(--line);
-      background: #fbfcfe;
+      background: var(--surface-2);
     }
     .d2-details summary {
       cursor: pointer;
@@ -189,20 +274,35 @@
       nav { position: static; max-height: none; }
       .grid { grid-template-columns: 1fr; }
       .wrap { width: min(100% - 24px, 1180px); }
+      .hero { padding: 34px 0 24px; }
+      section { padding: 18px; }
+      table { min-width: 620px; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      html { scroll-behavior: auto; }
+      *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+      }
     }
   </style>
   
 </head>
 <body>
+<a class="skip-link" href="#content">본문으로 건너뛰기</a>
 <header>
   <div class="wrap hero">
     <p class="eyebrow">MongoDB Data Model</p>
     <h1>MongoDB 구조 문서</h1>
     <p class="lead">결제 시스템의 주요 MongoDB 컬렉션 예시입니다. 컬렉션별 필드, 인덱스, 관계, API별 읽기/쓰기 지점을 함께 관리합니다.</p>
+    <div class="search-panel">
+      <input type="search" data-doc-search aria-label="문서 검색" placeholder="API, 상태, 컬렉션, 플로우 검색">
+    </div>
     <p class="top-links"><a href="./sequence-index.html">전체 시퀀스 목록</a><a href="./all-api-doc.html">전체 API 목록</a><a href="./api-detail-doc.html">API 상세 설명</a></p>
   </div>
 </header>
-<main class="wrap layout"><nav><a href="#overview">개요</a><a href="#users">사용자</a><a href="#payment-customers">결제 고객</a><a href="#products">상품</a><a href="#subscription-plans">구독 플랜</a><a href="#one-time-skus">일회성 SKU</a><a href="#checkouts">구매 의도</a><a href="#billing-auths">빌링 인증 시도</a><a href="#subscriptions">구독</a><a href="#payments">결제</a><a href="#invoices">인보이스</a><a href="#billing-methods">결제수단</a><a href="#payment-instruments">결제수단 토큰</a><a href="#webhook-events">웹훅 이벤트</a><a href="#relationships">문서 관계</a><a href="#api-access">API별 읽기/쓰기</a><a href="#state-models">상태 모델</a></nav><div><section id="overview">
+<main class="wrap layout" id="content"><nav aria-label="문서 목차"><a href="#overview">개요</a><a href="#users">사용자</a><a href="#payment-customers">결제 고객</a><a href="#products">상품</a><a href="#subscription-plans">구독 플랜</a><a href="#one-time-skus">일회성 SKU</a><a href="#checkouts">구매 의도</a><a href="#billing-auths">빌링 인증 시도</a><a href="#subscriptions">구독</a><a href="#payments">결제</a><a href="#invoices">인보이스</a><a href="#billing-methods">결제수단</a><a href="#payment-instruments">결제수단 토큰</a><a href="#webhook-events">웹훅 이벤트</a><a href="#relationships">문서 관계</a><a href="#api-access">API별 읽기/쓰기</a><a href="#state-models">상태 모델</a></nav><div><section id="overview">
   <h2>개요</h2>
   <p><strong>엔진:</strong> MongoDB</p>
   <p>결제 시스템의 주요 MongoDB 컬렉션 예시입니다. 컬렉션별 필드, 인덱스, 관계, API별 읽기/쓰기 지점을 함께 관리합니다.</p>
@@ -210,151 +310,165 @@
   <h2>사용자 <code>users</code></h2>
   <p>이미 존재하는 사용자 계정 컬렉션입니다. 결제 도메인은 user_id로만 참조하고 결제 관련 상태는 저장하지 않습니다.</p>
   <h3>필드</h3>
-  <table>
+  <div class="table-scroll"><table>
     <thead><tr><th>필드</th><th>타입</th><th>필수</th><th>설명</th><th>상세</th></tr></thead>
     <tbody><tr><td><code>_id</code></td><td><code>ObjectId</code></td><td>예</td><td>사용자 문서 ID입니다.</td><td>-</td></tr><tr><td><code>email</code></td><td><code>string</code></td><td>예</td><td>로그인과 결제 안내에 사용하는 이메일입니다.</td><td>-</td></tr><tr><td><code>status</code></td><td><code>string</code></td><td>예</td><td>사용자 계정 상태입니다.</td><td>enum: active, withdrawn, blocked</td></tr></tbody>
-  </table>
-  <h3>인덱스</h3><table><thead><tr><th>필드</th><th>유니크</th><th>설명</th></tr></thead><tbody><tr><td><code>email</code></td><td>예</td><td>이메일 중복 가입을 방지합니다.</td></tr></tbody></table>
+  </table></div>
+  <h3>인덱스</h3><div class="table-scroll"><table><thead><tr><th>필드</th><th>유니크</th><th>설명</th></tr></thead><tbody><tr><td><code>email</code></td><td>예</td><td>이메일 중복 가입을 방지합니다.</td></tr></tbody></table></div>
   <h3>관련 API</h3><ul><li><a href="./all-api-doc.html#subscriptions-checkout"><code>POST /subscriptions/checkout</code></a> - 구독 빌링 인증 전에 구독 대기 레코드와 토스 SDK 호출 데이터를 생성합니다.</li><li><a href="./all-api-doc.html#payments-orders"><code>POST /payments/orders</code></a> - 일반결제 결제창 호출 전에 내부 주문을 생성합니다.</li><li><a href="./all-api-doc.html#billing-auth"><code>POST /billing/auth</code></a> - 기존 회원이 결제수단을 변경할 때 빌링 인증 시작 데이터를 생성합니다.</li><li><a href="./all-api-doc.html#billing-issue"><code>POST /billing/issue</code></a> - 빌링 인증 성공 후 새 빌링키를 발급받아 결제수단으로 저장합니다.</li></ul>
 </section><section id="payment-customers">
   <h2>결제 고객 <code>payment_customers</code></h2>
   <p>PG사별 고객 식별자(customer_key)를 사용자 계정과 분리해 관리합니다.</p>
   <h3>필드</h3>
-  <table>
+  <div class="table-scroll"><table>
     <thead><tr><th>필드</th><th>타입</th><th>필수</th><th>설명</th><th>상세</th></tr></thead>
     <tbody><tr><td><code>_id</code></td><td><code>ObjectId</code></td><td>예</td><td>결제 고객 문서 ID입니다.</td><td>-</td></tr><tr><td><code>user_id</code></td><td><code>ObjectId</code></td><td>예</td><td>내부 사용자 문서 ID입니다.</td><td>ref: users._id</td></tr><tr><td><code>provider</code></td><td><code>string</code></td><td>예</td><td>고객 키를 발급하거나 사용하는 PG사입니다.</td><td>enum: tosspayments</td></tr><tr><td><code>customer_key</code></td><td><code>string</code></td><td>예</td><td>토스 SDK, 빌링키 발급, 자동결제에 사용하는 PG사 고객 키입니다.</td><td>-</td></tr><tr><td><code>status</code></td><td><code>string</code></td><td>예</td><td>결제 고객 식별자의 사용 가능 상태입니다.</td><td>enum: active, revoked</td></tr><tr><td><code>revoked_at</code></td><td><code>Date</code></td><td>아니오</td><td>회원 탈퇴, 계정 병합, PG 고객 식별자 폐기 시각입니다.</td><td>-</td></tr></tbody>
-  </table>
-  <h3>인덱스</h3><table><thead><tr><th>필드</th><th>유니크</th><th>설명</th></tr></thead><tbody><tr><td><code>user_id, provider</code></td><td>예</td><td>사용자별 PG사 고객 식별자를 하나로 유지합니다.</td></tr><tr><td><code>provider, customer_key</code></td><td>예</td><td>PG사 안에서 customer_key 중복을 방지합니다.</td></tr></tbody></table>
+  </table></div>
+  <h3>인덱스</h3><div class="table-scroll"><table><thead><tr><th>필드</th><th>유니크</th><th>설명</th></tr></thead><tbody><tr><td><code>user_id, provider</code></td><td>예</td><td>사용자별 PG사 고객 식별자를 하나로 유지합니다.</td></tr><tr><td><code>provider, customer_key</code></td><td>예</td><td>PG사 안에서 customer_key 중복을 방지합니다.</td></tr></tbody></table></div>
   <h3>관련 API</h3><ul><li><a href="./all-api-doc.html#subscriptions-checkout"><code>POST /subscriptions/checkout</code></a> - 구독 빌링 인증 전에 구독 대기 레코드와 토스 SDK 호출 데이터를 생성합니다.</li><li><a href="./all-api-doc.html#payments-orders"><code>POST /payments/orders</code></a> - 일반결제 결제창 호출 전에 내부 주문을 생성합니다.</li><li><a href="./all-api-doc.html#billing-auth"><code>POST /billing/auth</code></a> - 기존 회원이 결제수단을 변경할 때 빌링 인증 시작 데이터를 생성합니다.</li><li><a href="./all-api-doc.html#billing-issue"><code>POST /billing/issue</code></a> - 빌링 인증 성공 후 새 빌링키를 발급받아 결제수단으로 저장합니다.</li></ul>
 </section><section id="products">
   <h2>상품 <code>products</code></h2>
   <p>구독 플랜과 일회성 SKU가 속한 상품군과 판매 상태를 관리합니다.</p>
   <h3>필드</h3>
-  <table>
+  <div class="table-scroll"><table>
     <thead><tr><th>필드</th><th>타입</th><th>필수</th><th>설명</th><th>상세</th></tr></thead>
     <tbody><tr><td><code>_id</code></td><td><code>ObjectId</code></td><td>예</td><td>상품 문서 ID입니다.</td><td>-</td></tr><tr><td><code>product_code</code></td><td><code>string</code></td><td>예</td><td>외부 노출과 API 필터에 사용하는 상품 코드입니다.</td><td>-</td></tr><tr><td><code>product_type</code></td><td><code>string</code></td><td>예</td><td>구독 상품인지 일반결제 상품인지 구분합니다.</td><td>enum: subscription, one_time</td></tr><tr><td><code>name</code></td><td><code>string</code></td><td>예</td><td>관리자와 사용자 화면에 표시할 상품명입니다.</td><td>-</td></tr><tr><td><code>status</code></td><td><code>string</code></td><td>예</td><td>상품 판매 및 노출 상태입니다.</td><td>enum: draft, active, paused, archived</td></tr></tbody>
-  </table>
-  <h3>인덱스</h3><table><thead><tr><th>필드</th><th>유니크</th><th>설명</th></tr></thead><tbody><tr><td><code>product_code, product_type</code></td><td>예</td><td>상품 코드와 유형 조합을 고유하게 유지합니다.</td></tr></tbody></table>
+  </table></div>
+  <h3>인덱스</h3><div class="table-scroll"><table><thead><tr><th>필드</th><th>유니크</th><th>설명</th></tr></thead><tbody><tr><td><code>product_code, product_type</code></td><td>예</td><td>상품 코드와 유형 조합을 고유하게 유지합니다.</td></tr></tbody></table></div>
   <h3>관련 API</h3><ul><li><a href="./all-api-doc.html#plans-list"><code>GET /plans</code></a> - 구매 가능한 상품과 구독 플랜 목록을 조회합니다.</li><li><a href="./all-api-doc.html#plans-detail"><code>GET /plans/{planId}</code></a> - 단일 플랜의 가격, 주기, 판매 가능 상태를 조회합니다.</li><li><a href="./all-api-doc.html#admin-products-create"><code>POST /admin/products</code></a> - 관리자가 공통 Product를 생성하고 구독상품 또는 일반상품 타입을 지정합니다.</li><li><a href="./all-api-doc.html#admin-products-status"><code>PATCH /admin/products/{productId}/status</code></a> - 상품을 초안, 판매중, 판매중지, 아카이브 상태로 전환합니다.</li></ul>
 </section><section id="subscription-plans">
   <h2>구독 플랜 <code>subscription_plans</code></h2>
   <p>구독 상품의 과금 주기, 금액, 권한, 판매 가능 상태를 관리합니다.</p>
   <h3>필드</h3>
-  <table>
+  <div class="table-scroll"><table>
     <thead><tr><th>필드</th><th>타입</th><th>필수</th><th>설명</th><th>상세</th></tr></thead>
     <tbody><tr><td><code>_id</code></td><td><code>ObjectId</code></td><td>예</td><td>구독 플랜 문서 ID입니다.</td><td>-</td></tr><tr><td><code>product_id</code></td><td><code>ObjectId</code></td><td>예</td><td>플랜이 속한 구독 상품입니다.</td><td>ref: products._id</td></tr><tr><td><code>plan_code</code></td><td><code>string</code></td><td>예</td><td>상품 안에서 플랜을 구분하는 코드입니다.</td><td>-</td></tr><tr><td><code>billing_period</code></td><td><code>string</code></td><td>예</td><td>정기결제 주기입니다.</td><td>enum: monthly, yearly</td></tr><tr><td><code>amount</code></td><td><code>number</code></td><td>예</td><td>플랜 정가입니다.</td><td>-</td></tr><tr><td><code>entitlements</code></td><td><code>object</code></td><td>예</td><td>플랜별 기능 권한 스냅샷입니다.</td><td>-</td></tr><tr><td><code>status</code></td><td><code>string</code></td><td>예</td><td>플랜 판매 가능 상태입니다.</td><td>enum: draft, active, paused, archived</td></tr></tbody>
-  </table>
-  <h3>인덱스</h3><table><thead><tr><th>필드</th><th>유니크</th><th>설명</th></tr></thead><tbody><tr><td><code>product_id, plan_code</code></td><td>예</td><td>한 상품 안에서 플랜 코드를 고유하게 유지합니다.</td></tr><tr><td><code>product_id, status</code></td><td>아니오</td><td>상품별 활성 플랜 조회에 사용합니다.</td></tr></tbody></table>
+  </table></div>
+  <h3>인덱스</h3><div class="table-scroll"><table><thead><tr><th>필드</th><th>유니크</th><th>설명</th></tr></thead><tbody><tr><td><code>product_id, plan_code</code></td><td>예</td><td>한 상품 안에서 플랜 코드를 고유하게 유지합니다.</td></tr><tr><td><code>product_id, status</code></td><td>아니오</td><td>상품별 활성 플랜 조회에 사용합니다.</td></tr></tbody></table></div>
   <h3>관련 API</h3><ul><li><a href="./all-api-doc.html#plans-list"><code>GET /plans</code></a> - 구매 가능한 상품과 구독 플랜 목록을 조회합니다.</li><li><a href="./all-api-doc.html#plans-detail"><code>GET /plans/{planId}</code></a> - 단일 플랜의 가격, 주기, 판매 가능 상태를 조회합니다.</li><li><a href="./all-api-doc.html#admin-subscription-plans-create"><code>POST /admin/products/{productId}/subscription-plans</code></a> - 구독상품에 월간, 연간 같은 구독 플랜을 추가합니다.</li><li><a href="./all-api-doc.html#admin-subscription-plans-update"><code>PATCH /admin/products/{productId}/subscription-plans/{planId}</code></a> - 구독 플랜의 표시 정보, 판매 상태, 신규 가입 가격 정책을 수정합니다.</li><li><a href="./all-api-doc.html#subscriptions-change-preview"><code>POST /subscriptions/{subscriptionId}/change-preview</code></a> - 목표 플랜 변경이 업그레이드인지 다운그레이드인지 서버가 판정하고, 유저 확인에 필요한 결제 금액과 적용일을 계산합니다.</li><li><a href="./all-api-doc.html#subscriptions-change"><code>PATCH /subscriptions/{subscriptionId}</code></a> - 플랜 변경 미리보기에서 발급한 확인 토큰으로 업그레이드는 즉시 변경하고 다운그레이드는 다음 결제일 반영으로 예약합니다.</li></ul>
 </section><section id="one-time-skus">
   <h2>일회성 SKU <code>one_time_skus</code></h2>
   <p>일반결제 상품의 판매 단위, 금액, 재고 정책, 구매 제한을 관리합니다.</p>
   <h3>필드</h3>
-  <table>
+  <div class="table-scroll"><table>
     <thead><tr><th>필드</th><th>타입</th><th>필수</th><th>설명</th><th>상세</th></tr></thead>
     <tbody><tr><td><code>_id</code></td><td><code>ObjectId</code></td><td>예</td><td>일회성 SKU 문서 ID입니다.</td><td>-</td></tr><tr><td><code>product_id</code></td><td><code>ObjectId</code></td><td>예</td><td>SKU가 속한 일반결제 상품입니다.</td><td>ref: products._id</td></tr><tr><td><code>sku_code</code></td><td><code>string</code></td><td>예</td><td>상품 안에서 SKU를 구분하는 코드입니다.</td><td>-</td></tr><tr><td><code>amount</code></td><td><code>number</code></td><td>예</td><td>일반결제 판매 금액입니다.</td><td>-</td></tr><tr><td><code>stock_policy</code></td><td><code>string</code></td><td>예</td><td>재고 차감 정책입니다.</td><td>enum: unlimited, limited</td></tr><tr><td><code>purchase_limit</code></td><td><code>object</code></td><td>아니오</td><td>회원별 구매 제한 정책입니다.</td><td>-</td></tr><tr><td><code>status</code></td><td><code>string</code></td><td>예</td><td>SKU 판매 가능 상태입니다.</td><td>enum: draft, active, paused, archived</td></tr></tbody>
-  </table>
-  <h3>인덱스</h3><table><thead><tr><th>필드</th><th>유니크</th><th>설명</th></tr></thead><tbody><tr><td><code>product_id, sku_code</code></td><td>예</td><td>한 상품 안에서 SKU 코드를 고유하게 유지합니다.</td></tr></tbody></table>
+  </table></div>
+  <h3>인덱스</h3><div class="table-scroll"><table><thead><tr><th>필드</th><th>유니크</th><th>설명</th></tr></thead><tbody><tr><td><code>product_id, sku_code</code></td><td>예</td><td>한 상품 안에서 SKU 코드를 고유하게 유지합니다.</td></tr></tbody></table></div>
   <h3>관련 API</h3><ul><li><a href="./all-api-doc.html#payments-orders"><code>POST /payments/orders</code></a> - 일반결제 결제창 호출 전에 내부 주문을 생성합니다.</li><li><a href="./all-api-doc.html#admin-one-time-skus-create"><code>POST /admin/products/{productId}/one-time-skus</code></a> - 일반상품에 단건 구매용 SKU와 판매 가격, 재고 정책을 추가합니다.</li><li><a href="./all-api-doc.html#admin-one-time-skus-update"><code>PATCH /admin/products/{productId}/one-time-skus/{skuId}</code></a> - 일반상품 SKU의 가격, 재고 정책, 판매 상태를 수정합니다.</li></ul>
 </section><section id="checkouts">
   <h2>구매 의도 <code>checkouts</code></h2>
   <p>일반결제 결제창 호출 전 생성되는 구매 의도와 여러 결제 재시도를 묶어 관리합니다.</p>
   <h3>필드</h3>
-  <table>
+  <div class="table-scroll"><table>
     <thead><tr><th>필드</th><th>타입</th><th>필수</th><th>설명</th><th>상세</th></tr></thead>
     <tbody><tr><td><code>_id</code></td><td><code>ObjectId</code></td><td>예</td><td>구매 의도 문서 ID입니다.</td><td>-</td></tr><tr><td><code>checkout_id</code></td><td><code>string</code></td><td>예</td><td>프론트 재시도와 결제 시도 묶음에 사용하는 공개 ID입니다.</td><td>-</td></tr><tr><td><code>user_id</code></td><td><code>ObjectId</code></td><td>예</td><td>구매 의도 소유 사용자입니다.</td><td>ref: users._id</td></tr><tr><td><code>payment_customer_id</code></td><td><code>ObjectId</code></td><td>예</td><td>토스 결제창 호출에 사용할 PG 고객 식별자입니다.</td><td>ref: payment_customers._id</td></tr><tr><td><code>items</code></td><td><code>array</code></td><td>예</td><td>구매하려는 SKU와 수량 목록입니다.</td><td>-</td></tr><tr><td><code>status</code></td><td><code>string</code></td><td>예</td><td>구매 의도 전체 상태입니다.</td><td>enum: ready, paid, failed, expired</td></tr><tr><td><code>last_payment_id</code></td><td><code>ObjectId</code></td><td>아니오</td><td>마지막 결제 시도입니다.</td><td>ref: payments._id</td></tr></tbody>
-  </table>
-  <h3>인덱스</h3><table><thead><tr><th>필드</th><th>유니크</th><th>설명</th></tr></thead><tbody><tr><td><code>checkout_id</code></td><td>예</td><td>프론트가 전달하는 checkout_id를 고유하게 유지합니다.</td></tr><tr><td><code>user_id, created_at</code></td><td>아니오</td><td>회원별 결제 시도 이력 조회에 사용합니다.</td></tr></tbody></table>
+  </table></div>
+  <h3>인덱스</h3><div class="table-scroll"><table><thead><tr><th>필드</th><th>유니크</th><th>설명</th></tr></thead><tbody><tr><td><code>checkout_id</code></td><td>예</td><td>프론트가 전달하는 checkout_id를 고유하게 유지합니다.</td></tr><tr><td><code>user_id, created_at</code></td><td>아니오</td><td>회원별 결제 시도 이력 조회에 사용합니다.</td></tr></tbody></table></div>
   <h3>관련 API</h3><ul><li><a href="./all-api-doc.html#payments-orders"><code>POST /payments/orders</code></a> - 일반결제 결제창 호출 전에 내부 주문을 생성합니다.</li><li><a href="./all-api-doc.html#payments-confirm"><code>POST /payments/confirm</code></a> - 토스 결제 인증 후 일반결제를 최종 승인합니다.</li><li><a href="./all-api-doc.html#payments-auth-result"><code>POST /payments/{paymentId}/auth-result</code></a> - 토스 결제창 인증 실패 또는 사용자 취소 결과를 프론트 실패 페이지가 서버에 기록합니다.</li><li><a href="./all-api-doc.html#payments-detail"><code>GET /payments/{paymentId}</code></a> - 내부 결제 상태와 토스 승인 결과를 조회합니다.</li></ul>
 </section><section id="billing-auths">
   <h2>빌링 인증 시도 <code>billing_auths</code></h2>
   <p>결제수단 등록 전 토스 빌링 인증 시도와 성공 리다이렉트 검증 상태를 관리합니다.</p>
   <h3>필드</h3>
-  <table>
+  <div class="table-scroll"><table>
     <thead><tr><th>필드</th><th>타입</th><th>필수</th><th>설명</th><th>상세</th></tr></thead>
     <tbody><tr><td><code>_id</code></td><td><code>ObjectId</code></td><td>예</td><td>빌링 인증 시도 문서 ID입니다.</td><td>-</td></tr><tr><td><code>billing_auth_id</code></td><td><code>string</code></td><td>예</td><td>프론트가 성공 페이지에서 다시 전달하는 인증 시도 ID입니다.</td><td>-</td></tr><tr><td><code>user_id</code></td><td><code>ObjectId</code></td><td>예</td><td>인증 시도 소유 사용자입니다.</td><td>ref: users._id</td></tr><tr><td><code>payment_customer_id</code></td><td><code>ObjectId</code></td><td>예</td><td>빌링 인증에 사용할 PG 고객 식별자 문서입니다.</td><td>ref: payment_customers._id</td></tr><tr><td><code>customer_key</code></td><td><code>string</code></td><td>예</td><td>리다이렉트 검증을 위해 인증 시점에 사용한 customer_key 스냅샷입니다.</td><td>-</td></tr><tr><td><code>order_id</code></td><td><code>string</code></td><td>예</td><td>토스 빌링 인증 요청에 사용한 주문 ID입니다.</td><td>-</td></tr><tr><td><code>status</code></td><td><code>string</code></td><td>예</td><td>빌링키 발급 전후의 인증 시도 상태입니다.</td><td>enum: ready, issued, failed, expired</td></tr></tbody>
-  </table>
-  <h3>인덱스</h3><table><thead><tr><th>필드</th><th>유니크</th><th>설명</th></tr></thead><tbody><tr><td><code>billing_auth_id</code></td><td>예</td><td>성공 페이지에서 인증 시도를 정확히 찾습니다.</td></tr><tr><td><code>user_id, status</code></td><td>아니오</td><td>회원의 진행 중인 빌링 인증 시도를 조회합니다.</td></tr></tbody></table>
+  </table></div>
+  <h3>인덱스</h3><div class="table-scroll"><table><thead><tr><th>필드</th><th>유니크</th><th>설명</th></tr></thead><tbody><tr><td><code>billing_auth_id</code></td><td>예</td><td>성공 페이지에서 인증 시도를 정확히 찾습니다.</td></tr><tr><td><code>user_id, status</code></td><td>아니오</td><td>회원의 진행 중인 빌링 인증 시도를 조회합니다.</td></tr></tbody></table></div>
   <h3>관련 API</h3><ul><li><a href="./all-api-doc.html#billing-auth"><code>POST /billing/auth</code></a> - 기존 회원이 결제수단을 변경할 때 빌링 인증 시작 데이터를 생성합니다.</li><li><a href="./all-api-doc.html#billing-issue"><code>POST /billing/issue</code></a> - 빌링 인증 성공 후 새 빌링키를 발급받아 결제수단으로 저장합니다.</li></ul>
 </section><section id="subscriptions">
   <h2>구독 <code>subscriptions</code></h2>
   <p>사용자의 구독 상태, 현재 플랜, 다음 결제 예정일, 해지 예약 정보를 관리합니다.</p>
   <h3>필드</h3>
-  <table>
+  <div class="table-scroll"><table>
     <thead><tr><th>필드</th><th>타입</th><th>필수</th><th>설명</th><th>상세</th></tr></thead>
     <tbody><tr><td><code>_id</code></td><td><code>ObjectId</code></td><td>예</td><td>구독 문서 ID입니다.</td><td>-</td></tr><tr><td><code>user_id</code></td><td><code>ObjectId</code></td><td>예</td><td>구독 소유 사용자입니다.</td><td>ref: users._id</td></tr><tr><td><code>payment_customer_id</code></td><td><code>ObjectId</code></td><td>예</td><td>구독 빌링 인증에 사용한 PG 고객 식별자입니다.</td><td>ref: payment_customers._id</td></tr><tr><td><code>plan_id</code></td><td><code>ObjectId</code></td><td>예</td><td>현재 적용 중인 구독 플랜입니다.</td><td>ref: subscription_plans._id</td></tr><tr><td><code>status</code></td><td><code>string</code></td><td>예</td><td>구독의 현재 상태입니다.</td><td>enum: pending, active, past_due, cancel_scheduled, canceled</td></tr><tr><td><code>billing_method_id</code></td><td><code>ObjectId</code></td><td>아니오</td><td>자동결제에 사용할 기본 결제수단입니다.</td><td>ref: billing_methods._id</td></tr><tr><td><code>next_billing_at</code></td><td><code>Date</code></td><td>아니오</td><td>다음 정기결제 예정 시각입니다.</td><td>-</td></tr><tr><td><code>cancel_at_period_end</code></td><td><code>boolean</code></td><td>예</td><td>현재 이용기간 종료 시 해지 예약 여부입니다.</td><td>example: false</td></tr></tbody>
-  </table>
-  <h3>인덱스</h3><table><thead><tr><th>필드</th><th>유니크</th><th>설명</th></tr></thead><tbody><tr><td><code>user_id, status</code></td><td>아니오</td><td>사용자의 활성/예약 구독 조회에 사용합니다.</td></tr><tr><td><code>next_billing_at, status</code></td><td>아니오</td><td>정기결제 배치 대상 구독 조회에 사용합니다.</td></tr></tbody></table>
+  </table></div>
+  <h3>인덱스</h3><div class="table-scroll"><table><thead><tr><th>필드</th><th>유니크</th><th>설명</th></tr></thead><tbody><tr><td><code>user_id, status</code></td><td>아니오</td><td>사용자의 활성/예약 구독 조회에 사용합니다.</td></tr><tr><td><code>next_billing_at, status</code></td><td>아니오</td><td>정기결제 배치 대상 구독 조회에 사용합니다.</td></tr></tbody></table></div>
   <h3>관련 API</h3><ul><li><a href="./all-api-doc.html#subscriptions-confirm"><code>POST /subscriptions/confirm</code></a> - 프론트 성공 페이지가 호출하며, 빌링키 발급과 첫 결제로 구독을 활성화합니다.</li><li><a href="./all-api-doc.html#subscriptions-cancel"><code>POST /subscriptions/{subscriptionId}/cancel</code></a> - 현재 이용 기간 종료 시 구독 해지를 예약하고 다음 정기 결제 대상에서 제외합니다.</li><li><a href="./all-api-doc.html#internal-billing-run"><code>POST /internal/subscription-billing/run</code></a> - 다음 결제일이 도래한 구독을 찾아 정기 자동결제를 실행합니다.</li><li><a href="./all-api-doc.html#admin-subscription-adjust"><code>POST /admin/subscriptions/{subscriptionId}/adjust</code></a> - 관리자가 구독 상태, 다음 결제일, 실패 상태를 수동 보정합니다.</li></ul>
 </section><section id="payments">
   <h2>결제 <code>payments</code></h2>
   <p>일반결제와 구독결제의 승인, 실패, 취소 상태를 저장합니다.</p>
   <h3>필드</h3>
-  <table>
+  <div class="table-scroll"><table>
     <thead><tr><th>필드</th><th>타입</th><th>필수</th><th>설명</th><th>상세</th></tr></thead>
     <tbody><tr><td><code>_id</code></td><td><code>ObjectId</code></td><td>예</td><td>결제 문서 ID입니다.</td><td>-</td></tr><tr><td><code>subscription_id</code></td><td><code>ObjectId</code></td><td>아니오</td><td>구독 결제인 경우 연결되는 구독 ID입니다.</td><td>ref: subscriptions._id</td></tr><tr><td><code>checkout_id</code></td><td><code>string</code></td><td>아니오</td><td>일반결제 구매 의도와 연결되는 ID입니다.</td><td>ref: checkouts.checkout_id</td></tr><tr><td><code>payment_customer_id</code></td><td><code>ObjectId</code></td><td>아니오</td><td>토스 승인에 사용한 PG 고객 식별자입니다.</td><td>ref: payment_customers._id</td></tr><tr><td><code>order_id</code></td><td><code>string</code></td><td>예</td><td>토스 승인에 사용하는 내부 주문 ID입니다.</td><td>-</td></tr><tr><td><code>payment_key</code></td><td><code>string</code></td><td>아니오</td><td>토스 승인 후 발급되는 결제 키입니다.</td><td>-</td></tr><tr><td><code>amount</code></td><td><code>number</code></td><td>예</td><td>승인 또는 승인 예정 금액입니다.</td><td>-</td></tr><tr><td><code>status</code></td><td><code>string</code></td><td>예</td><td>결제 처리 상태입니다.</td><td>enum: ready, paid, failed, canceled, partial_canceled</td></tr></tbody>
-  </table>
-  <h3>인덱스</h3><table><thead><tr><th>필드</th><th>유니크</th><th>설명</th></tr></thead><tbody><tr><td><code>order_id</code></td><td>예</td><td>멱등 승인과 주문 중복 방지에 사용합니다.</td></tr><tr><td><code>subscription_id, created_at</code></td><td>아니오</td><td>구독별 결제 이력 조회에 사용합니다.</td></tr></tbody></table>
+  </table></div>
+  <h3>인덱스</h3><div class="table-scroll"><table><thead><tr><th>필드</th><th>유니크</th><th>설명</th></tr></thead><tbody><tr><td><code>order_id</code></td><td>예</td><td>멱등 승인과 주문 중복 방지에 사용합니다.</td></tr><tr><td><code>subscription_id, created_at</code></td><td>아니오</td><td>구독별 결제 이력 조회에 사용합니다.</td></tr></tbody></table></div>
   <h3>관련 API</h3><ul><li><a href="./all-api-doc.html#payments-confirm"><code>POST /payments/confirm</code></a> - 토스 결제 인증 후 일반결제를 최종 승인합니다.</li><li><a href="./all-api-doc.html#subscriptions-confirm"><code>POST /subscriptions/confirm</code></a> - 프론트 성공 페이지가 호출하며, 빌링키 발급과 첫 결제로 구독을 활성화합니다.</li><li><a href="./all-api-doc.html#internal-billing-run"><code>POST /internal/subscription-billing/run</code></a> - 다음 결제일이 도래한 구독을 찾아 정기 자동결제를 실행합니다.</li></ul>
 </section><section id="invoices">
   <h2>인보이스 <code>invoices</code></h2>
   <p>회원에게 노출되는 청구 이력과 영수증 링크를 저장합니다.</p>
   <h3>필드</h3>
-  <table>
+  <div class="table-scroll"><table>
     <thead><tr><th>필드</th><th>타입</th><th>필수</th><th>설명</th><th>상세</th></tr></thead>
     <tbody><tr><td><code>_id</code></td><td><code>ObjectId</code></td><td>예</td><td>인보이스 문서 ID입니다.</td><td>-</td></tr><tr><td><code>user_id</code></td><td><code>ObjectId</code></td><td>예</td><td>인보이스 소유 사용자입니다.</td><td>ref: users._id</td></tr><tr><td><code>payment_id</code></td><td><code>ObjectId</code></td><td>예</td><td>인보이스를 발생시킨 결제입니다.</td><td>ref: payments._id</td></tr><tr><td><code>status</code></td><td><code>string</code></td><td>예</td><td>인보이스 표시 상태입니다.</td><td>enum: issued, paid, voided, refunded</td></tr><tr><td><code>receipt_url</code></td><td><code>string</code></td><td>아니오</td><td>토스 영수증 또는 내부 영수증 URL입니다.</td><td>-</td></tr></tbody>
-  </table>
-  <h3>인덱스</h3><table><thead><tr><th>필드</th><th>유니크</th><th>설명</th></tr></thead><tbody><tr><td><code>user_id, issued_at</code></td><td>아니오</td><td>마이페이지 결제 내역 조회에 사용합니다.</td></tr></tbody></table>
+  </table></div>
+  <h3>인덱스</h3><div class="table-scroll"><table><thead><tr><th>필드</th><th>유니크</th><th>설명</th></tr></thead><tbody><tr><td><code>user_id, issued_at</code></td><td>아니오</td><td>마이페이지 결제 내역 조회에 사용합니다.</td></tr></tbody></table></div>
   <h3>관련 API</h3><ul><li><a href="./all-api-doc.html#invoices-list"><code>GET /invoices</code></a> - 구독 회차별 청구 내역과 결제 성공/실패 상태를 조회합니다.</li><li><a href="./all-api-doc.html#invoices-detail"><code>GET /invoices/{invoiceId}</code></a> - 단일 인보이스의 금액, 결제 시도, 실패 사유, 영수증 정보를 조회합니다.</li><li><a href="./all-api-doc.html#subscriptions-confirm"><code>POST /subscriptions/confirm</code></a> - 프론트 성공 페이지가 호출하며, 빌링키 발급과 첫 결제로 구독을 활성화합니다.</li><li><a href="./all-api-doc.html#payments-confirm"><code>POST /payments/confirm</code></a> - 토스 결제 인증 후 일반결제를 최종 승인합니다.</li></ul>
 </section><section id="billing-methods">
   <h2>결제수단 <code>billing_methods</code></h2>
   <p>사용자에게 노출되는 결제수단 표시 정보, 기본값, 사용 상태를 관리합니다.</p>
   <h3>필드</h3>
-  <table>
+  <div class="table-scroll"><table>
     <thead><tr><th>필드</th><th>타입</th><th>필수</th><th>설명</th><th>상세</th></tr></thead>
     <tbody><tr><td><code>_id</code></td><td><code>ObjectId</code></td><td>예</td><td>결제수단 문서 ID입니다.</td><td>-</td></tr><tr><td><code>user_id</code></td><td><code>ObjectId</code></td><td>예</td><td>결제수단 소유 사용자입니다.</td><td>ref: users._id</td></tr><tr><td><code>payment_customer_id</code></td><td><code>ObjectId</code></td><td>예</td><td>이 결제수단이 속한 PG 고객 식별자입니다.</td><td>ref: payment_customers._id</td></tr><tr><td><code>instrument_id</code></td><td><code>ObjectId</code></td><td>예</td><td>실제 PG 결제 토큰을 보관하는 결제수단 토큰 문서입니다.</td><td>ref: payment_instruments._id</td></tr><tr><td><code>display_name</code></td><td><code>string</code></td><td>예</td><td>사용자 화면에 표시할 결제수단 이름입니다.</td><td>-</td></tr><tr><td><code>masked_number</code></td><td><code>string</code></td><td>아니오</td><td>카드 번호 등 결제수단 식별용 마스킹 값입니다.</td><td>-</td></tr><tr><td><code>provider</code></td><td><code>string</code></td><td>예</td><td>결제수단을 발급한 PG사입니다.</td><td>enum: tosspayments</td></tr><tr><td><code>is_default</code></td><td><code>boolean</code></td><td>예</td><td>기본 결제수단 여부입니다.</td><td>-</td></tr><tr><td><code>status</code></td><td><code>string</code></td><td>예</td><td>결제수단 사용 가능 상태입니다.</td><td>enum: active, deleted</td></tr></tbody>
-  </table>
-  <h3>인덱스</h3><table><thead><tr><th>필드</th><th>유니크</th><th>설명</th></tr></thead><tbody><tr><td><code>user_id, is_default, status</code></td><td>아니오</td><td>사용자의 기본 결제수단 조회에 사용합니다.</td></tr></tbody></table>
+  </table></div>
+  <h3>인덱스</h3><div class="table-scroll"><table><thead><tr><th>필드</th><th>유니크</th><th>설명</th></tr></thead><tbody><tr><td><code>user_id, is_default, status</code></td><td>아니오</td><td>사용자의 기본 결제수단 조회에 사용합니다.</td></tr></tbody></table></div>
   <h3>관련 API</h3><ul><li><a href="./all-api-doc.html#billing-issue"><code>POST /billing/issue</code></a> - 빌링 인증 성공 후 새 빌링키를 발급받아 결제수단으로 저장합니다.</li><li><a href="./all-api-doc.html#billing-methods"><code>GET /billing/methods</code></a> - 회원이 등록한 표시용 결제수단 목록을 조회합니다.</li><li><a href="./all-api-doc.html#billing-method-default"><code>PATCH /billing/methods/{billingMethodId}/default</code></a> - 활성 결제수단 중 하나를 기본 결제수단으로 지정합니다.</li><li><a href="./all-api-doc.html#billing-method-delete"><code>DELETE /billing/methods/{billingMethodId}</code></a> - 사용하지 않는 결제수단을 삭제 또는 비활성화합니다.</li></ul>
 </section><section id="payment-instruments">
   <h2>결제수단 토큰 <code>payment_instruments</code></h2>
   <p>PG사에서 발급받은 billing_key 같은 민감 결제 토큰과 제공자 원본 식별자를 별도 보관합니다.</p>
   <h3>필드</h3>
-  <table>
+  <div class="table-scroll"><table>
     <thead><tr><th>필드</th><th>타입</th><th>필수</th><th>설명</th><th>상세</th></tr></thead>
     <tbody><tr><td><code>_id</code></td><td><code>ObjectId</code></td><td>예</td><td>결제수단 토큰 문서 ID입니다.</td><td>-</td></tr><tr><td><code>payment_customer_id</code></td><td><code>ObjectId</code></td><td>예</td><td>이 결제 토큰이 속한 PG 고객 식별자입니다.</td><td>ref: payment_customers._id</td></tr><tr><td><code>provider</code></td><td><code>string</code></td><td>예</td><td>결제 토큰을 발급한 PG사입니다.</td><td>enum: tosspayments</td></tr><tr><td><code>billing_key</code></td><td><code>string</code></td><td>예</td><td>암호화 저장된 토스 빌링키입니다. 평문 로그와 일반 응답에 포함하지 않습니다.</td><td>-</td></tr><tr><td><code>billing_key_hash</code></td><td><code>string</code></td><td>예</td><td>중복 저장 방지를 위한 빌링키 해시입니다.</td><td>-</td></tr><tr><td><code>provider_raw</code></td><td><code>object</code></td><td>아니오</td><td>감사와 장애 분석에 필요한 PG 응답 원문 중 보관 가능한 최소 필드입니다.</td><td>-</td></tr><tr><td><code>status</code></td><td><code>string</code></td><td>예</td><td>결제 토큰 사용 가능 상태입니다.</td><td>enum: active, revoked</td></tr><tr><td><code>revoked_at</code></td><td><code>Date</code></td><td>아니오</td><td>삭제, 재발급, 탈퇴 등으로 토큰을 폐기한 시각입니다.</td><td>-</td></tr></tbody>
-  </table>
-  <h3>인덱스</h3><table><thead><tr><th>필드</th><th>유니크</th><th>설명</th></tr></thead><tbody><tr><td><code>payment_customer_id, status</code></td><td>아니오</td><td>PG 고객별 활성 결제 토큰 조회에 사용합니다.</td></tr><tr><td><code>provider, billing_key_hash</code></td><td>예</td><td>동일 PG billing_key의 중복 저장을 방지합니다.</td></tr></tbody></table>
+  </table></div>
+  <h3>인덱스</h3><div class="table-scroll"><table><thead><tr><th>필드</th><th>유니크</th><th>설명</th></tr></thead><tbody><tr><td><code>payment_customer_id, status</code></td><td>아니오</td><td>PG 고객별 활성 결제 토큰 조회에 사용합니다.</td></tr><tr><td><code>provider, billing_key_hash</code></td><td>예</td><td>동일 PG billing_key의 중복 저장을 방지합니다.</td></tr></tbody></table></div>
   <h3>관련 API</h3><ul><li><a href="./all-api-doc.html#billing-issue"><code>POST /billing/issue</code></a> - 빌링 인증 성공 후 새 빌링키를 발급받아 결제수단으로 저장합니다.</li><li><a href="./all-api-doc.html#billing-method-delete"><code>DELETE /billing/methods/{billingMethodId}</code></a> - 사용하지 않는 결제수단을 삭제 또는 비활성화합니다.</li><li><a href="./all-api-doc.html#internal-billing-run"><code>POST /internal/subscription-billing/run</code></a> - 다음 결제일이 도래한 구독을 찾아 정기 자동결제를 실행합니다.</li><li><a href="./all-api-doc.html#internal-billing-retry"><code>POST /internal/subscription-billing/{invoiceId}/retry</code></a> - 실패한 구독 결제를 수동 또는 배치로 재시도합니다.</li></ul>
 </section><section id="webhook-events">
   <h2>웹훅 이벤트 <code>webhook_events</code></h2>
   <p>토스 웹훅 원문과 처리 결과를 저장해 중복 수신과 장애 복구에 사용합니다.</p>
   <h3>필드</h3>
-  <table>
+  <div class="table-scroll"><table>
     <thead><tr><th>필드</th><th>타입</th><th>필수</th><th>설명</th><th>상세</th></tr></thead>
     <tbody><tr><td><code>_id</code></td><td><code>ObjectId</code></td><td>예</td><td>웹훅 이벤트 문서 ID입니다.</td><td>-</td></tr><tr><td><code>provider</code></td><td><code>string</code></td><td>예</td><td>웹훅 발신자입니다.</td><td>example: &quot;tosspayments&quot;</td></tr><tr><td><code>event_id</code></td><td><code>string</code></td><td>예</td><td>제공자 이벤트 ID 또는 멱등 처리 키입니다.</td><td>-</td></tr><tr><td><code>payload</code></td><td><code>object</code></td><td>예</td><td>검증 후 저장하는 웹훅 원문입니다.</td><td>-</td></tr><tr><td><code>status</code></td><td><code>string</code></td><td>예</td><td>웹훅 처리 상태입니다.</td><td>enum: received, processed, failed, ignored</td></tr></tbody>
-  </table>
-  <h3>인덱스</h3><table><thead><tr><th>필드</th><th>유니크</th><th>설명</th></tr></thead><tbody><tr><td><code>provider, event_id</code></td><td>예</td><td>같은 웹훅 재전송의 중복 처리를 막습니다.</td></tr></tbody></table>
+  </table></div>
+  <h3>인덱스</h3><div class="table-scroll"><table><thead><tr><th>필드</th><th>유니크</th><th>설명</th></tr></thead><tbody><tr><td><code>provider, event_id</code></td><td>예</td><td>같은 웹훅 재전송의 중복 처리를 막습니다.</td></tr></tbody></table></div>
   <h3>관련 API</h3><ul><li><a href="./all-api-doc.html#webhooks-toss-payments"><code>POST /webhooks/toss-payments</code></a> - 토스페이먼츠 결제 이벤트를 수신하고 내부 결제/구독 상태를 보정합니다.</li></ul>
 </section><section id="relationships">
   <h2>문서 관계</h2>
-  <table><thead><tr><th>From</th><th>To</th><th>유형</th><th>설명</th></tr></thead><tbody><tr><td><code>payment_customers.user_id</code></td><td><code>users._id</code></td><td>reference</td><td>결제 고객 식별자는 내부 사용자 계정에 속합니다.</td></tr><tr><td><code>subscription_plans.product_id</code></td><td><code>products._id</code></td><td>reference</td><td>구독 플랜은 구독 상품 문서를 참조합니다.</td></tr><tr><td><code>one_time_skus.product_id</code></td><td><code>products._id</code></td><td>reference</td><td>일회성 SKU는 일반결제 상품 문서를 참조합니다.</td></tr><tr><td><code>checkouts.user_id</code></td><td><code>users._id</code></td><td>reference</td><td>구매 의도는 결제하려는 사용자를 참조합니다.</td></tr><tr><td><code>checkouts.payment_customer_id</code></td><td><code>payment_customers._id</code></td><td>reference</td><td>구매 의도는 토스 결제창 호출에 사용할 PG 고객 식별자를 참조합니다.</td></tr><tr><td><code>billing_auths.user_id</code></td><td><code>users._id</code></td><td>reference</td><td>빌링 인증 시도는 결제수단을 등록하는 사용자를 참조합니다.</td></tr><tr><td><code>billing_auths.payment_customer_id</code></td><td><code>payment_customers._id</code></td><td>reference</td><td>빌링 인증 시도는 인증에 사용할 PG 고객 식별자를 참조합니다.</td></tr><tr><td><code>subscriptions.user_id</code></td><td><code>users._id</code></td><td>reference</td><td>구독은 사용자 문서를 참조합니다.</td></tr><tr><td><code>subscriptions.payment_customer_id</code></td><td><code>payment_customers._id</code></td><td>reference</td><td>구독은 최초 빌링 인증에 사용한 PG 고객 식별자를 참조합니다.</td></tr><tr><td><code>subscriptions.plan_id</code></td><td><code>subscription_plans._id</code></td><td>reference</td><td>구독은 현재 적용 중인 구독 플랜을 참조합니다.</td></tr><tr><td><code>subscriptions.billing_method_id</code></td><td><code>billing_methods._id</code></td><td>reference</td><td>활성 구독은 기본 결제수단을 참조합니다.</td></tr><tr><td><code>billing_methods.payment_customer_id</code></td><td><code>payment_customers._id</code></td><td>reference</td><td>사용자 결제수단은 특정 PG 고객 식별자에 속합니다.</td></tr><tr><td><code>billing_methods.instrument_id</code></td><td><code>payment_instruments._id</code></td><td>reference</td><td>사용자 결제수단은 실제 PG 결제 토큰 문서를 참조합니다.</td></tr><tr><td><code>payment_instruments.payment_customer_id</code></td><td><code>payment_customers._id</code></td><td>reference</td><td>PG 결제 토큰은 특정 PG 고객 식별자에 속합니다.</td></tr><tr><td><code>payments.checkout_id</code></td><td><code>checkouts.checkout_id</code></td><td>reference</td><td>일반결제 결제 시도는 구매 의도 ID로 묶입니다.</td></tr><tr><td><code>payments.payment_customer_id</code></td><td><code>payment_customers._id</code></td><td>reference</td><td>결제 시도는 토스 승인에 사용한 PG 고객 식별자를 참조합니다.</td></tr><tr><td><code>payments.subscription_id</code></td><td><code>subscriptions._id</code></td><td>reference</td><td>구독 결제는 원본 구독을 참조합니다.</td></tr><tr><td><code>invoices.payment_id</code></td><td><code>payments._id</code></td><td>reference</td><td>인보이스는 결제 결과를 기준으로 발행됩니다.</td></tr><tr><td><code>webhook_events.payload</code></td><td><code>payments 또는 subscriptions</code></td><td>snapshot</td><td>웹훅 원문은 장애 추적을 위해 스냅샷으로 보관합니다.</td></tr></tbody></table>
+  <div class="table-scroll"><table><thead><tr><th>From</th><th>To</th><th>유형</th><th>설명</th></tr></thead><tbody><tr><td><code>payment_customers.user_id</code></td><td><code>users._id</code></td><td>reference</td><td>결제 고객 식별자는 내부 사용자 계정에 속합니다.</td></tr><tr><td><code>subscription_plans.product_id</code></td><td><code>products._id</code></td><td>reference</td><td>구독 플랜은 구독 상품 문서를 참조합니다.</td></tr><tr><td><code>one_time_skus.product_id</code></td><td><code>products._id</code></td><td>reference</td><td>일회성 SKU는 일반결제 상품 문서를 참조합니다.</td></tr><tr><td><code>checkouts.user_id</code></td><td><code>users._id</code></td><td>reference</td><td>구매 의도는 결제하려는 사용자를 참조합니다.</td></tr><tr><td><code>checkouts.payment_customer_id</code></td><td><code>payment_customers._id</code></td><td>reference</td><td>구매 의도는 토스 결제창 호출에 사용할 PG 고객 식별자를 참조합니다.</td></tr><tr><td><code>billing_auths.user_id</code></td><td><code>users._id</code></td><td>reference</td><td>빌링 인증 시도는 결제수단을 등록하는 사용자를 참조합니다.</td></tr><tr><td><code>billing_auths.payment_customer_id</code></td><td><code>payment_customers._id</code></td><td>reference</td><td>빌링 인증 시도는 인증에 사용할 PG 고객 식별자를 참조합니다.</td></tr><tr><td><code>subscriptions.user_id</code></td><td><code>users._id</code></td><td>reference</td><td>구독은 사용자 문서를 참조합니다.</td></tr><tr><td><code>subscriptions.payment_customer_id</code></td><td><code>payment_customers._id</code></td><td>reference</td><td>구독은 최초 빌링 인증에 사용한 PG 고객 식별자를 참조합니다.</td></tr><tr><td><code>subscriptions.plan_id</code></td><td><code>subscription_plans._id</code></td><td>reference</td><td>구독은 현재 적용 중인 구독 플랜을 참조합니다.</td></tr><tr><td><code>subscriptions.billing_method_id</code></td><td><code>billing_methods._id</code></td><td>reference</td><td>활성 구독은 기본 결제수단을 참조합니다.</td></tr><tr><td><code>billing_methods.payment_customer_id</code></td><td><code>payment_customers._id</code></td><td>reference</td><td>사용자 결제수단은 특정 PG 고객 식별자에 속합니다.</td></tr><tr><td><code>billing_methods.instrument_id</code></td><td><code>payment_instruments._id</code></td><td>reference</td><td>사용자 결제수단은 실제 PG 결제 토큰 문서를 참조합니다.</td></tr><tr><td><code>payment_instruments.payment_customer_id</code></td><td><code>payment_customers._id</code></td><td>reference</td><td>PG 결제 토큰은 특정 PG 고객 식별자에 속합니다.</td></tr><tr><td><code>payments.checkout_id</code></td><td><code>checkouts.checkout_id</code></td><td>reference</td><td>일반결제 결제 시도는 구매 의도 ID로 묶입니다.</td></tr><tr><td><code>payments.payment_customer_id</code></td><td><code>payment_customers._id</code></td><td>reference</td><td>결제 시도는 토스 승인에 사용한 PG 고객 식별자를 참조합니다.</td></tr><tr><td><code>payments.subscription_id</code></td><td><code>subscriptions._id</code></td><td>reference</td><td>구독 결제는 원본 구독을 참조합니다.</td></tr><tr><td><code>invoices.payment_id</code></td><td><code>payments._id</code></td><td>reference</td><td>인보이스는 결제 결과를 기준으로 발행됩니다.</td></tr><tr><td><code>webhook_events.payload</code></td><td><code>payments 또는 subscriptions</code></td><td>snapshot</td><td>웹훅 원문은 장애 추적을 위해 스냅샷으로 보관합니다.</td></tr></tbody></table></div>
 </section><section id="api-access">
   <h2>API별 읽기/쓰기</h2>
-  <table><thead><tr><th>API</th><th>Read</th><th>Write</th><th>설명</th></tr></thead><tbody><tr><td><a href="./all-api-doc.html#plans-list"><code>GET /plans</code></a></td><td>products, subscription-plans, subscriptions</td><td>-</td><td>상품과 활성 플랜을 조회하고, 로그인 사용자의 현재 구독 상태를 함께 계산합니다.</td></tr><tr><td><a href="./all-api-doc.html#admin-products-create"><code>POST /admin/products</code></a></td><td>products</td><td>products</td><td>상품 코드 중복을 확인하고 새 상품 문서를 생성합니다.</td></tr><tr><td><a href="./all-api-doc.html#admin-subscription-plans-create"><code>POST /admin/products/{productId}/subscription-plans</code></a></td><td>products, subscription-plans</td><td>subscription-plans</td><td>구독 상품에 새 플랜 버전을 추가합니다.</td></tr><tr><td><a href="./all-api-doc.html#admin-one-time-skus-create"><code>POST /admin/products/{productId}/one-time-skus</code></a></td><td>products, one-time-skus</td><td>one-time-skus</td><td>일반결제 상품에 새 SKU를 추가합니다.</td></tr><tr><td><a href="./all-api-doc.html#payments-orders"><code>POST /payments/orders</code></a></td><td>users, payment-customers, one-time-skus, checkouts</td><td>checkouts, payments</td><td>구매 가능 여부와 금액을 검증한 뒤 구매 의도와 새 결제 시도를 생성합니다.</td></tr><tr><td><a href="./all-api-doc.html#payments-auth-result"><code>POST /payments/{paymentId}/auth-result</code></a></td><td>checkouts, payments</td><td>checkouts, payments</td><td>토스 인증 실패 또는 사용자 취소 결과를 결제 시도와 구매 의도에 기록합니다.</td></tr><tr><td><a href="./all-api-doc.html#billing-auth"><code>POST /billing/auth</code></a></td><td>users, payment-customers</td><td>payment-customers, billing-auths</td><td>사용자의 PG 고객 식별자를 조회 또는 생성하고 토스 빌링 인증 시도 문서를 생성합니다.</td></tr><tr><td><a href="./all-api-doc.html#billing-issue"><code>POST /billing/issue</code></a></td><td>payment-customers, billing-auths</td><td>billing-auths, payment-instruments, billing-methods</td><td>빌링 인증 성공 리다이렉트를 검증하고 빌링키는 결제수단 토큰으로, 표시 정보는 결제수단으로 저장합니다.</td></tr><tr><td><a href="./all-api-doc.html#subscriptions-confirm"><code>POST /subscriptions/confirm</code></a></td><td>users, payment-customers, subscription-plans, billing-methods</td><td>subscriptions, payments, invoices</td><td>빌링키 발급과 첫 결제 승인 후 구독, 결제, 인보이스를 확정합니다.</td></tr><tr><td><a href="./all-api-doc.html#payments-confirm"><code>POST /payments/confirm</code></a></td><td>payments</td><td>payments, invoices</td><td>일반결제 승인 결과를 결제와 인보이스에 반영합니다.</td></tr><tr><td><a href="./all-api-doc.html#internal-billing-run"><code>POST /internal/subscription-billing/run</code></a></td><td>subscriptions, billing-methods, payment-instruments</td><td>payments, invoices, subscriptions</td><td>정기결제 대상 구독을 조회하고 결제 성공/실패 결과를 저장합니다.</td></tr><tr><td><a href="./all-api-doc.html#webhooks-toss-payments"><code>POST /webhooks/toss-payments</code></a></td><td>payments, subscriptions</td><td>webhook-events, payments, subscriptions</td><td>토스 웹훅 원문을 저장한 뒤 내부 결제/구독 상태와 대조합니다.</td></tr></tbody></table>
+  <div class="table-scroll"><table><thead><tr><th>API</th><th>Read</th><th>Write</th><th>설명</th></tr></thead><tbody><tr><td><a href="./all-api-doc.html#plans-list"><code>GET /plans</code></a></td><td>products, subscription-plans, subscriptions</td><td>-</td><td>상품과 활성 플랜을 조회하고, 로그인 사용자의 현재 구독 상태를 함께 계산합니다.</td></tr><tr><td><a href="./all-api-doc.html#admin-products-create"><code>POST /admin/products</code></a></td><td>products</td><td>products</td><td>상품 코드 중복을 확인하고 새 상품 문서를 생성합니다.</td></tr><tr><td><a href="./all-api-doc.html#admin-subscription-plans-create"><code>POST /admin/products/{productId}/subscription-plans</code></a></td><td>products, subscription-plans</td><td>subscription-plans</td><td>구독 상품에 새 플랜 버전을 추가합니다.</td></tr><tr><td><a href="./all-api-doc.html#admin-one-time-skus-create"><code>POST /admin/products/{productId}/one-time-skus</code></a></td><td>products, one-time-skus</td><td>one-time-skus</td><td>일반결제 상품에 새 SKU를 추가합니다.</td></tr><tr><td><a href="./all-api-doc.html#payments-orders"><code>POST /payments/orders</code></a></td><td>users, payment-customers, one-time-skus, checkouts</td><td>checkouts, payments</td><td>구매 가능 여부와 금액을 검증한 뒤 구매 의도와 새 결제 시도를 생성합니다.</td></tr><tr><td><a href="./all-api-doc.html#payments-auth-result"><code>POST /payments/{paymentId}/auth-result</code></a></td><td>checkouts, payments</td><td>checkouts, payments</td><td>토스 인증 실패 또는 사용자 취소 결과를 결제 시도와 구매 의도에 기록합니다.</td></tr><tr><td><a href="./all-api-doc.html#billing-auth"><code>POST /billing/auth</code></a></td><td>users, payment-customers</td><td>payment-customers, billing-auths</td><td>사용자의 PG 고객 식별자를 조회 또는 생성하고 토스 빌링 인증 시도 문서를 생성합니다.</td></tr><tr><td><a href="./all-api-doc.html#billing-issue"><code>POST /billing/issue</code></a></td><td>payment-customers, billing-auths</td><td>billing-auths, payment-instruments, billing-methods</td><td>빌링 인증 성공 리다이렉트를 검증하고 빌링키는 결제수단 토큰으로, 표시 정보는 결제수단으로 저장합니다.</td></tr><tr><td><a href="./all-api-doc.html#subscriptions-confirm"><code>POST /subscriptions/confirm</code></a></td><td>users, payment-customers, subscription-plans, billing-methods</td><td>subscriptions, payments, invoices</td><td>빌링키 발급과 첫 결제 승인 후 구독, 결제, 인보이스를 확정합니다.</td></tr><tr><td><a href="./all-api-doc.html#payments-confirm"><code>POST /payments/confirm</code></a></td><td>payments</td><td>payments, invoices</td><td>일반결제 승인 결과를 결제와 인보이스에 반영합니다.</td></tr><tr><td><a href="./all-api-doc.html#internal-billing-run"><code>POST /internal/subscription-billing/run</code></a></td><td>subscriptions, billing-methods, payment-instruments</td><td>payments, invoices, subscriptions</td><td>정기결제 대상 구독을 조회하고 결제 성공/실패 결과를 저장합니다.</td></tr><tr><td><a href="./all-api-doc.html#webhooks-toss-payments"><code>POST /webhooks/toss-payments</code></a></td><td>payments, subscriptions</td><td>webhook-events, payments, subscriptions</td><td>토스 웹훅 원문을 저장한 뒤 내부 결제/구독 상태와 대조합니다.</td></tr></tbody></table></div>
 </section><section id="state-models">
   <h2>상태 모델</h2>
   <div class="grid"><article class="box">
   <h3>구독 상태</h3>
   <p><code>subscriptions.status</code></p>
   <p>pending, active, past_due, cancel_scheduled, canceled</p>
-  <table><thead><tr><th>전이</th><th>이벤트</th></tr></thead><tbody><tr><td><code>pending → active</code></td><td>첫 결제 승인과 빌링키 저장이 완료됩니다.</td></tr><tr><td><code>active → cancel_scheduled</code></td><td>사용자가 현재 이용기간 종료 해지를 예약합니다.</td></tr><tr><td><code>active → past_due</code></td><td>정기결제 실패 후 재시도 대상이 됩니다.</td></tr><tr><td><code>cancel_scheduled → active</code></td><td>사용자가 해지 예약을 철회합니다.</td></tr><tr><td><code>cancel_scheduled → canceled</code></td><td>이용기간 종료 시각에 도달합니다.</td></tr></tbody></table>
+  <div class="table-scroll"><table><thead><tr><th>전이</th><th>이벤트</th></tr></thead><tbody><tr><td><code>pending → active</code></td><td>첫 결제 승인과 빌링키 저장이 완료됩니다.</td></tr><tr><td><code>active → cancel_scheduled</code></td><td>사용자가 현재 이용기간 종료 해지를 예약합니다.</td></tr><tr><td><code>active → past_due</code></td><td>정기결제 실패 후 재시도 대상이 됩니다.</td></tr><tr><td><code>cancel_scheduled → active</code></td><td>사용자가 해지 예약을 철회합니다.</td></tr><tr><td><code>cancel_scheduled → canceled</code></td><td>이용기간 종료 시각에 도달합니다.</td></tr></tbody></table></div>
 </article><article class="box">
   <h3>결제 상태</h3>
   <p><code>payments.status</code></p>
   <p>ready, paid, failed, canceled, partial_canceled</p>
-  <table><thead><tr><th>전이</th><th>이벤트</th></tr></thead><tbody><tr><td><code>ready → paid</code></td><td>토스 결제 승인에 성공합니다.</td></tr><tr><td><code>ready → failed</code></td><td>인증 실패, 승인 실패, 정기결제 실패가 기록됩니다.</td></tr><tr><td><code>paid → canceled</code></td><td>전체 취소가 완료됩니다.</td></tr><tr><td><code>paid → partial_canceled</code></td><td>부분 취소가 완료됩니다.</td></tr></tbody></table>
+  <div class="table-scroll"><table><thead><tr><th>전이</th><th>이벤트</th></tr></thead><tbody><tr><td><code>ready → paid</code></td><td>토스 결제 승인에 성공합니다.</td></tr><tr><td><code>ready → failed</code></td><td>인증 실패, 승인 실패, 정기결제 실패가 기록됩니다.</td></tr><tr><td><code>paid → canceled</code></td><td>전체 취소가 완료됩니다.</td></tr><tr><td><code>paid → partial_canceled</code></td><td>부분 취소가 완료됩니다.</td></tr></tbody></table></div>
 </article></div>
 </section></div></main>
+<script>
+(() => {
+  const input = document.querySelector("[data-doc-search]");
+  if (!input) return;
+  const targets = Array.from(document.querySelectorAll("main section, article.card, article.box"));
+  input.addEventListener("input", () => {
+    const query = input.value.trim().toLowerCase();
+    for (const target of targets) {
+      const text = target.textContent.toLowerCase();
+      target.hidden = Boolean(query) && !text.includes(query);
+    }
+  });
+})();
+</script>
 </body>
 </html>

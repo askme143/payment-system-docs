@@ -13,6 +13,30 @@ diagram: {
   toss.style.stroke: "#7b4bc4"
 
   client -> server: |md
+변경 가능한 플랜 목록 조회
+
+**GET /plans**
+
+현재 productCode 안의 활성 플랜만 표시
+| {
+    style.stroke: "#1c7c66"
+    style.font-color: "#334155"
+    style.font-size: 18
+    style.italic: false
+  }
+  client -> server: |md
+목표 플랜 상세 확인
+
+**GET /plans/{planId}**
+
+가격, 주기, 권한 차이를 미리보기 전 화면에 표시
+| {
+    style.stroke: "#1c7c66"
+    style.font-color: "#334155"
+    style.font-size: 18
+    style.italic: false
+  }
+  client -> server: |md
 플랜 변경 미리보기 요청
 
 **POST /subscriptions/{subscriptionId}/change-preview**
@@ -24,8 +48,8 @@ targetPlanId
     style.font-size: 18
     style.italic: false
   }
-  server.note_2: "회원과 구독 소유권 검증\nstatus IN active, grace_period\n해지 예약, 정지, 이미 변경 예약된 구독은 정책에 따라 거부 또는 예약 교체"
-  server.note_3: "서버가 업그레이드 판정\ntargetPlan.productCode == subscription.productCode\ntargetPlan.productCode가 현재 구독의 productCode와 같아야 하며 업그레이드는 즉시 변경으로 고정"
+  server.note_4: "회원과 구독 소유권 검증\nstatus IN active, grace_period\n해지 예약, 정지, 이미 변경 예약된 구독은 정책에 따라 거부 또는 예약 교체"
+  server.note_5: "서버가 업그레이드 판정\ntargetPlan.productCode == subscription.productCode\ntargetPlan.productCode가 현재 구독의 productCode와 같아야 하며 업그레이드는 즉시 변경으로 고정"
   server -> client: |md
 즉시 결제 금액과 다음 결제일 안내
 
@@ -50,7 +74,7 @@ confirmationToken, confirmed=true, Idempotency-Key
     style.font-size: 18
     style.italic: false
   }
-  server.note_6: "확인 토큰 재검증 및 결제 회차 생성\ninvoice.type = plan_change\n토큰의 금액, targetPlanId, serverDecision이 현재 상태와 일치해야 함"
+  server.note_8: "확인 토큰 재검증 및 결제 회차 생성\ninvoice.type = plan_change\n토큰의 금액, targetPlanId, serverDecision이 현재 상태와 일치해야 함"
   server -> toss: |md
 차액 자동결제 승인 요청
 
@@ -75,7 +99,7 @@ paymentKey, status=DONE
     style.font-size: 18
     style.italic: false
   }
-  server.note_9: "승인 성공 후 플랜 즉시 반영\nproductCode 유지, planId=targetPlanId, invoice paid\n권한, 사용량 한도, 다음 결제 예정 금액을 새 플랜 기준으로 갱신"
+  server.note_11: "승인 성공 후 플랜 즉시 반영\nproductCode 유지, planId=targetPlanId, invoice paid\n권한, 사용량 한도, 다음 결제 예정 금액을 새 플랜 기준으로 갱신"
   server -> client: |md
 결제 성공 이메일 발송
 

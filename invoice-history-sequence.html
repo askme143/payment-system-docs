@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>구독 재개 플로우</title>
+  <title>마이페이지 청구 내역 조회 플로우</title>
   <style>
     :root {
       --bg: #f5f7fb;
@@ -294,8 +294,8 @@
 <header>
   <div class="wrap hero">
     <p class="eyebrow">Sequence Diagram</p>
-    <h1>구독 재개 플로우</h1>
-    <p class="lead">기간 종료 전 해지 예약을 철회해 구독을 active 상태로 되돌리고 다음 정기 결제일을 복구하는 흐름입니다.</p>
+    <h1>마이페이지 청구 내역 조회 플로우</h1>
+    <p class="lead">회원이 마이페이지 청구 내역에서 인보이스 목록을 조회하고, 상세 화면에서 결제 성공 영수증 또는 결제 실패 사유와 재시도 안내를 확인하는 흐름입니다.</p>
     <div class="search-panel">
       <input type="search" data-doc-search aria-label="문서 검색" placeholder="API, 상태, 컬렉션, 플로우 검색">
     </div>
@@ -305,16 +305,16 @@
 <main class="wrap" id="content">
   <section>
     <h2>사용 API</h2>
-    <div class="grid"><div class="box"><a href="./all-api-doc.html#subscriptions-resume"><code>POST /subscriptions/{subscriptionId}/resume</code></a><p>해지 예약 또는 결제 실패 상태의 구독을 재개합니다.</p></div><div class="box"><a href="./all-api-doc.html#subscriptions-me"><code>GET /subscriptions/me</code></a><p>현재 회원의 상품별 구독 목록, 이용 기간, 다음 결제일, 공통 기본 결제수단 표시 정보를 조회합니다.</p></div><div class="box"><a href="./all-api-doc.html#internal-billing-run"><code>POST /internal/subscription-billing/run</code></a><p>다음 결제일이 도래한 구독을 찾아 정기 자동결제를 실행합니다.</p></div></div>
+    <div class="grid"><div class="box"><a href="./all-api-doc.html#invoices-list"><code>GET /invoices</code></a><p>구독 회차별 청구 내역과 결제 성공/실패 상태를 조회합니다.</p></div><div class="box"><a href="./all-api-doc.html#invoices-detail"><code>GET /invoices/{invoiceId}</code></a><p>단일 인보이스의 금액, 결제 시도, 실패 사유, 영수증 정보를 조회합니다.</p></div></div>
   </section>
-  <section id="subscription-resume-cancel-scheduled">
-  <h2>해지 예약 철회</h2>
-  <p>cancel_scheduled 상태의 구독을 기간 종료 전에 다시 active로 복구하고 정기 과금 배치가 다음 결제일을 조회할 수 있게 합니다.</p>
+  <section id="billing-history-main">
+  <h2>마이페이지 청구 내역 조회</h2>
+  <p>목록 API는 화면 표시용 요약만 반환하고, 상세 API에서 영수증 URL과 실패 사유를 확인하는 흐름입니다.</p>
   <div class="diagram"><div class="d2-diagram">
-  <div class="d2-toolbar"><a href="diagrams/subscription-resume-subscription-resume-cancel-scheduled.d2">D2 원본</a></div>
+  <div class="d2-toolbar"><a href="diagrams/invoice-history-billing-history-main.d2">D2 원본</a></div>
   <pre class="d2-source"><code>diagram: {
   shape: sequence_diagram
-  label: &quot;해지 예약 철회&quot;
+  label: &quot;마이페이지 청구 내역 조회&quot;
 
   client: &quot;웹 클라이언트&quot;
   client.style.fill: &quot;#e8f3ff&quot;
@@ -322,32 +322,26 @@
   server: &quot;우리 서버&quot;
   server.style.fill: &quot;#eaf8f3&quot;
   server.style.stroke: &quot;#1c7c66&quot;
-  scheduler: &quot;스케줄러&quot;
-  scheduler.style.fill: &quot;#fff8e6&quot;
-  scheduler.style.stroke: &quot;#9a5b00&quot;
 
   client -&gt; server: |md
-구독 재개 요청
+마이페이지 청구 내역 목록 요청
 
-**POST /subscriptions/{subscriptionId}/resume**
+**GET /invoices**
 
-resumeReason, Idempotency-Key, session
+status, subscriptionId, from, to, cursor, limit
 | {
     style.stroke: &quot;#1c7c66&quot;
     style.font-color: &quot;#334155&quot;
     style.font-size: 18
     style.italic: false
   }
-  server.note_2: &quot;회원과 구독 소유권 검증\nsession.userId == subscription.userId\n현재 회원 소유 구독만 재개 가능&quot;
-  server.note_3: &quot;재개 가능 상태 확인\nstatus == cancel_scheduled\n이미 canceled이면 신규 구독 또는 별도 복구 정책으로 안내&quot;
-  server.note_4: &quot;기간 종료 전 여부 확인\nnow &lt; currentPeriodEnd\n기간 종료 후에는 해지 예약 철회 불가&quot;
-  server.note_5: &quot;구독 상태와 청구 일정 복구\nstatus=active, cancelAt=null\nnextBillingDate 복구&quot;
+  server.note_2: &quot;회원과 조회 조건 검증\nsession.userId, filters, cursor\n현재 회원 소유 인보이스만 최신 청구일 순으로 조회&quot;
   server -&gt; client: |md
-재개 결과 반환
+청구 내역 목록 반환
 
-status=active, resumeAvailable=false
+items[], page.nextCursor
 
-프론트는 구독 상세 화면의 해지 예정 배지를 제거
+receiptAvailable, failureSummary, detailUrl 포함
 | {
     style.stroke: &quot;#2457a6&quot;
     style.font-color: &quot;#334155&quot;
@@ -355,36 +349,39 @@ status=active, resumeAvailable=false
     style.italic: false
   }
   client -&gt; server: |md
-현재 구독 상태 조회
+청구 상세 요청
 
-**GET /subscriptions/me**
+**GET /invoices/{invoiceId}**
 
-복구된 nextBillingDate와 결제수단 표시
+사용자가 목록 항목을 선택
 | {
     style.stroke: &quot;#1c7c66&quot;
     style.font-color: &quot;#334155&quot;
     style.font-size: 18
     style.italic: false
   }
-  scheduler -&gt; server: |md
-정기 과금 배치 실행
+  server.note_5: &quot;인보이스 소유권과 결제 상태 조회\ninvoice.userId == session.userId\n결제 시도, 구독, 플랜, 결제수단 표시 정보 연결&quot;
+  server -&gt; client: |md
+청구 상세 반환
 
-**POST /internal/subscription-billing/run**
+status, receiptUrl, failure, retry, actions
 
-active이고 nextBillingDate가 도래하면 다시 결제 후보
+영수증 또는 실패 안내에 필요한 상세 필드 반환
 | {
-    style.stroke: &quot;#1c7c66&quot;
+    style.stroke: &quot;#2457a6&quot;
     style.font-color: &quot;#334155&quot;
     style.font-size: 18
     style.italic: false
   }
+  server.note_7: &quot;영수증 링크 노출\nstatus == paid &amp;&amp; receiptUrl\n프론트는 결제일, 금액, 결제수단 요약과 영수증 링크를 표시&quot;
+  server.note_8: &quot;실패 사유와 재시도 안내 노출\nstatus == failed\nfailure.message, retry.nextRetryAt, billingMethodUpdateUrl 표시&quot;
 }
 </code></pre>
 </div></div>
 </section>
   <section id="states">
   <h2>상태 요약</h2>
-  <div class="table-scroll"><table><thead><tr><th>시점</th><th>구독 상태</th><th>결제 상태</th><th>설명</th></tr></thead><tbody><tr><td>재개 요청 전</td><td><code>cancel_scheduled</code></td><td><code>paid</code></td><td>회원은 남은 기간을 이용 중이지만 다음 결제일은 제거되어 있습니다.</td></tr><tr><td>재개 성공 직후</td><td><code>active</code></td><td><code>paid</code></td><td>해지 예약이 철회되고 다음 결제일이 복구됩니다.</td></tr><tr><td>다음 과금 배치 시점</td><td><code>active</code></td><td><code>pending</code></td><td>nextBillingDate가 도래하면 정기 과금 배치가 구독을 다시 결제 후보로 조회합니다.</td></tr></tbody></table></div>
+  <div class="table-scroll"><table><thead><tr><th>시점</th><th>구독 상태</th><th>결제 상태</th><th>설명</th></tr></thead><tbody><tr><td>목록 조회 후</td><td><code>active / past_due / canceled</code></td><td><code>paid / failed / pending</code></td><td>회원은 청구 내역 요약과 상세 진입 경로를 확인합니다.</td></tr><tr><td>성공 상세 조회 후</td><td><code>active</code></td><td><code>paid</code></td><td>상세 화면에서 영수증 링크와 결제 완료 시각을 확인합니다.</td></tr><tr><td>실패 상세 조회 후</td><td><code>past_due / grace_period</code></td><td><code>failed</code></td><td>상세 화면에서 실패 사유, 다음 재시도 예정일, 결제수단 수정 링크를 확인합니다.</td></tr></tbody></table></div>
 </section>
 </main>
 <script>

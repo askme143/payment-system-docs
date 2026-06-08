@@ -1,0 +1,68 @@
+diagram: {
+  shape: sequence_diagram
+  label: "정책 예외 상태 보정"
+
+  admin: "관리자"
+  admin.style.fill: "#f1f5f9"
+  admin.style.stroke: "#334155"
+  server: "우리 서버"
+  server.style.fill: "#eaf8f3"
+  server.style.stroke: "#1c7c66"
+  email: "이메일 발송 시스템"
+  email.style.fill: "#f8fafc"
+  email.style.stroke: "#65758a"
+
+  admin -> server: |md
+상태 보정 대상 구독 검색
+
+**GET /admin/subscriptions**
+
+상태, 실패 사유, CS 티켓 기준으로 보정 후보를 확인
+| {
+    style.stroke: "#1c7c66"
+    style.font-color: "#334155"
+    style.font-size: 18
+    style.italic: false
+  }
+  admin -> server: |md
+정책 예외 보정 요청
+
+**POST /admin/subscriptions/{subscriptionId}/adjust**
+
+adjustmentType=status_override 또는 clear_payment_failure, targetStatus, reasonMessage
+| {
+    style.stroke: "#1c7c66"
+    style.font-color: "#334155"
+    style.font-size: 18
+    style.italic: false
+  }
+  server.note_3: "관리자 권한 및 사유 검증\npermission == subscription_adjust && reasonMessage present\nCS 티켓, 장애 번호, 마이그레이션 작업 ID 같은 근거를 남김"
+  server.note_4: "상태 전이 가능성 검증\nallowed transition: past_due -> active, active -> canceled\n환불/해지/정지 정책과 충돌하는 전이는 409"
+  server.note_5: "실패 상태 또는 구독 상태 보정\nclear retryAt, paymentFailureReason, targetStatus\n재시도 최종 실패 후 별도 결제가 확인되면 active로 복구"
+  server.note_6: "절대 결제일 복구가 필요한 경우\nadjustmentType=set_next_billing_date, nextBillingAt\n마이그레이션 오류처럼 특정 날짜가 정답일 때만 사용"
+  server.note_7: "감사 로그 저장\noperatorAuditId links previousState/currentState\n누가, 언제, 어떤 근거로 상태를 바꿨는지 추적"
+  server -> email: |md
+회원 알림 발송
+
+notifyCustomer == true
+
+구독 유지, 종료, 결제 실패 해제 결과 안내
+| {
+    style.stroke: "#65758a"
+    style.font-color: "#334155"
+    style.font-size: 18
+    style.italic: false
+  }
+  server -> admin: |md
+정책 보정 결과 반환
+
+operatorAuditId, status, nextBillingAt
+
+관리자 콘솔은 전후 상태와 사유를 표시
+| {
+    style.stroke: "#334155"
+    style.font-color: "#334155"
+    style.font-size: 18
+    style.italic: false
+  }
+}

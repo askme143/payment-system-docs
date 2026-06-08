@@ -200,16 +200,21 @@ def page(title, body, extra_head=""):
     :root {{
       --bg: #f5f7fb;
       --surface: #ffffff;
+      --surface-2: #fbfcfe;
       --ink: #17202a;
-      --muted: #65758a;
+      --muted: #526174;
       --line: #d8e0ea;
       --accent: #1c7c66;
       --blue: #2457a6;
+      --blue-soft: #e8f3ff;
       --danger: #b42318;
       --soft: #e5f4ef;
-      --shadow: 0 14px 34px rgba(20, 35, 55, 0.08);
+      --warning: #9a5b00;
+      --warning-soft: #fff5dd;
+      --shadow: 0 12px 28px rgba(20, 35, 55, 0.07);
       --code-bg: #111827;
       --code-ink: #e5e7eb;
+      --focus: #8b5cf6;
     }}
     * {{ box-sizing: border-box; }}
     html {{ scroll-behavior: smooth; }}
@@ -220,15 +225,30 @@ def page(title, body, extra_head=""):
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
       line-height: 1.58;
     }}
+    .skip-link {{
+      position: absolute;
+      left: 16px;
+      top: 12px;
+      z-index: 10;
+      transform: translateY(-140%);
+      padding: 10px 12px;
+      color: #ffffff;
+      background: var(--ink);
+      border-radius: 6px;
+      transition: transform 160ms ease;
+    }}
+    .skip-link:focus {{ transform: translateY(0); }}
     header {{
-      background: var(--surface);
+      background:
+        linear-gradient(135deg, rgba(232, 243, 255, 0.9), rgba(229, 244, 239, 0.76)),
+        var(--surface);
       border-bottom: 1px solid var(--line);
     }}
     .wrap {{
       width: min(1180px, calc(100% - 36px));
       margin: 0 auto;
     }}
-    .hero {{ padding: 42px 0 28px; }}
+    .hero {{ padding: 46px 0 30px; }}
     .eyebrow {{
       margin: 0 0 10px;
       color: var(--accent);
@@ -247,6 +267,22 @@ def page(title, body, extra_head=""):
       color: var(--muted);
       font-size: 18px;
     }}
+    .search-panel {{
+      max-width: 760px;
+      margin-top: 22px;
+    }}
+    .search-panel input {{
+      width: 100%;
+      min-height: 48px;
+      padding: 0 16px;
+      color: var(--ink);
+      background: rgba(255, 255, 255, 0.92);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      box-shadow: var(--shadow);
+      font: inherit;
+    }}
+    .search-panel input::placeholder {{ color: #718096; }}
     main {{ padding: 28px 0 54px; }}
     .layout {{
       display: grid;
@@ -277,8 +313,18 @@ def page(title, body, extra_head=""):
       line-height: 1.35;
       overflow-wrap: anywhere;
       word-break: break-word;
+      cursor: pointer;
+      transition: color 160ms ease, background-color 160ms ease;
     }}
     nav a:hover {{ color: var(--ink); background: var(--soft); }}
+    a:focus-visible,
+    button:focus-visible,
+    input:focus-visible,
+    summary:focus-visible {{
+      outline: 3px solid var(--focus);
+      outline: 3px solid color-mix(in srgb, var(--focus), transparent 45%);
+      outline-offset: 2px;
+    }}
     section {{
       margin-bottom: 24px;
       padding: 24px;
@@ -286,11 +332,14 @@ def page(title, body, extra_head=""):
       border: 1px solid var(--line);
       border-radius: 8px;
       box-shadow: var(--shadow);
+      scroll-margin-top: 18px;
     }}
     h2 {{ margin: 0 0 16px; font-size: 24px; letter-spacing: 0; }}
     h3 {{ margin: 22px 0 8px; font-size: 18px; letter-spacing: 0; }}
+    h4 {{ margin: 14px 0 8px; font-size: 16px; letter-spacing: 0; }}
     p {{ margin: 0 0 14px; }}
-    a {{ color: var(--blue); font-weight: 800; text-decoration: none; }}
+    a {{ color: var(--blue); font-weight: 800; text-decoration: none; text-underline-offset: 3px; }}
+    a:hover {{ text-decoration: underline; }}
     code {{ font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 0.95em; }}
     pre {{
       margin: 10px 0 0;
@@ -302,19 +351,51 @@ def page(title, body, extra_head=""):
       font-size: 13px;
       line-height: 1.5;
     }}
-    table {{ width: 100%; border-collapse: collapse; font-size: 14px; }}
+    .table-scroll {{
+      width: 100%;
+      overflow-x: auto;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+    }}
+    table {{ width: 100%; min-width: 680px; border-collapse: collapse; font-size: 14px; }}
     th, td {{ padding: 11px 12px; text-align: left; vertical-align: top; border-bottom: 1px solid var(--line); }}
-    th {{ color: var(--muted); background: #fbfcfe; font-weight: 800; }}
-    .top-links {{ display: flex; flex-wrap: wrap; gap: 14px; margin-top: 16px; }}
+    th {{ color: var(--muted); background: var(--surface-2); font-weight: 800; }}
+    tr:last-child td {{ border-bottom: 0; }}
+    .top-links {{ display: flex; flex-wrap: wrap; gap: 10px; margin-top: 16px; }}
+    .top-links a {{
+      display: inline-flex;
+      align-items: center;
+      min-height: 38px;
+      padding: 7px 12px;
+      color: var(--ink);
+      background: rgba(255, 255, 255, 0.82);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      cursor: pointer;
+      transition: border-color 160ms ease, background-color 160ms ease;
+    }}
+    .top-links a:hover {{
+      background: #ffffff;
+      border-color: color-mix(in srgb, var(--blue), var(--line) 55%);
+      text-decoration: none;
+    }}
     .grid {{ display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }}
     .sequence-group {{ margin-top: 20px; }}
     .sequence-group:first-of-type {{ margin-top: 0; }}
     .sequence-group > p {{ color: var(--muted); }}
     .card, .box {{
       padding: 16px;
-      background: #fbfcfe;
+      background: var(--surface-2);
       border: 1px solid var(--line);
       border-radius: 8px;
+    }}
+    .card {{
+      transition: border-color 160ms ease, box-shadow 160ms ease, background-color 160ms ease;
+    }}
+    .card:has(a):hover {{
+      background: #ffffff;
+      border-color: color-mix(in srgb, var(--blue), var(--line) 56%);
+      box-shadow: 0 10px 22px rgba(20, 35, 55, 0.08);
     }}
     .status {{
       display: inline-flex;
@@ -327,11 +408,15 @@ def page(title, body, extra_head=""):
       font-size: 12px;
       font-weight: 900;
     }}
+    .status-planned {{
+      color: var(--warning);
+      background: var(--warning-soft);
+    }}
     .note {{
       margin-top: 14px;
       padding: 13px 15px;
       color: #7a4a00;
-      background: #fff5dd;
+      background: var(--warning-soft);
       border: 1px solid #eed39a;
       border-radius: 8px;
     }}
@@ -349,7 +434,7 @@ def page(title, body, extra_head=""):
       gap: 10px;
       padding: 10px 12px;
       border-bottom: 1px solid var(--line);
-      background: #fbfcfe;
+      background: var(--surface-2);
     }}
     .d2-toolbar a {{
       font-size: 13px;
@@ -367,7 +452,7 @@ def page(title, body, extra_head=""):
     }}
     .d2-details {{
       border-top: 1px solid var(--line);
-      background: #fbfcfe;
+      background: var(--surface-2);
     }}
     .d2-details summary {{
       cursor: pointer;
@@ -381,12 +466,38 @@ def page(title, body, extra_head=""):
       nav {{ position: static; max-height: none; }}
       .grid {{ grid-template-columns: 1fr; }}
       .wrap {{ width: min(100% - 24px, 1180px); }}
+      .hero {{ padding: 34px 0 24px; }}
+      section {{ padding: 18px; }}
+      table {{ min-width: 620px; }}
+    }}
+    @media (prefers-reduced-motion: reduce) {{
+      html {{ scroll-behavior: auto; }}
+      *, *::before, *::after {{
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+      }}
     }}
   </style>
   {extra_head}
 </head>
 <body>
+<a class="skip-link" href="#content">본문으로 건너뛰기</a>
 {body}
+<script>
+(() => {{
+  const input = document.querySelector("[data-doc-search]");
+  if (!input) return;
+  const targets = Array.from(document.querySelectorAll("main section, article.card, article.box"));
+  input.addEventListener("input", () => {{
+    const query = input.value.trim().toLowerCase();
+    for (const target of targets) {{
+      const text = target.textContent.toLowerCase();
+      target.hidden = Boolean(query) && !text.includes(query);
+    }}
+  }});
+}})();
+</script>
 </body>
 </html>
 """
@@ -403,6 +514,9 @@ def header(title, eyebrow, lead, links=None):
     <p class="eyebrow">{e(eyebrow)}</p>
     <h1>{e(title)}</h1>
     <p class="lead">{e(lead)}</p>
+    <div class="search-panel">
+      <input type="search" data-doc-search aria-label="문서 검색" placeholder="API, 상태, 컬렉션, 플로우 검색">
+    </div>
     {link_html}
   </div>
 </header>
@@ -410,7 +524,11 @@ def header(title, eyebrow, lead, links=None):
 
 
 def nav(items):
-    return "<nav>" + "".join(f"<a href=\"#{e(anchor)}\">{e(label)}</a>" for anchor, label in items) + "</nav>"
+    return "<nav aria-label=\"문서 목차\">" + "".join(f"<a href=\"#{e(anchor)}\">{e(label)}</a>" for anchor, label in items) + "</nav>"
+
+
+def table(html_table):
+    return f"<div class=\"table-scroll\">{html_table}</div>"
 
 
 def api_maps(data):
@@ -437,8 +555,8 @@ def render_sequence_index(data):
         )
         title = f"<a href=\"./{e(seq['file'])}\">{e(seq['title'])}</a>" if seq["status"] == "available" else e(seq["title"])
         return f"""<article class="card">
-  <span class="status">{e(seq['status'])}</span>
-  <h3>{title}</h3>
+  <span class="status status-{e(seq['status'])}">{e(seq['status'])}</span>
+  <h4>{title}</h4>
   <p>{e(seq['summary'])}</p>
   <ul>{api_lines}</ul>
 </article>"""
@@ -467,7 +585,7 @@ def render_sequence_index(data):
         "구독결제와 일반결제에서 필요한 시퀀스 다이어그램을 한 곳에서 찾는 허브입니다.",
         [("전체 API 목록", "./all-api-doc.html"), ("API 상세 설명", "./api-detail-doc.html")] + database_links(data)
     )
-    body += f"""<main class="wrap">
+    body += f"""<main class="wrap" id="content">
   <section id="available">
     <h2>작성 완료</h2>
     {grouped_cards(available)}
@@ -493,16 +611,17 @@ def render_api_catalog(data):
             if api["detailStatus"] == "available":
                 detail = f"<a href=\"./api-detail-doc.html#{e(api['detailAnchor'])}\">상세 보기</a>"
             else:
-                detail = "<span class=\"status\">상세 예정</span>"
+                detail = "<span class=\"status status-planned\">상세 예정</span>"
             rows.append(
                 f"<tr id=\"{e(api['id'])}\"><td><code>{e(fmt_api(api))}</code></td><td>{e(api['role'])}</td><td>{detail}</td></tr>"
             )
-        sections.append(f"""<section id="{e(category['id'])}">
-  <h2>{e(category['title'])}</h2>
-  <table>
+        api_table = table(f"""<table>
     <thead><tr><th>API</th><th>역할</th><th>상세</th></tr></thead>
     <tbody>{''.join(rows)}</tbody>
-  </table>
+  </table>""")
+        sections.append(f"""<section id="{e(category['id'])}">
+  <h2>{e(category['title'])}</h2>
+  {api_table}
 </section>""")
 
     body = header(
@@ -511,7 +630,7 @@ def render_api_catalog(data):
         "API의 전체 목록과 역할만 정리하는 색인입니다. 상세 계약은 API 상세 설명 페이지에서 관리합니다.",
         [("전체 시퀀스 목록", "./sequence-index.html"), ("API 상세 설명 단일 원본", "./api-detail-doc.html")] + database_links(data)
     )
-    body += f"<main class=\"wrap layout\">{nav(nav_items)}<div>{''.join(sections)}</div></main>"
+    body += f"<main class=\"wrap layout\" id=\"content\">{nav(nav_items)}<div>{''.join(sections)}</div></main>"
     return page(data["site"]["pages"]["apiCatalog"]["title"], body)
 
 
@@ -521,7 +640,7 @@ def render_fields(title, fields):
         for field in fields
     )
     return f"""<h3>{e(title)}</h3>
-<table><thead><tr><th>이름</th><th>필수</th><th>설명</th></tr></thead><tbody>{rows}</tbody></table>"""
+{table(f"<table><thead><tr><th>이름</th><th>필수</th><th>설명</th></tr></thead><tbody>{rows}</tbody></table>")}"""
 
 
 def render_json_example(value):
@@ -543,8 +662,10 @@ def render_failure_rules(rules):
     )
     return (
         "<h3>실패 규칙</h3>"
-        "<table><thead><tr><th>코드</th><th>HTTP</th><th>재시도</th><th>설명</th><th>결과 상태</th></tr></thead>"
-        f"<tbody>{rows}</tbody></table>"
+        + table(
+            "<table><thead><tr><th>코드</th><th>HTTP</th><th>재시도</th><th>설명</th><th>결과 상태</th></tr></thead>"
+            f"<tbody>{rows}</tbody></table>"
+        )
     )
 
 
@@ -568,7 +689,7 @@ def render_api_details(data):
                 f"<tr><td><code>{e(item['name'])}</code></td><td>{e(item['source'])}</td><td>{e(item['description'])}</td></tr>"
                 for item in detail["frontendInputs"]
             )
-            frontend_inputs = f"<h3>프론트 입력값</h3><table><thead><tr><th>값</th><th>출처</th><th>설명</th></tr></thead><tbody>{rows}</tbody></table>"
+            frontend_inputs = f"<h3>프론트 입력값</h3>{table(f'<table><thead><tr><th>값</th><th>출처</th><th>설명</th></tr></thead><tbody>{rows}</tbody></table>')}"
         body_fields = render_fields("Body 필드", request.get("bodyFields", [])) if request.get("bodyFields") else ""
         body_example = f"<h3>Body</h3>{render_json_example(request['bodyExample'])}" if "bodyExample" in request else "<h3>Body</h3><pre><code>요청 바디 없음</code></pre>"
         failure_rules = render_failure_rules(detail.get("failureRules", []))
@@ -607,7 +728,7 @@ def render_api_details(data):
         "Header, Cookie, Body, Response, 처리 로직을 관리하는 API 계약의 단일 원본입니다.",
         [("전체 시퀀스 목록", "./sequence-index.html"), ("전체 API 목록", "./all-api-doc.html")] + database_links(data)
     )
-    body += f"<main class=\"wrap layout\">{nav(nav_items)}<div>{''.join(sections)}</div></main>"
+    body += f"<main class=\"wrap layout\" id=\"content\">{nav(nav_items)}<div>{''.join(sections)}</div></main>"
     return page(data["site"]["pages"]["apiDetails"]["title"], body)
 
 
@@ -675,22 +796,25 @@ def render_database_doc(data):
         if index_rows:
             indexes = (
                 "<h3>인덱스</h3>"
-                "<table><thead><tr><th>필드</th><th>유니크</th><th>설명</th></tr></thead>"
-                f"<tbody>{index_rows}</tbody></table>"
+                + table(
+                    "<table><thead><tr><th>필드</th><th>유니크</th><th>설명</th></tr></thead>"
+                    f"<tbody>{index_rows}</tbody></table>"
+                )
             )
         related_apis = "".join(
             f"<li><a href=\"./all-api-doc.html#{e(api_id)}\"><code>{e(fmt_api(apis[api_id]))}</code></a> - {e(apis[api_id]['role'])}</li>"
             for api_id in collection.get("relatedApis", []) if api_id in apis
         )
         api_block = f"<h3>관련 API</h3><ul>{related_apis}</ul>" if related_apis else ""
+        fields_table = table(f"""<table>
+    <thead><tr><th>필드</th><th>타입</th><th>필수</th><th>설명</th><th>상세</th></tr></thead>
+    <tbody>{''.join(field_rows)}</tbody>
+  </table>""")
         sections.append(f"""<section id="{e(collection['id'])}">
   <h2>{e(collection['title'])} <code>{e(collection['name'])}</code></h2>
   <p>{e(collection['description'])}</p>
   <h3>필드</h3>
-  <table>
-    <thead><tr><th>필드</th><th>타입</th><th>필수</th><th>설명</th><th>상세</th></tr></thead>
-    <tbody>{''.join(field_rows)}</tbody>
-  </table>
+  {fields_table}
   {indexes}
   {api_block}
 </section>""")
@@ -707,7 +831,7 @@ def render_database_doc(data):
         )
         sections.append(f"""<section id="relationships">
   <h2>문서 관계</h2>
-  <table><thead><tr><th>From</th><th>To</th><th>유형</th><th>설명</th></tr></thead><tbody>{rows}</tbody></table>
+  {table(f"<table><thead><tr><th>From</th><th>To</th><th>유형</th><th>설명</th></tr></thead><tbody>{rows}</tbody></table>")}
 </section>""")
 
     if database.get("apiAccess"):
@@ -722,7 +846,7 @@ def render_database_doc(data):
         )
         sections.append(f"""<section id="api-access">
   <h2>API별 읽기/쓰기</h2>
-  <table><thead><tr><th>API</th><th>Read</th><th>Write</th><th>설명</th></tr></thead><tbody>{rows}</tbody></table>
+  {table(f"<table><thead><tr><th>API</th><th>Read</th><th>Write</th><th>설명</th></tr></thead><tbody>{rows}</tbody></table>")}
 </section>""")
 
     if database.get("stateModels"):
@@ -736,14 +860,14 @@ def render_database_doc(data):
   <h3>{e(model['title'])}</h3>
   <p><code>{e(model['collection'])}.{e(model['field'])}</code></p>
   <p>{e(', '.join(model['states']))}</p>
-  <table><thead><tr><th>전이</th><th>이벤트</th></tr></thead><tbody>{transitions}</tbody></table>
+  {table(f"<table><thead><tr><th>전이</th><th>이벤트</th></tr></thead><tbody>{transitions}</tbody></table>")}
 </article>""")
         sections.append(f"""<section id="state-models">
   <h2>상태 모델</h2>
   <div class="grid">{''.join(state_sections)}</div>
 </section>""")
 
-    body += f"<main class=\"wrap layout\">{nav(nav_items)}<div>{''.join(sections)}</div></main>"
+    body += f"<main class=\"wrap layout\" id=\"content\">{nav(nav_items)}<div>{''.join(sections)}</div></main>"
     return page(pages["database"]["title"], body)
 
 
@@ -933,7 +1057,7 @@ def render_sequence_page(data, sequence, rendered_d2_ids=None):
     if state_summary:
         state_section = f"""<section id="states">
   <h2>상태 요약</h2>
-  <table><thead><tr><th>시점</th><th>구독 상태</th><th>결제 상태</th><th>설명</th></tr></thead><tbody>{''.join(state_summary)}</tbody></table>
+  {table(f"<table><thead><tr><th>시점</th><th>구독 상태</th><th>결제 상태</th><th>설명</th></tr></thead><tbody>{''.join(state_summary)}</tbody></table>")}
 </section>"""
 
     body = header(
@@ -942,7 +1066,7 @@ def render_sequence_page(data, sequence, rendered_d2_ids=None):
         sequence["summary"],
         [("전체 시퀀스 목록", "./sequence-index.html"), ("전체 API 목록", "./all-api-doc.html"), ("API 상세 설명", "./api-detail-doc.html")] + database_links(data)
     )
-    body += f"""<main class="wrap">
+    body += f"""<main class="wrap" id="content">
   <section>
     <h2>사용 API</h2>
     <div class="grid">{api_links}</div>

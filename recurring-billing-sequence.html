@@ -8,16 +8,21 @@
     :root {
       --bg: #f5f7fb;
       --surface: #ffffff;
+      --surface-2: #fbfcfe;
       --ink: #17202a;
-      --muted: #65758a;
+      --muted: #526174;
       --line: #d8e0ea;
       --accent: #1c7c66;
       --blue: #2457a6;
+      --blue-soft: #e8f3ff;
       --danger: #b42318;
       --soft: #e5f4ef;
-      --shadow: 0 14px 34px rgba(20, 35, 55, 0.08);
+      --warning: #9a5b00;
+      --warning-soft: #fff5dd;
+      --shadow: 0 12px 28px rgba(20, 35, 55, 0.07);
       --code-bg: #111827;
       --code-ink: #e5e7eb;
+      --focus: #8b5cf6;
     }
     * { box-sizing: border-box; }
     html { scroll-behavior: smooth; }
@@ -28,15 +33,30 @@
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
       line-height: 1.58;
     }
+    .skip-link {
+      position: absolute;
+      left: 16px;
+      top: 12px;
+      z-index: 10;
+      transform: translateY(-140%);
+      padding: 10px 12px;
+      color: #ffffff;
+      background: var(--ink);
+      border-radius: 6px;
+      transition: transform 160ms ease;
+    }
+    .skip-link:focus { transform: translateY(0); }
     header {
-      background: var(--surface);
+      background:
+        linear-gradient(135deg, rgba(232, 243, 255, 0.9), rgba(229, 244, 239, 0.76)),
+        var(--surface);
       border-bottom: 1px solid var(--line);
     }
     .wrap {
       width: min(1180px, calc(100% - 36px));
       margin: 0 auto;
     }
-    .hero { padding: 42px 0 28px; }
+    .hero { padding: 46px 0 30px; }
     .eyebrow {
       margin: 0 0 10px;
       color: var(--accent);
@@ -55,6 +75,22 @@
       color: var(--muted);
       font-size: 18px;
     }
+    .search-panel {
+      max-width: 760px;
+      margin-top: 22px;
+    }
+    .search-panel input {
+      width: 100%;
+      min-height: 48px;
+      padding: 0 16px;
+      color: var(--ink);
+      background: rgba(255, 255, 255, 0.92);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      box-shadow: var(--shadow);
+      font: inherit;
+    }
+    .search-panel input::placeholder { color: #718096; }
     main { padding: 28px 0 54px; }
     .layout {
       display: grid;
@@ -85,8 +121,18 @@
       line-height: 1.35;
       overflow-wrap: anywhere;
       word-break: break-word;
+      cursor: pointer;
+      transition: color 160ms ease, background-color 160ms ease;
     }
     nav a:hover { color: var(--ink); background: var(--soft); }
+    a:focus-visible,
+    button:focus-visible,
+    input:focus-visible,
+    summary:focus-visible {
+      outline: 3px solid var(--focus);
+      outline: 3px solid color-mix(in srgb, var(--focus), transparent 45%);
+      outline-offset: 2px;
+    }
     section {
       margin-bottom: 24px;
       padding: 24px;
@@ -94,11 +140,14 @@
       border: 1px solid var(--line);
       border-radius: 8px;
       box-shadow: var(--shadow);
+      scroll-margin-top: 18px;
     }
     h2 { margin: 0 0 16px; font-size: 24px; letter-spacing: 0; }
     h3 { margin: 22px 0 8px; font-size: 18px; letter-spacing: 0; }
+    h4 { margin: 14px 0 8px; font-size: 16px; letter-spacing: 0; }
     p { margin: 0 0 14px; }
-    a { color: var(--blue); font-weight: 800; text-decoration: none; }
+    a { color: var(--blue); font-weight: 800; text-decoration: none; text-underline-offset: 3px; }
+    a:hover { text-decoration: underline; }
     code { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 0.95em; }
     pre {
       margin: 10px 0 0;
@@ -110,19 +159,51 @@
       font-size: 13px;
       line-height: 1.5;
     }
-    table { width: 100%; border-collapse: collapse; font-size: 14px; }
+    .table-scroll {
+      width: 100%;
+      overflow-x: auto;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+    }
+    table { width: 100%; min-width: 680px; border-collapse: collapse; font-size: 14px; }
     th, td { padding: 11px 12px; text-align: left; vertical-align: top; border-bottom: 1px solid var(--line); }
-    th { color: var(--muted); background: #fbfcfe; font-weight: 800; }
-    .top-links { display: flex; flex-wrap: wrap; gap: 14px; margin-top: 16px; }
+    th { color: var(--muted); background: var(--surface-2); font-weight: 800; }
+    tr:last-child td { border-bottom: 0; }
+    .top-links { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 16px; }
+    .top-links a {
+      display: inline-flex;
+      align-items: center;
+      min-height: 38px;
+      padding: 7px 12px;
+      color: var(--ink);
+      background: rgba(255, 255, 255, 0.82);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      cursor: pointer;
+      transition: border-color 160ms ease, background-color 160ms ease;
+    }
+    .top-links a:hover {
+      background: #ffffff;
+      border-color: color-mix(in srgb, var(--blue), var(--line) 55%);
+      text-decoration: none;
+    }
     .grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
     .sequence-group { margin-top: 20px; }
     .sequence-group:first-of-type { margin-top: 0; }
     .sequence-group > p { color: var(--muted); }
     .card, .box {
       padding: 16px;
-      background: #fbfcfe;
+      background: var(--surface-2);
       border: 1px solid var(--line);
       border-radius: 8px;
+    }
+    .card {
+      transition: border-color 160ms ease, box-shadow 160ms ease, background-color 160ms ease;
+    }
+    .card:has(a):hover {
+      background: #ffffff;
+      border-color: color-mix(in srgb, var(--blue), var(--line) 56%);
+      box-shadow: 0 10px 22px rgba(20, 35, 55, 0.08);
     }
     .status {
       display: inline-flex;
@@ -135,11 +216,15 @@
       font-size: 12px;
       font-weight: 900;
     }
+    .status-planned {
+      color: var(--warning);
+      background: var(--warning-soft);
+    }
     .note {
       margin-top: 14px;
       padding: 13px 15px;
       color: #7a4a00;
-      background: #fff5dd;
+      background: var(--warning-soft);
       border: 1px solid #eed39a;
       border-radius: 8px;
     }
@@ -157,7 +242,7 @@
       gap: 10px;
       padding: 10px 12px;
       border-bottom: 1px solid var(--line);
-      background: #fbfcfe;
+      background: var(--surface-2);
     }
     .d2-toolbar a {
       font-size: 13px;
@@ -175,7 +260,7 @@
     }
     .d2-details {
       border-top: 1px solid var(--line);
-      background: #fbfcfe;
+      background: var(--surface-2);
     }
     .d2-details summary {
       cursor: pointer;
@@ -189,20 +274,35 @@
       nav { position: static; max-height: none; }
       .grid { grid-template-columns: 1fr; }
       .wrap { width: min(100% - 24px, 1180px); }
+      .hero { padding: 34px 0 24px; }
+      section { padding: 18px; }
+      table { min-width: 620px; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      html { scroll-behavior: auto; }
+      *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+      }
     }
   </style>
   
 </head>
 <body>
+<a class="skip-link" href="#content">본문으로 건너뛰기</a>
 <header>
   <div class="wrap hero">
     <p class="eyebrow">Sequence Diagram</p>
     <h1>정기 결제 실행 플로우</h1>
     <p class="lead">스케줄러가 다음 결제일이 도래한 활성 구독을 상품 구독 단위로 잠그고 인보이스를 생성한 뒤 공통 기본 결제수단으로 토스 자동결제를 승인하고 다음 결제일을 예약하는 운영 흐름입니다.</p>
+    <div class="search-panel">
+      <input type="search" data-doc-search aria-label="문서 검색" placeholder="API, 상태, 컬렉션, 플로우 검색">
+    </div>
     <p class="top-links"><a href="./sequence-index.html">전체 시퀀스 목록</a><a href="./all-api-doc.html">전체 API 목록</a><a href="./api-detail-doc.html">API 상세 설명</a><a href="./database-doc.html">MongoDB 구조 문서</a></p>
   </div>
 </header>
-<main class="wrap">
+<main class="wrap" id="content">
   <section>
     <h2>사용 API</h2>
     <div class="grid"><div class="box"><a href="./all-api-doc.html#internal-billing-run"><code>POST /internal/subscription-billing/run</code></a><p>다음 결제일이 도래한 구독을 찾아 정기 자동결제를 실행합니다.</p></div><div class="box"><a href="./all-api-doc.html#webhooks-toss-payments"><code>POST /webhooks/toss-payments</code></a><p>토스페이먼츠 결제 이벤트를 수신하고 내부 결제/구독 상태를 보정합니다.</p></div></div>
@@ -390,8 +490,22 @@ processed, paid, failed, skipped
 </section>
   <section id="states">
   <h2>상태 요약</h2>
-  <table><thead><tr><th>시점</th><th>구독 상태</th><th>결제 상태</th><th>설명</th></tr></thead><tbody><tr><td>사전 알림 대상 선정</td><td><code>active</code></td><td><code>scheduled</code></td><td>다음 결제일 7일 전인 활성 구독을 대상으로 알림 데이터를 구성합니다.</td></tr><tr><td>이메일 발송 후</td><td><code>active</code></td><td><code>scheduled</code></td><td>결제일과 결제 금액이 포함된 사전 알림 발송 이력을 저장합니다.</td></tr><tr><td>배치 대상 선정 후</td><td><code>active</code></td><td><code>pending</code></td><td>다음 결제일이 도래한 구독이 잠기고 청구 회차가 생성됩니다.</td></tr><tr><td>자동결제 성공 후</td><td><code>active</code></td><td><code>paid</code></td><td>인보이스와 결제 레코드가 성공 처리되고 다음 결제일이 예약됩니다.</td></tr><tr><td>웹훅 보정 후</td><td><code>active</code></td><td><code>paid</code></td><td>토스 이벤트와 내부 상태가 일치하도록 멱등 보정됩니다.</td></tr></tbody></table>
+  <div class="table-scroll"><table><thead><tr><th>시점</th><th>구독 상태</th><th>결제 상태</th><th>설명</th></tr></thead><tbody><tr><td>사전 알림 대상 선정</td><td><code>active</code></td><td><code>scheduled</code></td><td>다음 결제일 7일 전인 활성 구독을 대상으로 알림 데이터를 구성합니다.</td></tr><tr><td>이메일 발송 후</td><td><code>active</code></td><td><code>scheduled</code></td><td>결제일과 결제 금액이 포함된 사전 알림 발송 이력을 저장합니다.</td></tr><tr><td>배치 대상 선정 후</td><td><code>active</code></td><td><code>pending</code></td><td>다음 결제일이 도래한 구독이 잠기고 청구 회차가 생성됩니다.</td></tr><tr><td>자동결제 성공 후</td><td><code>active</code></td><td><code>paid</code></td><td>인보이스와 결제 레코드가 성공 처리되고 다음 결제일이 예약됩니다.</td></tr><tr><td>웹훅 보정 후</td><td><code>active</code></td><td><code>paid</code></td><td>토스 이벤트와 내부 상태가 일치하도록 멱등 보정됩니다.</td></tr></tbody></table></div>
 </section>
 </main>
+<script>
+(() => {
+  const input = document.querySelector("[data-doc-search]");
+  if (!input) return;
+  const targets = Array.from(document.querySelectorAll("main section, article.card, article.box"));
+  input.addEventListener("input", () => {
+    const query = input.value.trim().toLowerCase();
+    for (const target of targets) {
+      const text = target.textContent.toLowerCase();
+      target.hidden = Boolean(query) && !text.includes(query);
+    }
+  });
+})();
+</script>
 </body>
 </html>

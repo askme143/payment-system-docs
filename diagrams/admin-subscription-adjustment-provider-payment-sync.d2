@@ -1,0 +1,94 @@
+diagram: {
+  shape: sequence_diagram
+  label: "토스 결제 성공 누락 보정"
+
+  admin: "관리자"
+  admin.style.fill: "#f1f5f9"
+  admin.style.stroke: "#334155"
+  server: "우리 서버"
+  server.style.fill: "#eaf8f3"
+  server.style.stroke: "#1c7c66"
+  toss: "토스페이먼츠 서버"
+  toss.style.fill: "#f1edff"
+  toss.style.stroke: "#7b4bc4"
+  email: "이메일 발송 시스템"
+  email.style.fill: "#f8fafc"
+  email.style.stroke: "#65758a"
+
+  admin -> server: |md
+보정 대상 구독 검색
+
+**GET /admin/subscriptions**
+
+회원, 상품, 상태, 결제 실패 여부, 다음 결제일 조건으로 조회
+| {
+    style.stroke: "#1c7c66"
+    style.font-color: "#334155"
+    style.font-size: 18
+    style.italic: false
+  }
+  admin -> server: |md
+외부 결제 근거 기반 보정 요청
+
+**POST /admin/subscriptions/{subscriptionId}/adjust**
+
+adjustmentType=provider_payment_sync, paymentKey 또는 invoiceId, reasonMessage
+| {
+    style.stroke: "#1c7c66"
+    style.font-color: "#334155"
+    style.font-size: 18
+    style.italic: false
+  }
+  server.note_3: "관리자 권한 및 멱등 검증\npermission == subscription_adjust, same Idempotency-Key\n이미 성공한 보정은 기존 operatorAuditId 반환"
+  server -> toss: |md
+토스 결제 상태 조회
+
+**GET /v1/payments/{paymentKey}**
+
+paymentKey, amount, status, approvedAt 대조
+| {
+    style.stroke: "#7b4bc4"
+    style.font-color: "#334155"
+    style.font-size: 18
+    style.italic: false
+  }
+  toss -> server: |md
+결제 상태 응답
+
+status=DONE, approvedAt, totalAmount
+
+내부 결제 금액과 구독 소유자를 재검증
+| {
+    style.stroke: "#1c7c66"
+    style.font-color: "#334155"
+    style.font-size: 18
+    style.italic: false
+  }
+  server.note_6: "내부 결제/인보이스/구독 보정\npayment=paid, invoice=paid, subscription=active\nnextBillingAt은 플랜 주기와 paidAt 기준으로 재계산"
+  server.note_7: "감사 로그 저장\npreviousState, currentState, reasonCode, operatorAuditId\nDB 직접 수정 대신 API 보정 이력을 남김"
+  server -> email: |md
+회원 알림 발송
+
+notifyCustomer == true
+
+서비스 접근 복구와 다음 결제일 안내
+| {
+    style.stroke: "#65758a"
+    style.font-color: "#334155"
+    style.font-size: 18
+    style.italic: false
+  }
+  server -> admin: |md
+보정 결과 반환
+
+operatorAuditId, previousState, currentState
+
+관리자 콘솔은 감사 로그 링크를 표시
+| {
+    style.stroke: "#334155"
+    style.font-color: "#334155"
+    style.font-size: 18
+    style.italic: false
+  }
+  server.note_10: "토스 조회 또는 검증 실패\nprovider_error / amount_mismatch / ownership_mismatch\n내부 상태를 변경하지 않고 실패 감사 로그 저장"
+}

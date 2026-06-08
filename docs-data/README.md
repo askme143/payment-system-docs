@@ -8,6 +8,46 @@ The goal is to keep generated HTML stable while letting multiple agents edit dat
 
 - `schema/documentation.schema.json`: JSON Schema for the full documentation data model.
 
+## Recommended Documentation Stack
+
+This repository uses a lightweight static documentation stack:
+
+- **Source of truth:** `docs-data/documentation.json`
+- **Schema contract:** `docs-data/schema/documentation.schema.json`
+- **Generator:** `scripts/generate_docs.py`
+- **Diagram source:** generated D2 files in `diagrams/*.d2`
+- **Diagram render target:** generated SVG files in `diagrams/*.svg` when the `d2` CLI is available
+- **Published output:** generated static HTML files in the repository root
+- **Verification:** `tests/test_generate_docs.py`
+
+Prefer improving the generator and JSON model over hand-editing generated HTML. This keeps API contracts, sequence pages, database documentation, and diagrams consistent.
+
+## UI/UX Standards
+
+The generated documentation is optimized for technical readers who need to scan API contracts quickly.
+
+1. Every generated page includes global search, skip-to-content navigation, visible focus states, and a sticky table of contents where useful.
+2. Tables must be wrapped in a horizontally scrollable container so mobile viewports do not overflow.
+3. Cards should be used only for repeated sequence/API/state summaries, not as nested page sections.
+4. Status labels should use semantic classes such as `status-available` and `status-planned`.
+5. Links and interactive controls must expose hover and keyboard focus feedback.
+6. Page changes should be checked at narrow mobile width, tablet width, and desktop width.
+
+## Generation Workflow
+
+After changing the JSON source, schema, generator, or design system:
+
+```bash
+python3 scripts/generate_docs.py --data docs-data/documentation.json --out .
+python3 -m unittest tests/test_generate_docs.py
+```
+
+If the `d2` CLI is installed and diagram SVGs should be refreshed:
+
+```bash
+python3 scripts/generate_docs.py --data docs-data/documentation.json --out . --render-d2
+```
+
 ## Document Model
 
 Use one root JSON document with these top-level keys:

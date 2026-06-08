@@ -13,6 +13,28 @@ diagram: {
   toss.style.stroke: "#7b4bc4"
 
   client -> server: |md
+구독 가능한 플랜 목록 조회
+
+**GET /plans**
+| {
+    style.stroke: "#1c7c66"
+    style.font-color: "#334155"
+    style.font-size: 18
+    style.italic: false
+  }
+  client -> server: |md
+선택한 플랜 상세 확인
+
+**GET /plans/{planId}**
+
+비활성화됐거나 판매 중지된 플랜이면 체크아웃 전 안내
+| {
+    style.stroke: "#1c7c66"
+    style.font-color: "#334155"
+    style.font-size: 18
+    style.italic: false
+  }
+  client -> server: |md
 구독 체크아웃 생성 요청
 
 **POST /subscriptions/checkout**
@@ -22,7 +44,7 @@ diagram: {
     style.font-size: 18
     style.italic: false
   }
-  server.note_2: "서버 검증 실패\n401 / 400 / 409\nUNAUTHORIZED / PLAN_NOT_AVAILABLE / PRODUCT_ALREADY_SUBSCRIBED"
+  server.note_4: "서버 검증 실패\n401 / 400 / 409\nUNAUTHORIZED / PLAN_NOT_AVAILABLE / PRODUCT_ALREADY_SUBSCRIBED"
   server -> client: |md
 실패 응답 반환
 

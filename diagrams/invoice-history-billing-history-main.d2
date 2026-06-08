@@ -1,0 +1,64 @@
+diagram: {
+  shape: sequence_diagram
+  label: "마이페이지 청구 내역 조회"
+
+  client: "웹 클라이언트"
+  client.style.fill: "#e8f3ff"
+  client.style.stroke: "#2457a6"
+  server: "우리 서버"
+  server.style.fill: "#eaf8f3"
+  server.style.stroke: "#1c7c66"
+
+  client -> server: |md
+마이페이지 청구 내역 목록 요청
+
+**GET /invoices**
+
+status, subscriptionId, from, to, cursor, limit
+| {
+    style.stroke: "#1c7c66"
+    style.font-color: "#334155"
+    style.font-size: 18
+    style.italic: false
+  }
+  server.note_2: "회원과 조회 조건 검증\nsession.userId, filters, cursor\n현재 회원 소유 인보이스만 최신 청구일 순으로 조회"
+  server -> client: |md
+청구 내역 목록 반환
+
+items[], page.nextCursor
+
+receiptAvailable, failureSummary, detailUrl 포함
+| {
+    style.stroke: "#2457a6"
+    style.font-color: "#334155"
+    style.font-size: 18
+    style.italic: false
+  }
+  client -> server: |md
+청구 상세 요청
+
+**GET /invoices/{invoiceId}**
+
+사용자가 목록 항목을 선택
+| {
+    style.stroke: "#1c7c66"
+    style.font-color: "#334155"
+    style.font-size: 18
+    style.italic: false
+  }
+  server.note_5: "인보이스 소유권과 결제 상태 조회\ninvoice.userId == session.userId\n결제 시도, 구독, 플랜, 결제수단 표시 정보 연결"
+  server -> client: |md
+청구 상세 반환
+
+status, receiptUrl, failure, retry, actions
+
+영수증 또는 실패 안내에 필요한 상세 필드 반환
+| {
+    style.stroke: "#2457a6"
+    style.font-color: "#334155"
+    style.font-size: 18
+    style.italic: false
+  }
+  server.note_7: "영수증 링크 노출\nstatus == paid && receiptUrl\n프론트는 결제일, 금액, 결제수단 요약과 영수증 링크를 표시"
+  server.note_8: "실패 사유와 재시도 안내 노출\nstatus == failed\nfailure.message, retry.nextRetryAt, billingMethodUpdateUrl 표시"
+}

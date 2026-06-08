@@ -8,16 +8,21 @@
     :root {
       --bg: #f5f7fb;
       --surface: #ffffff;
+      --surface-2: #fbfcfe;
       --ink: #17202a;
-      --muted: #65758a;
+      --muted: #526174;
       --line: #d8e0ea;
       --accent: #1c7c66;
       --blue: #2457a6;
+      --blue-soft: #e8f3ff;
       --danger: #b42318;
       --soft: #e5f4ef;
-      --shadow: 0 14px 34px rgba(20, 35, 55, 0.08);
+      --warning: #9a5b00;
+      --warning-soft: #fff5dd;
+      --shadow: 0 12px 28px rgba(20, 35, 55, 0.07);
       --code-bg: #111827;
       --code-ink: #e5e7eb;
+      --focus: #8b5cf6;
     }
     * { box-sizing: border-box; }
     html { scroll-behavior: smooth; }
@@ -28,15 +33,30 @@
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
       line-height: 1.58;
     }
+    .skip-link {
+      position: absolute;
+      left: 16px;
+      top: 12px;
+      z-index: 10;
+      transform: translateY(-140%);
+      padding: 10px 12px;
+      color: #ffffff;
+      background: var(--ink);
+      border-radius: 6px;
+      transition: transform 160ms ease;
+    }
+    .skip-link:focus { transform: translateY(0); }
     header {
-      background: var(--surface);
+      background:
+        linear-gradient(135deg, rgba(232, 243, 255, 0.9), rgba(229, 244, 239, 0.76)),
+        var(--surface);
       border-bottom: 1px solid var(--line);
     }
     .wrap {
       width: min(1180px, calc(100% - 36px));
       margin: 0 auto;
     }
-    .hero { padding: 42px 0 28px; }
+    .hero { padding: 46px 0 30px; }
     .eyebrow {
       margin: 0 0 10px;
       color: var(--accent);
@@ -55,6 +75,22 @@
       color: var(--muted);
       font-size: 18px;
     }
+    .search-panel {
+      max-width: 760px;
+      margin-top: 22px;
+    }
+    .search-panel input {
+      width: 100%;
+      min-height: 48px;
+      padding: 0 16px;
+      color: var(--ink);
+      background: rgba(255, 255, 255, 0.92);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      box-shadow: var(--shadow);
+      font: inherit;
+    }
+    .search-panel input::placeholder { color: #718096; }
     main { padding: 28px 0 54px; }
     .layout {
       display: grid;
@@ -85,8 +121,18 @@
       line-height: 1.35;
       overflow-wrap: anywhere;
       word-break: break-word;
+      cursor: pointer;
+      transition: color 160ms ease, background-color 160ms ease;
     }
     nav a:hover { color: var(--ink); background: var(--soft); }
+    a:focus-visible,
+    button:focus-visible,
+    input:focus-visible,
+    summary:focus-visible {
+      outline: 3px solid var(--focus);
+      outline: 3px solid color-mix(in srgb, var(--focus), transparent 45%);
+      outline-offset: 2px;
+    }
     section {
       margin-bottom: 24px;
       padding: 24px;
@@ -94,11 +140,14 @@
       border: 1px solid var(--line);
       border-radius: 8px;
       box-shadow: var(--shadow);
+      scroll-margin-top: 18px;
     }
     h2 { margin: 0 0 16px; font-size: 24px; letter-spacing: 0; }
     h3 { margin: 22px 0 8px; font-size: 18px; letter-spacing: 0; }
+    h4 { margin: 14px 0 8px; font-size: 16px; letter-spacing: 0; }
     p { margin: 0 0 14px; }
-    a { color: var(--blue); font-weight: 800; text-decoration: none; }
+    a { color: var(--blue); font-weight: 800; text-decoration: none; text-underline-offset: 3px; }
+    a:hover { text-decoration: underline; }
     code { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 0.95em; }
     pre {
       margin: 10px 0 0;
@@ -110,19 +159,51 @@
       font-size: 13px;
       line-height: 1.5;
     }
-    table { width: 100%; border-collapse: collapse; font-size: 14px; }
+    .table-scroll {
+      width: 100%;
+      overflow-x: auto;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+    }
+    table { width: 100%; min-width: 680px; border-collapse: collapse; font-size: 14px; }
     th, td { padding: 11px 12px; text-align: left; vertical-align: top; border-bottom: 1px solid var(--line); }
-    th { color: var(--muted); background: #fbfcfe; font-weight: 800; }
-    .top-links { display: flex; flex-wrap: wrap; gap: 14px; margin-top: 16px; }
+    th { color: var(--muted); background: var(--surface-2); font-weight: 800; }
+    tr:last-child td { border-bottom: 0; }
+    .top-links { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 16px; }
+    .top-links a {
+      display: inline-flex;
+      align-items: center;
+      min-height: 38px;
+      padding: 7px 12px;
+      color: var(--ink);
+      background: rgba(255, 255, 255, 0.82);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      cursor: pointer;
+      transition: border-color 160ms ease, background-color 160ms ease;
+    }
+    .top-links a:hover {
+      background: #ffffff;
+      border-color: color-mix(in srgb, var(--blue), var(--line) 55%);
+      text-decoration: none;
+    }
     .grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
     .sequence-group { margin-top: 20px; }
     .sequence-group:first-of-type { margin-top: 0; }
     .sequence-group > p { color: var(--muted); }
     .card, .box {
       padding: 16px;
-      background: #fbfcfe;
+      background: var(--surface-2);
       border: 1px solid var(--line);
       border-radius: 8px;
+    }
+    .card {
+      transition: border-color 160ms ease, box-shadow 160ms ease, background-color 160ms ease;
+    }
+    .card:has(a):hover {
+      background: #ffffff;
+      border-color: color-mix(in srgb, var(--blue), var(--line) 56%);
+      box-shadow: 0 10px 22px rgba(20, 35, 55, 0.08);
     }
     .status {
       display: inline-flex;
@@ -135,11 +216,15 @@
       font-size: 12px;
       font-weight: 900;
     }
+    .status-planned {
+      color: var(--warning);
+      background: var(--warning-soft);
+    }
     .note {
       margin-top: 14px;
       padding: 13px 15px;
       color: #7a4a00;
-      background: #fff5dd;
+      background: var(--warning-soft);
       border: 1px solid #eed39a;
       border-radius: 8px;
     }
@@ -157,7 +242,7 @@
       gap: 10px;
       padding: 10px 12px;
       border-bottom: 1px solid var(--line);
-      background: #fbfcfe;
+      background: var(--surface-2);
     }
     .d2-toolbar a {
       font-size: 13px;
@@ -175,7 +260,7 @@
     }
     .d2-details {
       border-top: 1px solid var(--line);
-      background: #fbfcfe;
+      background: var(--surface-2);
     }
     .d2-details summary {
       cursor: pointer;
@@ -189,20 +274,35 @@
       nav { position: static; max-height: none; }
       .grid { grid-template-columns: 1fr; }
       .wrap { width: min(100% - 24px, 1180px); }
+      .hero { padding: 34px 0 24px; }
+      section { padding: 18px; }
+      table { min-width: 620px; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      html { scroll-behavior: auto; }
+      *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+      }
     }
   </style>
   
 </head>
 <body>
+<a class="skip-link" href="#content">본문으로 건너뛰기</a>
 <header>
   <div class="wrap hero">
     <p class="eyebrow">Sequence Diagram</p>
     <h1>결제 취소/환불 플로우</h1>
     <p class="lead">승인 완료된 일반결제를 회원 또는 운영자가 전체/부분 취소하고, 토스 취소 API 결과를 내부 결제 상태와 취소 이력에 반영하는 흐름입니다.</p>
+    <div class="search-panel">
+      <input type="search" data-doc-search aria-label="문서 검색" placeholder="API, 상태, 컬렉션, 플로우 검색">
+    </div>
     <p class="top-links"><a href="./sequence-index.html">전체 시퀀스 목록</a><a href="./all-api-doc.html">전체 API 목록</a><a href="./api-detail-doc.html">API 상세 설명</a><a href="./database-doc.html">MongoDB 구조 문서</a></p>
   </div>
 </header>
-<main class="wrap">
+<main class="wrap" id="content">
   <section>
     <h2>사용 API</h2>
     <div class="grid"><div class="box"><a href="./all-api-doc.html#payments-cancel"><code>POST /payments/{paymentId}/cancel</code></a><p>승인 완료된 일반결제를 전체 또는 부분 취소하고 내부 취소 이력을 저장합니다.</p></div><div class="box"><a href="./all-api-doc.html#admin-payments"><code>GET /admin/payments</code></a><p>CS와 운영자가 결제 목록을 검색합니다.</p></div><div class="box"><a href="./all-api-doc.html#admin-payment-cancel"><code>POST /admin/payments/{paymentId}/cancel</code></a><p>관리자가 회원 요청, 중복 결제, 장애 보정 사유로 일반결제를 전체 또는 부분 취소합니다.</p></div></div>
@@ -401,8 +501,22 @@ operatorAuditId, status, cancelHistory
 </section>
   <section id="states">
   <h2>상태 요약</h2>
-  <table><thead><tr><th>시점</th><th>구독 상태</th><th>결제 상태</th><th>설명</th></tr></thead><tbody><tr><td>취소 전</td><td><code>-</code></td><td><code>paid</code></td><td>승인 완료 결제이며 cancelableAmount가 남아 있습니다.</td></tr><tr><td>부분 취소 후</td><td><code>-</code></td><td><code>partial_canceled</code></td><td>일부 금액만 취소됐고 남은 금액은 추가 취소할 수 있습니다.</td></tr><tr><td>전체 취소 후</td><td><code>-</code></td><td><code>canceled</code></td><td>취소 가능 금액이 0이며 추가 취소 요청은 멱등 결과 또는 409로 처리합니다.</td></tr><tr><td>운영자 취소 전</td><td><code>-</code></td><td><code>paid 또는 partial_canceled</code></td><td>관리자가 취소 가능 금액과 사유를 확인합니다.</td></tr><tr><td>운영자 취소 후</td><td><code>-</code></td><td><code>canceled 또는 partial_canceled</code></td><td>회원 결제 내역과 운영 감사 로그가 같은 취소 건을 가리킵니다.</td></tr></tbody></table>
+  <div class="table-scroll"><table><thead><tr><th>시점</th><th>구독 상태</th><th>결제 상태</th><th>설명</th></tr></thead><tbody><tr><td>취소 전</td><td><code>-</code></td><td><code>paid</code></td><td>승인 완료 결제이며 cancelableAmount가 남아 있습니다.</td></tr><tr><td>부분 취소 후</td><td><code>-</code></td><td><code>partial_canceled</code></td><td>일부 금액만 취소됐고 남은 금액은 추가 취소할 수 있습니다.</td></tr><tr><td>전체 취소 후</td><td><code>-</code></td><td><code>canceled</code></td><td>취소 가능 금액이 0이며 추가 취소 요청은 멱등 결과 또는 409로 처리합니다.</td></tr><tr><td>운영자 취소 전</td><td><code>-</code></td><td><code>paid 또는 partial_canceled</code></td><td>관리자가 취소 가능 금액과 사유를 확인합니다.</td></tr><tr><td>운영자 취소 후</td><td><code>-</code></td><td><code>canceled 또는 partial_canceled</code></td><td>회원 결제 내역과 운영 감사 로그가 같은 취소 건을 가리킵니다.</td></tr></tbody></table></div>
 </section>
 </main>
+<script>
+(() => {
+  const input = document.querySelector("[data-doc-search]");
+  if (!input) return;
+  const targets = Array.from(document.querySelectorAll("main section, article.card, article.box"));
+  input.addEventListener("input", () => {
+    const query = input.value.trim().toLowerCase();
+    for (const target of targets) {
+      const text = target.textContent.toLowerCase();
+      target.hidden = Boolean(query) && !text.includes(query);
+    }
+  });
+})();
+</script>
 </body>
 </html>

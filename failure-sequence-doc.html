@@ -8,16 +8,21 @@
     :root {
       --bg: #f5f7fb;
       --surface: #ffffff;
+      --surface-2: #fbfcfe;
       --ink: #17202a;
-      --muted: #65758a;
+      --muted: #526174;
       --line: #d8e0ea;
       --accent: #1c7c66;
       --blue: #2457a6;
+      --blue-soft: #e8f3ff;
       --danger: #b42318;
       --soft: #e5f4ef;
-      --shadow: 0 14px 34px rgba(20, 35, 55, 0.08);
+      --warning: #9a5b00;
+      --warning-soft: #fff5dd;
+      --shadow: 0 12px 28px rgba(20, 35, 55, 0.07);
       --code-bg: #111827;
       --code-ink: #e5e7eb;
+      --focus: #8b5cf6;
     }
     * { box-sizing: border-box; }
     html { scroll-behavior: smooth; }
@@ -28,15 +33,30 @@
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
       line-height: 1.58;
     }
+    .skip-link {
+      position: absolute;
+      left: 16px;
+      top: 12px;
+      z-index: 10;
+      transform: translateY(-140%);
+      padding: 10px 12px;
+      color: #ffffff;
+      background: var(--ink);
+      border-radius: 6px;
+      transition: transform 160ms ease;
+    }
+    .skip-link:focus { transform: translateY(0); }
     header {
-      background: var(--surface);
+      background:
+        linear-gradient(135deg, rgba(232, 243, 255, 0.9), rgba(229, 244, 239, 0.76)),
+        var(--surface);
       border-bottom: 1px solid var(--line);
     }
     .wrap {
       width: min(1180px, calc(100% - 36px));
       margin: 0 auto;
     }
-    .hero { padding: 42px 0 28px; }
+    .hero { padding: 46px 0 30px; }
     .eyebrow {
       margin: 0 0 10px;
       color: var(--accent);
@@ -55,6 +75,22 @@
       color: var(--muted);
       font-size: 18px;
     }
+    .search-panel {
+      max-width: 760px;
+      margin-top: 22px;
+    }
+    .search-panel input {
+      width: 100%;
+      min-height: 48px;
+      padding: 0 16px;
+      color: var(--ink);
+      background: rgba(255, 255, 255, 0.92);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      box-shadow: var(--shadow);
+      font: inherit;
+    }
+    .search-panel input::placeholder { color: #718096; }
     main { padding: 28px 0 54px; }
     .layout {
       display: grid;
@@ -85,8 +121,18 @@
       line-height: 1.35;
       overflow-wrap: anywhere;
       word-break: break-word;
+      cursor: pointer;
+      transition: color 160ms ease, background-color 160ms ease;
     }
     nav a:hover { color: var(--ink); background: var(--soft); }
+    a:focus-visible,
+    button:focus-visible,
+    input:focus-visible,
+    summary:focus-visible {
+      outline: 3px solid var(--focus);
+      outline: 3px solid color-mix(in srgb, var(--focus), transparent 45%);
+      outline-offset: 2px;
+    }
     section {
       margin-bottom: 24px;
       padding: 24px;
@@ -94,11 +140,14 @@
       border: 1px solid var(--line);
       border-radius: 8px;
       box-shadow: var(--shadow);
+      scroll-margin-top: 18px;
     }
     h2 { margin: 0 0 16px; font-size: 24px; letter-spacing: 0; }
     h3 { margin: 22px 0 8px; font-size: 18px; letter-spacing: 0; }
+    h4 { margin: 14px 0 8px; font-size: 16px; letter-spacing: 0; }
     p { margin: 0 0 14px; }
-    a { color: var(--blue); font-weight: 800; text-decoration: none; }
+    a { color: var(--blue); font-weight: 800; text-decoration: none; text-underline-offset: 3px; }
+    a:hover { text-decoration: underline; }
     code { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 0.95em; }
     pre {
       margin: 10px 0 0;
@@ -110,19 +159,51 @@
       font-size: 13px;
       line-height: 1.5;
     }
-    table { width: 100%; border-collapse: collapse; font-size: 14px; }
+    .table-scroll {
+      width: 100%;
+      overflow-x: auto;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+    }
+    table { width: 100%; min-width: 680px; border-collapse: collapse; font-size: 14px; }
     th, td { padding: 11px 12px; text-align: left; vertical-align: top; border-bottom: 1px solid var(--line); }
-    th { color: var(--muted); background: #fbfcfe; font-weight: 800; }
-    .top-links { display: flex; flex-wrap: wrap; gap: 14px; margin-top: 16px; }
+    th { color: var(--muted); background: var(--surface-2); font-weight: 800; }
+    tr:last-child td { border-bottom: 0; }
+    .top-links { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 16px; }
+    .top-links a {
+      display: inline-flex;
+      align-items: center;
+      min-height: 38px;
+      padding: 7px 12px;
+      color: var(--ink);
+      background: rgba(255, 255, 255, 0.82);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      cursor: pointer;
+      transition: border-color 160ms ease, background-color 160ms ease;
+    }
+    .top-links a:hover {
+      background: #ffffff;
+      border-color: color-mix(in srgb, var(--blue), var(--line) 55%);
+      text-decoration: none;
+    }
     .grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
     .sequence-group { margin-top: 20px; }
     .sequence-group:first-of-type { margin-top: 0; }
     .sequence-group > p { color: var(--muted); }
     .card, .box {
       padding: 16px;
-      background: #fbfcfe;
+      background: var(--surface-2);
       border: 1px solid var(--line);
       border-radius: 8px;
+    }
+    .card {
+      transition: border-color 160ms ease, box-shadow 160ms ease, background-color 160ms ease;
+    }
+    .card:has(a):hover {
+      background: #ffffff;
+      border-color: color-mix(in srgb, var(--blue), var(--line) 56%);
+      box-shadow: 0 10px 22px rgba(20, 35, 55, 0.08);
     }
     .status {
       display: inline-flex;
@@ -135,11 +216,15 @@
       font-size: 12px;
       font-weight: 900;
     }
+    .status-planned {
+      color: var(--warning);
+      background: var(--warning-soft);
+    }
     .note {
       margin-top: 14px;
       padding: 13px 15px;
       color: #7a4a00;
-      background: #fff5dd;
+      background: var(--warning-soft);
       border: 1px solid #eed39a;
       border-radius: 8px;
     }
@@ -157,7 +242,7 @@
       gap: 10px;
       padding: 10px 12px;
       border-bottom: 1px solid var(--line);
-      background: #fbfcfe;
+      background: var(--surface-2);
     }
     .d2-toolbar a {
       font-size: 13px;
@@ -175,7 +260,7 @@
     }
     .d2-details {
       border-top: 1px solid var(--line);
-      background: #fbfcfe;
+      background: var(--surface-2);
     }
     .d2-details summary {
       cursor: pointer;
@@ -189,20 +274,35 @@
       nav { position: static; max-height: none; }
       .grid { grid-template-columns: 1fr; }
       .wrap { width: min(100% - 24px, 1180px); }
+      .hero { padding: 34px 0 24px; }
+      section { padding: 18px; }
+      table { min-width: 620px; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      html { scroll-behavior: auto; }
+      *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+      }
     }
   </style>
   
 </head>
 <body>
+<a class="skip-link" href="#content">본문으로 건너뛰기</a>
 <header>
   <div class="wrap hero">
     <p class="eyebrow">Sequence Diagram</p>
     <h1>신규 회원 최초 구독 실패 플로우</h1>
     <p class="lead">체크아웃 실패, 토스 빌링 인증 실패, 구독 확정 검증 실패, 빌링키 발급 실패, 첫 결제 실패, 웹훅 실패를 나눠 설명합니다.</p>
+    <div class="search-panel">
+      <input type="search" data-doc-search aria-label="문서 검색" placeholder="API, 상태, 컬렉션, 플로우 검색">
+    </div>
     <p class="top-links"><a href="./sequence-index.html">전체 시퀀스 목록</a><a href="./all-api-doc.html">전체 API 목록</a><a href="./api-detail-doc.html">API 상세 설명</a><a href="./database-doc.html">MongoDB 구조 문서</a></p>
   </div>
 </header>
-<main class="wrap">
+<main class="wrap" id="content">
   <section>
     <h2>사용 API</h2>
     <div class="grid"><div class="box"><a href="./all-api-doc.html#plans-list"><code>GET /plans</code></a><p>구매 가능한 상품과 구독 플랜 목록을 조회합니다.</p></div><div class="box"><a href="./all-api-doc.html#plans-detail"><code>GET /plans/{planId}</code></a><p>단일 플랜의 가격, 주기, 판매 가능 상태를 조회합니다.</p></div><div class="box"><a href="./all-api-doc.html#subscriptions-checkout"><code>POST /subscriptions/checkout</code></a><p>구독 빌링 인증 전에 구독 대기 레코드와 토스 SDK 호출 데이터를 생성합니다.</p></div><div class="box"><a href="./all-api-doc.html#subscriptions-confirm"><code>POST /subscriptions/confirm</code></a><p>프론트 성공 페이지가 호출하며, 빌링키 발급과 첫 결제로 구독을 활성화합니다.</p></div><div class="box"><a href="./all-api-doc.html#webhooks-toss-payments"><code>POST /webhooks/toss-payments</code></a><p>토스페이먼츠 결제 이벤트를 수신하고 내부 결제/구독 상태를 보정합니다.</p></div></div>
@@ -522,5 +622,19 @@ CARD_DECLINED / EXCEED_MAX_AMOUNT / INSUFFICIENT_FUNDS
 </section>
   
 </main>
+<script>
+(() => {
+  const input = document.querySelector("[data-doc-search]");
+  if (!input) return;
+  const targets = Array.from(document.querySelectorAll("main section, article.card, article.box"));
+  input.addEventListener("input", () => {
+    const query = input.value.trim().toLowerCase();
+    for (const target of targets) {
+      const text = target.textContent.toLowerCase();
+      target.hidden = Boolean(query) && !text.includes(query);
+    }
+  });
+})();
+</script>
 </body>
 </html>
