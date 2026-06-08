@@ -136,6 +136,7 @@ def validate_data(data):
     actor_ids = {actor["id"] for actor in data["actors"]}
     category_ids = {category["id"] for category in data["apiCategories"]}
     api_ids = {api["id"] for api in data["apis"]}
+    sequence_group_ids = {group["id"] for group in data.get("sequenceGroups", [])}
 
     for api in data["apis"]:
         if api["categoryId"] not in category_ids:
@@ -146,6 +147,11 @@ def validate_data(data):
             raise ValueError(f"apiDetails references missing API {api_id}")
 
     for sequence in data["sequences"]:
+        if sequence_group_ids:
+            if "groupId" not in sequence:
+                raise ValueError(f"Sequence {sequence['id']} is missing groupId")
+            if sequence["groupId"] not in sequence_group_ids:
+                raise ValueError(f"Sequence {sequence['id']} references missing sequence group {sequence['groupId']}")
         for api_id in sequence.get("apiIds", []):
             if api_id not in api_ids:
                 raise ValueError(f"Sequence {sequence['id']} references missing API {api_id}")
@@ -165,6 +171,22 @@ def validate_data(data):
                         raise ValueError(f"Step {step['label']} references missing actor {step[key]}")
                 if "apiId" in step and step["apiId"] not in api_ids:
                     raise ValueError(f"Step {step['label']} references missing API {step['apiId']}")
+
+    if data.get("database"):
+        collection_ids = {collection["id"] for collection in data["database"]["collections"]}
+        for collection in data["database"]["collections"]:
+            for api_id in collection.get("relatedApis", []):
+                if api_id not in api_ids:
+                    raise ValueError(f"Collection {collection['id']} references missing API {api_id}")
+        for access in data["database"].get("apiAccess", []):
+            if access["apiId"] not in api_ids:
+                raise ValueError(f"Database API access references missing API {access['apiId']}")
+            for collection_id in access.get("reads", []) + access.get("writes", []):
+                if collection_id not in collection_ids:
+                    raise ValueError(f"Database API access {access['apiId']} references missing collection {collection_id}")
+        for model in data["database"].get("stateModels", []):
+            if model["collection"] not in collection_ids:
+                raise ValueError(f"State model {model['id']} references missing collection {model['collection']}")
 
 
 def page(title, body, extra_head=""):
@@ -235,7 +257,10 @@ def page(title, body, extra_head=""):
       position: sticky;
       top: 18px;
       align-self: start;
+      max-height: calc(100vh - 36px);
       padding: 14px;
+      overflow-y: auto;
+      overscroll-behavior: contain;
       background: var(--surface);
       border: 1px solid var(--line);
       border-radius: 8px;
@@ -282,6 +307,9 @@ def page(title, body, extra_head=""):
     th {{ color: var(--muted); background: #fbfcfe; font-weight: 800; }}
     .top-links {{ display: flex; flex-wrap: wrap; gap: 14px; margin-top: 16px; }}
     .grid {{ display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }}
+    .sequence-group {{ margin-top: 20px; }}
+    .sequence-group:first-of-type {{ margin-top: 0; }}
+    .sequence-group > p {{ color: var(--muted); }}
     .card, .box {{
       padding: 16px;
       background: #fbfcfe;
@@ -350,7 +378,7 @@ def page(title, body, extra_head=""):
     }}
     @media (max-width: 900px) {{
       .layout {{ grid-template-columns: 1fr; }}
-      nav {{ position: static; }}
+      nav {{ position: static; max-height: none; }}
       .grid {{ grid-template-columns: 1fr; }}
       .wrap {{ width: min(100% - 24px, 1180px); }}
     }}
@@ -391,6 +419,13 @@ def api_maps(data):
     return apis, categories
 
 
+def database_links(data):
+    page_ref = data["site"]["pages"].get("database")
+    if not page_ref:
+        return []
+    return [(page_ref["title"], f"./{page_ref['file']}")]
+
+
 def render_sequence_index(data):
     available = [seq for seq in data["sequences"] if seq["status"] == "available"]
     planned = [seq for seq in data["sequences"] if seq["status"] == "planned"]
@@ -408,20 +443,38 @@ def render_sequence_index(data):
   <ul>{api_lines}</ul>
 </article>"""
 
+    def grouped_cards(sequences):
+        groups = sorted(data.get("sequenceGroups", []), key=lambda item: item["order"])
+        if not groups:
+            return f"<div class=\"grid\">{''.join(card(seq) for seq in sequences)}</div>"
+
+        rendered_groups = []
+        for group in groups:
+            group_sequences = [seq for seq in sequences if seq.get("groupId") == group["id"]]
+            if not group_sequences:
+                continue
+            description = f"<p>{e(group['description'])}</p>" if group.get("description") else ""
+            rendered_groups.append(f"""<div class="sequence-group">
+  <h3>{e(group['title'])}</h3>
+  {description}
+  <div class="grid">{''.join(card(seq) for seq in group_sequences)}</div>
+</div>""")
+        return "".join(rendered_groups)
+
     body = header(
         data["site"]["pages"]["sequenceIndex"]["title"],
         "Sequence Diagram Hub",
         "구독결제와 일반결제에서 필요한 시퀀스 다이어그램을 한 곳에서 찾는 허브입니다.",
-        [("전체 API 목록", "./all-api-doc.html"), ("API 상세 설명", "./api-detail-doc.html")]
+        [("전체 API 목록", "./all-api-doc.html"), ("API 상세 설명", "./api-detail-doc.html")] + database_links(data)
     )
     body += f"""<main class="wrap">
   <section id="available">
     <h2>작성 완료</h2>
-    <div class="grid">{''.join(card(seq) for seq in available)}</div>
+    {grouped_cards(available)}
   </section>
   <section id="planned">
     <h2>추가 예정</h2>
-    <div class="grid">{''.join(card(seq) for seq in planned)}</div>
+    {grouped_cards(planned)}
   </section>
 </main>"""
     return page(data["site"]["pages"]["sequenceIndex"]["title"], body)
@@ -456,7 +509,7 @@ def render_api_catalog(data):
         data["site"]["pages"]["apiCatalog"]["title"],
         "API Catalog",
         "API의 전체 목록과 역할만 정리하는 색인입니다. 상세 계약은 API 상세 설명 페이지에서 관리합니다.",
-        [("전체 시퀀스 목록", "./sequence-index.html"), ("API 상세 설명 단일 원본", "./api-detail-doc.html")]
+        [("전체 시퀀스 목록", "./sequence-index.html"), ("API 상세 설명 단일 원본", "./api-detail-doc.html")] + database_links(data)
     )
     body += f"<main class=\"wrap layout\">{nav(nav_items)}<div>{''.join(sections)}</div></main>"
     return page(data["site"]["pages"]["apiCatalog"]["title"], body)
@@ -473,6 +526,26 @@ def render_fields(title, fields):
 
 def render_json_example(value):
     return f"<pre><code>{e(json.dumps(value, ensure_ascii=False, indent=2))}</code></pre>"
+
+
+def render_failure_rules(rules):
+    if not rules:
+        return ""
+    rows = "".join(
+        "<tr>"
+        f"<td><code>{e(rule['code'])}</code></td>"
+        f"<td>{e(rule['httpStatus'])}</td>"
+        f"<td>{'예' if rule['retryable'] else '아니오'}</td>"
+        f"<td>{e(rule['description'])}</td>"
+        f"<td>{e(rule.get('resultState', '-'))}</td>"
+        "</tr>"
+        for rule in rules
+    )
+    return (
+        "<h3>실패 규칙</h3>"
+        "<table><thead><tr><th>코드</th><th>HTTP</th><th>재시도</th><th>설명</th><th>결과 상태</th></tr></thead>"
+        f"<tbody>{rows}</tbody></table>"
+    )
 
 
 def render_api_details(data):
@@ -498,31 +571,180 @@ def render_api_details(data):
             frontend_inputs = f"<h3>프론트 입력값</h3><table><thead><tr><th>값</th><th>출처</th><th>설명</th></tr></thead><tbody>{rows}</tbody></table>"
         body_fields = render_fields("Body 필드", request.get("bodyFields", [])) if request.get("bodyFields") else ""
         body_example = f"<h3>Body</h3>{render_json_example(request['bodyExample'])}" if "bodyExample" in request else "<h3>Body</h3><pre><code>요청 바디 없음</code></pre>"
+        failure_rules = render_failure_rules(detail.get("failureRules", []))
         logic = "".join(f"<li>{e(item)}</li>" for item in detail["logic"])
         notes = "".join(f"<div class=\"note\">{e(item)}</div>" for item in detail.get("notes", []))
-        sections.append(f"""<section id="{e(api['detailAnchor'])}">
-  <h2><code>{e(fmt_api(api))}</code></h2>
-  <p>{e(detail['summary'])}</p>
-  {f'<div class="note">{e(detail["redirectNote"])}</div>' if detail.get("redirectNote") else ''}
-  {render_fields("Header", request.get("headers", []))}
-  {render_fields("Cookie", request.get("cookies", []))}
-  {body_example}
-  {body_fields}
-  {frontend_inputs}
-  {''.join(response_html)}
-  <h3>처리 로직</h3>
-  <ol>{logic}</ol>
-  {notes}
-</section>""")
+        section_parts = [
+            f"<section id=\"{e(api['detailAnchor'])}\">",
+            f"  <h2><code>{e(fmt_api(api))}</code></h2>",
+            f"  <p>{e(detail['summary'])}</p>",
+        ]
+        if detail.get("redirectNote"):
+            section_parts.append(f"  <div class=\"note\">{e(detail['redirectNote'])}</div>")
+        section_parts.extend([
+            f"  {render_fields('Header', request.get('headers', []))}",
+            f"  {render_fields('Cookie', request.get('cookies', []))}",
+            f"  {body_example}",
+        ])
+        if body_fields:
+            section_parts.append(f"  {body_fields}")
+        if frontend_inputs:
+            section_parts.append(f"  {frontend_inputs}")
+        section_parts.extend([
+            f"  {''.join(response_html)}",
+            f"  {failure_rules}" if failure_rules else "",
+            "  <h3>처리 로직</h3>",
+            f"  <ol>{logic}</ol>",
+        ])
+        if notes:
+            section_parts.append(f"  {notes}")
+        section_parts.append("</section>")
+        sections.append("\n".join(section_parts))
 
     body = header(
         data["site"]["pages"]["apiDetails"]["title"],
         "API Contract",
         "Header, Cookie, Body, Response, 처리 로직을 관리하는 API 계약의 단일 원본입니다.",
-        [("전체 시퀀스 목록", "./sequence-index.html"), ("전체 API 목록", "./all-api-doc.html")]
+        [("전체 시퀀스 목록", "./sequence-index.html"), ("전체 API 목록", "./all-api-doc.html")] + database_links(data)
     )
     body += f"<main class=\"wrap layout\">{nav(nav_items)}<div>{''.join(sections)}</div></main>"
     return page(data["site"]["pages"]["apiDetails"]["title"], body)
+
+
+def render_database_doc(data):
+    database = data["database"]
+    apis, _ = api_maps(data)
+    pages = data["site"]["pages"]
+    nav_items = [("overview", "개요")]
+    nav_items.extend((collection["id"], collection["title"]) for collection in database["collections"])
+    if database.get("relationships"):
+        nav_items.append(("relationships", "문서 관계"))
+    if database.get("apiAccess"):
+        nav_items.append(("api-access", "API별 읽기/쓰기"))
+    if database.get("stateModels"):
+        nav_items.append(("state-models", "상태 모델"))
+
+    links = [
+        ("전체 시퀀스 목록", "./sequence-index.html"),
+        ("전체 API 목록", "./all-api-doc.html"),
+        ("API 상세 설명", "./api-detail-doc.html"),
+    ]
+    body = header(
+        pages["database"]["title"],
+        "MongoDB Data Model",
+        database.get("description") or "결제 시스템에서 사용하는 MongoDB 컬렉션, 관계, 상태, API 접근 방식을 정리합니다.",
+        links
+    )
+
+    sections = [
+        f"""<section id="overview">
+  <h2>개요</h2>
+  <p><strong>엔진:</strong> {e(database['engine'])}</p>
+  <p>{e(database.get('description', '주요 컬렉션과 API별 데이터 변경 지점을 추적합니다.'))}</p>
+</section>"""
+    ]
+
+    for collection in database["collections"]:
+        field_rows = []
+        for field in collection["fields"]:
+            details = []
+            if field.get("ref"):
+                details.append(f"ref: {field['ref']}")
+            if field.get("enum"):
+                details.append("enum: " + ", ".join(field["enum"]))
+            if "example" in field:
+                details.append("example: " + json.dumps(field["example"], ensure_ascii=False))
+            field_rows.append(
+                "<tr>"
+                f"<td><code>{e(field['name'])}</code></td>"
+                f"<td><code>{e(field['type'])}</code></td>"
+                f"<td>{'예' if field['required'] else '아니오'}</td>"
+                f"<td>{e(field['description'])}</td>"
+                f"<td>{e('; '.join(details) or '-')}</td>"
+                "</tr>"
+            )
+        index_rows = "".join(
+            "<tr>"
+            f"<td><code>{e(', '.join(index['fields']))}</code></td>"
+            f"<td>{'예' if index.get('unique') else '아니오'}</td>"
+            f"<td>{e(index.get('description', '-'))}</td>"
+            "</tr>"
+            for index in collection.get("indexes", [])
+        )
+        indexes = ""
+        if index_rows:
+            indexes = (
+                "<h3>인덱스</h3>"
+                "<table><thead><tr><th>필드</th><th>유니크</th><th>설명</th></tr></thead>"
+                f"<tbody>{index_rows}</tbody></table>"
+            )
+        related_apis = "".join(
+            f"<li><a href=\"./all-api-doc.html#{e(api_id)}\"><code>{e(fmt_api(apis[api_id]))}</code></a> - {e(apis[api_id]['role'])}</li>"
+            for api_id in collection.get("relatedApis", []) if api_id in apis
+        )
+        api_block = f"<h3>관련 API</h3><ul>{related_apis}</ul>" if related_apis else ""
+        sections.append(f"""<section id="{e(collection['id'])}">
+  <h2>{e(collection['title'])} <code>{e(collection['name'])}</code></h2>
+  <p>{e(collection['description'])}</p>
+  <h3>필드</h3>
+  <table>
+    <thead><tr><th>필드</th><th>타입</th><th>필수</th><th>설명</th><th>상세</th></tr></thead>
+    <tbody>{''.join(field_rows)}</tbody>
+  </table>
+  {indexes}
+  {api_block}
+</section>""")
+
+    if database.get("relationships"):
+        rows = "".join(
+            "<tr>"
+            f"<td><code>{e(item['from'])}</code></td>"
+            f"<td><code>{e(item['to'])}</code></td>"
+            f"<td>{e(item['type'])}</td>"
+            f"<td>{e(item['description'])}</td>"
+            "</tr>"
+            for item in database["relationships"]
+        )
+        sections.append(f"""<section id="relationships">
+  <h2>문서 관계</h2>
+  <table><thead><tr><th>From</th><th>To</th><th>유형</th><th>설명</th></tr></thead><tbody>{rows}</tbody></table>
+</section>""")
+
+    if database.get("apiAccess"):
+        rows = "".join(
+            "<tr>"
+            f"<td><a href=\"./all-api-doc.html#{e(item['apiId'])}\"><code>{e(fmt_api(apis[item['apiId']]))}</code></a></td>"
+            f"<td>{e(', '.join(item.get('reads', [])) or '-')}</td>"
+            f"<td>{e(', '.join(item.get('writes', [])) or '-')}</td>"
+            f"<td>{e(item['description'])}</td>"
+            "</tr>"
+            for item in database["apiAccess"]
+        )
+        sections.append(f"""<section id="api-access">
+  <h2>API별 읽기/쓰기</h2>
+  <table><thead><tr><th>API</th><th>Read</th><th>Write</th><th>설명</th></tr></thead><tbody>{rows}</tbody></table>
+</section>""")
+
+    if database.get("stateModels"):
+        state_sections = []
+        for model in database["stateModels"]:
+            transitions = "".join(
+                f"<tr><td><code>{e(item['from'])} → {e(item['to'])}</code></td><td>{e(item['event'])}</td></tr>"
+                for item in model["transitions"]
+            )
+            state_sections.append(f"""<article class="box">
+  <h3>{e(model['title'])}</h3>
+  <p><code>{e(model['collection'])}.{e(model['field'])}</code></p>
+  <p>{e(', '.join(model['states']))}</p>
+  <table><thead><tr><th>전이</th><th>이벤트</th></tr></thead><tbody>{transitions}</tbody></table>
+</article>""")
+        sections.append(f"""<section id="state-models">
+  <h2>상태 모델</h2>
+  <div class="grid">{''.join(state_sections)}</div>
+</section>""")
+
+    body += f"<main class=\"wrap layout\">{nav(nav_items)}<div>{''.join(sections)}</div></main>"
+    return page(pages["database"]["title"], body)
 
 
 def actor_theme(actor):
@@ -718,7 +940,7 @@ def render_sequence_page(data, sequence, rendered_d2_ids=None):
         sequence["title"],
         "Sequence Diagram",
         sequence["summary"],
-        [("전체 시퀀스 목록", "./sequence-index.html"), ("전체 API 목록", "./all-api-doc.html"), ("API 상세 설명", "./api-detail-doc.html")]
+        [("전체 시퀀스 목록", "./sequence-index.html"), ("전체 API 목록", "./all-api-doc.html"), ("API 상세 설명", "./api-detail-doc.html")] + database_links(data)
     )
     body += f"""<main class="wrap">
   <section>
@@ -774,6 +996,8 @@ def generate_docs(data_path, out_dir, render_d2=False, rendered_d2_ids=None):
         pages["apiCatalog"]["file"]: render_api_catalog(data),
         pages["apiDetails"]["file"]: render_api_details(data)
     }
+    if data.get("database") and pages.get("database"):
+        rendered[pages["database"]["file"]] = render_database_doc(data)
     for sequence in data["sequences"]:
         if sequence["status"] == "available":
             rendered[sequence["file"]] = render_sequence_page(data, sequence, rendered_ids)

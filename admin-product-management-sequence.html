@@ -65,7 +65,10 @@
       position: sticky;
       top: 18px;
       align-self: start;
+      max-height: calc(100vh - 36px);
       padding: 14px;
+      overflow-y: auto;
+      overscroll-behavior: contain;
       background: var(--surface);
       border: 1px solid var(--line);
       border-radius: 8px;
@@ -112,6 +115,9 @@
     th { color: var(--muted); background: #fbfcfe; font-weight: 800; }
     .top-links { display: flex; flex-wrap: wrap; gap: 14px; margin-top: 16px; }
     .grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+    .sequence-group { margin-top: 20px; }
+    .sequence-group:first-of-type { margin-top: 0; }
+    .sequence-group > p { color: var(--muted); }
     .card, .box {
       padding: 16px;
       background: #fbfcfe;
@@ -180,7 +186,7 @@
     }
     @media (max-width: 900px) {
       .layout { grid-template-columns: 1fr; }
-      nav { position: static; }
+      nav { position: static; max-height: none; }
       .grid { grid-template-columns: 1fr; }
       .wrap { width: min(100% - 24px, 1180px); }
     }
@@ -193,7 +199,7 @@
     <p class="eyebrow">Sequence Diagram</p>
     <h1>어드민 상품 관리 플로우</h1>
     <p class="lead">관리자가 공통 Product를 만들고, 구독상품은 구독 플랜으로, 일반상품은 단건 구매 SKU로 분리해 판매 조건과 상태를 관리하는 흐름입니다.</p>
-    <p class="top-links"><a href="./sequence-index.html">전체 시퀀스 목록</a><a href="./all-api-doc.html">전체 API 목록</a><a href="./api-detail-doc.html">API 상세 설명</a></p>
+    <p class="top-links"><a href="./sequence-index.html">전체 시퀀스 목록</a><a href="./all-api-doc.html">전체 API 목록</a><a href="./api-detail-doc.html">API 상세 설명</a><a href="./database-doc.html">MongoDB 구조 문서</a></p>
   </div>
 </header>
 <main class="wrap">
@@ -206,10 +212,7 @@
   <p>공통 Product를 subscription 타입으로 만든 뒤 월간, 연간, Basic, Pro 같은 구독 플랜을 추가하고 판매 상태를 전환합니다.</p>
   <div class="diagram"><div class="d2-diagram">
   <div class="d2-toolbar"><a href="diagrams/admin-product-management-subscription-product.d2">D2 원본</a></div>
-  <img class="d2-svg" src="diagrams/admin-product-management-subscription-product.svg" alt="구독상품 생성 및 플랜 구성">
-  <details class="d2-details">
-    <summary>D2 원본 보기</summary>
-    <pre class="d2-source"><code>diagram: {
+  <pre class="d2-source"><code>diagram: {
   shape: sequence_diagram
   label: &quot;구독상품 생성 및 플랜 구성&quot;
 
@@ -283,17 +286,13 @@ draft -&gt; active 또는 active -&gt; suspended
   }
 }
 </code></pre>
-  </details>
 </div></div>
 </section><section id="one-time-product">
   <h2>일반상품 생성 및 SKU 구성</h2>
   <p>공통 Product를 one_time 타입으로 만든 뒤 단건 구매 SKU와 가격, 재고, 구매 제한 정책을 추가합니다.</p>
   <div class="diagram"><div class="d2-diagram">
   <div class="d2-toolbar"><a href="diagrams/admin-product-management-one-time-product.d2">D2 원본</a></div>
-  <img class="d2-svg" src="diagrams/admin-product-management-one-time-product.svg" alt="일반상품 생성 및 SKU 구성">
-  <details class="d2-details">
-    <summary>D2 원본 보기</summary>
-    <pre class="d2-source"><code>diagram: {
+  <pre class="d2-source"><code>diagram: {
   shape: sequence_diagram
   label: &quot;일반상품 생성 및 SKU 구성&quot;
 
@@ -367,7 +366,6 @@ active -&gt; suspended이면 신규 주문 생성 차단
   }
 }
 </code></pre>
-  </details>
 </div></div>
 </section>
   <section id="states">

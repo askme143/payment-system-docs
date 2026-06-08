@@ -4,7 +4,7 @@
   "title": "Payment System Documentation Data",
   "type": "object",
   "additionalProperties": false,
-  "required": ["version", "site", "actors", "apiCategories", "apis", "apiDetails", "sequences", "policies"],
+  "required": ["version", "site", "actors", "apiCategories", "apis", "apiDetails", "sequenceGroups", "sequences", "policies"],
   "properties": {
     "version": {
       "type": "string",
@@ -45,6 +45,14 @@
         "$ref": "#/$defs/apiDetail"
       }
     },
+    "sequenceGroups": {
+      "type": "array",
+      "description": "Topic groups used in the sequence index page.",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/sequenceGroup"
+      }
+    },
     "sequences": {
       "type": "array",
       "description": "Sequence diagram pages. Available pages can render diagrams; planned pages can appear only in the sequence index.",
@@ -55,6 +63,9 @@
     },
     "policies": {
       "$ref": "#/$defs/policies"
+    },
+    "database": {
+      "$ref": "#/$defs/database"
     }
   },
   "$defs": {
@@ -81,6 +92,9 @@
               "$ref": "#/$defs/pageRef"
             },
             "apiDetails": {
+              "$ref": "#/$defs/pageRef"
+            },
+            "database": {
               "$ref": "#/$defs/pageRef"
             }
           }
@@ -245,6 +259,26 @@
         }
       }
     },
+    "sequenceGroup": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "title", "order"],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/id"
+        },
+        "title": {
+          "type": "string"
+        },
+        "order": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "description": {
+          "type": "string"
+        }
+      }
+    },
     "requestContract": {
       "type": "object",
       "additionalProperties": false,
@@ -313,6 +347,228 @@
         }
       }
     },
+    "database": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["engine", "collections"],
+      "properties": {
+        "engine": {
+          "type": "string",
+          "enum": ["MongoDB"]
+        },
+        "description": {
+          "type": "string"
+        },
+        "collections": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/dbCollection"
+          }
+        },
+        "relationships": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/dbRelationship"
+          }
+        },
+        "apiAccess": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/dbApiAccess"
+          }
+        },
+        "stateModels": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/dbStateModel"
+          }
+        }
+      }
+    },
+    "dbCollection": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "name", "title", "description", "fields"],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/id"
+        },
+        "name": {
+          "type": "string"
+        },
+        "title": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        },
+        "fields": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/dbField"
+          }
+        },
+        "indexes": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/dbIndex"
+          }
+        },
+        "relatedApis": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/id"
+          },
+          "uniqueItems": true
+        }
+      }
+    },
+    "dbField": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "type", "required", "description"],
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "type": {
+          "type": "string"
+        },
+        "required": {
+          "type": "boolean"
+        },
+        "description": {
+          "type": "string"
+        },
+        "ref": {
+          "type": "string"
+        },
+        "enum": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "example": {
+          "$ref": "#/$defs/jsonValue"
+        }
+      }
+    },
+    "dbIndex": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["fields"],
+      "properties": {
+        "fields": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string"
+          }
+        },
+        "unique": {
+          "type": "boolean"
+        },
+        "description": {
+          "type": "string"
+        }
+      }
+    },
+    "dbRelationship": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["from", "to", "type", "description"],
+      "properties": {
+        "from": {
+          "type": "string"
+        },
+        "to": {
+          "type": "string"
+        },
+        "type": {
+          "type": "string",
+          "enum": ["reference", "embedded", "snapshot"]
+        },
+        "description": {
+          "type": "string"
+        }
+      }
+    },
+    "dbApiAccess": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["apiId", "reads", "writes", "description"],
+      "properties": {
+        "apiId": {
+          "$ref": "#/$defs/id"
+        },
+        "reads": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/id"
+          }
+        },
+        "writes": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/id"
+          }
+        },
+        "description": {
+          "type": "string"
+        }
+      }
+    },
+    "dbStateModel": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "title", "collection", "field", "states", "transitions"],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/id"
+        },
+        "title": {
+          "type": "string"
+        },
+        "collection": {
+          "$ref": "#/$defs/id"
+        },
+        "field": {
+          "type": "string"
+        },
+        "states": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string"
+          }
+        },
+        "transitions": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/dbStateTransition"
+          }
+        }
+      }
+    },
+    "dbStateTransition": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["from", "to", "event"],
+      "properties": {
+        "from": {
+          "type": "string"
+        },
+        "to": {
+          "type": "string"
+        },
+        "event": {
+          "type": "string"
+        }
+      }
+    },
     "sourceField": {
       "type": "object",
       "additionalProperties": false,
@@ -378,7 +634,7 @@
     "sequencePage": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["id", "title", "file", "status", "kind", "summary", "apiIds"],
+      "required": ["id", "title", "file", "status", "kind", "groupId", "summary", "apiIds"],
       "properties": {
         "id": {
           "$ref": "#/$defs/id"
@@ -397,6 +653,9 @@
         "kind": {
           "type": "string",
           "enum": ["success", "failure", "operation", "payment", "admin"]
+        },
+        "groupId": {
+          "$ref": "#/$defs/id"
         },
         "summary": {
           "type": "string"

@@ -1,4 +1,5 @@
 import json
+import re
 import tempfile
 import unittest
 from pathlib import Path
@@ -7,6 +8,58 @@ from scripts.generate_docs import generate_docs, render_d2_diagram
 
 
 class GenerateDocsTest(unittest.TestCase):
+    def test_documentation_includes_core_mongodb_collections(self):
+        data = json.loads(Path("docs-data/documentation.json").read_text(encoding="utf-8"))
+        collection_ids = {collection["id"] for collection in data["database"]["collections"]}
+
+        self.assertTrue(
+            {
+                "users",
+                "payment-customers",
+                "payment-instruments",
+                "products",
+                "subscription-plans",
+                "one-time-skus",
+                "checkouts",
+                "billing-auths"
+            }.issubset(collection_ids)
+        )
+
+        collections = {collection["id"]: collection for collection in data["database"]["collections"]}
+        user_fields = {field["name"] for field in collections["users"]["fields"]}
+        payment_customer_fields = {field["name"] for field in collections["payment-customers"]["fields"]}
+        payment_customer_indexes = {tuple(index["fields"]) for index in collections["payment-customers"]["indexes"]}
+        billing_method_fields = {field["name"] for field in collections["billing-methods"]["fields"]}
+        payment_instrument_fields = {field["name"] for field in collections["payment-instruments"]["fields"]}
+        payment_instrument_indexes = {tuple(index["fields"]) for index in collections["payment-instruments"]["indexes"]}
+
+        self.assertNotIn("customer_key", user_fields)
+        self.assertNotIn("default_billing_method_id", user_fields)
+        self.assertIn("customer_key", payment_customer_fields)
+        self.assertIn(("provider", "customer_key"), payment_customer_indexes)
+        self.assertNotIn("billing_key", billing_method_fields)
+        self.assertIn("instrument_id", billing_method_fields)
+        self.assertIn("billing_key", payment_instrument_fields)
+        self.assertIn(("provider", "billing_key_hash"), payment_instrument_indexes)
+
+        snake_name = re.compile(r"^_id$|^[a-z][a-z0-9_]*$")
+        for collection in data["database"]["collections"]:
+            self.assertRegex(collection["name"], snake_name)
+            for field in collection["fields"]:
+                self.assertRegex(field["name"], snake_name)
+                if "ref" in field:
+                    for ref_part in field["ref"].split("."):
+                        self.assertRegex(ref_part, snake_name)
+            for index in collection.get("indexes", []):
+                for field_name in index["fields"]:
+                    self.assertRegex(field_name, snake_name)
+        for relationship in data["database"]["relationships"]:
+            for side in (relationship["from"], relationship["to"]):
+                if " 또는 " in side:
+                    continue
+                for ref_part in side.split("."):
+                    self.assertRegex(ref_part, snake_name)
+
     def test_renders_sequence_steps_as_d2_source(self):
         actors = {
             "server": {"id": "server", "label": "우리 서버", "subtitle": "API", "kind": "server"}
@@ -112,7 +165,8 @@ class GenerateDocsTest(unittest.TestCase):
                 "pages": {
                     "sequenceIndex": {"title": "시퀀스 목록", "file": "sequence-index.html"},
                     "apiCatalog": {"title": "전체 API 목록", "file": "all-api-doc.html"},
-                    "apiDetails": {"title": "API 상세", "file": "api-detail-doc.html"}
+                    "apiDetails": {"title": "API 상세", "file": "api-detail-doc.html"},
+                    "database": {"title": "MongoDB 구조", "file": "database-doc.html"}
                 }
             },
             "actors": [
@@ -155,6 +209,14 @@ class GenerateDocsTest(unittest.TestCase):
                     "logic": ["구독 소유자를 검증합니다.", "첫 결제를 실행합니다."]
                 }
             },
+            "sequenceGroups": [
+                {
+                    "id": "subscriptions",
+                    "title": "구독",
+                    "order": 1,
+                    "description": "구독 시작, 변경, 해지 흐름입니다."
+                }
+            ],
             "sequences": [
                 {
                     "id": "initial-subscription-success",
@@ -162,6 +224,7 @@ class GenerateDocsTest(unittest.TestCase):
                     "file": "subscription-api-doc.html",
                     "status": "available",
                     "kind": "success",
+                    "groupId": "subscriptions",
                     "summary": "구독 확정 흐름입니다.",
                     "apiIds": ["subscriptions-confirm"],
                     "actorIds": ["client", "server"],
@@ -184,6 +247,73 @@ class GenerateDocsTest(unittest.TestCase):
                     ]
                 }
             ],
+            "database": {
+                "engine": "MongoDB",
+                "description": "결제 시스템의 주요 컬렉션과 API별 읽기/쓰기 관계입니다.",
+                "collections": [
+                    {
+                        "id": "subscriptions",
+                        "name": "subscriptions",
+                        "title": "구독",
+                        "description": "사용자의 구독 상태와 다음 결제 일정을 관리합니다.",
+                        "fields": [
+                            {
+                                "name": "_id",
+                                "type": "ObjectId",
+                                "required": True,
+                                "description": "구독 문서 ID입니다."
+                            },
+                            {
+                                "name": "status",
+                                "type": "string",
+                                "required": True,
+                                "enum": ["active", "cancel_scheduled", "canceled"],
+                                "description": "구독 상태입니다."
+                            }
+                        ],
+                        "indexes": [
+                            {
+                                "fields": ["userId", "status"],
+                                "unique": False,
+                                "description": "사용자의 현재 구독 조회에 사용합니다."
+                            }
+                        ],
+                        "relatedApis": ["subscriptions-confirm"]
+                    }
+                ],
+                "relationships": [
+                    {
+                        "from": "subscriptions.userId",
+                        "to": "users._id",
+                        "type": "reference",
+                        "description": "구독 소유 사용자를 참조합니다."
+                    }
+                ],
+                "apiAccess": [
+                    {
+                        "apiId": "subscriptions-confirm",
+                        "reads": [],
+                        "writes": ["subscriptions"],
+                        "description": "구독 확정 시 구독, 결제, 인보이스 문서를 생성합니다."
+                    }
+                ],
+                "stateModels": [
+                    {
+                        "id": "subscription-status",
+                        "title": "구독 상태",
+                        "collection": "subscriptions",
+                        "field": "status",
+                        "states": ["active", "cancel_scheduled", "canceled"],
+                        "transitions": [
+                            {
+                                "from": "active",
+                                "to": "cancel_scheduled",
+                                "event": "사용자가 다음 결제 전 해지를 예약합니다."
+                            }
+                        ]
+                    }
+                ]
+            },
             "policies": {
                 "idempotency": ["같은 요청의 재시도는 기존 성공 결과를 반환합니다."],
                 "httpStatus": [{"status": 409, "usage": "다른 값과 충돌할 때 사용합니다."}],
@@ -205,6 +335,7 @@ class GenerateDocsTest(unittest.TestCase):
                     "sequence-index.html",
                     "all-api-doc.html",
                     "api-detail-doc.html",
+                    "database-doc.html",
                     "subscription-api-doc.html"
                 },
                 {path.name for path in generated}
@@ -212,14 +343,26 @@ class GenerateDocsTest(unittest.TestCase):
             catalog = (out_dir / "all-api-doc.html").read_text(encoding="utf-8")
             detail = (out_dir / "api-detail-doc.html").read_text(encoding="utf-8")
             sequence = (out_dir / "subscription-api-doc.html").read_text(encoding="utf-8")
+            database = (out_dir / "database-doc.html").read_text(encoding="utf-8")
 
             self.assertIn("POST /subscriptions/confirm", catalog)
             self.assertIn("href=\"./api-detail-doc.html#confirm\"", catalog)
+            index = (out_dir / "sequence-index.html").read_text(encoding="utf-8")
+            self.assertIn("<h3>구독</h3>", index)
+            self.assertIn("구독 시작, 변경, 해지 흐름입니다.", index)
+            self.assertLess(index.index("<h3>구독</h3>"), index.index("최초 구독 성공"))
+            self.assertIn("max-height: calc(100vh - 36px);", detail)
+            self.assertIn("overflow-y: auto;", detail)
             self.assertIn("Idempotency-Key", detail)
             self.assertIn("구독 확정 요청", sequence)
             self.assertIn("href=\"./all-api-doc.html#subscriptions-confirm\"", sequence)
             self.assertIn("diagrams/initial-subscription-success-main.d2", sequence)
             self.assertIn("shape: sequence_diagram", (out_dir / "diagrams" / "initial-subscription-success-main.d2").read_text(encoding="utf-8"))
+            self.assertIn("MongoDB 구조", database)
+            self.assertIn("subscriptions", database)
+            self.assertIn("subscriptions.userId", database)
+            self.assertIn("POST /subscriptions/confirm", database)
+            self.assertIn("active → cancel_scheduled", database)
 
     def test_sequence_page_uses_svg_when_d2_rendering_is_enabled(self):
         data = {
@@ -300,11 +443,21 @@ class GenerateDocsTest(unittest.TestCase):
             )
             detail = (out_dir / "api-detail-doc.html").read_text(encoding="utf-8")
             sequence = (out_dir / "subscription-cancel-sequence.html").read_text(encoding="utf-8")
+            diagram = (out_dir / "diagrams" / "subscription-cancel-subscription-cancel-expiration.d2").read_text(encoding="utf-8")
 
             self.assertIn("POST /subscriptions/{subscriptionId}/cancel", detail)
             self.assertIn("해지 예약", detail)
             self.assertIn("기간 종료 시 해지 예약", sequence)
+            self.assertIn("해지 예약 만료 처리", sequence)
             self.assertIn("cancel_scheduled", sequence)
+            self.assertIn("cancel_scheduled -&gt; canceled", sequence)
+            self.assertIn("currentPeriodEnd &lt;= now", sequence)
+            self.assertIn("재구독", sequence)
+            self.assertIn("subscription-cancel-subscription-cancel-expiration.d2", sequence)
+            self.assertIn("만료 대상 구독 조회", diagram)
+            self.assertIn("currentPeriodEnd <= now", diagram)
+            self.assertIn("최종 종료 상태 저장", diagram)
+            self.assertIn("구독 최신 상태 조회", diagram)
 
     def test_real_documentation_includes_cancel_related_api_details(self):
         with tempfile.TemporaryDirectory() as tmp:
@@ -406,8 +559,25 @@ class GenerateDocsTest(unittest.TestCase):
                 "billing-method-sequence.html",
                 {path.name for path in generated}
             )
+            catalog = (out_dir / "all-api-doc.html").read_text(encoding="utf-8")
+            detail = (out_dir / "api-detail-doc.html").read_text(encoding="utf-8")
             sequence = (out_dir / "billing-method-sequence.html").read_text(encoding="utf-8")
 
+            self.assertIn("href=\"./api-detail-doc.html#billing-auth\"", catalog)
+            self.assertIn("href=\"./api-detail-doc.html#billing-issue\"", catalog)
+            self.assertIn("href=\"./api-detail-doc.html#billing-methods\"", catalog)
+            self.assertIn("href=\"./api-detail-doc.html#billing-method-default\"", catalog)
+            self.assertIn("href=\"./api-detail-doc.html#billing-method-delete\"", catalog)
+            self.assertIn("POST /billing/auth", detail)
+            self.assertIn("POST /billing/issue", detail)
+            self.assertIn("GET /billing/methods", detail)
+            self.assertIn("PATCH /billing/methods/{billingMethodId}/default", detail)
+            self.assertIn("DELETE /billing/methods/{billingMethodId}", detail)
+            self.assertIn("setAsDefault", detail)
+            self.assertIn("POST /v1/billing/authorizations/issue", detail)
+            self.assertIn("defaultBillingMethodId", detail)
+            self.assertIn("last_method_for_active_subscriptions", detail)
+            self.assertIn("모든 상품 구독에 공통 적용", detail)
             self.assertIn("결제수단 관리 플로우", sequence)
             self.assertIn("결제 수단 추가", sequence)
             self.assertIn("기본 결제수단 지정", sequence)
@@ -434,7 +604,7 @@ class GenerateDocsTest(unittest.TestCase):
             self.assertIn("다른 productCode의 활성 구독이 있으면 별도 상품 구독으로 허용", detail)
             self.assertIn("상품별 중복 구독 검증", success_sequence)
             self.assertIn("UNIQUE active(userId, productCode)", success_sequence)
-            self.assertIn("공통 기본 billingKey", recurring_sequence)
+            self.assertIn("기본 결제수단 토큰", recurring_sequence)
             self.assertIn("productCode, plan amount", recurring_sequence)
 
     def test_real_documentation_includes_one_time_payment_flow(self):
@@ -542,6 +712,35 @@ class GenerateDocsTest(unittest.TestCase):
             self.assertIn("운영자 결제 취소", sequence)
             self.assertIn("cancelHistory", sequence)
 
+    def test_real_documentation_includes_invoice_history_flow(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            out_dir = Path(tmp)
+
+            generated = generate_docs("docs-data/documentation.json", out_dir)
+
+            self.assertIn(
+                "invoice-history-sequence.html",
+                {path.name for path in generated}
+            )
+            catalog = (out_dir / "all-api-doc.html").read_text(encoding="utf-8")
+            detail = (out_dir / "api-detail-doc.html").read_text(encoding="utf-8")
+            sequence = (out_dir / "invoice-history-sequence.html").read_text(encoding="utf-8")
+            diagram = (out_dir / "diagrams" / "invoice-history-billing-history-main.d2").read_text(encoding="utf-8")
+
+            self.assertIn("href=\"./api-detail-doc.html#invoices-list\"", catalog)
+            self.assertIn("GET /invoices", detail)
+            self.assertIn("status, subscriptionId, from, to, cursor, limit", detail)
+            self.assertIn("receiptAvailable", detail)
+            self.assertIn("failureSummary", detail)
+            self.assertIn("상세 API에서 영수증 URL과 실패 사유를 확인", detail)
+            self.assertIn("마이페이지 청구 내역 조회", sequence)
+            self.assertIn("GET /invoices", sequence)
+            self.assertIn("GET /invoices/{invoiceId}", sequence)
+            self.assertIn("영수증 링크 노출", sequence)
+            self.assertIn("실패 사유와 재시도 안내 노출", sequence)
+            self.assertIn("GET /invoices", diagram)
+            self.assertIn("GET /invoices/{invoiceId}", diagram)
+
     def test_real_documentation_includes_admin_product_management_flow(self):
         with tempfile.TemporaryDirectory() as tmp:
             out_dir = Path(tmp)
@@ -558,15 +757,75 @@ class GenerateDocsTest(unittest.TestCase):
 
             self.assertIn("POST /admin/products", catalog)
             self.assertIn("POST /admin/products/{productId}/subscription-plans", catalog)
+            self.assertIn("PATCH /admin/products/{productId}/subscription-plans/{planId}", detail)
             self.assertIn("POST /admin/products/{productId}/one-time-skus", catalog)
+            self.assertIn("PATCH /admin/products/{productId}/one-time-skus/{skuId}", detail)
+            self.assertIn("PATCH /admin/products/{productId}/status", detail)
             self.assertIn("공통 Product 아래에서 구독상품과 일반상품을 분리", detail)
             self.assertIn("productType", detail)
             self.assertIn("subscriptionPlans", detail)
             self.assertIn("oneTimeSkus", detail)
+            self.assertIn("changeReason", detail)
+            self.assertIn("effectiveFor", detail)
+            self.assertIn("MISSING_ACTIVE_SELLING_UNIT", detail)
             self.assertIn("구독상품 생성 및 플랜 구성", sequence)
             self.assertIn("일반상품 생성 및 SKU 구성", sequence)
             self.assertIn("구독 플랜은 기존 활성 구독의 과거 가격을 덮어쓰지 않습니다", sequence)
             self.assertIn("일반상품 SKU는 주문 생성 시점에 가격 스냅샷으로 고정합니다", sequence)
+
+    def test_real_documentation_includes_admin_subscription_adjustment_flow(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            out_dir = Path(tmp)
+
+            generated = generate_docs("docs-data/documentation.json", out_dir)
+
+            self.assertIn(
+                "admin-subscription-adjustment-sequence.html",
+                {path.name for path in generated}
+            )
+            catalog = (out_dir / "all-api-doc.html").read_text(encoding="utf-8")
+            detail = (out_dir / "api-detail-doc.html").read_text(encoding="utf-8")
+            sequence = (out_dir / "admin-subscription-adjustment-sequence.html").read_text(encoding="utf-8")
+            diagram = (out_dir / "diagrams" / "admin-subscription-adjustment-next-billing-postpone.d2").read_text(encoding="utf-8")
+
+            self.assertIn("href=\"./api-detail-doc.html#admin-subscription-adjust\"", catalog)
+            self.assertIn("POST /admin/subscriptions/{subscriptionId}/adjust", detail)
+            self.assertIn("provider_payment_sync", detail)
+            self.assertIn("postpone_next_billing", detail)
+            self.assertIn("set_next_billing_date", detail)
+            self.assertIn("postponeBy.days", detail)
+            self.assertIn("nextBillingAt", detail)
+            self.assertIn("운영자 구독 수동 보정", sequence)
+            self.assertIn("토스 결제 성공 누락 보정", sequence)
+            self.assertIn("다음 결제일 연기", sequence)
+            self.assertIn("정책 예외 상태 보정", sequence)
+            self.assertIn("current nextBillingAt + postponeBy.days", diagram)
+
+    def test_real_documentation_includes_subscription_final_failure_cancel_flow(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            out_dir = Path(tmp)
+
+            generated = generate_docs("docs-data/documentation.json", out_dir)
+
+            self.assertIn(
+                "subscription-final-failure-sequence.html",
+                {path.name for path in generated}
+            )
+            sequence_index = (out_dir / "sequence-index.html").read_text(encoding="utf-8")
+            sequence = (out_dir / "subscription-final-failure-sequence.html").read_text(encoding="utf-8")
+            diagram = (out_dir / "diagrams" / "subscription-final-failure-final-failure-cancel.d2").read_text(encoding="utf-8")
+
+            self.assertIn("href=\"./subscription-final-failure-sequence.html\"", sequence_index)
+            self.assertIn("구독 결제 최종 실패 후 구독 종료 플로우", sequence)
+            self.assertIn("최종 실패 후 즉시 구독 종료", sequence)
+            self.assertIn("subscription=canceled", sequence)
+            self.assertIn("nextBillingDate=null", sequence)
+            self.assertIn("다시 이용하려면 새 구독을 시작", sequence)
+            self.assertNotIn("graceEndsAt", sequence)
+            self.assertNotIn("serviceAccess=limited", sequence)
+            self.assertNotIn("복구 조건", sequence)
+            self.assertIn("template=subscription_canceled_payment_failed", diagram)
+            self.assertIn("status=canceled, cancelReason=payment_final_failed", diagram)
 
 
 if __name__ == "__main__":

@@ -65,7 +65,10 @@
       position: sticky;
       top: 18px;
       align-self: start;
+      max-height: calc(100vh - 36px);
       padding: 14px;
+      overflow-y: auto;
+      overscroll-behavior: contain;
       background: var(--surface);
       border: 1px solid var(--line);
       border-radius: 8px;
@@ -112,6 +115,9 @@
     th { color: var(--muted); background: #fbfcfe; font-weight: 800; }
     .top-links { display: flex; flex-wrap: wrap; gap: 14px; margin-top: 16px; }
     .grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+    .sequence-group { margin-top: 20px; }
+    .sequence-group:first-of-type { margin-top: 0; }
+    .sequence-group > p { color: var(--muted); }
     .card, .box {
       padding: 16px;
       background: #fbfcfe;
@@ -180,7 +186,7 @@
     }
     @media (max-width: 900px) {
       .layout { grid-template-columns: 1fr; }
-      nav { position: static; }
+      nav { position: static; max-height: none; }
       .grid { grid-template-columns: 1fr; }
       .wrap { width: min(100% - 24px, 1180px); }
     }
@@ -193,7 +199,7 @@
     <p class="eyebrow">Sequence Diagram</p>
     <h1>일반결제 플로우</h1>
     <p class="lead">구매 의도 생성, 결제 시도 생성, 토스 결제창 인증, 결제 승인, 웹훅 보정까지의 일반결제 성공 흐름입니다. 실패 후 재시도는 기존 시도를 재사용하지 않고 새 paymentId와 orderId를 발급합니다.</p>
-    <p class="top-links"><a href="./sequence-index.html">전체 시퀀스 목록</a><a href="./all-api-doc.html">전체 API 목록</a><a href="./api-detail-doc.html">API 상세 설명</a></p>
+    <p class="top-links"><a href="./sequence-index.html">전체 시퀀스 목록</a><a href="./all-api-doc.html">전체 API 목록</a><a href="./api-detail-doc.html">API 상세 설명</a><a href="./database-doc.html">MongoDB 구조 문서</a></p>
   </div>
 </header>
 <main class="wrap">
@@ -206,10 +212,7 @@
   <p>회원의 구매 의도(checkoutId) 아래 첫 결제 시도 또는 재시도 시도를 생성하고, 토스 인증과 서버 승인을 거쳐 결제를 완료하는 흐름입니다.</p>
   <div class="diagram"><div class="d2-diagram">
   <div class="d2-toolbar"><a href="diagrams/one-time-payment-one-time-payment-main.d2">D2 원본</a></div>
-  <img class="d2-svg" src="diagrams/one-time-payment-one-time-payment-main.svg" alt="일반결제 성공">
-  <details class="d2-details">
-    <summary>D2 원본 보기</summary>
-    <pre class="d2-source"><code>diagram: {
+  <pre class="d2-source"><code>diagram: {
   shape: sequence_diagram
   label: &quot;일반결제 성공&quot;
 
@@ -349,7 +352,6 @@ checkoutId, paymentId, status=paid, receiptUrl
   }
 }
 </code></pre>
-  </details>
 </div></div>
 </section>
   <section id="states">

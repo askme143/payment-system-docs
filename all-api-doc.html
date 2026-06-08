@@ -65,7 +65,10 @@
       position: sticky;
       top: 18px;
       align-self: start;
+      max-height: calc(100vh - 36px);
       padding: 14px;
+      overflow-y: auto;
+      overscroll-behavior: contain;
       background: var(--surface);
       border: 1px solid var(--line);
       border-radius: 8px;
@@ -112,6 +115,9 @@
     th { color: var(--muted); background: #fbfcfe; font-weight: 800; }
     .top-links { display: flex; flex-wrap: wrap; gap: 14px; margin-top: 16px; }
     .grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+    .sequence-group { margin-top: 20px; }
+    .sequence-group:first-of-type { margin-top: 0; }
+    .sequence-group > p { color: var(--muted); }
     .card, .box {
       padding: 16px;
       background: #fbfcfe;
@@ -180,7 +186,7 @@
     }
     @media (max-width: 900px) {
       .layout { grid-template-columns: 1fr; }
-      nav { position: static; }
+      nav { position: static; max-height: none; }
       .grid { grid-template-columns: 1fr; }
       .wrap { width: min(100% - 24px, 1180px); }
     }
@@ -193,14 +199,14 @@
     <p class="eyebrow">API Catalog</p>
     <h1>결제 시스템 전체 API 목록</h1>
     <p class="lead">API의 전체 목록과 역할만 정리하는 색인입니다. 상세 계약은 API 상세 설명 페이지에서 관리합니다.</p>
-    <p class="top-links"><a href="./sequence-index.html">전체 시퀀스 목록</a><a href="./api-detail-doc.html">API 상세 설명 단일 원본</a></p>
+    <p class="top-links"><a href="./sequence-index.html">전체 시퀀스 목록</a><a href="./api-detail-doc.html">API 상세 설명 단일 원본</a><a href="./database-doc.html">MongoDB 구조 문서</a></p>
   </div>
 </header>
 <main class="wrap layout"><nav><a href="#plans">상품/플랜 API</a><a href="#payments">일반결제 API</a><a href="#subscriptions">구독 API</a><a href="#billing">빌링키/결제수단 API</a><a href="#invoices">인보이스 API</a><a href="#webhooks">웹훅 API</a><a href="#internal">내부 배치 API</a><a href="#admin">관리자 API</a></nav><div><section id="plans">
   <h2>상품/플랜 API</h2>
   <table>
     <thead><tr><th>API</th><th>역할</th><th>상세</th></tr></thead>
-    <tbody><tr id="plans-list"><td><code>GET /plans</code></td><td>구매 가능한 상품과 구독 플랜 목록을 조회합니다.</td><td><span class="status">상세 예정</span></td></tr><tr id="plans-detail"><td><code>GET /plans/{planId}</code></td><td>단일 플랜의 가격, 주기, 판매 가능 상태를 조회합니다.</td><td><span class="status">상세 예정</span></td></tr></tbody>
+    <tbody><tr id="plans-list"><td><code>GET /plans</code></td><td>구매 가능한 상품과 구독 플랜 목록을 조회합니다.</td><td><a href="./api-detail-doc.html#plans-list">상세 보기</a></td></tr><tr id="plans-detail"><td><code>GET /plans/{planId}</code></td><td>단일 플랜의 가격, 주기, 판매 가능 상태를 조회합니다.</td><td><a href="./api-detail-doc.html#plans-detail">상세 보기</a></td></tr></tbody>
   </table>
 </section><section id="payments">
   <h2>일반결제 API</h2>
@@ -218,13 +224,13 @@
   <h2>빌링키/결제수단 API</h2>
   <table>
     <thead><tr><th>API</th><th>역할</th><th>상세</th></tr></thead>
-    <tbody><tr id="billing-auth"><td><code>POST /billing/auth</code></td><td>기존 회원이 결제수단을 변경할 때 빌링 인증 시작 데이터를 생성합니다.</td><td><span class="status">상세 예정</span></td></tr><tr id="billing-issue"><td><code>POST /billing/issue</code></td><td>빌링 인증 성공 후 새 빌링키를 발급받아 결제수단으로 저장합니다.</td><td><span class="status">상세 예정</span></td></tr><tr id="billing-methods"><td><code>GET /billing/methods</code></td><td>회원이 등록한 표시용 결제수단 목록을 조회합니다.</td><td><span class="status">상세 예정</span></td></tr><tr id="billing-method-default"><td><code>PATCH /billing/methods/{billingMethodId}/default</code></td><td>활성 결제수단 중 하나를 기본 결제수단으로 지정합니다.</td><td><span class="status">상세 예정</span></td></tr><tr id="billing-method-delete"><td><code>DELETE /billing/methods/{billingMethodId}</code></td><td>사용하지 않는 결제수단을 삭제 또는 비활성화합니다.</td><td><span class="status">상세 예정</span></td></tr></tbody>
+    <tbody><tr id="billing-auth"><td><code>POST /billing/auth</code></td><td>기존 회원이 결제수단을 변경할 때 빌링 인증 시작 데이터를 생성합니다.</td><td><a href="./api-detail-doc.html#billing-auth">상세 보기</a></td></tr><tr id="billing-issue"><td><code>POST /billing/issue</code></td><td>빌링 인증 성공 후 새 빌링키를 발급받아 결제수단으로 저장합니다.</td><td><a href="./api-detail-doc.html#billing-issue">상세 보기</a></td></tr><tr id="billing-methods"><td><code>GET /billing/methods</code></td><td>회원이 등록한 표시용 결제수단 목록을 조회합니다.</td><td><a href="./api-detail-doc.html#billing-methods">상세 보기</a></td></tr><tr id="billing-method-default"><td><code>PATCH /billing/methods/{billingMethodId}/default</code></td><td>활성 결제수단 중 하나를 기본 결제수단으로 지정합니다.</td><td><a href="./api-detail-doc.html#billing-method-default">상세 보기</a></td></tr><tr id="billing-method-delete"><td><code>DELETE /billing/methods/{billingMethodId}</code></td><td>사용하지 않는 결제수단을 삭제 또는 비활성화합니다.</td><td><a href="./api-detail-doc.html#billing-method-delete">상세 보기</a></td></tr></tbody>
   </table>
 </section><section id="invoices">
   <h2>인보이스 API</h2>
   <table>
     <thead><tr><th>API</th><th>역할</th><th>상세</th></tr></thead>
-    <tbody><tr id="invoices-list"><td><code>GET /invoices</code></td><td>구독 회차별 청구 내역과 결제 성공/실패 상태를 조회합니다.</td><td><span class="status">상세 예정</span></td></tr><tr id="invoices-detail"><td><code>GET /invoices/{invoiceId}</code></td><td>단일 인보이스의 금액, 결제 시도, 실패 사유, 영수증 정보를 조회합니다.</td><td><a href="./api-detail-doc.html#invoice-detail">상세 보기</a></td></tr></tbody>
+    <tbody><tr id="invoices-list"><td><code>GET /invoices</code></td><td>구독 회차별 청구 내역과 결제 성공/실패 상태를 조회합니다.</td><td><a href="./api-detail-doc.html#invoices-list">상세 보기</a></td></tr><tr id="invoices-detail"><td><code>GET /invoices/{invoiceId}</code></td><td>단일 인보이스의 금액, 결제 시도, 실패 사유, 영수증 정보를 조회합니다.</td><td><a href="./api-detail-doc.html#invoice-detail">상세 보기</a></td></tr></tbody>
   </table>
 </section><section id="webhooks">
   <h2>웹훅 API</h2>
@@ -242,7 +248,7 @@
   <h2>관리자 API</h2>
   <table>
     <thead><tr><th>API</th><th>역할</th><th>상세</th></tr></thead>
-    <tbody><tr id="admin-payments"><td><code>GET /admin/payments</code></td><td>CS와 운영자가 결제 목록을 검색합니다.</td><td><span class="status">상세 예정</span></td></tr><tr id="admin-subscriptions"><td><code>GET /admin/subscriptions</code></td><td>구독 목록, 상태, 다음 결제일, 결제 실패 여부를 검색합니다.</td><td><span class="status">상세 예정</span></td></tr><tr id="admin-payment-cancel"><td><code>POST /admin/payments/{paymentId}/cancel</code></td><td>관리자가 회원 요청, 중복 결제, 장애 보정 사유로 일반결제를 전체 또는 부분 취소합니다.</td><td><a href="./api-detail-doc.html#admin-payment-cancel">상세 보기</a></td></tr><tr id="admin-subscription-adjust"><td><code>POST /admin/subscriptions/{subscriptionId}/adjust</code></td><td>관리자가 구독 상태, 다음 결제일, 실패 상태를 수동 보정합니다.</td><td><span class="status">상세 예정</span></td></tr><tr id="admin-products-create"><td><code>POST /admin/products</code></td><td>관리자가 공통 Product를 생성하고 구독상품 또는 일반상품 타입을 지정합니다.</td><td><a href="./api-detail-doc.html#admin-products-create">상세 보기</a></td></tr><tr id="admin-subscription-plans-create"><td><code>POST /admin/products/{productId}/subscription-plans</code></td><td>구독상품에 월간, 연간 같은 구독 플랜을 추가합니다.</td><td><a href="./api-detail-doc.html#admin-subscription-plans-create">상세 보기</a></td></tr><tr id="admin-subscription-plans-update"><td><code>PATCH /admin/products/{productId}/subscription-plans/{planId}</code></td><td>구독 플랜의 표시 정보, 판매 상태, 신규 가입 가격 정책을 수정합니다.</td><td><span class="status">상세 예정</span></td></tr><tr id="admin-one-time-skus-create"><td><code>POST /admin/products/{productId}/one-time-skus</code></td><td>일반상품에 단건 구매용 SKU와 판매 가격, 재고 정책을 추가합니다.</td><td><a href="./api-detail-doc.html#admin-one-time-skus-create">상세 보기</a></td></tr><tr id="admin-one-time-skus-update"><td><code>PATCH /admin/products/{productId}/one-time-skus/{skuId}</code></td><td>일반상품 SKU의 가격, 재고 정책, 판매 상태를 수정합니다.</td><td><span class="status">상세 예정</span></td></tr><tr id="admin-products-status"><td><code>PATCH /admin/products/{productId}/status</code></td><td>상품을 초안, 판매중, 판매중지, 아카이브 상태로 전환합니다.</td><td><span class="status">상세 예정</span></td></tr></tbody>
+    <tbody><tr id="admin-payments"><td><code>GET /admin/payments</code></td><td>CS와 운영자가 결제 목록을 검색합니다.</td><td><a href="./api-detail-doc.html#admin-payments">상세 보기</a></td></tr><tr id="admin-subscriptions"><td><code>GET /admin/subscriptions</code></td><td>구독 목록, 상태, 다음 결제일, 결제 실패 여부를 검색합니다.</td><td><a href="./api-detail-doc.html#admin-subscriptions">상세 보기</a></td></tr><tr id="admin-payment-cancel"><td><code>POST /admin/payments/{paymentId}/cancel</code></td><td>관리자가 회원 요청, 중복 결제, 장애 보정 사유로 일반결제를 전체 또는 부분 취소합니다.</td><td><a href="./api-detail-doc.html#admin-payment-cancel">상세 보기</a></td></tr><tr id="admin-subscription-adjust"><td><code>POST /admin/subscriptions/{subscriptionId}/adjust</code></td><td>관리자가 구독 상태, 다음 결제일, 실패 상태를 수동 보정합니다.</td><td><a href="./api-detail-doc.html#admin-subscription-adjust">상세 보기</a></td></tr><tr id="admin-products-create"><td><code>POST /admin/products</code></td><td>관리자가 공통 Product를 생성하고 구독상품 또는 일반상품 타입을 지정합니다.</td><td><a href="./api-detail-doc.html#admin-products-create">상세 보기</a></td></tr><tr id="admin-subscription-plans-create"><td><code>POST /admin/products/{productId}/subscription-plans</code></td><td>구독상품에 월간, 연간 같은 구독 플랜을 추가합니다.</td><td><a href="./api-detail-doc.html#admin-subscription-plans-create">상세 보기</a></td></tr><tr id="admin-subscription-plans-update"><td><code>PATCH /admin/products/{productId}/subscription-plans/{planId}</code></td><td>구독 플랜의 표시 정보, 판매 상태, 신규 가입 가격 정책을 수정합니다.</td><td><a href="./api-detail-doc.html#admin-subscription-plans-update">상세 보기</a></td></tr><tr id="admin-one-time-skus-create"><td><code>POST /admin/products/{productId}/one-time-skus</code></td><td>일반상품에 단건 구매용 SKU와 판매 가격, 재고 정책을 추가합니다.</td><td><a href="./api-detail-doc.html#admin-one-time-skus-create">상세 보기</a></td></tr><tr id="admin-one-time-skus-update"><td><code>PATCH /admin/products/{productId}/one-time-skus/{skuId}</code></td><td>일반상품 SKU의 가격, 재고 정책, 판매 상태를 수정합니다.</td><td><a href="./api-detail-doc.html#admin-one-time-skus-update">상세 보기</a></td></tr><tr id="admin-products-status"><td><code>PATCH /admin/products/{productId}/status</code></td><td>상품을 초안, 판매중, 판매중지, 아카이브 상태로 전환합니다.</td><td><a href="./api-detail-doc.html#admin-products-status">상세 보기</a></td></tr></tbody>
   </table>
 </section></div></main>
 </body>

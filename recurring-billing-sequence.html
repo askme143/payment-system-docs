@@ -65,7 +65,10 @@
       position: sticky;
       top: 18px;
       align-self: start;
+      max-height: calc(100vh - 36px);
       padding: 14px;
+      overflow-y: auto;
+      overscroll-behavior: contain;
       background: var(--surface);
       border: 1px solid var(--line);
       border-radius: 8px;
@@ -112,6 +115,9 @@
     th { color: var(--muted); background: #fbfcfe; font-weight: 800; }
     .top-links { display: flex; flex-wrap: wrap; gap: 14px; margin-top: 16px; }
     .grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+    .sequence-group { margin-top: 20px; }
+    .sequence-group:first-of-type { margin-top: 0; }
+    .sequence-group > p { color: var(--muted); }
     .card, .box {
       padding: 16px;
       background: #fbfcfe;
@@ -180,7 +186,7 @@
     }
     @media (max-width: 900px) {
       .layout { grid-template-columns: 1fr; }
-      nav { position: static; }
+      nav { position: static; max-height: none; }
       .grid { grid-template-columns: 1fr; }
       .wrap { width: min(100% - 24px, 1180px); }
     }
@@ -193,7 +199,7 @@
     <p class="eyebrow">Sequence Diagram</p>
     <h1>정기 결제 실행 플로우</h1>
     <p class="lead">스케줄러가 다음 결제일이 도래한 활성 구독을 상품 구독 단위로 잠그고 인보이스를 생성한 뒤 공통 기본 결제수단으로 토스 자동결제를 승인하고 다음 결제일을 예약하는 운영 흐름입니다.</p>
-    <p class="top-links"><a href="./sequence-index.html">전체 시퀀스 목록</a><a href="./all-api-doc.html">전체 API 목록</a><a href="./api-detail-doc.html">API 상세 설명</a></p>
+    <p class="top-links"><a href="./sequence-index.html">전체 시퀀스 목록</a><a href="./all-api-doc.html">전체 API 목록</a><a href="./api-detail-doc.html">API 상세 설명</a><a href="./database-doc.html">MongoDB 구조 문서</a></p>
   </div>
 </header>
 <main class="wrap">
@@ -206,10 +212,7 @@
   <p>다음 결제일 7일 전에 결제 예정일과 결제 금액을 회원에게 이메일로 안내합니다.</p>
   <div class="diagram"><div class="d2-diagram">
   <div class="d2-toolbar"><a href="diagrams/subscription-recurring-billing-subscription-billing-reminder.d2">D2 원본</a></div>
-  <img class="d2-svg" src="diagrams/subscription-recurring-billing-subscription-billing-reminder.svg" alt="정기 결제 7일 전 사전 알림">
-  <details class="d2-details">
-    <summary>D2 원본 보기</summary>
-    <pre class="d2-source"><code>diagram: {
+  <pre class="d2-source"><code>diagram: {
   shape: sequence_diagram
   label: &quot;정기 결제 7일 전 사전 알림&quot;
 
@@ -266,17 +269,13 @@ billingDate, amount, currency, planName, subscriptionManageUrl
   server.note_5: &quot;알림 발송 이력 저장\nreminderSentAt\n같은 billingPeriod에 중복 발송하지 않도록 기록&quot;
 }
 </code></pre>
-  </details>
 </div></div>
 </section><section id="subscription-recurring-billing-main">
   <h2>정기 결제 실행</h2>
-  <p>최초 구독 성공 후 저장된 billingKey를 사용해 매 주기 자동결제를 실행하는 배치 흐름입니다.</p>
+  <p>최초 구독 성공 후 저장된 결제수단 토큰의 billingKey를 사용해 매 주기 자동결제를 실행하는 배치 흐름입니다.</p>
   <div class="diagram"><div class="d2-diagram">
   <div class="d2-toolbar"><a href="diagrams/subscription-recurring-billing-subscription-recurring-billing-main.d2">D2 원본</a></div>
-  <img class="d2-svg" src="diagrams/subscription-recurring-billing-subscription-recurring-billing-main.svg" alt="정기 결제 실행">
-  <details class="d2-details">
-    <summary>D2 원본 보기</summary>
-    <pre class="d2-source"><code>diagram: {
+  <pre class="d2-source"><code>diagram: {
   shape: sequence_diagram
   label: &quot;정기 결제 실행&quot;
 
@@ -310,7 +309,7 @@ cron, queue worker, 운영자 수동 실행 모두 동일 진입점 사용
   }
   server.note_2: &quot;결제 대상 구독 조회 및 잠금\nstatus=active AND nextBillingDate&lt;=today\n한 회원의 여러 상품 구독이 같은 날 도래해도 subscription 또는 invoice 단위로 각각 잠금&quot;
   server.note_3: &quot;청구 회차 인보이스 생성\ninvoice.status = pending\nproductCode, plan amount, billingPeriod, orderId, idempotencyKey 확정&quot;
-  server.note_4: &quot;공통 기본 billingKey 복호화\nbillingMethod.active\n회원의 기본 결제수단이 없거나 비활성이면 해당 구독 결제 시도 없이 실패 처리&quot;
+  server.note_4: &quot;기본 결제수단 토큰 복호화\nbillingMethod.active\n회원의 기본 결제수단이 없거나 비활성이면 해당 구독 결제 시도 없이 실패 처리&quot;
   server -&gt; toss: |md
 자동결제 승인 요청
 
@@ -387,7 +386,6 @@ processed, paid, failed, skipped
   }
 }
 </code></pre>
-  </details>
 </div></div>
 </section>
   <section id="states">

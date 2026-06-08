@@ -65,7 +65,10 @@
       position: sticky;
       top: 18px;
       align-self: start;
+      max-height: calc(100vh - 36px);
       padding: 14px;
+      overflow-y: auto;
+      overscroll-behavior: contain;
       background: var(--surface);
       border: 1px solid var(--line);
       border-radius: 8px;
@@ -112,6 +115,9 @@
     th { color: var(--muted); background: #fbfcfe; font-weight: 800; }
     .top-links { display: flex; flex-wrap: wrap; gap: 14px; margin-top: 16px; }
     .grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+    .sequence-group { margin-top: 20px; }
+    .sequence-group:first-of-type { margin-top: 0; }
+    .sequence-group > p { color: var(--muted); }
     .card, .box {
       padding: 16px;
       background: #fbfcfe;
@@ -180,7 +186,7 @@
     }
     @media (max-width: 900px) {
       .layout { grid-template-columns: 1fr; }
-      nav { position: static; }
+      nav { position: static; max-height: none; }
       .grid { grid-template-columns: 1fr; }
       .wrap { width: min(100% - 24px, 1180px); }
     }
@@ -193,7 +199,7 @@
     <p class="eyebrow">Sequence Diagram</p>
     <h1>구독 재개 플로우</h1>
     <p class="lead">기간 종료 전 해지 예약을 철회해 구독을 active 상태로 되돌리고 다음 정기 결제일을 복구하는 흐름입니다.</p>
-    <p class="top-links"><a href="./sequence-index.html">전체 시퀀스 목록</a><a href="./all-api-doc.html">전체 API 목록</a><a href="./api-detail-doc.html">API 상세 설명</a></p>
+    <p class="top-links"><a href="./sequence-index.html">전체 시퀀스 목록</a><a href="./all-api-doc.html">전체 API 목록</a><a href="./api-detail-doc.html">API 상세 설명</a><a href="./database-doc.html">MongoDB 구조 문서</a></p>
   </div>
 </header>
 <main class="wrap">
@@ -206,10 +212,7 @@
   <p>cancel_scheduled 상태의 구독을 기간 종료 전에 다시 active로 복구하고 정기 과금 배치가 다음 결제일을 조회할 수 있게 합니다.</p>
   <div class="diagram"><div class="d2-diagram">
   <div class="d2-toolbar"><a href="diagrams/subscription-resume-subscription-resume-cancel-scheduled.d2">D2 원본</a></div>
-  <img class="d2-svg" src="diagrams/subscription-resume-subscription-resume-cancel-scheduled.svg" alt="해지 예약 철회">
-  <details class="d2-details">
-    <summary>D2 원본 보기</summary>
-    <pre class="d2-source"><code>diagram: {
+  <pre class="d2-source"><code>diagram: {
   shape: sequence_diagram
   label: &quot;해지 예약 철회&quot;
 
@@ -277,7 +280,6 @@ active이고 nextBillingDate가 도래하면 다시 결제 후보
   }
 }
 </code></pre>
-  </details>
 </div></div>
 </section>
   <section id="states">

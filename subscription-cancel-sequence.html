@@ -65,7 +65,10 @@
       position: sticky;
       top: 18px;
       align-self: start;
+      max-height: calc(100vh - 36px);
       padding: 14px;
+      overflow-y: auto;
+      overscroll-behavior: contain;
       background: var(--surface);
       border: 1px solid var(--line);
       border-radius: 8px;
@@ -112,6 +115,9 @@
     th { color: var(--muted); background: #fbfcfe; font-weight: 800; }
     .top-links { display: flex; flex-wrap: wrap; gap: 14px; margin-top: 16px; }
     .grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+    .sequence-group { margin-top: 20px; }
+    .sequence-group:first-of-type { margin-top: 0; }
+    .sequence-group > p { color: var(--muted); }
     .card, .box {
       padding: 16px;
       background: #fbfcfe;
@@ -180,7 +186,7 @@
     }
     @media (max-width: 900px) {
       .layout { grid-template-columns: 1fr; }
-      nav { position: static; }
+      nav { position: static; max-height: none; }
       .grid { grid-template-columns: 1fr; }
       .wrap { width: min(100% - 24px, 1180px); }
     }
@@ -192,24 +198,21 @@
   <div class="wrap hero">
     <p class="eyebrow">Sequence Diagram</p>
     <h1>구독 해지 플로우</h1>
-    <p class="lead">회원이 기간 종료 시 해지 예약을 요청하면 현재 이용 기간은 유지하고 다음 정기 결제 대상에서 제외하는 흐름입니다.</p>
-    <p class="top-links"><a href="./sequence-index.html">전체 시퀀스 목록</a><a href="./all-api-doc.html">전체 API 목록</a><a href="./api-detail-doc.html">API 상세 설명</a></p>
+    <p class="lead">회원이 기간 종료 시 해지 예약을 요청하면 현재 이용 기간은 유지하고, 기간 종료 이후 만료 배치가 구독을 canceled로 최종 마감하는 흐름입니다.</p>
+    <p class="top-links"><a href="./sequence-index.html">전체 시퀀스 목록</a><a href="./all-api-doc.html">전체 API 목록</a><a href="./api-detail-doc.html">API 상세 설명</a><a href="./database-doc.html">MongoDB 구조 문서</a></p>
   </div>
 </header>
 <main class="wrap">
   <section>
     <h2>사용 API</h2>
-    <div class="grid"><div class="box"><a href="./all-api-doc.html#subscriptions-cancel"><code>POST /subscriptions/{subscriptionId}/cancel</code></a><p>현재 이용 기간 종료 시 구독 해지를 예약하고 다음 정기 결제 대상에서 제외합니다.</p></div><div class="box"><a href="./all-api-doc.html#subscriptions-resume"><code>POST /subscriptions/{subscriptionId}/resume</code></a><p>해지 예약 또는 결제 실패 상태의 구독을 재개합니다.</p></div></div>
+    <div class="grid"><div class="box"><a href="./all-api-doc.html#subscriptions-cancel"><code>POST /subscriptions/{subscriptionId}/cancel</code></a><p>현재 이용 기간 종료 시 구독 해지를 예약하고 다음 정기 결제 대상에서 제외합니다.</p></div><div class="box"><a href="./all-api-doc.html#subscriptions-resume"><code>POST /subscriptions/{subscriptionId}/resume</code></a><p>해지 예약 또는 결제 실패 상태의 구독을 재개합니다.</p></div><div class="box"><a href="./all-api-doc.html#subscriptions-me"><code>GET /subscriptions/me</code></a><p>현재 회원의 상품별 구독 목록, 이용 기간, 다음 결제일, 공통 기본 결제수단 표시 정보를 조회합니다.</p></div><div class="box"><a href="./all-api-doc.html#internal-billing-run"><code>POST /internal/subscription-billing/run</code></a><p>다음 결제일이 도래한 구독을 찾아 정기 자동결제를 실행합니다.</p></div></div>
   </section>
   <section id="subscription-cancel-end-of-period">
   <h2>기간 종료 시 해지 예약</h2>
   <p>해지 요청 즉시 서비스 접근을 끊지 않고 현재 이용 기간 종료일까지 권한을 유지한 뒤 다음 과금에서 제외합니다.</p>
   <div class="diagram"><div class="d2-diagram">
   <div class="d2-toolbar"><a href="diagrams/subscription-cancel-subscription-cancel-end-of-period.d2">D2 원본</a></div>
-  <img class="d2-svg" src="diagrams/subscription-cancel-subscription-cancel-end-of-period.svg" alt="기간 종료 시 해지 예약">
-  <details class="d2-details">
-    <summary>D2 원본 보기</summary>
-    <pre class="d2-source"><code>diagram: {
+  <pre class="d2-source"><code>diagram: {
   shape: sequence_diagram
   label: &quot;기간 종료 시 해지 예약&quot;
 
@@ -262,15 +265,75 @@ nextBillingDate가 null인 구독은 결제 대상 아님
     style.font-size: 18
     style.italic: false
   }
-  server.note_7: &quot;기간 종료 시 구독 종료 처리\ncancel_scheduled -&gt; canceled\ncurrentPeriodEnd 이후 접근 권한 비활성화&quot;
 }
 </code></pre>
-  </details>
+</div></div>
+</section><section id="subscription-cancel-expiration">
+  <h2>해지 예약 만료 처리</h2>
+  <p>cancel_scheduled 상태의 구독이 currentPeriodEnd 또는 cancelAt을 지난 뒤 최종 canceled 상태로 마감되고, 이후 회원 화면에서는 재개가 아니라 재구독을 안내하는 흐름입니다.</p>
+  <div class="diagram"><div class="d2-diagram">
+  <div class="d2-toolbar"><a href="diagrams/subscription-cancel-subscription-cancel-expiration.d2">D2 원본</a></div>
+  <pre class="d2-source"><code>diagram: {
+  shape: sequence_diagram
+  label: &quot;해지 예약 만료 처리&quot;
+
+  scheduler: &quot;스케줄러&quot;
+  scheduler.style.fill: &quot;#fff8e6&quot;
+  scheduler.style.stroke: &quot;#9a5b00&quot;
+  server: &quot;우리 서버&quot;
+  server.style.fill: &quot;#eaf8f3&quot;
+  server.style.stroke: &quot;#1c7c66&quot;
+  client: &quot;웹 클라이언트&quot;
+  client.style.fill: &quot;#e8f3ff&quot;
+  client.style.stroke: &quot;#2457a6&quot;
+
+  scheduler -&gt; server: |md
+만료 대상 구독 조회
+
+**POST /internal/subscription-billing/run**
+
+status=cancel_scheduled, currentPeriodEnd &lt;= now 또는 cancelAt &lt;= now
+| {
+    style.stroke: &quot;#1c7c66&quot;
+    style.font-color: &quot;#334155&quot;
+    style.font-size: 18
+    style.italic: false
+  }
+  server.note_2: &quot;대상 구독 잠금 및 상태 재검증\nstatus == cancel_scheduled &amp;&amp; currentPeriodEnd &lt;= now\n기간 종료 전이거나 이미 active/canceled로 바뀐 구독은 제외&quot;
+  server.note_3: &quot;최종 종료 상태 저장\ncancel_scheduled -&gt; canceled\ncanceledAt=now, accessUntil=currentPeriodEnd, nextBillingDate=null 유지&quot;
+  server.note_4: &quot;권한 회수 및 감사 로그 저장\nentitlement disabled, auditLog.cancel_expired\n상태 전이와 권한 회수는 같은 트랜잭션 경계에서 처리&quot;
+  server.note_5: &quot;알림 작업 예약\ntemplate=subscription_canceled_after_period\n알림 실패는 구독 상태를 되돌리지 않고 재시도 큐 또는 운영 로그에 남김&quot;
+  client -&gt; server: |md
+구독 최신 상태 조회
+
+**GET /subscriptions/me**
+
+만료 후에는 resumeAvailable=false, 재구독 CTA 표시
+| {
+    style.stroke: &quot;#1c7c66&quot;
+    style.font-color: &quot;#334155&quot;
+    style.font-size: 18
+    style.italic: false
+  }
+  server -&gt; client: |md
+종료 상태와 재구독 안내 반환
+
+status=canceled, resumeAvailable=false, resubscribeUrl
+
+subscriptions-resume으로 되돌릴 수 없고 신규 구독 또는 재구독으로 안내
+| {
+    style.stroke: &quot;#2457a6&quot;
+    style.font-color: &quot;#334155&quot;
+    style.font-size: 18
+    style.italic: false
+  }
+}
+</code></pre>
 </div></div>
 </section>
   <section id="states">
   <h2>상태 요약</h2>
-  <table><thead><tr><th>시점</th><th>구독 상태</th><th>결제 상태</th><th>설명</th></tr></thead><tbody><tr><td>해지 예약 전</td><td><code>active</code></td><td><code>paid</code></td><td>회원은 이용 중이고 다음 결제일이 예약되어 있습니다.</td></tr><tr><td>해지 예약 직후</td><td><code>cancel_scheduled</code></td><td><code>paid</code></td><td>현재 기간 권한은 유지되며 다음 결제일은 제거됩니다.</td></tr><tr><td>기간 종료 후</td><td><code>canceled</code></td><td><code>paid</code></td><td>구독이 종료되고 서비스 접근 권한이 비활성화됩니다.</td></tr></tbody></table>
+  <table><thead><tr><th>시점</th><th>구독 상태</th><th>결제 상태</th><th>설명</th></tr></thead><tbody><tr><td>해지 예약 전</td><td><code>active</code></td><td><code>paid</code></td><td>회원은 이용 중이고 다음 결제일이 예약되어 있습니다.</td></tr><tr><td>해지 예약 직후</td><td><code>cancel_scheduled</code></td><td><code>paid</code></td><td>현재 기간 권한은 유지되며 다음 결제일은 제거됩니다.</td></tr><tr><td>기간 종료 전</td><td><code>cancel_scheduled</code></td><td><code>paid</code></td><td>회원은 currentPeriodEnd까지 접근할 수 있고 해지 예약 철회가 가능합니다.</td></tr><tr><td>만료 배치 처리 후</td><td><code>canceled</code></td><td><code>paid</code></td><td>구독이 최종 종료되고 접근 권한이 회수되며 정기 과금 대상에 다시 포함되지 않습니다.</td></tr><tr><td>이후 구독 조회</td><td><code>canceled</code></td><td><code>paid</code></td><td>회원 화면은 재개 버튼 대신 신규 구독 또는 재구독 안내를 표시합니다.</td></tr></tbody></table>
 </section>
 </main>
 </body>

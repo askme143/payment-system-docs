@@ -65,7 +65,10 @@
       position: sticky;
       top: 18px;
       align-self: start;
+      max-height: calc(100vh - 36px);
       padding: 14px;
+      overflow-y: auto;
+      overscroll-behavior: contain;
       background: var(--surface);
       border: 1px solid var(--line);
       border-radius: 8px;
@@ -112,6 +115,9 @@
     th { color: var(--muted); background: #fbfcfe; font-weight: 800; }
     .top-links { display: flex; flex-wrap: wrap; gap: 14px; margin-top: 16px; }
     .grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+    .sequence-group { margin-top: 20px; }
+    .sequence-group:first-of-type { margin-top: 0; }
+    .sequence-group > p { color: var(--muted); }
     .card, .box {
       padding: 16px;
       background: #fbfcfe;
@@ -180,7 +186,7 @@
     }
     @media (max-width: 900px) {
       .layout { grid-template-columns: 1fr; }
-      nav { position: static; }
+      nav { position: static; max-height: none; }
       .grid { grid-template-columns: 1fr; }
       .wrap { width: min(100% - 24px, 1180px); }
     }
@@ -193,23 +199,20 @@
     <p class="eyebrow">Sequence Diagram</p>
     <h1>신규 회원 최초 구독 실패 플로우</h1>
     <p class="lead">체크아웃 실패, 토스 빌링 인증 실패, 구독 확정 검증 실패, 빌링키 발급 실패, 첫 결제 실패, 웹훅 실패를 나눠 설명합니다.</p>
-    <p class="top-links"><a href="./sequence-index.html">전체 시퀀스 목록</a><a href="./all-api-doc.html">전체 API 목록</a><a href="./api-detail-doc.html">API 상세 설명</a></p>
+    <p class="top-links"><a href="./sequence-index.html">전체 시퀀스 목록</a><a href="./all-api-doc.html">전체 API 목록</a><a href="./api-detail-doc.html">API 상세 설명</a><a href="./database-doc.html">MongoDB 구조 문서</a></p>
   </div>
 </header>
 <main class="wrap">
   <section>
     <h2>사용 API</h2>
-    <div class="grid"><div class="box"><a href="./all-api-doc.html#subscriptions-checkout"><code>POST /subscriptions/checkout</code></a><p>구독 빌링 인증 전에 구독 대기 레코드와 토스 SDK 호출 데이터를 생성합니다.</p></div><div class="box"><a href="./all-api-doc.html#subscriptions-confirm"><code>POST /subscriptions/confirm</code></a><p>프론트 성공 페이지가 호출하며, 빌링키 발급과 첫 결제로 구독을 활성화합니다.</p></div><div class="box"><a href="./all-api-doc.html#webhooks-toss-payments"><code>POST /webhooks/toss-payments</code></a><p>토스페이먼츠 결제 이벤트를 수신하고 내부 결제/구독 상태를 보정합니다.</p></div></div>
+    <div class="grid"><div class="box"><a href="./all-api-doc.html#plans-list"><code>GET /plans</code></a><p>구매 가능한 상품과 구독 플랜 목록을 조회합니다.</p></div><div class="box"><a href="./all-api-doc.html#plans-detail"><code>GET /plans/{planId}</code></a><p>단일 플랜의 가격, 주기, 판매 가능 상태를 조회합니다.</p></div><div class="box"><a href="./all-api-doc.html#subscriptions-checkout"><code>POST /subscriptions/checkout</code></a><p>구독 빌링 인증 전에 구독 대기 레코드와 토스 SDK 호출 데이터를 생성합니다.</p></div><div class="box"><a href="./all-api-doc.html#subscriptions-confirm"><code>POST /subscriptions/confirm</code></a><p>프론트 성공 페이지가 호출하며, 빌링키 발급과 첫 결제로 구독을 활성화합니다.</p></div><div class="box"><a href="./all-api-doc.html#webhooks-toss-payments"><code>POST /webhooks/toss-payments</code></a><p>토스페이먼츠 결제 이벤트를 수신하고 내부 결제/구독 상태를 보정합니다.</p></div></div>
   </section>
   <section id="checkout-fail">
   <h2>체크아웃 생성 실패</h2>
   <p>로그인하지 않았거나, 플랜이 비활성화됐거나, 같은 상품의 활성 구독이 이미 있는 경우입니다.</p>
   <div class="diagram"><div class="d2-diagram">
   <div class="d2-toolbar"><a href="diagrams/initial-subscription-failure-checkout-fail.d2">D2 원본</a></div>
-  <img class="d2-svg" src="diagrams/initial-subscription-failure-checkout-fail.svg" alt="체크아웃 생성 실패">
-  <details class="d2-details">
-    <summary>D2 원본 보기</summary>
-    <pre class="d2-source"><code>diagram: {
+  <pre class="d2-source"><code>diagram: {
   shape: sequence_diagram
   label: &quot;체크아웃 생성 실패&quot;
 
@@ -224,6 +227,28 @@
   toss.style.stroke: &quot;#7b4bc4&quot;
 
   client -&gt; server: |md
+구독 가능한 플랜 목록 조회
+
+**GET /plans**
+| {
+    style.stroke: &quot;#1c7c66&quot;
+    style.font-color: &quot;#334155&quot;
+    style.font-size: 18
+    style.italic: false
+  }
+  client -&gt; server: |md
+선택한 플랜 상세 확인
+
+**GET /plans/{planId}**
+
+비활성화됐거나 판매 중지된 플랜이면 체크아웃 전 안내
+| {
+    style.stroke: &quot;#1c7c66&quot;
+    style.font-color: &quot;#334155&quot;
+    style.font-size: 18
+    style.italic: false
+  }
+  client -&gt; server: |md
 구독 체크아웃 생성 요청
 
 **POST /subscriptions/checkout**
@@ -233,7 +258,7 @@
     style.font-size: 18
     style.italic: false
   }
-  server.note_2: &quot;서버 검증 실패\n401 / 400 / 409\nUNAUTHORIZED / PLAN_NOT_AVAILABLE / PRODUCT_ALREADY_SUBSCRIBED&quot;
+  server.note_4: &quot;서버 검증 실패\n401 / 400 / 409\nUNAUTHORIZED / PLAN_NOT_AVAILABLE / PRODUCT_ALREADY_SUBSCRIBED&quot;
   server -&gt; client: |md
 실패 응답 반환
 
@@ -246,17 +271,13 @@
   }
 }
 </code></pre>
-  </details>
 </div></div>
 </section><section id="auth-fail">
   <h2>토스 빌링 인증 실패</h2>
   <p>사용자가 인증을 취소했거나 카드 등록 인증이 실패한 경우입니다.</p>
   <div class="diagram"><div class="d2-diagram">
   <div class="d2-toolbar"><a href="diagrams/initial-subscription-failure-auth-fail.d2">D2 원본</a></div>
-  <img class="d2-svg" src="diagrams/initial-subscription-failure-auth-fail.svg" alt="토스 빌링 인증 실패">
-  <details class="d2-details">
-    <summary>D2 원본 보기</summary>
-    <pre class="d2-source"><code>diagram: {
+  <pre class="d2-source"><code>diagram: {
   shape: sequence_diagram
   label: &quot;토스 빌링 인증 실패&quot;
 
@@ -295,17 +316,13 @@ confirm API는 호출되지 않음
   }
 }
 </code></pre>
-  </details>
 </div></div>
 </section><section id="confirm-fail">
   <h2>구독 확정 검증 실패</h2>
   <p>subscriptionId 누락, 소유자 불일치, customerKey 불일치, 중복 성공 요청 같은 서버 검증 실패입니다.</p>
   <div class="diagram"><div class="d2-diagram">
   <div class="d2-toolbar"><a href="diagrams/initial-subscription-failure-confirm-fail.d2">D2 원본</a></div>
-  <img class="d2-svg" src="diagrams/initial-subscription-failure-confirm-fail.svg" alt="구독 확정 검증 실패">
-  <details class="d2-details">
-    <summary>D2 원본 보기</summary>
-    <pre class="d2-source"><code>diagram: {
+  <pre class="d2-source"><code>diagram: {
   shape: sequence_diagram
   label: &quot;구독 확정 검증 실패&quot;
 
@@ -344,17 +361,13 @@ FORBIDDEN / CONFLICT / ALREADY_CONFIRMED
   }
 }
 </code></pre>
-  </details>
 </div></div>
 </section><section id="billing-key-fail">
   <h2>빌링키 발급 실패</h2>
   
   <div class="diagram"><div class="d2-diagram">
   <div class="d2-toolbar"><a href="diagrams/initial-subscription-failure-billing-key-fail.d2">D2 원본</a></div>
-  <img class="d2-svg" src="diagrams/initial-subscription-failure-billing-key-fail.svg" alt="빌링키 발급 실패">
-  <details class="d2-details">
-    <summary>D2 원본 보기</summary>
-    <pre class="d2-source"><code>diagram: {
+  <pre class="d2-source"><code>diagram: {
   shape: sequence_diagram
   label: &quot;빌링키 발급 실패&quot;
 
@@ -410,17 +423,13 @@ BILLING_KEY_ISSUE_FAILED
   }
 }
 </code></pre>
-  </details>
 </div></div>
 </section><section id="first-payment-fail">
   <h2>첫 자동결제 실패</h2>
   
   <div class="diagram"><div class="d2-diagram">
   <div class="d2-toolbar"><a href="diagrams/initial-subscription-failure-first-payment-fail.d2">D2 원본</a></div>
-  <img class="d2-svg" src="diagrams/initial-subscription-failure-first-payment-fail.svg" alt="첫 자동결제 실패">
-  <details class="d2-details">
-    <summary>D2 원본 보기</summary>
-    <pre class="d2-source"><code>diagram: {
+  <pre class="d2-source"><code>diagram: {
   shape: sequence_diagram
   label: &quot;첫 자동결제 실패&quot;
 
@@ -478,17 +487,13 @@ CARD_DECLINED / EXCEED_MAX_AMOUNT / INSUFFICIENT_FUNDS
   }
 }
 </code></pre>
-  </details>
 </div></div>
 </section><section id="webhook-fail">
   <h2>웹훅 실패 또는 중복 이벤트</h2>
   
   <div class="diagram"><div class="d2-diagram">
   <div class="d2-toolbar"><a href="diagrams/initial-subscription-failure-webhook-fail.d2">D2 원본</a></div>
-  <img class="d2-svg" src="diagrams/initial-subscription-failure-webhook-fail.svg" alt="웹훅 실패 또는 중복 이벤트">
-  <details class="d2-details">
-    <summary>D2 원본 보기</summary>
-    <pre class="d2-source"><code>diagram: {
+  <pre class="d2-source"><code>diagram: {
   shape: sequence_diagram
   label: &quot;웹훅 실패 또는 중복 이벤트&quot;
 
@@ -513,7 +518,6 @@ CARD_DECLINED / EXCEED_MAX_AMOUNT / INSUFFICIENT_FUNDS
   server.note_3: &quot;중복 이벤트\n이미 처리됨: 변경 없이 200 OK&quot;
 }
 </code></pre>
-  </details>
 </div></div>
 </section>
   
