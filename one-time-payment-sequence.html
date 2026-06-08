@@ -271,12 +271,114 @@
     }
     @media (max-width: 900px) {
       .layout { grid-template-columns: 1fr; }
-      nav { position: static; max-height: none; }
+      nav {
+        position: sticky;
+        top: 0;
+        z-index: 4;
+        display: flex;
+        gap: 8px;
+        max-height: none;
+        margin-inline: -12px;
+        padding: 10px 12px;
+        overflow-x: auto;
+        overflow-y: hidden;
+        border-radius: 0;
+        border-inline: 0;
+        box-shadow: 0 8px 18px rgba(20, 35, 55, 0.08);
+        scrollbar-width: thin;
+      }
+      nav a {
+        flex: 0 0 auto;
+        min-height: 44px;
+        max-width: min(72vw, 280px);
+        display: inline-flex;
+        align-items: center;
+        padding: 8px 12px;
+        background: var(--surface-2);
+        border: 1px solid var(--line);
+        white-space: normal;
+      }
       .grid { grid-template-columns: 1fr; }
-      .wrap { width: min(100% - 24px, 1180px); }
+      .wrap { width: min(100% - 16px, 1180px); }
       .hero { padding: 34px 0 24px; }
+      h1 { font-size: clamp(28px, 8vw, 38px); }
+      .lead { font-size: 16px; }
+      .search-panel { margin-top: 18px; }
+      .search-panel input { min-height: 46px; }
+      .top-links { gap: 8px; }
+      .top-links a {
+        min-height: 44px;
+        flex: 1 1 220px;
+        justify-content: center;
+        text-align: center;
+      }
+      main { padding: 18px 0 38px; }
       section { padding: 18px; }
-      table { min-width: 620px; }
+      section,
+      .card,
+      .box,
+      .d2-diagram,
+      .table-scroll {
+        border-radius: 8px;
+      }
+      .card,
+      .box { padding: 14px; }
+      .card ul,
+      .box ul { padding-left: 20px; }
+      code {
+        overflow-wrap: anywhere;
+        word-break: break-word;
+      }
+      .table-scroll {
+        margin-inline: -2px;
+        -webkit-overflow-scrolling: touch;
+      }
+      table { min-width: 720px; font-size: 13px; }
+      th, td { padding: 10px 11px; }
+      pre {
+        font-size: 12px;
+        -webkit-overflow-scrolling: touch;
+      }
+      .diagram {
+        margin-inline: -2px;
+        -webkit-overflow-scrolling: touch;
+      }
+      .d2-toolbar {
+        position: sticky;
+        left: 0;
+        justify-content: flex-start;
+      }
+      .d2-toolbar a,
+      .d2-details summary {
+        min-height: 44px;
+        display: inline-flex;
+        align-items: center;
+      }
+      .d2-svg {
+        width: 900px;
+        max-width: none;
+      }
+      .d2-source { min-width: 760px; }
+    }
+    @media (max-width: 520px) {
+      body { line-height: 1.54; }
+      .wrap { width: min(100% - 12px, 1180px); }
+      .hero { padding: 28px 0 20px; }
+      .eyebrow { font-size: 13px; }
+      h1 { font-size: clamp(26px, 9vw, 34px); }
+      h2 { font-size: 21px; }
+      h3 { font-size: 17px; }
+      section {
+        padding: 16px;
+        margin-bottom: 16px;
+      }
+      nav {
+        margin-inline: -6px;
+        padding-inline: 8px;
+      }
+      nav a { max-width: 78vw; }
+      table { min-width: 680px; }
+      .d2-svg { width: 820px; }
     }
     @media (prefers-reduced-motion: reduce) {
       html { scroll-behavior: auto; }
