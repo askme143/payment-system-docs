@@ -1,0 +1,225 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>결제 시스템 전체 API 목록</title>
+  <style>
+    :root {
+      --bg: #f5f7fb;
+      --surface: #ffffff;
+      --ink: #17202a;
+      --muted: #65758a;
+      --line: #d8e0ea;
+      --accent: #1c7c66;
+      --blue: #2457a6;
+      --danger: #b42318;
+      --soft: #e5f4ef;
+      --shadow: 0 14px 34px rgba(20, 35, 55, 0.08);
+      --code-bg: #111827;
+      --code-ink: #e5e7eb;
+    }
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      color: var(--ink);
+      background: var(--bg);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      line-height: 1.58;
+    }
+    header {
+      background: var(--surface);
+      border-bottom: 1px solid var(--line);
+    }
+    .wrap {
+      width: min(1180px, calc(100% - 36px));
+      margin: 0 auto;
+    }
+    .hero { padding: 42px 0 28px; }
+    .eyebrow {
+      margin: 0 0 10px;
+      color: var(--accent);
+      font-size: 14px;
+      font-weight: 800;
+    }
+    h1 {
+      margin: 0;
+      font-size: clamp(30px, 5vw, 48px);
+      line-height: 1.14;
+      letter-spacing: 0;
+    }
+    .lead {
+      max-width: 900px;
+      margin: 16px 0 0;
+      color: var(--muted);
+      font-size: 18px;
+    }
+    main { padding: 28px 0 54px; }
+    .layout {
+      display: grid;
+      grid-template-columns: 260px 1fr;
+      gap: 24px;
+    }
+    nav {
+      position: sticky;
+      top: 18px;
+      align-self: start;
+      padding: 14px;
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      box-shadow: var(--shadow);
+    }
+    nav a {
+      display: block;
+      padding: 8px 10px;
+      color: var(--muted);
+      text-decoration: none;
+      border-radius: 6px;
+      font-size: 14px;
+      font-weight: 700;
+      line-height: 1.35;
+      overflow-wrap: anywhere;
+      word-break: break-word;
+    }
+    nav a:hover { color: var(--ink); background: var(--soft); }
+    section {
+      margin-bottom: 24px;
+      padding: 24px;
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      box-shadow: var(--shadow);
+    }
+    h2 { margin: 0 0 16px; font-size: 24px; letter-spacing: 0; }
+    h3 { margin: 22px 0 8px; font-size: 18px; letter-spacing: 0; }
+    p { margin: 0 0 14px; }
+    a { color: var(--blue); font-weight: 800; text-decoration: none; }
+    code { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 0.95em; }
+    pre {
+      margin: 10px 0 0;
+      padding: 14px;
+      overflow-x: auto;
+      color: var(--code-ink);
+      background: var(--code-bg);
+      border-radius: 8px;
+      font-size: 13px;
+      line-height: 1.5;
+    }
+    table { width: 100%; border-collapse: collapse; font-size: 14px; }
+    th, td { padding: 11px 12px; text-align: left; vertical-align: top; border-bottom: 1px solid var(--line); }
+    th { color: var(--muted); background: #fbfcfe; font-weight: 800; }
+    .top-links { display: flex; flex-wrap: wrap; gap: 14px; margin-top: 16px; }
+    .grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+    .card, .box {
+      padding: 16px;
+      background: #fbfcfe;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+    }
+    .status {
+      display: inline-flex;
+      align-items: center;
+      min-height: 24px;
+      padding: 2px 8px;
+      border-radius: 999px;
+      color: var(--accent);
+      background: var(--soft);
+      font-size: 12px;
+      font-weight: 900;
+    }
+    .note {
+      margin-top: 14px;
+      padding: 13px 15px;
+      color: #7a4a00;
+      background: #fff5dd;
+      border: 1px solid #eed39a;
+      border-radius: 8px;
+    }
+    .diagram { overflow-x: auto; padding-bottom: 4px; }
+    .sequence-svg {
+      display: block;
+      width: 1060px;
+      min-width: 1060px;
+      height: auto;
+      background: #fff;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+    }
+    .actor-title { fill: var(--ink); font-size: 18px; font-weight: 800; }
+    .actor-subtitle { fill: var(--muted); font-size: 12px; font-weight: 600; }
+    .lifeline { stroke: #cbd5e1; stroke-width: 3; stroke-dasharray: 10 12; }
+    .msg-line { fill: none; stroke-width: 2.5; }
+    .msg-label { fill: var(--ink); font-size: 14px; font-weight: 800; }
+    .msg-code { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 14px; font-weight: 700; }
+    .msg-note { fill: var(--muted); font-size: 12px; font-weight: 600; }
+    @media (max-width: 900px) {
+      .layout { grid-template-columns: 1fr; }
+      nav { position: static; }
+      .grid { grid-template-columns: 1fr; }
+      .wrap { width: min(100% - 24px, 1180px); }
+    }
+  </style>
+  
+</head>
+<body>
+<header>
+  <div class="wrap hero">
+    <p class="eyebrow">API Catalog</p>
+    <h1>결제 시스템 전체 API 목록</h1>
+    <p class="lead">API의 전체 목록과 역할만 정리하는 색인입니다. 상세 계약은 API 상세 설명 페이지에서 관리합니다.</p>
+    <p class="top-links"><a href="./sequence-index.html">전체 시퀀스 목록</a><a href="./api-detail-doc.html">API 상세 설명 단일 원본</a></p>
+  </div>
+</header>
+<main class="wrap layout"><nav><a href="#plans">상품/플랜 API</a><a href="#payments">일반결제 API</a><a href="#subscriptions">구독 API</a><a href="#billing">빌링키/결제수단 API</a><a href="#invoices">인보이스 API</a><a href="#webhooks">웹훅 API</a><a href="#internal">내부 배치 API</a><a href="#admin">관리자 API</a></nav><div><section id="plans">
+  <h2>상품/플랜 API</h2>
+  <table>
+    <thead><tr><th>API</th><th>역할</th><th>상세</th></tr></thead>
+    <tbody><tr id="plans-list"><td><code>GET /plans</code></td><td>구매 가능한 상품과 구독 플랜 목록을 조회합니다.</td><td><span class="status">상세 예정</span></td></tr><tr id="plans-detail"><td><code>GET /plans/{planId}</code></td><td>단일 플랜의 가격, 주기, 판매 가능 상태를 조회합니다.</td><td><span class="status">상세 예정</span></td></tr></tbody>
+  </table>
+</section><section id="payments">
+  <h2>일반결제 API</h2>
+  <table>
+    <thead><tr><th>API</th><th>역할</th><th>상세</th></tr></thead>
+    <tbody><tr id="payments-orders"><td><code>POST /payments/orders</code></td><td>일반결제 결제창 호출 전에 내부 주문을 생성합니다.</td><td><a href="./api-detail-doc.html#payments-orders">상세 보기</a></td></tr><tr id="payments-confirm"><td><code>POST /payments/confirm</code></td><td>토스 결제 인증 후 일반결제를 최종 승인합니다.</td><td><a href="./api-detail-doc.html#payments-confirm">상세 보기</a></td></tr><tr id="payments-detail"><td><code>GET /payments/{paymentId}</code></td><td>내부 결제 상태와 토스 승인 결과를 조회합니다.</td><td><a href="./api-detail-doc.html#payments-detail">상세 보기</a></td></tr><tr id="payments-auth-result"><td><code>POST /payments/{paymentId}/auth-result</code></td><td>토스 결제창 인증 실패 또는 사용자 취소 결과를 프론트 실패 페이지가 서버에 기록합니다.</td><td><a href="./api-detail-doc.html#payments-auth-result">상세 보기</a></td></tr><tr id="payments-cancel"><td><code>POST /payments/{paymentId}/cancel</code></td><td>결제를 전체 또는 부분 취소합니다.</td><td><span class="status">상세 예정</span></td></tr></tbody>
+  </table>
+</section><section id="subscriptions">
+  <h2>구독 API</h2>
+  <table>
+    <thead><tr><th>API</th><th>역할</th><th>상세</th></tr></thead>
+    <tbody><tr id="subscriptions-checkout"><td><code>POST /subscriptions/checkout</code></td><td>구독 빌링 인증 전에 구독 대기 레코드와 토스 SDK 호출 데이터를 생성합니다.</td><td><a href="./api-detail-doc.html#checkout">상세 보기</a></td></tr><tr id="subscriptions-confirm"><td><code>POST /subscriptions/confirm</code></td><td>프론트 성공 페이지가 호출하며, 빌링키 발급과 첫 결제로 구독을 활성화합니다.</td><td><a href="./api-detail-doc.html#confirm">상세 보기</a></td></tr><tr id="subscriptions-me"><td><code>GET /subscriptions/me</code></td><td>현재 회원의 상품별 구독 목록, 이용 기간, 다음 결제일, 공통 기본 결제수단 표시 정보를 조회합니다.</td><td><a href="./api-detail-doc.html#me">상세 보기</a></td></tr><tr id="subscriptions-cancel"><td><code>POST /subscriptions/{subscriptionId}/cancel</code></td><td>현재 이용 기간 종료 시 구독 해지를 예약하고 다음 정기 결제 대상에서 제외합니다.</td><td><a href="./api-detail-doc.html#cancel">상세 보기</a></td></tr><tr id="subscriptions-resume"><td><code>POST /subscriptions/{subscriptionId}/resume</code></td><td>해지 예약 또는 결제 실패 상태의 구독을 재개합니다.</td><td><a href="./api-detail-doc.html#resume">상세 보기</a></td></tr><tr id="subscriptions-change-preview"><td><code>POST /subscriptions/{subscriptionId}/change-preview</code></td><td>목표 플랜 변경이 업그레이드인지 다운그레이드인지 서버가 판정하고, 유저 확인에 필요한 결제 금액과 적용일을 계산합니다.</td><td><a href="./api-detail-doc.html#change-preview">상세 보기</a></td></tr><tr id="subscriptions-change"><td><code>PATCH /subscriptions/{subscriptionId}</code></td><td>플랜 변경 미리보기에서 발급한 확인 토큰으로 업그레이드는 즉시 변경하고 다운그레이드는 다음 결제일 반영으로 예약합니다.</td><td><a href="./api-detail-doc.html#change">상세 보기</a></td></tr></tbody>
+  </table>
+</section><section id="billing">
+  <h2>빌링키/결제수단 API</h2>
+  <table>
+    <thead><tr><th>API</th><th>역할</th><th>상세</th></tr></thead>
+    <tbody><tr id="billing-auth"><td><code>POST /billing/auth</code></td><td>기존 회원이 결제수단을 변경할 때 빌링 인증 시작 데이터를 생성합니다.</td><td><span class="status">상세 예정</span></td></tr><tr id="billing-issue"><td><code>POST /billing/issue</code></td><td>빌링 인증 성공 후 새 빌링키를 발급받아 결제수단으로 저장합니다.</td><td><span class="status">상세 예정</span></td></tr><tr id="billing-methods"><td><code>GET /billing/methods</code></td><td>회원이 등록한 표시용 결제수단 목록을 조회합니다.</td><td><span class="status">상세 예정</span></td></tr><tr id="billing-method-default"><td><code>PATCH /billing/methods/{billingMethodId}/default</code></td><td>활성 결제수단 중 하나를 기본 결제수단으로 지정합니다.</td><td><span class="status">상세 예정</span></td></tr><tr id="billing-method-delete"><td><code>DELETE /billing/methods/{billingMethodId}</code></td><td>사용하지 않는 결제수단을 삭제 또는 비활성화합니다.</td><td><span class="status">상세 예정</span></td></tr></tbody>
+  </table>
+</section><section id="invoices">
+  <h2>인보이스 API</h2>
+  <table>
+    <thead><tr><th>API</th><th>역할</th><th>상세</th></tr></thead>
+    <tbody><tr id="invoices-list"><td><code>GET /invoices</code></td><td>구독 회차별 청구 내역과 결제 성공/실패 상태를 조회합니다.</td><td><span class="status">상세 예정</span></td></tr><tr id="invoices-detail"><td><code>GET /invoices/{invoiceId}</code></td><td>단일 인보이스의 금액, 결제 시도, 실패 사유, 영수증 정보를 조회합니다.</td><td><a href="./api-detail-doc.html#invoice-detail">상세 보기</a></td></tr></tbody>
+  </table>
+</section><section id="webhooks">
+  <h2>웹훅 API</h2>
+  <table>
+    <thead><tr><th>API</th><th>역할</th><th>상세</th></tr></thead>
+    <tbody><tr id="webhooks-toss-payments"><td><code>POST /webhooks/toss-payments</code></td><td>토스페이먼츠 결제 이벤트를 수신하고 내부 결제/구독 상태를 보정합니다.</td><td><a href="./api-detail-doc.html#webhook">상세 보기</a></td></tr></tbody>
+  </table>
+</section><section id="internal">
+  <h2>내부 배치 API</h2>
+  <table>
+    <thead><tr><th>API</th><th>역할</th><th>상세</th></tr></thead>
+    <tbody><tr id="internal-billing-run"><td><code>POST /internal/subscription-billing/run</code></td><td>다음 결제일이 도래한 구독을 찾아 정기 자동결제를 실행합니다.</td><td><a href="./api-detail-doc.html#billing-run">상세 보기</a></td></tr><tr id="internal-billing-retry"><td><code>POST /internal/subscription-billing/{invoiceId}/retry</code></td><td>실패한 구독 결제를 수동 또는 배치로 재시도합니다.</td><td><a href="./api-detail-doc.html#billing-retry">상세 보기</a></td></tr></tbody>
+  </table>
+</section><section id="admin">
+  <h2>관리자 API</h2>
+  <table>
+    <thead><tr><th>API</th><th>역할</th><th>상세</th></tr></thead>
+    <tbody><tr id="admin-payments"><td><code>GET /admin/payments</code></td><td>CS와 운영자가 결제 목록을 검색합니다.</td><td><span class="status">상세 예정</span></td></tr><tr id="admin-subscriptions"><td><code>GET /admin/subscriptions</code></td><td>구독 목록, 상태, 다음 결제일, 결제 실패 여부를 검색합니다.</td><td><span class="status">상세 예정</span></td></tr><tr id="admin-payment-cancel"><td><code>POST /admin/payments/{paymentId}/cancel</code></td><td>관리자가 전체 또는 부분 환불을 실행합니다.</td><td><span class="status">상세 예정</span></td></tr><tr id="admin-subscription-adjust"><td><code>POST /admin/subscriptions/{subscriptionId}/adjust</code></td><td>관리자가 구독 상태, 다음 결제일, 실패 상태를 수동 보정합니다.</td><td><span class="status">상세 예정</span></td></tr></tbody>
+  </table>
+</section></div></main>
+</body>
+</html>

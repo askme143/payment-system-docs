@@ -1,0 +1,195 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>구독 플랜 변경 플로우</title>
+  <style>
+    :root {
+      --bg: #f5f7fb;
+      --surface: #ffffff;
+      --ink: #17202a;
+      --muted: #65758a;
+      --line: #d8e0ea;
+      --accent: #1c7c66;
+      --blue: #2457a6;
+      --danger: #b42318;
+      --soft: #e5f4ef;
+      --shadow: 0 14px 34px rgba(20, 35, 55, 0.08);
+      --code-bg: #111827;
+      --code-ink: #e5e7eb;
+    }
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      color: var(--ink);
+      background: var(--bg);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      line-height: 1.58;
+    }
+    header {
+      background: var(--surface);
+      border-bottom: 1px solid var(--line);
+    }
+    .wrap {
+      width: min(1180px, calc(100% - 36px));
+      margin: 0 auto;
+    }
+    .hero { padding: 42px 0 28px; }
+    .eyebrow {
+      margin: 0 0 10px;
+      color: var(--accent);
+      font-size: 14px;
+      font-weight: 800;
+    }
+    h1 {
+      margin: 0;
+      font-size: clamp(30px, 5vw, 48px);
+      line-height: 1.14;
+      letter-spacing: 0;
+    }
+    .lead {
+      max-width: 900px;
+      margin: 16px 0 0;
+      color: var(--muted);
+      font-size: 18px;
+    }
+    main { padding: 28px 0 54px; }
+    .layout {
+      display: grid;
+      grid-template-columns: 260px 1fr;
+      gap: 24px;
+    }
+    nav {
+      position: sticky;
+      top: 18px;
+      align-self: start;
+      padding: 14px;
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      box-shadow: var(--shadow);
+    }
+    nav a {
+      display: block;
+      padding: 8px 10px;
+      color: var(--muted);
+      text-decoration: none;
+      border-radius: 6px;
+      font-size: 14px;
+      font-weight: 700;
+      line-height: 1.35;
+      overflow-wrap: anywhere;
+      word-break: break-word;
+    }
+    nav a:hover { color: var(--ink); background: var(--soft); }
+    section {
+      margin-bottom: 24px;
+      padding: 24px;
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      box-shadow: var(--shadow);
+    }
+    h2 { margin: 0 0 16px; font-size: 24px; letter-spacing: 0; }
+    h3 { margin: 22px 0 8px; font-size: 18px; letter-spacing: 0; }
+    p { margin: 0 0 14px; }
+    a { color: var(--blue); font-weight: 800; text-decoration: none; }
+    code { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 0.95em; }
+    pre {
+      margin: 10px 0 0;
+      padding: 14px;
+      overflow-x: auto;
+      color: var(--code-ink);
+      background: var(--code-bg);
+      border-radius: 8px;
+      font-size: 13px;
+      line-height: 1.5;
+    }
+    table { width: 100%; border-collapse: collapse; font-size: 14px; }
+    th, td { padding: 11px 12px; text-align: left; vertical-align: top; border-bottom: 1px solid var(--line); }
+    th { color: var(--muted); background: #fbfcfe; font-weight: 800; }
+    .top-links { display: flex; flex-wrap: wrap; gap: 14px; margin-top: 16px; }
+    .grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+    .card, .box {
+      padding: 16px;
+      background: #fbfcfe;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+    }
+    .status {
+      display: inline-flex;
+      align-items: center;
+      min-height: 24px;
+      padding: 2px 8px;
+      border-radius: 999px;
+      color: var(--accent);
+      background: var(--soft);
+      font-size: 12px;
+      font-weight: 900;
+    }
+    .note {
+      margin-top: 14px;
+      padding: 13px 15px;
+      color: #7a4a00;
+      background: #fff5dd;
+      border: 1px solid #eed39a;
+      border-radius: 8px;
+    }
+    .diagram { overflow-x: auto; padding-bottom: 4px; }
+    .sequence-svg {
+      display: block;
+      width: 1060px;
+      min-width: 1060px;
+      height: auto;
+      background: #fff;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+    }
+    .actor-title { fill: var(--ink); font-size: 18px; font-weight: 800; }
+    .actor-subtitle { fill: var(--muted); font-size: 12px; font-weight: 600; }
+    .lifeline { stroke: #cbd5e1; stroke-width: 3; stroke-dasharray: 10 12; }
+    .msg-line { fill: none; stroke-width: 2.5; }
+    .msg-label { fill: var(--ink); font-size: 14px; font-weight: 800; }
+    .msg-code { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 14px; font-weight: 700; }
+    .msg-note { fill: var(--muted); font-size: 12px; font-weight: 600; }
+    @media (max-width: 900px) {
+      .layout { grid-template-columns: 1fr; }
+      nav { position: static; }
+      .grid { grid-template-columns: 1fr; }
+      .wrap { width: min(100% - 24px, 1180px); }
+    }
+  </style>
+  
+</head>
+<body>
+<header>
+  <div class="wrap hero">
+    <p class="eyebrow">Sequence Diagram</p>
+    <h1>구독 플랜 변경 플로우</h1>
+    <p class="lead">회원이 현재 상품 구독 안에서 플랜을 변경할 때 즉시 업그레이드는 차액을 청구하고, 다운그레이드나 다음 주기 변경은 예약 상태로 저장한 뒤 다음 정기 결제부터 반영하는 흐름입니다.</p>
+    <p class="top-links"><a href="./sequence-index.html">전체 시퀀스 목록</a><a href="./all-api-doc.html">전체 API 목록</a><a href="./api-detail-doc.html">API 상세 설명</a></p>
+  </div>
+</header>
+<main class="wrap">
+  <section>
+    <h2>사용 API</h2>
+    <div class="grid"><div class="box"><a href="./all-api-doc.html#subscriptions-change-preview"><code>POST /subscriptions/{subscriptionId}/change-preview</code></a><p>목표 플랜 변경이 업그레이드인지 다운그레이드인지 서버가 판정하고, 유저 확인에 필요한 결제 금액과 적용일을 계산합니다.</p></div><div class="box"><a href="./all-api-doc.html#subscriptions-change"><code>PATCH /subscriptions/{subscriptionId}</code></a><p>플랜 변경 미리보기에서 발급한 확인 토큰으로 업그레이드는 즉시 변경하고 다운그레이드는 다음 결제일 반영으로 예약합니다.</p></div><div class="box"><a href="./all-api-doc.html#subscriptions-me"><code>GET /subscriptions/me</code></a><p>현재 회원의 상품별 구독 목록, 이용 기간, 다음 결제일, 공통 기본 결제수단 표시 정보를 조회합니다.</p></div><div class="box"><a href="./all-api-doc.html#internal-billing-run"><code>POST /internal/subscription-billing/run</code></a><p>다음 결제일이 도래한 구독을 찾아 정기 자동결제를 실행합니다.</p></div><div class="box"><a href="./all-api-doc.html#webhooks-toss-payments"><code>POST /webhooks/toss-payments</code></a><p>토스페이먼츠 결제 이벤트를 수신하고 내부 결제/구독 상태를 보정합니다.</p></div></div>
+  </section>
+  <section id="subscription-plan-upgrade-now">
+  <h2>즉시 업그레이드 및 차액 결제</h2>
+  <p>상위 플랜으로 즉시 변경하는 경우 남은 기간의 차액을 계산하고 저장된 빌링키로 추가 결제를 승인한 뒤 구독 권한을 바로 갱신합니다.</p>
+  <div class="diagram"><svg class="sequence-svg" viewBox="0 0 1060 1886" role="img" aria-label="즉시 업그레이드 및 차액 결제"><defs><marker id="arrow-client" viewBox="0 0 12 12" refX="10" refY="6" markerWidth="9" markerHeight="9" orient="auto-start-reverse"><path d="M 1 1 L 11 6 L 1 11 z" fill="#2457a6"></path></marker><marker id="arrow-server" viewBox="0 0 12 12" refX="10" refY="6" markerWidth="9" markerHeight="9" orient="auto-start-reverse"><path d="M 1 1 L 11 6 L 1 11 z" fill="#1c7c66"></path></marker><marker id="arrow-toss" viewBox="0 0 12 12" refX="10" refY="6" markerWidth="9" markerHeight="9" orient="auto-start-reverse"><path d="M 1 1 L 11 6 L 1 11 z" fill="#7b4bc4"></path></marker><marker id="arrow-provider" viewBox="0 0 12 12" refX="10" refY="6" markerWidth="9" markerHeight="9" orient="auto-start-reverse"><path d="M 1 1 L 11 6 L 1 11 z" fill="#7b4bc4"></path></marker><marker id="arrow-scheduler" viewBox="0 0 12 12" refX="10" refY="6" markerWidth="9" markerHeight="9" orient="auto-start-reverse"><path d="M 1 1 L 11 6 L 1 11 z" fill="#9a5b00"></path></marker><marker id="arrow-admin" viewBox="0 0 12 12" refX="10" refY="6" markerWidth="9" markerHeight="9" orient="auto-start-reverse"><path d="M 1 1 L 11 6 L 1 11 z" fill="#334155"></path></marker><marker id="arrow-system" viewBox="0 0 12 12" refX="10" refY="6" markerWidth="9" markerHeight="9" orient="auto-start-reverse"><path d="M 1 1 L 11 6 L 1 11 z" fill="#334155"></path></marker><marker id="arrow-success" viewBox="0 0 12 12" refX="10" refY="6" markerWidth="9" markerHeight="9" orient="auto-start-reverse"><path d="M 1 1 L 11 6 L 1 11 z" fill="#1c7c66"></path></marker><marker id="arrow-failure" viewBox="0 0 12 12" refX="10" refY="6" markerWidth="9" markerHeight="9" orient="auto-start-reverse"><path d="M 1 1 L 11 6 L 1 11 z" fill="#b42318"></path></marker><marker id="arrow-neutral" viewBox="0 0 12 12" refX="10" refY="6" markerWidth="9" markerHeight="9" orient="auto-start-reverse"><path d="M 1 1 L 11 6 L 1 11 z" fill="#65758a"></path></marker></defs><rect x="5" y="30" width="230" height="68" rx="8" fill="#ffffff" stroke="#2457a6" stroke-width="2"></rect><text x="120" y="58" text-anchor="middle" class="actor-title">웹 클라이언트</text><text x="120" y="80" text-anchor="middle" class="actor-subtitle">Browser / Mobile Web</text><line x1="120" y1="98" x2="120" y2="1856" class="lifeline"></line><rect x="415" y="30" width="230" height="68" rx="8" fill="#ffffff" stroke="#1c7c66" stroke-width="2"></rect><text x="530" y="58" text-anchor="middle" class="actor-title">우리 서버</text><text x="530" y="80" text-anchor="middle" class="actor-subtitle">Subscription API</text><line x1="530" y1="98" x2="530" y2="1856" class="lifeline"></line><rect x="825" y="30" width="230" height="68" rx="8" fill="#ffffff" stroke="#7b4bc4" stroke-width="2"></rect><text x="940" y="58" text-anchor="middle" class="actor-title">토스페이먼츠 서버</text><text x="940" y="80" text-anchor="middle" class="actor-subtitle">Billing &amp; Payment API</text><line x1="940" y1="98" x2="940" y2="1856" class="lifeline"></line><line x1="120" y1="145" x2="530" y2="145" class="msg-line" stroke="#1c7c66" marker-end="url(#arrow-server)"></line><text x="140" y="121" class="msg-label"><desc>플랜 변경 미리보기 요청</desc><tspan x="140" dy="0">플랜 변경 미리보기 요청</tspan></text><text x="140" y="173" class="msg-code" fill="#1c7c66"><desc>POST /subscriptions/{subscriptionId}/change-preview</desc><tspan x="140" dy="0">POST /subscriptions/{subscriptionId}/change-preview</tspan></text><text x="140" y="199" class="msg-note"><desc>targetPlanId</desc><tspan x="140" dy="0">targetPlanId</tspan></text><rect x="350" y="233" width="360" height="125" rx="8" fill="#fbfcfe" stroke="#65758a"></rect><text x="370" y="257" class="msg-label"><desc>회원과 구독 소유권 검증</desc><tspan x="370" dy="0">회원과 구독 소유권 검증</tspan></text><text x="370" y="289" class="msg-code" fill="#65758a"><desc>status IN active, grace_period</desc><tspan x="370" dy="0">status IN active, grace_period</tspan></text><text x="370" y="321" class="msg-note"><desc>해지 예약, 정지, 이미 변경 예약된 구독은 정책에 따라 거부 또는 예약 교체</desc><tspan x="370" dy="0">해지 예약, 정지, 이미 변경 예약된 구독은 정책에 따라 거부 또는 예약 교체</tspan></text><rect x="350" y="365" width="360" height="162" rx="8" fill="#fbfcfe" stroke="#65758a"></rect><text x="370" y="389" class="msg-label"><desc>서버가 업그레이드 판정</desc><tspan x="370" dy="0">서버가 업그레이드 판정</tspan></text><text x="370" y="421" class="msg-code" fill="#65758a"><desc>targetPlan.productCode == subscription.productCode</desc><tspan x="370" dy="0">targetPlan.productCode ==</tspan><tspan x="370" dy="20">subscription.productCode</tspan></text><text x="370" y="473" class="msg-note"><desc>targetPlan.productCode가 현재 구독의 productCode와 같아야 하며 업그레이드는 즉시 변경으로 고정</desc><tspan x="370" dy="0">targetPlan.productCode가 현재 구독의 productCode와 같아야</tspan><tspan x="370" dy="17">하며 업그레이드는 즉시 변경으로 고정</tspan></text><line x1="530" y1="541" x2="120" y2="541" class="msg-line" stroke="#2457a6" marker-end="url(#arrow-client)"></line><text x="140" y="517" class="msg-label"><desc>즉시 결제 금액과 다음 결제일 안내</desc><tspan x="140" dy="0">즉시 결제 금액과 다음 결제일 안내</tspan></text><text x="140" y="569" class="msg-code" fill="#2457a6"><desc>amount, nextBillingDate, confirmationToken</desc><tspan x="140" dy="0">amount, nextBillingDate, confirmationToken</tspan></text><text x="140" y="595" class="msg-note"><desc>프론트는 결제 금액과 결제일 안내를 보여주고 유저 확인을 받음</desc><tspan x="140" dy="0">프론트는 결제 금액과 결제일 안내를 보여주고 유저 확인을 받음</tspan></text><line x1="120" y1="673" x2="530" y2="673" class="msg-line" stroke="#1c7c66" marker-end="url(#arrow-server)"></line><text x="140" y="649" class="msg-label"><desc>유저 확인 후 플랜 변경 확정 요청</desc><tspan x="140" dy="0">유저 확인 후 플랜 변경 확정 요청</tspan></text><text x="140" y="701" class="msg-code" fill="#1c7c66"><desc>PATCH /subscriptions/{subscriptionId}</desc><tspan x="140" dy="0">PATCH /subscriptions/{subscriptionId}</tspan></text><text x="140" y="727" class="msg-note"><desc>confirmationToken, confirmed=true, Idempotency-Key</desc><tspan x="140" dy="0">confirmationToken, confirmed=true, Idempotency-Key</tspan></text><rect x="350" y="761" width="360" height="142" rx="8" fill="#fbfcfe" stroke="#65758a"></rect><text x="370" y="785" class="msg-label"><desc>확인 토큰 재검증 및 결제 회차 생성</desc><tspan x="370" dy="0">확인 토큰 재검증 및 결제 회차 생성</tspan></text><text x="370" y="817" class="msg-code" fill="#65758a"><desc>invoice.type = plan_change</desc><tspan x="370" dy="0">invoice.type = plan_change</tspan></text><text x="370" y="849" class="msg-note"><desc>토큰의 금액, targetPlanId, serverDecision이 현재 상태와 일치해야 함</desc><tspan x="370" dy="0">토큰의 금액, targetPlanId, serverDecision이 현재 상태와</tspan><tspan x="370" dy="17">일치해야 함</tspan></text><line x1="530" y1="937" x2="940" y2="937" class="msg-line" stroke="#7b4bc4" marker-end="url(#arrow-toss)"></line><text x="550" y="913" class="msg-label"><desc>차액 자동결제 승인 요청</desc><tspan x="550" dy="0">차액 자동결제 승인 요청</tspan></text><text x="550" y="965" class="msg-code" fill="#7b4bc4"><desc>POST /v1/billing/{billingKey}</desc><tspan x="550" dy="0">POST /v1/billing/{billingKey}</tspan></text><text x="550" y="991" class="msg-note"><desc>customerKey, amount=prorationAmount, orderId, orderName</desc><tspan x="550" dy="0">customerKey, amount=prorationAmount, orderId, orderName</tspan></text><line x1="940" y1="1069" x2="530" y2="1069" class="msg-line" stroke="#1c7c66" marker-end="url(#arrow-server)"></line><text x="550" y="1045" class="msg-label"><desc>차액 결제 승인 결과</desc><tspan x="550" dy="0">차액 결제 승인 결과</tspan></text><text x="550" y="1097" class="msg-code" fill="#1c7c66"><desc>paymentKey, status=DONE</desc><tspan x="550" dy="0">paymentKey, status=DONE</tspan></text><text x="550" y="1123" class="msg-note"><desc>실패 시 플랜 변경은 적용하지 않고 결제 실패 사유 저장</desc><tspan x="550" dy="0">실패 시 플랜 변경은 적용하지 않고 결제 실패 사유 저장</tspan></text><rect x="270" y="1157" width="520" height="125" rx="8" fill="#fbfcfe" stroke="#1c7c66" stroke-dasharray="7 6"></rect><text x="290" y="1181" class="msg-label"><desc>승인 성공 후 플랜 즉시 반영</desc><tspan x="290" dy="0">승인 성공 후 플랜 즉시 반영</tspan></text><text x="290" y="1213" class="msg-code" fill="#1c7c66"><desc>productCode 유지, planId=targetPlanId, invoice paid</desc><tspan x="290" dy="0">productCode 유지, planId=targetPlanId, invoice paid</tspan></text><text x="290" y="1245" class="msg-note"><desc>권한, 사용량 한도, 다음 결제 예정 금액을 새 플랜 기준으로 갱신</desc><tspan x="290" dy="0">권한, 사용량 한도, 다음 결제 예정 금액을 새 플랜 기준으로 갱신</tspan></text><line x1="530" y1="1333" x2="120" y2="1333" class="msg-line" stroke="#2457a6" marker-end="url(#arrow-client)"></line><text x="140" y="1309" class="msg-label"><desc>결제 성공 이메일 발송</desc><tspan x="140" dy="0">결제 성공 이메일 발송</tspan></text><text x="140" y="1361" class="msg-code" fill="#2457a6"><desc>receiptUrl, amount, invoiceId</desc><tspan x="140" dy="0">receiptUrl, amount, invoiceId</tspan></text><text x="140" y="1387" class="msg-note"><desc>즉시 결제 시 이메일로 영수증 링크를 발송</desc><tspan x="140" dy="0">즉시 결제 시 이메일로 영수증 링크를 발송</tspan></text><line x1="530" y1="1465" x2="120" y2="1465" class="msg-line" stroke="#2457a6" marker-end="url(#arrow-client)"></line><text x="140" y="1441" class="msg-label"><desc>플랜 변경 결과 반환</desc><tspan x="140" dy="0">플랜 변경 결과 반환</tspan></text><text x="140" y="1493" class="msg-code" fill="#2457a6"><desc>status=active, planChanged=true</desc><tspan x="140" dy="0">status=active, planChanged=true</tspan></text><text x="140" y="1519" class="msg-note"><desc>프론트는 구독 상세 정보를 다시 조회</desc><tspan x="140" dy="0">프론트는 구독 상세 정보를 다시 조회</tspan></text><line x1="120" y1="1597" x2="530" y2="1597" class="msg-line" stroke="#1c7c66" marker-end="url(#arrow-server)"></line><text x="140" y="1573" class="msg-label"><desc>현재 구독 상태 조회</desc><tspan x="140" dy="0">현재 구독 상태 조회</tspan></text><text x="140" y="1625" class="msg-code" fill="#1c7c66"><desc>GET /subscriptions/me</desc><tspan x="140" dy="0">GET /subscriptions/me</tspan></text><text x="140" y="1651" class="msg-note"><desc>변경된 플랜, 다음 결제일, 다음 결제 금액 표시</desc><tspan x="140" dy="0">변경된 플랜, 다음 결제일, 다음 결제 금액 표시</tspan></text><line x1="940" y1="1729" x2="530" y2="1729" class="msg-line" stroke="#1c7c66" marker-end="url(#arrow-server)"></line><text x="550" y="1705" class="msg-label"><desc>차액 결제 웹훅 수신 및 상태 보정</desc><tspan x="550" dy="0">차액 결제 웹훅 수신 및 상태 보정</tspan></text><text x="550" y="1757" class="msg-code" fill="#1c7c66"><desc>POST /webhooks/toss-payments</desc><tspan x="550" dy="0">POST /webhooks/toss-payments</tspan></text><text x="550" y="1783" class="msg-note"><desc>이미 paid 처리된 plan_change 인보이스면 멱등하게 200 OK</desc><tspan x="550" dy="0">이미 paid 처리된 plan_change 인보이스면 멱등하게 200 OK</tspan></text></svg></div>
+</section><section id="subscription-plan-change-next-cycle">
+  <h2>다음 주기 플랜 변경 예약</h2>
+  <p>다운그레이드 또는 결제 주기 변경처럼 즉시 결제하지 않는 변경은 현재 기간 종료일까지 기존 권한을 유지하고 다음 정기 결제부터 새 플랜을 적용합니다.</p>
+  <div class="diagram"><svg class="sequence-svg" viewBox="0 0 1060 1358" role="img" aria-label="다음 주기 플랜 변경 예약"><defs><marker id="arrow-client" viewBox="0 0 12 12" refX="10" refY="6" markerWidth="9" markerHeight="9" orient="auto-start-reverse"><path d="M 1 1 L 11 6 L 1 11 z" fill="#2457a6"></path></marker><marker id="arrow-server" viewBox="0 0 12 12" refX="10" refY="6" markerWidth="9" markerHeight="9" orient="auto-start-reverse"><path d="M 1 1 L 11 6 L 1 11 z" fill="#1c7c66"></path></marker><marker id="arrow-toss" viewBox="0 0 12 12" refX="10" refY="6" markerWidth="9" markerHeight="9" orient="auto-start-reverse"><path d="M 1 1 L 11 6 L 1 11 z" fill="#7b4bc4"></path></marker><marker id="arrow-provider" viewBox="0 0 12 12" refX="10" refY="6" markerWidth="9" markerHeight="9" orient="auto-start-reverse"><path d="M 1 1 L 11 6 L 1 11 z" fill="#7b4bc4"></path></marker><marker id="arrow-scheduler" viewBox="0 0 12 12" refX="10" refY="6" markerWidth="9" markerHeight="9" orient="auto-start-reverse"><path d="M 1 1 L 11 6 L 1 11 z" fill="#9a5b00"></path></marker><marker id="arrow-admin" viewBox="0 0 12 12" refX="10" refY="6" markerWidth="9" markerHeight="9" orient="auto-start-reverse"><path d="M 1 1 L 11 6 L 1 11 z" fill="#334155"></path></marker><marker id="arrow-system" viewBox="0 0 12 12" refX="10" refY="6" markerWidth="9" markerHeight="9" orient="auto-start-reverse"><path d="M 1 1 L 11 6 L 1 11 z" fill="#334155"></path></marker><marker id="arrow-success" viewBox="0 0 12 12" refX="10" refY="6" markerWidth="9" markerHeight="9" orient="auto-start-reverse"><path d="M 1 1 L 11 6 L 1 11 z" fill="#1c7c66"></path></marker><marker id="arrow-failure" viewBox="0 0 12 12" refX="10" refY="6" markerWidth="9" markerHeight="9" orient="auto-start-reverse"><path d="M 1 1 L 11 6 L 1 11 z" fill="#b42318"></path></marker><marker id="arrow-neutral" viewBox="0 0 12 12" refX="10" refY="6" markerWidth="9" markerHeight="9" orient="auto-start-reverse"><path d="M 1 1 L 11 6 L 1 11 z" fill="#65758a"></path></marker></defs><rect x="5" y="30" width="230" height="68" rx="8" fill="#ffffff" stroke="#2457a6" stroke-width="2"></rect><text x="120" y="58" text-anchor="middle" class="actor-title">웹 클라이언트</text><text x="120" y="80" text-anchor="middle" class="actor-subtitle">Browser / Mobile Web</text><line x1="120" y1="98" x2="120" y2="1328" class="lifeline"></line><rect x="415" y="30" width="230" height="68" rx="8" fill="#ffffff" stroke="#1c7c66" stroke-width="2"></rect><text x="530" y="58" text-anchor="middle" class="actor-title">우리 서버</text><text x="530" y="80" text-anchor="middle" class="actor-subtitle">Subscription API</text><line x1="530" y1="98" x2="530" y2="1328" class="lifeline"></line><rect x="825" y="30" width="230" height="68" rx="8" fill="#ffffff" stroke="#9a5b00" stroke-width="2"></rect><text x="940" y="58" text-anchor="middle" class="actor-title">스케줄러</text><text x="940" y="80" text-anchor="middle" class="actor-subtitle">Billing Batch</text><line x1="940" y1="98" x2="940" y2="1328" class="lifeline"></line><line x1="120" y1="145" x2="530" y2="145" class="msg-line" stroke="#1c7c66" marker-end="url(#arrow-server)"></line><text x="140" y="121" class="msg-label"><desc>플랜 변경 미리보기 요청</desc><tspan x="140" dy="0">플랜 변경 미리보기 요청</tspan></text><text x="140" y="173" class="msg-code" fill="#1c7c66"><desc>POST /subscriptions/{subscriptionId}/change-preview</desc><tspan x="140" dy="0">POST /subscriptions/{subscriptionId}/change-preview</tspan></text><text x="140" y="199" class="msg-note"><desc>targetPlanId</desc><tspan x="140" dy="0">targetPlanId</tspan></text><rect x="350" y="233" width="360" height="165" rx="8" fill="#fbfcfe" stroke="#65758a"></rect><text x="370" y="257" class="msg-label"><desc>서버가 다운그레이드 판정</desc><tspan x="370" dy="0">서버가 다운그레이드 판정</tspan></text><text x="370" y="289" class="msg-code" fill="#65758a"><desc>serverDecision=downgrade, targetPlan.productCode == subscription.productCode</desc><tspan x="370" dy="0">serverDecision=downgrade,</tspan><tspan x="370" dy="20">targetPlan.productCode ==</tspan><tspan x="370" dy="20">subscription.productCode</tspan></text><text x="370" y="361" class="msg-note"><desc>다운그레이드는 다음 결제일 반영으로 고정</desc><tspan x="370" dy="0">다운그레이드는 다음 결제일 반영으로 고정</tspan></text><line x1="530" y1="409" x2="120" y2="409" class="msg-line" stroke="#2457a6" marker-end="url(#arrow-client)"></line><text x="140" y="385" class="msg-label"><desc>다음 결제일 변경 예정 안내</desc><tspan x="140" dy="0">다음 결제일 변경 예정 안내</tspan></text><text x="140" y="437" class="msg-code" fill="#2457a6"><desc>nextBillingDate, effectiveAt, confirmationToken</desc><tspan x="140" dy="0">nextBillingDate, effectiveAt, confirmationToken</tspan></text><text x="140" y="463" class="msg-note"><desc>프론트는 구체적인 다음 결제일을 보여주고 유저 확인을 받음</desc><tspan x="140" dy="0">프론트는 구체적인 다음 결제일을 보여주고 유저 확인을 받음</tspan></text><line x1="120" y1="541" x2="530" y2="541" class="msg-line" stroke="#1c7c66" marker-end="url(#arrow-server)"></line><text x="140" y="517" class="msg-label"><desc>유저 확인 후 플랜 변경 확정 요청</desc><tspan x="140" dy="0">유저 확인 후 플랜 변경 확정 요청</tspan></text><text x="140" y="569" class="msg-code" fill="#1c7c66"><desc>PATCH /subscriptions/{subscriptionId}</desc><tspan x="140" dy="0">PATCH /subscriptions/{subscriptionId}</tspan></text><text x="140" y="595" class="msg-note"><desc>confirmationToken, confirmed=true, Idempotency-Key</desc><tspan x="140" dy="0">confirmationToken, confirmed=true, Idempotency-Key</tspan></text><rect x="270" y="629" width="520" height="125" rx="8" fill="#fbfcfe" stroke="#1c7c66" stroke-dasharray="7 6"></rect><text x="290" y="653" class="msg-label"><desc>변경 예약 저장</desc><tspan x="290" dy="0">변경 예약 저장</tspan></text><text x="290" y="685" class="msg-code" fill="#1c7c66"><desc>pendingPlanId=targetPlanId</desc><tspan x="290" dy="0">pendingPlanId=targetPlanId</tspan></text><text x="290" y="717" class="msg-note"><desc>effectiveAt=currentPeriodEnd, 현재 기간 권한은 유지</desc><tspan x="290" dy="0">effectiveAt=currentPeriodEnd, 현재 기간 권한은 유지</tspan></text><line x1="530" y1="805" x2="120" y2="805" class="msg-line" stroke="#2457a6" marker-end="url(#arrow-client)"></line><text x="140" y="781" class="msg-label"><desc>변경 예약 결과 반환</desc><tspan x="140" dy="0">변경 예약 결과 반환</tspan></text><text x="140" y="833" class="msg-code" fill="#2457a6"><desc>pendingPlan, effectiveAt, currentPlan</desc><tspan x="140" dy="0">pendingPlan, effectiveAt, currentPlan</tspan></text><text x="140" y="859" class="msg-note"><desc>프론트는 다음 주기 변경 예정 배지를 표시</desc><tspan x="140" dy="0">프론트는 다음 주기 변경 예정 배지를 표시</tspan></text><line x1="120" y1="937" x2="530" y2="937" class="msg-line" stroke="#1c7c66" marker-end="url(#arrow-server)"></line><text x="140" y="913" class="msg-label"><desc>현재 구독 상태 조회</desc><tspan x="140" dy="0">현재 구독 상태 조회</tspan></text><text x="140" y="965" class="msg-code" fill="#1c7c66"><desc>GET /subscriptions/me</desc><tspan x="140" dy="0">GET /subscriptions/me</tspan></text><text x="140" y="991" class="msg-note"><desc>현재 플랜과 예약된 목표 플랜을 함께 표시</desc><tspan x="140" dy="0">현재 플랜과 예약된 목표 플랜을 함께 표시</tspan></text><line x1="940" y1="1069" x2="530" y2="1069" class="msg-line" stroke="#1c7c66" marker-end="url(#arrow-server)"></line><text x="550" y="1045" class="msg-label"><desc>정기 과금 배치 실행</desc><tspan x="550" dy="0">정기 과금 배치 실행</tspan></text><text x="550" y="1097" class="msg-code" fill="#1c7c66"><desc>POST /internal/subscription-billing/run</desc><tspan x="550" dy="0">POST /internal/subscription-billing/run</tspan></text><text x="550" y="1123" class="msg-note"><desc>currentPeriodEnd에 도달한 변경 예약을 결제 대상 선정 전에 반영</desc><tspan x="550" dy="0">currentPeriodEnd에 도달한 변경 예약을 결제 대상 선정 전에 반영</tspan></text><rect x="270" y="1157" width="520" height="125" rx="8" fill="#fbfcfe" stroke="#1c7c66" stroke-dasharray="7 6"></rect><text x="290" y="1181" class="msg-label"><desc>새 플랜으로 다음 회차 청구</desc><tspan x="290" dy="0">새 플랜으로 다음 회차 청구</tspan></text><text x="290" y="1213" class="msg-code" fill="#1c7c66"><desc>productCode 유지, planId=pendingPlanId, pendingPlanId=null</desc><tspan x="290" dy="0">productCode 유지, planId=pendingPlanId, pendingPlanId=null</tspan></text><text x="290" y="1245" class="msg-note"><desc>인보이스 금액과 다음 결제일은 새 플랜 기준으로 계산</desc><tspan x="290" dy="0">인보이스 금액과 다음 결제일은 새 플랜 기준으로 계산</tspan></text></svg></div>
+</section>
+  <section id="states">
+  <h2>상태 요약</h2>
+  <table><thead><tr><th>시점</th><th>구독 상태</th><th>결제 상태</th><th>설명</th></tr></thead><tbody><tr><td>변경 요청 전</td><td><code>active</code></td><td><code>paid</code></td><td>회원은 현재 플랜으로 이용 중이며 저장된 빌링키가 활성 상태입니다.</td></tr><tr><td>차액 결제 생성 후</td><td><code>changing_plan</code></td><td><code>pending</code></td><td>중복 변경을 막기 위해 변경 작업과 결제 회차가 잠깁니다.</td></tr><tr><td>차액 결제 성공 후</td><td><code>active</code></td><td><code>paid</code></td><td>목표 플랜이 즉시 적용되고 다음 정기 결제 금액도 새 플랜 기준으로 갱신됩니다.</td></tr><tr><td>변경 예약 전</td><td><code>active</code></td><td><code>paid</code></td><td>현재 플랜 권한과 다음 결제일이 유지됩니다.</td></tr><tr><td>변경 예약 직후</td><td><code>active</code></td><td><code>paid</code></td><td>pendingPlanId와 effectiveAt이 저장되고 현재 기간에는 기존 플랜이 유지됩니다.</td></tr><tr><td>다음 정기 결제 시</td><td><code>active</code></td><td><code>pending</code></td><td>예약된 플랜이 실제 planId로 승격되고 새 플랜 금액으로 청구가 시작됩니다.</td></tr></tbody></table>
+</section>
+</main>
+</body>
+</html>

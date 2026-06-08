@@ -1,0 +1,638 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.local/payment-docs/documentation.schema.json",
+  "title": "Payment System Documentation Data",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["version", "site", "actors", "apiCategories", "apis", "apiDetails", "sequences", "policies"],
+  "properties": {
+    "version": {
+      "type": "string",
+      "description": "Documentation data schema version, for example 1.0.0."
+    },
+    "site": {
+      "$ref": "#/$defs/site"
+    },
+    "actors": {
+      "type": "array",
+      "description": "Reusable participants in sequence diagrams.",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/actor"
+      },
+      "uniqueItems": true
+    },
+    "apiCategories": {
+      "type": "array",
+      "description": "Groups used in the full API catalog page.",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/apiCategory"
+      }
+    },
+    "apis": {
+      "type": "array",
+      "description": "Single catalog of every API. Sequence documents reference these by id.",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/api"
+      }
+    },
+    "apiDetails": {
+      "type": "object",
+      "description": "Detailed API contracts keyed by api id. This is the single source of truth for headers, cookies, body, response, and logic.",
+      "additionalProperties": {
+        "$ref": "#/$defs/apiDetail"
+      }
+    },
+    "sequences": {
+      "type": "array",
+      "description": "Sequence diagram pages. Available pages can render diagrams; planned pages can appear only in the sequence index.",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/sequencePage"
+      }
+    },
+    "policies": {
+      "$ref": "#/$defs/policies"
+    }
+  },
+  "$defs": {
+    "site": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["title", "pages"],
+      "properties": {
+        "title": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        },
+        "pages": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["sequenceIndex", "apiCatalog", "apiDetails"],
+          "properties": {
+            "sequenceIndex": {
+              "$ref": "#/$defs/pageRef"
+            },
+            "apiCatalog": {
+              "$ref": "#/$defs/pageRef"
+            },
+            "apiDetails": {
+              "$ref": "#/$defs/pageRef"
+            }
+          }
+        }
+      }
+    },
+    "pageRef": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["title", "file"],
+      "properties": {
+        "title": {
+          "type": "string"
+        },
+        "file": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9._/-]+\\.html$"
+        }
+      }
+    },
+    "actor": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "label", "subtitle", "kind"],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/id"
+        },
+        "label": {
+          "type": "string"
+        },
+        "subtitle": {
+          "type": "string"
+        },
+        "kind": {
+          "type": "string",
+          "enum": ["client", "server", "provider", "scheduler", "admin", "system"]
+        },
+        "theme": {
+          "type": "string",
+          "enum": ["client", "server", "toss", "danger", "neutral"]
+        }
+      }
+    },
+    "apiCategory": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "title", "order"],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/id"
+        },
+        "title": {
+          "type": "string"
+        },
+        "order": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "description": {
+          "type": "string"
+        }
+      }
+    },
+    "api": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "categoryId", "method", "path", "role", "detailStatus"],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/id"
+        },
+        "categoryId": {
+          "$ref": "#/$defs/id"
+        },
+        "method": {
+          "$ref": "#/$defs/httpMethod"
+        },
+        "path": {
+          "type": "string",
+          "pattern": "^/[A-Za-z0-9{}._~:/-]+$"
+        },
+        "role": {
+          "type": "string",
+          "description": "One sentence describing what this API does."
+        },
+        "visibility": {
+          "type": "string",
+          "enum": ["public", "authenticated", "webhook", "internal", "admin"],
+          "default": "authenticated"
+        },
+        "detailStatus": {
+          "type": "string",
+          "enum": ["available", "planned"]
+        },
+        "detailAnchor": {
+          "type": "string",
+          "description": "Anchor id in the API detail page when detailStatus is available."
+        },
+        "tags": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "uniqueItems": true
+        }
+      }
+    },
+    "apiDetail": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["summary", "request", "responses", "logic"],
+      "properties": {
+        "summary": {
+          "type": "string"
+        },
+        "redirectNote": {
+          "type": "string",
+          "description": "Use for APIs such as subscription confirm that are called by the frontend success page, not directly by Toss redirect."
+        },
+        "request": {
+          "$ref": "#/$defs/requestContract"
+        },
+        "frontendInputs": {
+          "type": "array",
+          "description": "Values collected by a frontend page before calling this API.",
+          "items": {
+            "$ref": "#/$defs/sourceField"
+          }
+        },
+        "responses": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/responseContract"
+          }
+        },
+        "logic": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string"
+          }
+        },
+        "failureRules": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/failureRule"
+          }
+        },
+        "externalCalls": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/externalCall"
+          }
+        },
+        "notes": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "requestContract": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["headers", "cookies"],
+      "properties": {
+        "headers": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/field"
+          }
+        },
+        "cookies": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/field"
+          }
+        },
+        "bodyFields": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/field"
+          }
+        },
+        "bodyExample": {
+          "$ref": "#/$defs/jsonValue"
+        }
+      }
+    },
+    "responseContract": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status", "description"],
+      "properties": {
+        "status": {
+          "type": "integer",
+          "minimum": 100,
+          "maximum": 599
+        },
+        "description": {
+          "type": "string"
+        },
+        "bodyExample": {
+          "$ref": "#/$defs/jsonValue"
+        }
+      }
+    },
+    "field": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "required", "description"],
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "required": {
+          "type": "boolean"
+        },
+        "description": {
+          "type": "string"
+        },
+        "type": {
+          "type": "string"
+        },
+        "example": {
+          "$ref": "#/$defs/jsonValue"
+        }
+      }
+    },
+    "sourceField": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "source", "description"],
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "source": {
+          "type": "string",
+          "enum": ["redirectQuery", "sessionStorage", "routeState", "serverResponse", "generatedByFrontend", "cookie", "header"]
+        },
+        "description": {
+          "type": "string"
+        }
+      }
+    },
+    "failureRule": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["code", "httpStatus", "description", "retryable"],
+      "properties": {
+        "code": {
+          "type": "string",
+          "pattern": "^[A-Z0-9_]+$"
+        },
+        "httpStatus": {
+          "type": "integer",
+          "minimum": 100,
+          "maximum": 599
+        },
+        "description": {
+          "type": "string"
+        },
+        "retryable": {
+          "type": "boolean"
+        },
+        "resultState": {
+          "type": "string"
+        }
+      }
+    },
+    "externalCall": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["provider", "method", "path", "purpose"],
+      "properties": {
+        "provider": {
+          "type": "string",
+          "enum": ["tosspayments"]
+        },
+        "method": {
+          "$ref": "#/$defs/httpMethod"
+        },
+        "path": {
+          "type": "string"
+        },
+        "purpose": {
+          "type": "string"
+        }
+      }
+    },
+    "sequencePage": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "title", "file", "status", "kind", "summary", "apiIds"],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/id"
+        },
+        "title": {
+          "type": "string"
+        },
+        "file": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9._/-]+\\.html$"
+        },
+        "status": {
+          "type": "string",
+          "enum": ["available", "planned"]
+        },
+        "kind": {
+          "type": "string",
+          "enum": ["success", "failure", "operation", "payment", "admin"]
+        },
+        "summary": {
+          "type": "string"
+        },
+        "apiIds": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/id"
+          },
+          "uniqueItems": true
+        },
+        "actorIds": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/id"
+          },
+          "uniqueItems": true
+        },
+        "diagrams": {
+          "type": "array",
+          "description": "Available sequence pages render one or more diagrams. Failure pages usually have multiple diagrams.",
+          "items": {
+            "$ref": "#/$defs/diagram"
+          }
+        }
+      }
+    },
+    "diagram": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "title", "actorIds", "steps"],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/id"
+        },
+        "title": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        },
+        "actorIds": {
+          "type": "array",
+          "minItems": 2,
+          "items": {
+            "$ref": "#/$defs/id"
+          }
+        },
+        "relatedApiIds": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/id"
+          },
+          "uniqueItems": true
+        },
+        "steps": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/sequenceStep"
+          }
+        },
+        "stateSummary": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/stateTransition"
+          }
+        }
+      }
+    },
+    "sequenceStep": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["type", "label"],
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": ["message", "self", "callout", "branch"]
+        },
+        "from": {
+          "$ref": "#/$defs/id"
+        },
+        "to": {
+          "$ref": "#/$defs/id"
+        },
+        "label": {
+          "type": "string"
+        },
+        "apiId": {
+          "$ref": "#/$defs/id"
+        },
+        "externalCall": {
+          "$ref": "#/$defs/externalCall"
+        },
+        "code": {
+          "type": "string"
+        },
+        "note": {
+          "type": "string"
+        },
+        "theme": {
+          "type": "string",
+          "enum": ["client", "server", "toss", "success", "failure", "neutral"]
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "message"
+              }
+            }
+          },
+          "then": {
+            "required": ["from", "to"]
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "self"
+              }
+            }
+          },
+          "then": {
+            "required": ["from"]
+          }
+        }
+      ]
+    },
+    "stateTransition": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["event", "subscriptionState", "paymentState", "description"],
+      "properties": {
+        "event": {
+          "type": "string"
+        },
+        "subscriptionState": {
+          "type": "string"
+        },
+        "paymentState": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        },
+        "frontendAction": {
+          "type": "string"
+        }
+      }
+    },
+    "policies": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["idempotency", "httpStatus", "security", "tosspayments"],
+      "properties": {
+        "idempotency": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "httpStatus": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/httpStatusPolicy"
+          }
+        },
+        "security": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "tosspayments": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "httpStatusPolicy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status", "usage"],
+      "properties": {
+        "status": {
+          "type": "integer",
+          "minimum": 100,
+          "maximum": 599
+        },
+        "usage": {
+          "type": "string"
+        }
+      }
+    },
+    "httpMethod": {
+      "type": "string",
+      "enum": ["GET", "POST", "PUT", "PATCH", "DELETE"]
+    },
+    "id": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9-]*$"
+    },
+    "jsonValue": {
+      "description": "Any JSON value.",
+      "oneOf": [
+        {
+          "type": "null"
+        },
+        {
+          "type": "boolean"
+        },
+        {
+          "type": "number"
+        },
+        {
+          "type": "string"
+        },
+        {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/jsonValue"
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/$defs/jsonValue"
+          }
+        }
+      ]
+    }
+  }
+}

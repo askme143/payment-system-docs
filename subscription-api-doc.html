@@ -1,0 +1,191 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>신규 회원 최초 구독 성공 플로우</title>
+  <style>
+    :root {
+      --bg: #f5f7fb;
+      --surface: #ffffff;
+      --ink: #17202a;
+      --muted: #65758a;
+      --line: #d8e0ea;
+      --accent: #1c7c66;
+      --blue: #2457a6;
+      --danger: #b42318;
+      --soft: #e5f4ef;
+      --shadow: 0 14px 34px rgba(20, 35, 55, 0.08);
+      --code-bg: #111827;
+      --code-ink: #e5e7eb;
+    }
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      color: var(--ink);
+      background: var(--bg);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      line-height: 1.58;
+    }
+    header {
+      background: var(--surface);
+      border-bottom: 1px solid var(--line);
+    }
+    .wrap {
+      width: min(1180px, calc(100% - 36px));
+      margin: 0 auto;
+    }
+    .hero { padding: 42px 0 28px; }
+    .eyebrow {
+      margin: 0 0 10px;
+      color: var(--accent);
+      font-size: 14px;
+      font-weight: 800;
+    }
+    h1 {
+      margin: 0;
+      font-size: clamp(30px, 5vw, 48px);
+      line-height: 1.14;
+      letter-spacing: 0;
+    }
+    .lead {
+      max-width: 900px;
+      margin: 16px 0 0;
+      color: var(--muted);
+      font-size: 18px;
+    }
+    main { padding: 28px 0 54px; }
+    .layout {
+      display: grid;
+      grid-template-columns: 260px 1fr;
+      gap: 24px;
+    }
+    nav {
+      position: sticky;
+      top: 18px;
+      align-self: start;
+      padding: 14px;
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      box-shadow: var(--shadow);
+    }
+    nav a {
+      display: block;
+      padding: 8px 10px;
+      color: var(--muted);
+      text-decoration: none;
+      border-radius: 6px;
+      font-size: 14px;
+      font-weight: 700;
+      line-height: 1.35;
+      overflow-wrap: anywhere;
+      word-break: break-word;
+    }
+    nav a:hover { color: var(--ink); background: var(--soft); }
+    section {
+      margin-bottom: 24px;
+      padding: 24px;
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      box-shadow: var(--shadow);
+    }
+    h2 { margin: 0 0 16px; font-size: 24px; letter-spacing: 0; }
+    h3 { margin: 22px 0 8px; font-size: 18px; letter-spacing: 0; }
+    p { margin: 0 0 14px; }
+    a { color: var(--blue); font-weight: 800; text-decoration: none; }
+    code { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 0.95em; }
+    pre {
+      margin: 10px 0 0;
+      padding: 14px;
+      overflow-x: auto;
+      color: var(--code-ink);
+      background: var(--code-bg);
+      border-radius: 8px;
+      font-size: 13px;
+      line-height: 1.5;
+    }
+    table { width: 100%; border-collapse: collapse; font-size: 14px; }
+    th, td { padding: 11px 12px; text-align: left; vertical-align: top; border-bottom: 1px solid var(--line); }
+    th { color: var(--muted); background: #fbfcfe; font-weight: 800; }
+    .top-links { display: flex; flex-wrap: wrap; gap: 14px; margin-top: 16px; }
+    .grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+    .card, .box {
+      padding: 16px;
+      background: #fbfcfe;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+    }
+    .status {
+      display: inline-flex;
+      align-items: center;
+      min-height: 24px;
+      padding: 2px 8px;
+      border-radius: 999px;
+      color: var(--accent);
+      background: var(--soft);
+      font-size: 12px;
+      font-weight: 900;
+    }
+    .note {
+      margin-top: 14px;
+      padding: 13px 15px;
+      color: #7a4a00;
+      background: #fff5dd;
+      border: 1px solid #eed39a;
+      border-radius: 8px;
+    }
+    .diagram { overflow-x: auto; padding-bottom: 4px; }
+    .sequence-svg {
+      display: block;
+      width: 1060px;
+      min-width: 1060px;
+      height: auto;
+      background: #fff;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+    }
+    .actor-title { fill: var(--ink); font-size: 18px; font-weight: 800; }
+    .actor-subtitle { fill: var(--muted); font-size: 12px; font-weight: 600; }
+    .lifeline { stroke: #cbd5e1; stroke-width: 3; stroke-dasharray: 10 12; }
+    .msg-line { fill: none; stroke-width: 2.5; }
+    .msg-label { fill: var(--ink); font-size: 14px; font-weight: 800; }
+    .msg-code { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 14px; font-weight: 700; }
+    .msg-note { fill: var(--muted); font-size: 12px; font-weight: 600; }
+    @media (max-width: 900px) {
+      .layout { grid-template-columns: 1fr; }
+      nav { position: static; }
+      .grid { grid-template-columns: 1fr; }
+      .wrap { width: min(100% - 24px, 1180px); }
+    }
+  </style>
+  
+</head>
+<body>
+<header>
+  <div class="wrap hero">
+    <p class="eyebrow">Sequence Diagram</p>
+    <h1>신규 회원 최초 구독 성공 플로우</h1>
+    <p class="lead">체크아웃 생성, 빌링 인증, 빌링키 발급, 첫 자동결제 승인, 웹훅 보정까지의 성공 흐름입니다.</p>
+    <p class="top-links"><a href="./sequence-index.html">전체 시퀀스 목록</a><a href="./all-api-doc.html">전체 API 목록</a><a href="./api-detail-doc.html">API 상세 설명</a></p>
+  </div>
+</header>
+<main class="wrap">
+  <section>
+    <h2>사용 API</h2>
+    <div class="grid"><div class="box"><a href="./all-api-doc.html#subscriptions-checkout"><code>POST /subscriptions/checkout</code></a><p>구독 빌링 인증 전에 구독 대기 레코드와 토스 SDK 호출 데이터를 생성합니다.</p></div><div class="box"><a href="./all-api-doc.html#subscriptions-confirm"><code>POST /subscriptions/confirm</code></a><p>프론트 성공 페이지가 호출하며, 빌링키 발급과 첫 결제로 구독을 활성화합니다.</p></div><div class="box"><a href="./all-api-doc.html#webhooks-toss-payments"><code>POST /webhooks/toss-payments</code></a><p>토스페이먼츠 결제 이벤트를 수신하고 내부 결제/구독 상태를 보정합니다.</p></div><div class="box"><a href="./all-api-doc.html#subscriptions-me"><code>GET /subscriptions/me</code></a><p>현재 회원의 상품별 구독 목록, 이용 기간, 다음 결제일, 공통 기본 결제수단 표시 정보를 조회합니다.</p></div></div>
+  </section>
+  <section id="initial-subscription-success-main">
+  <h2>신규 회원 최초 구독 성공</h2>
+  
+  <div class="diagram"><svg class="sequence-svg" viewBox="0 0 1060 2150" role="img" aria-label="신규 회원 최초 구독 성공"><defs><marker id="arrow-client" viewBox="0 0 12 12" refX="10" refY="6" markerWidth="9" markerHeight="9" orient="auto-start-reverse"><path d="M 1 1 L 11 6 L 1 11 z" fill="#2457a6"></path></marker><marker id="arrow-server" viewBox="0 0 12 12" refX="10" refY="6" markerWidth="9" markerHeight="9" orient="auto-start-reverse"><path d="M 1 1 L 11 6 L 1 11 z" fill="#1c7c66"></path></marker><marker id="arrow-toss" viewBox="0 0 12 12" refX="10" refY="6" markerWidth="9" markerHeight="9" orient="auto-start-reverse"><path d="M 1 1 L 11 6 L 1 11 z" fill="#7b4bc4"></path></marker><marker id="arrow-provider" viewBox="0 0 12 12" refX="10" refY="6" markerWidth="9" markerHeight="9" orient="auto-start-reverse"><path d="M 1 1 L 11 6 L 1 11 z" fill="#7b4bc4"></path></marker><marker id="arrow-scheduler" viewBox="0 0 12 12" refX="10" refY="6" markerWidth="9" markerHeight="9" orient="auto-start-reverse"><path d="M 1 1 L 11 6 L 1 11 z" fill="#9a5b00"></path></marker><marker id="arrow-admin" viewBox="0 0 12 12" refX="10" refY="6" markerWidth="9" markerHeight="9" orient="auto-start-reverse"><path d="M 1 1 L 11 6 L 1 11 z" fill="#334155"></path></marker><marker id="arrow-system" viewBox="0 0 12 12" refX="10" refY="6" markerWidth="9" markerHeight="9" orient="auto-start-reverse"><path d="M 1 1 L 11 6 L 1 11 z" fill="#334155"></path></marker><marker id="arrow-success" viewBox="0 0 12 12" refX="10" refY="6" markerWidth="9" markerHeight="9" orient="auto-start-reverse"><path d="M 1 1 L 11 6 L 1 11 z" fill="#1c7c66"></path></marker><marker id="arrow-failure" viewBox="0 0 12 12" refX="10" refY="6" markerWidth="9" markerHeight="9" orient="auto-start-reverse"><path d="M 1 1 L 11 6 L 1 11 z" fill="#b42318"></path></marker><marker id="arrow-neutral" viewBox="0 0 12 12" refX="10" refY="6" markerWidth="9" markerHeight="9" orient="auto-start-reverse"><path d="M 1 1 L 11 6 L 1 11 z" fill="#65758a"></path></marker></defs><rect x="5" y="30" width="230" height="68" rx="8" fill="#ffffff" stroke="#2457a6" stroke-width="2"></rect><text x="120" y="58" text-anchor="middle" class="actor-title">웹 클라이언트</text><text x="120" y="80" text-anchor="middle" class="actor-subtitle">Browser / Mobile Web</text><line x1="120" y1="98" x2="120" y2="2120" class="lifeline"></line><rect x="415" y="30" width="230" height="68" rx="8" fill="#ffffff" stroke="#1c7c66" stroke-width="2"></rect><text x="530" y="58" text-anchor="middle" class="actor-title">우리 서버</text><text x="530" y="80" text-anchor="middle" class="actor-subtitle">Subscription API</text><line x1="530" y1="98" x2="530" y2="2120" class="lifeline"></line><rect x="825" y="30" width="230" height="68" rx="8" fill="#ffffff" stroke="#7b4bc4" stroke-width="2"></rect><text x="940" y="58" text-anchor="middle" class="actor-title">토스페이먼츠 서버</text><text x="940" y="80" text-anchor="middle" class="actor-subtitle">Billing &amp; Payment API</text><line x1="940" y1="98" x2="940" y2="2120" class="lifeline"></line><line x1="120" y1="145" x2="530" y2="145" class="msg-line" stroke="#1c7c66" marker-end="url(#arrow-server)"></line><text x="140" y="121" class="msg-label"><desc>구독 체크아웃 생성 요청</desc><tspan x="140" dy="0">구독 체크아웃 생성 요청</tspan></text><text x="140" y="173" class="msg-code" fill="#1c7c66"><desc>POST /subscriptions/checkout</desc><tspan x="140" dy="0">POST /subscriptions/checkout</tspan></text><text x="140" y="199" class="msg-note"><desc>planId, successUrl, failUrl</desc><tspan x="140" dy="0">planId, successUrl, failUrl</tspan></text><rect x="350" y="233" width="360" height="125" rx="8" fill="#fbfcfe" stroke="#65758a"></rect><text x="370" y="257" class="msg-label"><desc>상품별 중복 구독 검증</desc><tspan x="370" dy="0">상품별 중복 구독 검증</tspan></text><text x="370" y="289" class="msg-code" fill="#65758a"><desc>UNIQUE active(userId, productCode)</desc><tspan x="370" dy="0">UNIQUE active(userId, productCode)</tspan></text><text x="370" y="321" class="msg-note"><desc>같은 상품의 활성 구독은 거부하고 다른 상품의 활성 구독은 허용</desc><tspan x="370" dy="0">같은 상품의 활성 구독은 거부하고 다른 상품의 활성 구독은 허용</tspan></text><rect x="350" y="365" width="360" height="125" rx="8" fill="#fbfcfe" stroke="#65758a"></rect><text x="370" y="389" class="msg-label"><desc>주문 및 구독 대기 상태 생성</desc><tspan x="370" dy="0">주문 및 구독 대기 상태 생성</tspan></text><text x="370" y="421" class="msg-code" fill="#65758a"><desc>pending_billing_auth</desc><tspan x="370" dy="0">pending_billing_auth</tspan></text><text x="370" y="453" class="msg-note"><desc>orderId, customerKey, amount 계산</desc><tspan x="370" dy="0">orderId, customerKey, amount 계산</tspan></text><line x1="530" y1="541" x2="120" y2="541" class="msg-line" stroke="#2457a6" marker-end="url(#arrow-client)"></line><text x="140" y="517" class="msg-label"><desc>토스 SDK 호출 데이터 반환</desc><tspan x="140" dy="0">토스 SDK 호출 데이터 반환</tspan></text><text x="140" y="569" class="msg-code" fill="#2457a6"><desc>subscriptionId, orderId, customerKey, amount</desc><tspan x="140" dy="0">subscriptionId, orderId, customerKey, amount</tspan></text><text x="140" y="595" class="msg-note"><desc>successUrl에는 subscriptionId 포함</desc><tspan x="140" dy="0">successUrl에는 subscriptionId 포함</tspan></text><rect x="30" y="629" width="360" height="125" rx="8" fill="#fbfcfe" stroke="#65758a"></rect><text x="50" y="653" class="msg-label"><desc>프론트가 구독 컨텍스트 보관</desc><tspan x="50" dy="0">프론트가 구독 컨텍스트 보관</tspan></text><text x="50" y="685" class="msg-code" fill="#65758a"><desc>subscriptionId</desc><tspan x="50" dy="0">subscriptionId</tspan></text><text x="50" y="717" class="msg-note"><desc>sessionStorage, URL state, route state 등</desc><tspan x="50" dy="0">sessionStorage, URL state, route state 등</tspan></text><line x1="120" y1="805" x2="940" y2="805" class="msg-line" stroke="#7b4bc4" marker-end="url(#arrow-toss)"></line><text x="140" y="781" class="msg-label"><desc>빌링 인증 요청</desc><tspan x="140" dy="0">빌링 인증 요청</tspan></text><text x="140" y="833" class="msg-code" fill="#7b4bc4"><desc>TossPayments.requestBillingAuth(...)</desc><tspan x="140" dy="0">TossPayments.requestBillingAuth(...)</tspan></text><text x="140" y="859" class="msg-note"><desc>customerKey, successUrl?subscriptionId=..., failUrl</desc><tspan x="140" dy="0">customerKey, successUrl?subscriptionId=..., failUrl</tspan></text><line x1="940" y1="937" x2="120" y2="937" class="msg-line" stroke="#2457a6" marker-end="url(#arrow-client)"></line><text x="140" y="913" class="msg-label"><desc>프론트 성공 페이지로 리다이렉트</desc><tspan x="140" dy="0">프론트 성공 페이지로 리다이렉트</tspan></text><text x="140" y="965" class="msg-code" fill="#2457a6"><desc>/billing/success?subscriptionId=...&amp;authKey=...</desc><tspan x="140" dy="0">/billing/success?subscriptionId=...&amp;authKey=...</tspan></text><text x="140" y="991" class="msg-note"><desc>토스는 서버 confirm API로 직접 POST하지 않음</desc><tspan x="140" dy="0">토스는 서버 confirm API로 직접 POST하지 않음</tspan></text><line x1="120" y1="1069" x2="530" y2="1069" class="msg-line" stroke="#1c7c66" marker-end="url(#arrow-server)"></line><text x="140" y="1045" class="msg-label"><desc>프론트 성공 페이지가 구독 확정 요청</desc><tspan x="140" dy="0">프론트 성공 페이지가 구독 확정 요청</tspan></text><text x="140" y="1097" class="msg-code" fill="#1c7c66"><desc>POST /subscriptions/confirm</desc><tspan x="140" dy="0">POST /subscriptions/confirm</tspan></text><text x="140" y="1123" class="msg-note"><desc>Body: subscriptionId, authKey, customerKey / Header: Idempotency-Key / Cookie: session</desc><tspan x="140" dy="0">Body: subscriptionId, authKey, customerKey / Header: Idempotency-Key /</tspan><tspan x="140" dy="17">Cookie: session</tspan></text><line x1="530" y1="1201" x2="940" y2="1201" class="msg-line" stroke="#7b4bc4" marker-end="url(#arrow-toss)"></line><text x="550" y="1177" class="msg-label"><desc>빌링키 발급 요청</desc><tspan x="550" dy="0">빌링키 발급 요청</tspan></text><text x="550" y="1229" class="msg-code" fill="#7b4bc4"><desc>POST /v1/billing/authorizations/issue</desc><tspan x="550" dy="0">POST /v1/billing/authorizations/issue</tspan></text><text x="550" y="1255" class="msg-note"><desc>authKey, customerKey</desc><tspan x="550" dy="0">authKey, customerKey</tspan></text><line x1="940" y1="1333" x2="530" y2="1333" class="msg-line" stroke="#1c7c66" marker-end="url(#arrow-server)"></line><text x="550" y="1309" class="msg-label"><desc>빌링키 발급 응답</desc><tspan x="550" dy="0">빌링키 발급 응답</tspan></text><text x="550" y="1361" class="msg-code" fill="#1c7c66"><desc>billingKey, card, authenticatedAt</desc><tspan x="550" dy="0">billingKey, card, authenticatedAt</tspan></text><text x="550" y="1387" class="msg-note"><desc>서버가 billingKey를 암호화 저장</desc><tspan x="550" dy="0">서버가 billingKey를 암호화 저장</tspan></text><line x1="530" y1="1465" x2="940" y2="1465" class="msg-line" stroke="#7b4bc4" marker-end="url(#arrow-toss)"></line><text x="550" y="1441" class="msg-label"><desc>첫 자동결제 승인 요청</desc><tspan x="550" dy="0">첫 자동결제 승인 요청</tspan></text><text x="550" y="1493" class="msg-code" fill="#7b4bc4"><desc>POST /v1/billing/{billingKey}</desc><tspan x="550" dy="0">POST /v1/billing/{billingKey}</tspan></text><text x="550" y="1519" class="msg-note"><desc>customerKey, amount, orderId, orderName</desc><tspan x="550" dy="0">customerKey, amount, orderId, orderName</tspan></text><line x1="940" y1="1597" x2="530" y2="1597" class="msg-line" stroke="#1c7c66" marker-end="url(#arrow-server)"></line><text x="550" y="1573" class="msg-label"><desc>첫 결제 승인 결과</desc><tspan x="550" dy="0">첫 결제 승인 결과</tspan></text><text x="550" y="1625" class="msg-code" fill="#1c7c66"><desc>paymentKey, status=DONE, approvedAt</desc><tspan x="550" dy="0">paymentKey, status=DONE, approvedAt</tspan></text><text x="550" y="1651" class="msg-note"><desc>실패 시 failure 객체 또는 오류 코드 반환</desc><tspan x="550" dy="0">실패 시 failure 객체 또는 오류 코드 반환</tspan></text><rect x="270" y="1685" width="520" height="125" rx="8" fill="#fbfcfe" stroke="#1c7c66" stroke-dasharray="7 6"></rect><text x="290" y="1709" class="msg-label"><desc>성공 분기</desc><tspan x="290" dy="0">성공 분기</tspan></text><text x="290" y="1741" class="msg-code" fill="#1c7c66"><desc>결제 paid, 인보이스 paid, 구독 active</desc><tspan x="290" dy="0">결제 paid, 인보이스 paid, 구독 active</tspan></text><text x="290" y="1773" class="msg-note"><desc>nextBillingDate 생성</desc><tspan x="290" dy="0">nextBillingDate 생성</tspan></text><line x1="530" y1="1861" x2="120" y2="1861" class="msg-line" stroke="#2457a6" marker-end="url(#arrow-client)"></line><text x="140" y="1837" class="msg-label"><desc>구독 활성화 결과 반환</desc><tspan x="140" dy="0">구독 활성화 결과 반환</tspan></text><text x="140" y="1889" class="msg-code" fill="#2457a6"><desc>status=active, paymentStatus=paid</desc><tspan x="140" dy="0">status=active, paymentStatus=paid</tspan></text><text x="140" y="1915" class="msg-note"><desc>프론트는 현재 구독 화면으로 이동</desc><tspan x="140" dy="0">프론트는 현재 구독 화면으로 이동</tspan></text><line x1="940" y1="1993" x2="530" y2="1993" class="msg-line" stroke="#1c7c66" marker-end="url(#arrow-server)"></line><text x="550" y="1969" class="msg-label"><desc>결제 상태 웹훅 수신 및 상태 보정</desc><tspan x="550" dy="0">결제 상태 웹훅 수신 및 상태 보정</tspan></text><text x="550" y="2021" class="msg-code" fill="#1c7c66"><desc>POST /webhooks/toss-payments</desc><tspan x="550" dy="0">POST /webhooks/toss-payments</tspan></text><text x="550" y="2047" class="msg-note"><desc>멱등 처리 후 이미 처리된 결제면 200 OK</desc><tspan x="550" dy="0">멱등 처리 후 이미 처리된 결제면 200 OK</tspan></text></svg></div>
+</section>
+  <section id="states">
+  <h2>상태 요약</h2>
+  <table><thead><tr><th>시점</th><th>구독 상태</th><th>결제 상태</th><th>설명</th></tr></thead><tbody><tr><td>체크아웃 생성 후</td><td><code>pending_billing_auth</code></td><td><code>ready</code></td><td>회원이 토스 빌링 인증을 시작할 수 있습니다.</td></tr><tr><td>첫 결제 성공 후</td><td><code>active</code></td><td><code>paid</code></td><td>서비스 이용이 가능하고 다음 결제일이 예약됩니다.</td></tr></tbody></table>
+</section>
+</main>
+</body>
+</html>

@@ -1,0 +1,191 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>구독 재개 플로우</title>
+  <style>
+    :root {
+      --bg: #f5f7fb;
+      --surface: #ffffff;
+      --ink: #17202a;
+      --muted: #65758a;
+      --line: #d8e0ea;
+      --accent: #1c7c66;
+      --blue: #2457a6;
+      --danger: #b42318;
+      --soft: #e5f4ef;
+      --shadow: 0 14px 34px rgba(20, 35, 55, 0.08);
+      --code-bg: #111827;
+      --code-ink: #e5e7eb;
+    }
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      color: var(--ink);
+      background: var(--bg);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      line-height: 1.58;
+    }
+    header {
+      background: var(--surface);
+      border-bottom: 1px solid var(--line);
+    }
+    .wrap {
+      width: min(1180px, calc(100% - 36px));
+      margin: 0 auto;
+    }
+    .hero { padding: 42px 0 28px; }
+    .eyebrow {
+      margin: 0 0 10px;
+      color: var(--accent);
+      font-size: 14px;
+      font-weight: 800;
+    }
+    h1 {
+      margin: 0;
+      font-size: clamp(30px, 5vw, 48px);
+      line-height: 1.14;
+      letter-spacing: 0;
+    }
+    .lead {
+      max-width: 900px;
+      margin: 16px 0 0;
+      color: var(--muted);
+      font-size: 18px;
+    }
+    main { padding: 28px 0 54px; }
+    .layout {
+      display: grid;
+      grid-template-columns: 260px 1fr;
+      gap: 24px;
+    }
+    nav {
+      position: sticky;
+      top: 18px;
+      align-self: start;
+      padding: 14px;
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      box-shadow: var(--shadow);
+    }
+    nav a {
+      display: block;
+      padding: 8px 10px;
+      color: var(--muted);
+      text-decoration: none;
+      border-radius: 6px;
+      font-size: 14px;
+      font-weight: 700;
+      line-height: 1.35;
+      overflow-wrap: anywhere;
+      word-break: break-word;
+    }
+    nav a:hover { color: var(--ink); background: var(--soft); }
+    section {
+      margin-bottom: 24px;
+      padding: 24px;
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      box-shadow: var(--shadow);
+    }
+    h2 { margin: 0 0 16px; font-size: 24px; letter-spacing: 0; }
+    h3 { margin: 22px 0 8px; font-size: 18px; letter-spacing: 0; }
+    p { margin: 0 0 14px; }
+    a { color: var(--blue); font-weight: 800; text-decoration: none; }
+    code { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 0.95em; }
+    pre {
+      margin: 10px 0 0;
+      padding: 14px;
+      overflow-x: auto;
+      color: var(--code-ink);
+      background: var(--code-bg);
+      border-radius: 8px;
+      font-size: 13px;
+      line-height: 1.5;
+    }
+    table { width: 100%; border-collapse: collapse; font-size: 14px; }
+    th, td { padding: 11px 12px; text-align: left; vertical-align: top; border-bottom: 1px solid var(--line); }
+    th { color: var(--muted); background: #fbfcfe; font-weight: 800; }
+    .top-links { display: flex; flex-wrap: wrap; gap: 14px; margin-top: 16px; }
+    .grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+    .card, .box {
+      padding: 16px;
+      background: #fbfcfe;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+    }
+    .status {
+      display: inline-flex;
+      align-items: center;
+      min-height: 24px;
+      padding: 2px 8px;
+      border-radius: 999px;
+      color: var(--accent);
+      background: var(--soft);
+      font-size: 12px;
+      font-weight: 900;
+    }
+    .note {
+      margin-top: 14px;
+      padding: 13px 15px;
+      color: #7a4a00;
+      background: #fff5dd;
+      border: 1px solid #eed39a;
+      border-radius: 8px;
+    }
+    .diagram { overflow-x: auto; padding-bottom: 4px; }
+    .sequence-svg {
+      display: block;
+      width: 1060px;
+      min-width: 1060px;
+      height: auto;
+      background: #fff;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+    }
+    .actor-title { fill: var(--ink); font-size: 18px; font-weight: 800; }
+    .actor-subtitle { fill: var(--muted); font-size: 12px; font-weight: 600; }
+    .lifeline { stroke: #cbd5e1; stroke-width: 3; stroke-dasharray: 10 12; }
+    .msg-line { fill: none; stroke-width: 2.5; }
+    .msg-label { fill: var(--ink); font-size: 14px; font-weight: 800; }
+    .msg-code { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 14px; font-weight: 700; }
+    .msg-note { fill: var(--muted); font-size: 12px; font-weight: 600; }
+    @media (max-width: 900px) {
+      .layout { grid-template-columns: 1fr; }
+      nav { position: static; }
+      .grid { grid-template-columns: 1fr; }
+      .wrap { width: min(100% - 24px, 1180px); }
+    }
+  </style>
+  
+</head>
+<body>
+<header>
+  <div class="wrap hero">
+    <p class="eyebrow">Sequence Diagram</p>
+    <h1>구독 재개 플로우</h1>
+    <p class="lead">기간 종료 전 해지 예약을 철회해 구독을 active 상태로 되돌리고 다음 정기 결제일을 복구하는 흐름입니다.</p>
+    <p class="top-links"><a href="./sequence-index.html">전체 시퀀스 목록</a><a href="./all-api-doc.html">전체 API 목록</a><a href="./api-detail-doc.html">API 상세 설명</a></p>
+  </div>
+</header>
+<main class="wrap">
+  <section>
+    <h2>사용 API</h2>
+    <div class="grid"><div class="box"><a href="./all-api-doc.html#subscriptions-resume"><code>POST /subscriptions/{subscriptionId}/resume</code></a><p>해지 예약 또는 결제 실패 상태의 구독을 재개합니다.</p></div><div class="box"><a href="./all-api-doc.html#subscriptions-me"><code>GET /subscriptions/me</code></a><p>현재 회원의 상품별 구독 목록, 이용 기간, 다음 결제일, 공통 기본 결제수단 표시 정보를 조회합니다.</p></div><div class="box"><a href="./all-api-doc.html#internal-billing-run"><code>POST /internal/subscription-billing/run</code></a><p>다음 결제일이 도래한 구독을 찾아 정기 자동결제를 실행합니다.</p></div></div>
+  </section>
+  <section id="subscription-resume-cancel-scheduled">
+  <h2>해지 예약 철회</h2>
+  <p>cancel_scheduled 상태의 구독을 기간 종료 전에 다시 active로 복구하고 정기 과금 배치가 다음 결제일을 조회할 수 있게 합니다.</p>
+  <div class="diagram"><svg class="sequence-svg" viewBox="0 0 1060 1226" role="img" aria-label="해지 예약 철회"><defs><marker id="arrow-client" viewBox="0 0 12 12" refX="10" refY="6" markerWidth="9" markerHeight="9" orient="auto-start-reverse"><path d="M 1 1 L 11 6 L 1 11 z" fill="#2457a6"></path></marker><marker id="arrow-server" viewBox="0 0 12 12" refX="10" refY="6" markerWidth="9" markerHeight="9" orient="auto-start-reverse"><path d="M 1 1 L 11 6 L 1 11 z" fill="#1c7c66"></path></marker><marker id="arrow-toss" viewBox="0 0 12 12" refX="10" refY="6" markerWidth="9" markerHeight="9" orient="auto-start-reverse"><path d="M 1 1 L 11 6 L 1 11 z" fill="#7b4bc4"></path></marker><marker id="arrow-provider" viewBox="0 0 12 12" refX="10" refY="6" markerWidth="9" markerHeight="9" orient="auto-start-reverse"><path d="M 1 1 L 11 6 L 1 11 z" fill="#7b4bc4"></path></marker><marker id="arrow-scheduler" viewBox="0 0 12 12" refX="10" refY="6" markerWidth="9" markerHeight="9" orient="auto-start-reverse"><path d="M 1 1 L 11 6 L 1 11 z" fill="#9a5b00"></path></marker><marker id="arrow-admin" viewBox="0 0 12 12" refX="10" refY="6" markerWidth="9" markerHeight="9" orient="auto-start-reverse"><path d="M 1 1 L 11 6 L 1 11 z" fill="#334155"></path></marker><marker id="arrow-system" viewBox="0 0 12 12" refX="10" refY="6" markerWidth="9" markerHeight="9" orient="auto-start-reverse"><path d="M 1 1 L 11 6 L 1 11 z" fill="#334155"></path></marker><marker id="arrow-success" viewBox="0 0 12 12" refX="10" refY="6" markerWidth="9" markerHeight="9" orient="auto-start-reverse"><path d="M 1 1 L 11 6 L 1 11 z" fill="#1c7c66"></path></marker><marker id="arrow-failure" viewBox="0 0 12 12" refX="10" refY="6" markerWidth="9" markerHeight="9" orient="auto-start-reverse"><path d="M 1 1 L 11 6 L 1 11 z" fill="#b42318"></path></marker><marker id="arrow-neutral" viewBox="0 0 12 12" refX="10" refY="6" markerWidth="9" markerHeight="9" orient="auto-start-reverse"><path d="M 1 1 L 11 6 L 1 11 z" fill="#65758a"></path></marker></defs><rect x="5" y="30" width="230" height="68" rx="8" fill="#ffffff" stroke="#2457a6" stroke-width="2"></rect><text x="120" y="58" text-anchor="middle" class="actor-title">웹 클라이언트</text><text x="120" y="80" text-anchor="middle" class="actor-subtitle">Browser / Mobile Web</text><line x1="120" y1="98" x2="120" y2="1196" class="lifeline"></line><rect x="415" y="30" width="230" height="68" rx="8" fill="#ffffff" stroke="#1c7c66" stroke-width="2"></rect><text x="530" y="58" text-anchor="middle" class="actor-title">우리 서버</text><text x="530" y="80" text-anchor="middle" class="actor-subtitle">Subscription API</text><line x1="530" y1="98" x2="530" y2="1196" class="lifeline"></line><rect x="825" y="30" width="230" height="68" rx="8" fill="#ffffff" stroke="#9a5b00" stroke-width="2"></rect><text x="940" y="58" text-anchor="middle" class="actor-title">스케줄러</text><text x="940" y="80" text-anchor="middle" class="actor-subtitle">Billing Batch</text><line x1="940" y1="98" x2="940" y2="1196" class="lifeline"></line><line x1="120" y1="145" x2="530" y2="145" class="msg-line" stroke="#1c7c66" marker-end="url(#arrow-server)"></line><text x="140" y="121" class="msg-label"><desc>구독 재개 요청</desc><tspan x="140" dy="0">구독 재개 요청</tspan></text><text x="140" y="173" class="msg-code" fill="#1c7c66"><desc>POST /subscriptions/{subscriptionId}/resume</desc><tspan x="140" dy="0">POST /subscriptions/{subscriptionId}/resume</tspan></text><text x="140" y="199" class="msg-note"><desc>resumeReason, Idempotency-Key, session</desc><tspan x="140" dy="0">resumeReason, Idempotency-Key, session</tspan></text><rect x="350" y="233" width="360" height="125" rx="8" fill="#fbfcfe" stroke="#65758a"></rect><text x="370" y="257" class="msg-label"><desc>회원과 구독 소유권 검증</desc><tspan x="370" dy="0">회원과 구독 소유권 검증</tspan></text><text x="370" y="289" class="msg-code" fill="#65758a"><desc>session.userId == subscription.userId</desc><tspan x="370" dy="0">session.userId == subscription.userId</tspan></text><text x="370" y="321" class="msg-note"><desc>현재 회원 소유 구독만 재개 가능</desc><tspan x="370" dy="0">현재 회원 소유 구독만 재개 가능</tspan></text><rect x="350" y="365" width="360" height="125" rx="8" fill="#fbfcfe" stroke="#65758a"></rect><text x="370" y="389" class="msg-label"><desc>재개 가능 상태 확인</desc><tspan x="370" dy="0">재개 가능 상태 확인</tspan></text><text x="370" y="421" class="msg-code" fill="#65758a"><desc>status == cancel_scheduled</desc><tspan x="370" dy="0">status == cancel_scheduled</tspan></text><text x="370" y="453" class="msg-note"><desc>이미 canceled이면 신규 구독 또는 별도 복구 정책으로 안내</desc><tspan x="370" dy="0">이미 canceled이면 신규 구독 또는 별도 복구 정책으로 안내</tspan></text><rect x="270" y="497" width="520" height="125" rx="8" fill="#fbfcfe" stroke="#1c7c66" stroke-dasharray="7 6"></rect><text x="290" y="521" class="msg-label"><desc>기간 종료 전 여부 확인</desc><tspan x="290" dy="0">기간 종료 전 여부 확인</tspan></text><text x="290" y="553" class="msg-code" fill="#1c7c66"><desc>now &lt; currentPeriodEnd</desc><tspan x="290" dy="0">now &lt; currentPeriodEnd</tspan></text><text x="290" y="585" class="msg-note"><desc>기간 종료 후에는 해지 예약 철회 불가</desc><tspan x="290" dy="0">기간 종료 후에는 해지 예약 철회 불가</tspan></text><rect x="270" y="629" width="520" height="125" rx="8" fill="#fbfcfe" stroke="#1c7c66" stroke-dasharray="7 6"></rect><text x="290" y="653" class="msg-label"><desc>구독 상태와 청구 일정 복구</desc><tspan x="290" dy="0">구독 상태와 청구 일정 복구</tspan></text><text x="290" y="685" class="msg-code" fill="#1c7c66"><desc>status=active, cancelAt=null</desc><tspan x="290" dy="0">status=active, cancelAt=null</tspan></text><text x="290" y="717" class="msg-note"><desc>nextBillingDate 복구</desc><tspan x="290" dy="0">nextBillingDate 복구</tspan></text><line x1="530" y1="805" x2="120" y2="805" class="msg-line" stroke="#2457a6" marker-end="url(#arrow-client)"></line><text x="140" y="781" class="msg-label"><desc>재개 결과 반환</desc><tspan x="140" dy="0">재개 결과 반환</tspan></text><text x="140" y="833" class="msg-code" fill="#2457a6"><desc>status=active, resumeAvailable=false</desc><tspan x="140" dy="0">status=active, resumeAvailable=false</tspan></text><text x="140" y="859" class="msg-note"><desc>프론트는 구독 상세 화면의 해지 예정 배지를 제거</desc><tspan x="140" dy="0">프론트는 구독 상세 화면의 해지 예정 배지를 제거</tspan></text><line x1="120" y1="937" x2="530" y2="937" class="msg-line" stroke="#1c7c66" marker-end="url(#arrow-server)"></line><text x="140" y="913" class="msg-label"><desc>현재 구독 상태 조회</desc><tspan x="140" dy="0">현재 구독 상태 조회</tspan></text><text x="140" y="965" class="msg-code" fill="#1c7c66"><desc>GET /subscriptions/me</desc><tspan x="140" dy="0">GET /subscriptions/me</tspan></text><text x="140" y="991" class="msg-note"><desc>복구된 nextBillingDate와 결제수단 표시</desc><tspan x="140" dy="0">복구된 nextBillingDate와 결제수단 표시</tspan></text><line x1="940" y1="1069" x2="530" y2="1069" class="msg-line" stroke="#1c7c66" marker-end="url(#arrow-server)"></line><text x="550" y="1045" class="msg-label"><desc>정기 과금 배치 실행</desc><tspan x="550" dy="0">정기 과금 배치 실행</tspan></text><text x="550" y="1097" class="msg-code" fill="#1c7c66"><desc>POST /internal/subscription-billing/run</desc><tspan x="550" dy="0">POST /internal/subscription-billing/run</tspan></text><text x="550" y="1123" class="msg-note"><desc>active이고 nextBillingDate가 도래하면 다시 결제 후보</desc><tspan x="550" dy="0">active이고 nextBillingDate가 도래하면 다시 결제 후보</tspan></text></svg></div>
+</section>
+  <section id="states">
+  <h2>상태 요약</h2>
+  <table><thead><tr><th>시점</th><th>구독 상태</th><th>결제 상태</th><th>설명</th></tr></thead><tbody><tr><td>재개 요청 전</td><td><code>cancel_scheduled</code></td><td><code>paid</code></td><td>회원은 남은 기간을 이용 중이지만 다음 결제일은 제거되어 있습니다.</td></tr><tr><td>재개 성공 직후</td><td><code>active</code></td><td><code>paid</code></td><td>해지 예약이 철회되고 다음 결제일이 복구됩니다.</td></tr><tr><td>다음 과금 배치 시점</td><td><code>active</code></td><td><code>pending</code></td><td>nextBillingDate가 도래하면 정기 과금 배치가 구독을 다시 결제 후보로 조회합니다.</td></tr></tbody></table>
+</section>
+</main>
+</body>
+</html>

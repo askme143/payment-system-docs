@@ -1,0 +1,199 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>결제수단 관리 플로우</title>
+  <style>
+    :root {
+      --bg: #f5f7fb;
+      --surface: #ffffff;
+      --ink: #17202a;
+      --muted: #65758a;
+      --line: #d8e0ea;
+      --accent: #1c7c66;
+      --blue: #2457a6;
+      --danger: #b42318;
+      --soft: #e5f4ef;
+      --shadow: 0 14px 34px rgba(20, 35, 55, 0.08);
+      --code-bg: #111827;
+      --code-ink: #e5e7eb;
+    }
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      color: var(--ink);
+      background: var(--bg);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      line-height: 1.58;
+    }
+    header {
+      background: var(--surface);
+      border-bottom: 1px solid var(--line);
+    }
+    .wrap {
+      width: min(1180px, calc(100% - 36px));
+      margin: 0 auto;
+    }
+    .hero { padding: 42px 0 28px; }
+    .eyebrow {
+      margin: 0 0 10px;
+      color: var(--accent);
+      font-size: 14px;
+      font-weight: 800;
+    }
+    h1 {
+      margin: 0;
+      font-size: clamp(30px, 5vw, 48px);
+      line-height: 1.14;
+      letter-spacing: 0;
+    }
+    .lead {
+      max-width: 900px;
+      margin: 16px 0 0;
+      color: var(--muted);
+      font-size: 18px;
+    }
+    main { padding: 28px 0 54px; }
+    .layout {
+      display: grid;
+      grid-template-columns: 260px 1fr;
+      gap: 24px;
+    }
+    nav {
+      position: sticky;
+      top: 18px;
+      align-self: start;
+      padding: 14px;
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      box-shadow: var(--shadow);
+    }
+    nav a {
+      display: block;
+      padding: 8px 10px;
+      color: var(--muted);
+      text-decoration: none;
+      border-radius: 6px;
+      font-size: 14px;
+      font-weight: 700;
+      line-height: 1.35;
+      overflow-wrap: anywhere;
+      word-break: break-word;
+    }
+    nav a:hover { color: var(--ink); background: var(--soft); }
+    section {
+      margin-bottom: 24px;
+      padding: 24px;
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      box-shadow: var(--shadow);
+    }
+    h2 { margin: 0 0 16px; font-size: 24px; letter-spacing: 0; }
+    h3 { margin: 22px 0 8px; font-size: 18px; letter-spacing: 0; }
+    p { margin: 0 0 14px; }
+    a { color: var(--blue); font-weight: 800; text-decoration: none; }
+    code { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 0.95em; }
+    pre {
+      margin: 10px 0 0;
+      padding: 14px;
+      overflow-x: auto;
+      color: var(--code-ink);
+      background: var(--code-bg);
+      border-radius: 8px;
+      font-size: 13px;
+      line-height: 1.5;
+    }
+    table { width: 100%; border-collapse: collapse; font-size: 14px; }
+    th, td { padding: 11px 12px; text-align: left; vertical-align: top; border-bottom: 1px solid var(--line); }
+    th { color: var(--muted); background: #fbfcfe; font-weight: 800; }
+    .top-links { display: flex; flex-wrap: wrap; gap: 14px; margin-top: 16px; }
+    .grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+    .card, .box {
+      padding: 16px;
+      background: #fbfcfe;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+    }
+    .status {
+      display: inline-flex;
+      align-items: center;
+      min-height: 24px;
+      padding: 2px 8px;
+      border-radius: 999px;
+      color: var(--accent);
+      background: var(--soft);
+      font-size: 12px;
+      font-weight: 900;
+    }
+    .note {
+      margin-top: 14px;
+      padding: 13px 15px;
+      color: #7a4a00;
+      background: #fff5dd;
+      border: 1px solid #eed39a;
+      border-radius: 8px;
+    }
+    .diagram { overflow-x: auto; padding-bottom: 4px; }
+    .sequence-svg {
+      display: block;
+      width: 1060px;
+      min-width: 1060px;
+      height: auto;
+      background: #fff;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+    }
+    .actor-title { fill: var(--ink); font-size: 18px; font-weight: 800; }
+    .actor-subtitle { fill: var(--muted); font-size: 12px; font-weight: 600; }
+    .lifeline { stroke: #cbd5e1; stroke-width: 3; stroke-dasharray: 10 12; }
+    .msg-line { fill: none; stroke-width: 2.5; }
+    .msg-label { fill: var(--ink); font-size: 14px; font-weight: 800; }
+    .msg-code { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 14px; font-weight: 700; }
+    .msg-note { fill: var(--muted); font-size: 12px; font-weight: 600; }
+    @media (max-width: 900px) {
+      .layout { grid-template-columns: 1fr; }
+      nav { position: static; }
+      .grid { grid-template-columns: 1fr; }
+      .wrap { width: min(100% - 24px, 1180px); }
+    }
+  </style>
+  
+</head>
+<body>
+<header>
+  <div class="wrap hero">
+    <p class="eyebrow">Sequence Diagram</p>
+    <h1>결제수단 관리 플로우</h1>
+    <p class="lead">회원이 결제 수단을 추가하고, 모든 상품 구독이 함께 사용하는 공통 기본 결제수단을 지정하며, 활성 구독이 1개 이상 있으면 최소 1개의 결제수단을 유지하도록 삭제를 제한하는 흐름입니다.</p>
+    <p class="top-links"><a href="./sequence-index.html">전체 시퀀스 목록</a><a href="./all-api-doc.html">전체 API 목록</a><a href="./api-detail-doc.html">API 상세 설명</a></p>
+  </div>
+</header>
+<main class="wrap">
+  <section>
+    <h2>사용 API</h2>
+    <div class="grid"><div class="box"><a href="./all-api-doc.html#billing-auth"><code>POST /billing/auth</code></a><p>기존 회원이 결제수단을 변경할 때 빌링 인증 시작 데이터를 생성합니다.</p></div><div class="box"><a href="./all-api-doc.html#billing-issue"><code>POST /billing/issue</code></a><p>빌링 인증 성공 후 새 빌링키를 발급받아 결제수단으로 저장합니다.</p></div><div class="box"><a href="./all-api-doc.html#billing-methods"><code>GET /billing/methods</code></a><p>회원이 등록한 표시용 결제수단 목록을 조회합니다.</p></div><div class="box"><a href="./all-api-doc.html#billing-method-default"><code>PATCH /billing/methods/{billingMethodId}/default</code></a><p>활성 결제수단 중 하나를 기본 결제수단으로 지정합니다.</p></div><div class="box"><a href="./all-api-doc.html#billing-method-delete"><code>DELETE /billing/methods/{billingMethodId}</code></a><p>사용하지 않는 결제수단을 삭제 또는 비활성화합니다.</p></div></div>
+  </section>
+  <section id="billing-method-add">
+  <h2>결제 수단 추가</h2>
+  <p>회원이 새 카드를 빌링 인증하고, 서버가 토스에서 새 빌링키를 발급받아 결제수단으로 저장하는 흐름입니다.</p>
+  <div class="diagram"><svg class="sequence-svg" viewBox="0 0 1060 1622" role="img" aria-label="결제 수단 추가"><defs><marker id="arrow-client" viewBox="0 0 12 12" refX="10" refY="6" markerWidth="9" markerHeight="9" orient="auto-start-reverse"><path d="M 1 1 L 11 6 L 1 11 z" fill="#2457a6"></path></marker><marker id="arrow-server" viewBox="0 0 12 12" refX="10" refY="6" markerWidth="9" markerHeight="9" orient="auto-start-reverse"><path d="M 1 1 L 11 6 L 1 11 z" fill="#1c7c66"></path></marker><marker id="arrow-toss" viewBox="0 0 12 12" refX="10" refY="6" markerWidth="9" markerHeight="9" orient="auto-start-reverse"><path d="M 1 1 L 11 6 L 1 11 z" fill="#7b4bc4"></path></marker><marker id="arrow-provider" viewBox="0 0 12 12" refX="10" refY="6" markerWidth="9" markerHeight="9" orient="auto-start-reverse"><path d="M 1 1 L 11 6 L 1 11 z" fill="#7b4bc4"></path></marker><marker id="arrow-scheduler" viewBox="0 0 12 12" refX="10" refY="6" markerWidth="9" markerHeight="9" orient="auto-start-reverse"><path d="M 1 1 L 11 6 L 1 11 z" fill="#9a5b00"></path></marker><marker id="arrow-admin" viewBox="0 0 12 12" refX="10" refY="6" markerWidth="9" markerHeight="9" orient="auto-start-reverse"><path d="M 1 1 L 11 6 L 1 11 z" fill="#334155"></path></marker><marker id="arrow-system" viewBox="0 0 12 12" refX="10" refY="6" markerWidth="9" markerHeight="9" orient="auto-start-reverse"><path d="M 1 1 L 11 6 L 1 11 z" fill="#334155"></path></marker><marker id="arrow-success" viewBox="0 0 12 12" refX="10" refY="6" markerWidth="9" markerHeight="9" orient="auto-start-reverse"><path d="M 1 1 L 11 6 L 1 11 z" fill="#1c7c66"></path></marker><marker id="arrow-failure" viewBox="0 0 12 12" refX="10" refY="6" markerWidth="9" markerHeight="9" orient="auto-start-reverse"><path d="M 1 1 L 11 6 L 1 11 z" fill="#b42318"></path></marker><marker id="arrow-neutral" viewBox="0 0 12 12" refX="10" refY="6" markerWidth="9" markerHeight="9" orient="auto-start-reverse"><path d="M 1 1 L 11 6 L 1 11 z" fill="#65758a"></path></marker></defs><rect x="5" y="30" width="230" height="68" rx="8" fill="#ffffff" stroke="#2457a6" stroke-width="2"></rect><text x="120" y="58" text-anchor="middle" class="actor-title">웹 클라이언트</text><text x="120" y="80" text-anchor="middle" class="actor-subtitle">Browser / Mobile Web</text><line x1="120" y1="98" x2="120" y2="1592" class="lifeline"></line><rect x="415" y="30" width="230" height="68" rx="8" fill="#ffffff" stroke="#1c7c66" stroke-width="2"></rect><text x="530" y="58" text-anchor="middle" class="actor-title">우리 서버</text><text x="530" y="80" text-anchor="middle" class="actor-subtitle">Subscription API</text><line x1="530" y1="98" x2="530" y2="1592" class="lifeline"></line><rect x="825" y="30" width="230" height="68" rx="8" fill="#ffffff" stroke="#7b4bc4" stroke-width="2"></rect><text x="940" y="58" text-anchor="middle" class="actor-title">토스페이먼츠 서버</text><text x="940" y="80" text-anchor="middle" class="actor-subtitle">Billing &amp; Payment API</text><line x1="940" y1="98" x2="940" y2="1592" class="lifeline"></line><line x1="120" y1="145" x2="530" y2="145" class="msg-line" stroke="#1c7c66" marker-end="url(#arrow-server)"></line><text x="140" y="121" class="msg-label"><desc>결제수단 추가 인증 시작 요청</desc><tspan x="140" dy="0">결제수단 추가 인증 시작 요청</tspan></text><text x="140" y="173" class="msg-code" fill="#1c7c66"><desc>POST /billing/auth</desc><tspan x="140" dy="0">POST /billing/auth</tspan></text><text x="140" y="199" class="msg-note"><desc>successUrl, failUrl, setAsDefault</desc><tspan x="140" dy="0">successUrl, failUrl, setAsDefault</tspan></text><rect x="350" y="233" width="360" height="125" rx="8" fill="#fbfcfe" stroke="#65758a"></rect><text x="370" y="257" class="msg-label"><desc>회원과 기존 결제수단 상태 확인</desc><tspan x="370" dy="0">회원과 기존 결제수단 상태 확인</tspan></text><text x="370" y="289" class="msg-code" fill="#65758a"><desc>activeBillingMethodCount</desc><tspan x="370" dy="0">activeBillingMethodCount</tspan></text><text x="370" y="321" class="msg-note"><desc>결제수단이 없으면 새 결제수단을 기본값으로 지정하도록 예약</desc><tspan x="370" dy="0">결제수단이 없으면 새 결제수단을 기본값으로 지정하도록 예약</tspan></text><line x1="530" y1="409" x2="120" y2="409" class="msg-line" stroke="#2457a6" marker-end="url(#arrow-client)"></line><text x="140" y="385" class="msg-label"><desc>토스 빌링 인증 호출 데이터 반환</desc><tspan x="140" dy="0">토스 빌링 인증 호출 데이터 반환</tspan></text><text x="140" y="437" class="msg-code" fill="#2457a6"><desc>customerKey, successUrl, failUrl</desc><tspan x="140" dy="0">customerKey, successUrl, failUrl</tspan></text><text x="140" y="463" class="msg-note"><desc>프론트는 반환값으로 TossPayments.requestBillingAuth(...) 호출</desc><tspan x="140" dy="0">프론트는 반환값으로 TossPayments.requestBillingAuth(...) 호출</tspan></text><line x1="120" y1="541" x2="940" y2="541" class="msg-line" stroke="#7b4bc4" marker-end="url(#arrow-toss)"></line><text x="140" y="517" class="msg-label"><desc>새 카드 빌링 인증 요청</desc><tspan x="140" dy="0">새 카드 빌링 인증 요청</tspan></text><text x="140" y="569" class="msg-code" fill="#7b4bc4"><desc>TossPayments.requestBillingAuth(...)</desc><tspan x="140" dy="0">TossPayments.requestBillingAuth(...)</tspan></text><text x="140" y="595" class="msg-note"><desc>회원이 카드 인증을 완료하거나 취소</desc><tspan x="140" dy="0">회원이 카드 인증을 완료하거나 취소</tspan></text><line x1="940" y1="673" x2="120" y2="673" class="msg-line" stroke="#2457a6" marker-end="url(#arrow-client)"></line><text x="140" y="649" class="msg-label"><desc>프론트 성공 페이지로 리다이렉트</desc><tspan x="140" dy="0">프론트 성공 페이지로 리다이렉트</tspan></text><text x="140" y="701" class="msg-code" fill="#2457a6"><desc>successUrl?authKey=...&amp;customerKey=...</desc><tspan x="140" dy="0">successUrl?authKey=...&amp;customerKey=...</tspan></text><text x="140" y="727" class="msg-note"><desc>토스는 서버 issue API로 직접 POST하지 않음</desc><tspan x="140" dy="0">토스는 서버 issue API로 직접 POST하지 않음</tspan></text><line x1="120" y1="805" x2="530" y2="805" class="msg-line" stroke="#1c7c66" marker-end="url(#arrow-server)"></line><text x="140" y="781" class="msg-label"><desc>새 빌링키 발급 및 저장 요청</desc><tspan x="140" dy="0">새 빌링키 발급 및 저장 요청</tspan></text><text x="140" y="833" class="msg-code" fill="#1c7c66"><desc>POST /billing/issue</desc><tspan x="140" dy="0">POST /billing/issue</tspan></text><text x="140" y="859" class="msg-note"><desc>authKey, customerKey, Idempotency-Key</desc><tspan x="140" dy="0">authKey, customerKey, Idempotency-Key</tspan></text><line x1="530" y1="937" x2="940" y2="937" class="msg-line" stroke="#7b4bc4" marker-end="url(#arrow-toss)"></line><text x="550" y="913" class="msg-label"><desc>빌링키 발급 요청</desc><tspan x="550" dy="0">빌링키 발급 요청</tspan></text><text x="550" y="965" class="msg-code" fill="#7b4bc4"><desc>POST /v1/billing/authorizations/issue</desc><tspan x="550" dy="0">POST /v1/billing/authorizations/issue</tspan></text><text x="550" y="991" class="msg-note"><desc>billingKey는 서버에서만 암호화 저장</desc><tspan x="550" dy="0">billingKey는 서버에서만 암호화 저장</tspan></text><line x1="940" y1="1069" x2="530" y2="1069" class="msg-line" stroke="#1c7c66" marker-end="url(#arrow-server)"></line><text x="550" y="1045" class="msg-label"><desc>빌링키와 카드 표시 정보 반환</desc><tspan x="550" dy="0">빌링키와 카드 표시 정보 반환</tspan></text><text x="550" y="1097" class="msg-code" fill="#1c7c66"><desc>billingKey, card.company, card.number</desc><tspan x="550" dy="0">billingKey, card.company, card.number</tspan></text><text x="550" y="1123" class="msg-note"><desc>카드 전체 번호와 민감 인증 정보는 저장하지 않음</desc><tspan x="550" dy="0">카드 전체 번호와 민감 인증 정보는 저장하지 않음</tspan></text><rect x="270" y="1157" width="520" height="125" rx="8" fill="#fbfcfe" stroke="#1c7c66" stroke-dasharray="7 6"></rect><text x="290" y="1181" class="msg-label"><desc>결제수단 저장 및 기본값 결정</desc><tspan x="290" dy="0">결제수단 저장 및 기본값 결정</tspan></text><text x="290" y="1213" class="msg-code" fill="#1c7c66"><desc>billingMethod active</desc><tspan x="290" dy="0">billingMethod active</tspan></text><text x="290" y="1245" class="msg-note"><desc>첫 결제수단이거나 setAsDefault=true이면 기존 기본값을 해제하고 새 결제수단을 기본값으로 지정</desc><tspan x="290" dy="0">첫 결제수단이거나 setAsDefault=true이면 기존 기본값을 해제하고 새 결제수단을 기본값으로 지정</tspan></text><line x1="530" y1="1333" x2="120" y2="1333" class="msg-line" stroke="#2457a6" marker-end="url(#arrow-client)"></line><text x="140" y="1309" class="msg-label"><desc>결제수단 추가 결과 반환</desc><tspan x="140" dy="0">결제수단 추가 결과 반환</tspan></text><text x="140" y="1361" class="msg-code" fill="#2457a6"><desc>billingMethodId, isDefault, displayName</desc><tspan x="140" dy="0">billingMethodId, isDefault, displayName</tspan></text><text x="140" y="1387" class="msg-note"><desc>프론트는 결제수단 목록을 다시 조회</desc><tspan x="140" dy="0">프론트는 결제수단 목록을 다시 조회</tspan></text><line x1="120" y1="1465" x2="530" y2="1465" class="msg-line" stroke="#1c7c66" marker-end="url(#arrow-server)"></line><text x="140" y="1441" class="msg-label"><desc>결제수단 목록 조회</desc><tspan x="140" dy="0">결제수단 목록 조회</tspan></text><text x="140" y="1493" class="msg-code" fill="#1c7c66"><desc>GET /billing/methods</desc><tspan x="140" dy="0">GET /billing/methods</tspan></text><text x="140" y="1519" class="msg-note"><desc>모든 상품 구독에 공통 적용되는 기본 결제수단과 추가된 결제수단 표시</desc><tspan x="140" dy="0">모든 상품 구독에 공통 적용되는 기본 결제수단과 추가된 결제수단 표시</tspan></text></svg></div>
+</section><section id="billing-method-set-default">
+  <h2>기본 결제수단 지정</h2>
+  <p>활성 결제수단 중 하나를 모든 상품 구독의 다음 정기결제에 사용할 공통 기본 결제수단으로 지정하는 흐름입니다.</p>
+  <div class="diagram"><svg class="sequence-svg" viewBox="0 0 1060 962" role="img" aria-label="기본 결제수단 지정"><defs><marker id="arrow-client" viewBox="0 0 12 12" refX="10" refY="6" markerWidth="9" markerHeight="9" orient="auto-start-reverse"><path d="M 1 1 L 11 6 L 1 11 z" fill="#2457a6"></path></marker><marker id="arrow-server" viewBox="0 0 12 12" refX="10" refY="6" markerWidth="9" markerHeight="9" orient="auto-start-reverse"><path d="M 1 1 L 11 6 L 1 11 z" fill="#1c7c66"></path></marker><marker id="arrow-toss" viewBox="0 0 12 12" refX="10" refY="6" markerWidth="9" markerHeight="9" orient="auto-start-reverse"><path d="M 1 1 L 11 6 L 1 11 z" fill="#7b4bc4"></path></marker><marker id="arrow-provider" viewBox="0 0 12 12" refX="10" refY="6" markerWidth="9" markerHeight="9" orient="auto-start-reverse"><path d="M 1 1 L 11 6 L 1 11 z" fill="#7b4bc4"></path></marker><marker id="arrow-scheduler" viewBox="0 0 12 12" refX="10" refY="6" markerWidth="9" markerHeight="9" orient="auto-start-reverse"><path d="M 1 1 L 11 6 L 1 11 z" fill="#9a5b00"></path></marker><marker id="arrow-admin" viewBox="0 0 12 12" refX="10" refY="6" markerWidth="9" markerHeight="9" orient="auto-start-reverse"><path d="M 1 1 L 11 6 L 1 11 z" fill="#334155"></path></marker><marker id="arrow-system" viewBox="0 0 12 12" refX="10" refY="6" markerWidth="9" markerHeight="9" orient="auto-start-reverse"><path d="M 1 1 L 11 6 L 1 11 z" fill="#334155"></path></marker><marker id="arrow-success" viewBox="0 0 12 12" refX="10" refY="6" markerWidth="9" markerHeight="9" orient="auto-start-reverse"><path d="M 1 1 L 11 6 L 1 11 z" fill="#1c7c66"></path></marker><marker id="arrow-failure" viewBox="0 0 12 12" refX="10" refY="6" markerWidth="9" markerHeight="9" orient="auto-start-reverse"><path d="M 1 1 L 11 6 L 1 11 z" fill="#b42318"></path></marker><marker id="arrow-neutral" viewBox="0 0 12 12" refX="10" refY="6" markerWidth="9" markerHeight="9" orient="auto-start-reverse"><path d="M 1 1 L 11 6 L 1 11 z" fill="#65758a"></path></marker></defs><rect x="5" y="30" width="230" height="68" rx="8" fill="#ffffff" stroke="#2457a6" stroke-width="2"></rect><text x="120" y="58" text-anchor="middle" class="actor-title">웹 클라이언트</text><text x="120" y="80" text-anchor="middle" class="actor-subtitle">Browser / Mobile Web</text><line x1="120" y1="98" x2="120" y2="932" class="lifeline"></line><rect x="825" y="30" width="230" height="68" rx="8" fill="#ffffff" stroke="#1c7c66" stroke-width="2"></rect><text x="940" y="58" text-anchor="middle" class="actor-title">우리 서버</text><text x="940" y="80" text-anchor="middle" class="actor-subtitle">Subscription API</text><line x1="940" y1="98" x2="940" y2="932" class="lifeline"></line><line x1="120" y1="145" x2="940" y2="145" class="msg-line" stroke="#1c7c66" marker-end="url(#arrow-server)"></line><text x="140" y="121" class="msg-label"><desc>결제수단 목록 조회</desc><tspan x="140" dy="0">결제수단 목록 조회</tspan></text><text x="140" y="173" class="msg-code" fill="#1c7c66"><desc>GET /billing/methods</desc><tspan x="140" dy="0">GET /billing/methods</tspan></text><text x="140" y="199" class="msg-note"><desc>활성 결제수단, 기본 여부, 삭제 가능 여부 표시</desc><tspan x="140" dy="0">활성 결제수단, 기본 여부, 삭제 가능 여부 표시</tspan></text><line x1="120" y1="277" x2="940" y2="277" class="msg-line" stroke="#1c7c66" marker-end="url(#arrow-server)"></line><text x="140" y="253" class="msg-label"><desc>기본 결제수단 지정 요청</desc><tspan x="140" dy="0">기본 결제수단 지정 요청</tspan></text><text x="140" y="305" class="msg-code" fill="#1c7c66"><desc>PATCH /billing/methods/{billingMethodId}/default</desc><tspan x="140" dy="0">PATCH /billing/methods/{billingMethodId}/default</tspan></text><text x="140" y="331" class="msg-note"><desc>billingMethodId, Idempotency-Key</desc><tspan x="140" dy="0">billingMethodId, Idempotency-Key</tspan></text><rect x="670" y="365" width="360" height="125" rx="8" fill="#fbfcfe" stroke="#65758a"></rect><text x="690" y="389" class="msg-label"><desc>소유권과 활성 상태 검증</desc><tspan x="690" dy="0">소유권과 활성 상태 검증</tspan></text><text x="690" y="421" class="msg-code" fill="#65758a"><desc>billingMethod.userId == session.userId</desc><tspan x="690" dy="0">billingMethod.userId == session.userId</tspan></text><text x="690" y="453" class="msg-note"><desc>삭제됨, 비활성, 인증 실패 결제수단은 기본값으로 지정할 수 없음</desc><tspan x="690" dy="0">삭제됨, 비활성, 인증 실패 결제수단은 기본값으로 지정할 수 없음</tspan></text><rect x="270" y="497" width="520" height="125" rx="8" fill="#fbfcfe" stroke="#1c7c66" stroke-dasharray="7 6"></rect><text x="290" y="521" class="msg-label"><desc>기존 기본값 해제 후 새 기본값 저장</desc><tspan x="290" dy="0">기존 기본값 해제 후 새 기본값 저장</tspan></text><text x="290" y="553" class="msg-code" fill="#1c7c66"><desc>isDefault=false -&gt; true</desc><tspan x="290" dy="0">isDefault=false -&gt; true</tspan></text><text x="290" y="585" class="msg-note"><desc>같은 회원의 기본 결제수단은 항상 하나만 유지</desc><tspan x="290" dy="0">같은 회원의 기본 결제수단은 항상 하나만 유지</tspan></text><line x1="940" y1="673" x2="120" y2="673" class="msg-line" stroke="#2457a6" marker-end="url(#arrow-client)"></line><text x="140" y="649" class="msg-label"><desc>기본 결제수단 지정 결과 반환</desc><tspan x="140" dy="0">기본 결제수단 지정 결과 반환</tspan></text><text x="140" y="701" class="msg-code" fill="#2457a6"><desc>billingMethodId, isDefault=true</desc><tspan x="140" dy="0">billingMethodId, isDefault=true</tspan></text><text x="140" y="727" class="msg-note"><desc>다음 정기결제 배치는 모든 상품 구독에 새 기본 결제수단의 billingKey를 사용</desc><tspan x="140" dy="0">다음 정기결제 배치는 모든 상품 구독에 새 기본 결제수단의 billingKey를 사용</tspan></text><line x1="120" y1="805" x2="940" y2="805" class="msg-line" stroke="#1c7c66" marker-end="url(#arrow-server)"></line><text x="140" y="781" class="msg-label"><desc>결제수단 목록 재조회</desc><tspan x="140" dy="0">결제수단 목록 재조회</tspan></text><text x="140" y="833" class="msg-code" fill="#1c7c66"><desc>GET /billing/methods</desc><tspan x="140" dy="0">GET /billing/methods</tspan></text><text x="140" y="859" class="msg-note"><desc>이전 기본 결제수단은 삭제하지 않고 isDefault=false로 표시</desc><tspan x="140" dy="0">이전 기본 결제수단은 삭제하지 않고 isDefault=false로 표시</tspan></text></svg></div>
+</section><section id="billing-method-delete">
+  <h2>결제 수단 삭제</h2>
+  <p>회원이 사용하지 않는 결제수단을 비활성화하되, 활성 구독이 1개 이상 있는 회원은 공통 결제수단이 최소 1개 남아야 합니다.</p>
+  <div class="diagram"><svg class="sequence-svg" viewBox="0 0 1060 1226" role="img" aria-label="결제 수단 삭제"><defs><marker id="arrow-client" viewBox="0 0 12 12" refX="10" refY="6" markerWidth="9" markerHeight="9" orient="auto-start-reverse"><path d="M 1 1 L 11 6 L 1 11 z" fill="#2457a6"></path></marker><marker id="arrow-server" viewBox="0 0 12 12" refX="10" refY="6" markerWidth="9" markerHeight="9" orient="auto-start-reverse"><path d="M 1 1 L 11 6 L 1 11 z" fill="#1c7c66"></path></marker><marker id="arrow-toss" viewBox="0 0 12 12" refX="10" refY="6" markerWidth="9" markerHeight="9" orient="auto-start-reverse"><path d="M 1 1 L 11 6 L 1 11 z" fill="#7b4bc4"></path></marker><marker id="arrow-provider" viewBox="0 0 12 12" refX="10" refY="6" markerWidth="9" markerHeight="9" orient="auto-start-reverse"><path d="M 1 1 L 11 6 L 1 11 z" fill="#7b4bc4"></path></marker><marker id="arrow-scheduler" viewBox="0 0 12 12" refX="10" refY="6" markerWidth="9" markerHeight="9" orient="auto-start-reverse"><path d="M 1 1 L 11 6 L 1 11 z" fill="#9a5b00"></path></marker><marker id="arrow-admin" viewBox="0 0 12 12" refX="10" refY="6" markerWidth="9" markerHeight="9" orient="auto-start-reverse"><path d="M 1 1 L 11 6 L 1 11 z" fill="#334155"></path></marker><marker id="arrow-system" viewBox="0 0 12 12" refX="10" refY="6" markerWidth="9" markerHeight="9" orient="auto-start-reverse"><path d="M 1 1 L 11 6 L 1 11 z" fill="#334155"></path></marker><marker id="arrow-success" viewBox="0 0 12 12" refX="10" refY="6" markerWidth="9" markerHeight="9" orient="auto-start-reverse"><path d="M 1 1 L 11 6 L 1 11 z" fill="#1c7c66"></path></marker><marker id="arrow-failure" viewBox="0 0 12 12" refX="10" refY="6" markerWidth="9" markerHeight="9" orient="auto-start-reverse"><path d="M 1 1 L 11 6 L 1 11 z" fill="#b42318"></path></marker><marker id="arrow-neutral" viewBox="0 0 12 12" refX="10" refY="6" markerWidth="9" markerHeight="9" orient="auto-start-reverse"><path d="M 1 1 L 11 6 L 1 11 z" fill="#65758a"></path></marker></defs><rect x="5" y="30" width="230" height="68" rx="8" fill="#ffffff" stroke="#2457a6" stroke-width="2"></rect><text x="120" y="58" text-anchor="middle" class="actor-title">웹 클라이언트</text><text x="120" y="80" text-anchor="middle" class="actor-subtitle">Browser / Mobile Web</text><line x1="120" y1="98" x2="120" y2="1196" class="lifeline"></line><rect x="825" y="30" width="230" height="68" rx="8" fill="#ffffff" stroke="#1c7c66" stroke-width="2"></rect><text x="940" y="58" text-anchor="middle" class="actor-title">우리 서버</text><text x="940" y="80" text-anchor="middle" class="actor-subtitle">Subscription API</text><line x1="940" y1="98" x2="940" y2="1196" class="lifeline"></line><line x1="120" y1="145" x2="940" y2="145" class="msg-line" stroke="#1c7c66" marker-end="url(#arrow-server)"></line><text x="140" y="121" class="msg-label"><desc>결제수단 목록 조회</desc><tspan x="140" dy="0">결제수단 목록 조회</tspan></text><text x="140" y="173" class="msg-code" fill="#1c7c66"><desc>GET /billing/methods</desc><tspan x="140" dy="0">GET /billing/methods</tspan></text><text x="140" y="199" class="msg-note"><desc>기본 결제수단과 삭제 가능 여부를 함께 표시</desc><tspan x="140" dy="0">기본 결제수단과 삭제 가능 여부를 함께 표시</tspan></text><line x1="120" y1="277" x2="940" y2="277" class="msg-line" stroke="#1c7c66" marker-end="url(#arrow-server)"></line><text x="140" y="253" class="msg-label"><desc>결제수단 삭제 요청</desc><tspan x="140" dy="0">결제수단 삭제 요청</tspan></text><text x="140" y="305" class="msg-code" fill="#1c7c66"><desc>DELETE /billing/methods/{billingMethodId}</desc><tspan x="140" dy="0">DELETE /billing/methods/{billingMethodId}</tspan></text><text x="140" y="331" class="msg-note"><desc>billingMethodId, Idempotency-Key</desc><tspan x="140" dy="0">billingMethodId, Idempotency-Key</tspan></text><rect x="670" y="365" width="360" height="145" rx="8" fill="#fbfcfe" stroke="#65758a"></rect><text x="690" y="389" class="msg-label"><desc>소유권과 구독 상태 검증</desc><tspan x="690" dy="0">소유권과 구독 상태 검증</tspan></text><text x="690" y="421" class="msg-code" fill="#65758a"><desc>activeSubscriptionCount, activeBillingMethodCount</desc><tspan x="690" dy="0">activeSubscriptionCount,</tspan><tspan x="690" dy="20">activeBillingMethodCount</tspan></text><text x="690" y="473" class="msg-note"><desc>활성 구독이 1개 이상 있으면 삭제 후 결제수단이 0개가 되는 요청은 거부</desc><tspan x="690" dy="0">활성 구독이 1개 이상 있으면 삭제 후 결제수단이 0개가 되는 요청은 거부</tspan></text><rect x="270" y="497" width="520" height="125" rx="8" fill="#fff1f0" stroke="#b42318" stroke-dasharray="7 6"></rect><text x="290" y="521" class="msg-label"><desc>마지막 결제수단 삭제 거부</desc><tspan x="290" dy="0">마지막 결제수단 삭제 거부</tspan></text><text x="290" y="553" class="msg-code" fill="#b42318"><desc>409 BILLING_METHOD_REQUIRED</desc><tspan x="290" dy="0">409 BILLING_METHOD_REQUIRED</tspan></text><text x="290" y="585" class="msg-note"><desc>활성 구독이 1개 이상 있는 회원은 공통 결제수단이 최소 1개 남아야 합니다</desc><tspan x="290" dy="0">활성 구독이 1개 이상 있는 회원은 공통 결제수단이 최소 1개 남아야 합니다</tspan></text><rect x="270" y="629" width="520" height="125" rx="8" fill="#fff1f0" stroke="#b42318" stroke-dasharray="7 6"></rect><text x="290" y="653" class="msg-label"><desc>기본 결제수단 삭제 거부</desc><tspan x="290" dy="0">기본 결제수단 삭제 거부</tspan></text><text x="290" y="685" class="msg-code" fill="#b42318"><desc>409 DEFAULT_BILLING_METHOD_REQUIRED</desc><tspan x="290" dy="0">409 DEFAULT_BILLING_METHOD_REQUIRED</tspan></text><text x="290" y="717" class="msg-note"><desc>다른 결제수단을 먼저 기본값으로 지정한 뒤 삭제하도록 안내</desc><tspan x="290" dy="0">다른 결제수단을 먼저 기본값으로 지정한 뒤 삭제하도록 안내</tspan></text><rect x="270" y="761" width="520" height="125" rx="8" fill="#fbfcfe" stroke="#1c7c66" stroke-dasharray="7 6"></rect><text x="290" y="785" class="msg-label"><desc>삭제 가능 결제수단 비활성화</desc><tspan x="290" dy="0">삭제 가능 결제수단 비활성화</tspan></text><text x="290" y="817" class="msg-code" fill="#1c7c66"><desc>billingMethod.status=inactive</desc><tspan x="290" dy="0">billingMethod.status=inactive</tspan></text><text x="290" y="849" class="msg-note"><desc>과거 결제 내역 추적을 위해 물리 삭제 대신 비활성화</desc><tspan x="290" dy="0">과거 결제 내역 추적을 위해 물리 삭제 대신 비활성화</tspan></text><line x1="940" y1="937" x2="120" y2="937" class="msg-line" stroke="#2457a6" marker-end="url(#arrow-client)"></line><text x="140" y="913" class="msg-label"><desc>삭제 결과 반환</desc><tspan x="140" dy="0">삭제 결과 반환</tspan></text><text x="140" y="965" class="msg-code" fill="#2457a6"><desc>deleted=true 또는 409 errorCode</desc><tspan x="140" dy="0">deleted=true 또는 409 errorCode</tspan></text><text x="140" y="991" class="msg-note"><desc>거부 시 프론트는 결제수단 추가 또는 기본값 변경을 안내</desc><tspan x="140" dy="0">거부 시 프론트는 결제수단 추가 또는 기본값 변경을 안내</tspan></text><line x1="120" y1="1069" x2="940" y2="1069" class="msg-line" stroke="#1c7c66" marker-end="url(#arrow-server)"></line><text x="140" y="1045" class="msg-label"><desc>결제수단 목록 재조회</desc><tspan x="140" dy="0">결제수단 목록 재조회</tspan></text><text x="140" y="1097" class="msg-code" fill="#1c7c66"><desc>GET /billing/methods</desc><tspan x="140" dy="0">GET /billing/methods</tspan></text><text x="140" y="1123" class="msg-note"><desc>비활성화된 결제수단은 기본 목록에서 제외</desc><tspan x="140" dy="0">비활성화된 결제수단은 기본 목록에서 제외</tspan></text></svg></div>
+</section>
+  <section id="states">
+  <h2>상태 요약</h2>
+  <table><thead><tr><th>시점</th><th>구독 상태</th><th>결제 상태</th><th>설명</th></tr></thead><tbody><tr><td>추가 인증 시작 후</td><td><code>active</code></td><td><code>billing_auth_pending</code></td><td>회원은 기존 구독을 유지한 채 새 카드 빌링 인증을 진행합니다.</td></tr><tr><td>첫 결제수단 저장 후</td><td><code>active</code></td><td><code>billing_method_active</code></td><td>저장된 결제수단이 자동으로 기본 결제수단이 됩니다.</td></tr><tr><td>추가 결제수단 저장 후</td><td><code>active</code></td><td><code>billing_method_active</code></td><td>요청 정책에 따라 새 결제수단을 기본값으로 지정하거나 기존 기본값을 유지합니다.</td></tr><tr><td>기본값 변경 전</td><td><code>active</code></td><td><code>billing_method_active</code></td><td>기존 기본 결제수단이 모든 상품 구독의 다음 정기결제 대상으로 지정되어 있습니다.</td></tr><tr><td>기본값 변경 후</td><td><code>active</code></td><td><code>billing_method_active</code></td><td>새 기본 결제수단이 모든 상품 구독의 다음 정기결제 대상으로 지정되고 기존 결제수단은 활성 상태로 남습니다.</td></tr><tr><td>삭제 요청 전</td><td><code>active</code></td><td><code>billing_method_active</code></td><td>모든 활성 상품 구독의 다음 결제에 사용할 공통 기본 결제수단이 존재합니다.</td></tr><tr><td>마지막 결제수단 삭제 시도</td><td><code>active</code></td><td><code>billing_method_required</code></td><td>구독 유지를 위해 삭제를 거부하고 결제수단 추가를 안내합니다.</td></tr><tr><td>보조 결제수단 삭제 후</td><td><code>active</code></td><td><code>billing_method_active</code></td><td>삭제 대상만 비활성화되고 기본 결제수단은 그대로 유지됩니다.</td></tr></tbody></table>
+</section>
+</main>
+</body>
+</html>
