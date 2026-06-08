@@ -308,7 +308,7 @@
         max-width: 1180px;
       }
       .hero {
-        width: calc(100% - 16px);
+        width: 100%;
         padding: 34px 0 24px;
       }
       h1 { font-size: clamp(28px, 8vw, 38px); }
@@ -382,7 +382,7 @@
       body { line-height: 1.54; }
       .wrap { width: calc(100% - 12px); }
       .hero {
-        width: calc(100% - 12px);
+        width: 100%;
         padding: 28px 0 20px;
       }
       .eyebrow { font-size: 13px; }
@@ -416,7 +416,8 @@
 <body>
 <a class="skip-link" href="#content">본문으로 건너뛰기</a>
 <header>
-  <div class="wrap hero">
+  <div class="hero">
+    <div class="wrap">
     <p class="eyebrow">Sequence Diagram Hub</p>
     <h1>결제 시스템 시퀀스 다이어그램 목록</h1>
     <p class="lead">구독결제와 일반결제에서 필요한 시퀀스 다이어그램을 한 곳에서 찾는 허브입니다.</p>
@@ -424,6 +425,7 @@
       <input type="search" data-doc-search aria-label="문서 검색" placeholder="API, 상태, 컬렉션, 플로우 검색">
     </div>
     <p class="top-links"><a href="./all-api-doc.html">전체 API 목록</a><a href="./api-detail-doc.html">API 상세 설명</a><a href="./database-doc.html">MongoDB 구조 문서</a></p>
+    </div>
   </div>
 </header>
 <main class="wrap" id="content">

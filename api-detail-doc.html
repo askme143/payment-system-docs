@@ -308,7 +308,7 @@
         max-width: 1180px;
       }
       .hero {
-        width: calc(100% - 16px);
+        width: 100%;
         padding: 34px 0 24px;
       }
       h1 { font-size: clamp(28px, 8vw, 38px); }
@@ -382,7 +382,7 @@
       body { line-height: 1.54; }
       .wrap { width: calc(100% - 12px); }
       .hero {
-        width: calc(100% - 12px);
+        width: 100%;
         padding: 28px 0 20px;
       }
       .eyebrow { font-size: 13px; }
@@ -416,7 +416,8 @@
 <body>
 <a class="skip-link" href="#content">본문으로 건너뛰기</a>
 <header>
-  <div class="wrap hero">
+  <div class="hero">
+    <div class="wrap">
     <p class="eyebrow">API Contract</p>
     <h1>결제 API 상세 설명</h1>
     <p class="lead">Header, Cookie, Body, Response, 처리 로직을 관리하는 API 계약의 단일 원본입니다.</p>
@@ -424,6 +425,7 @@
       <input type="search" data-doc-search aria-label="문서 검색" placeholder="API, 상태, 컬렉션, 플로우 검색">
     </div>
     <p class="top-links"><a href="./sequence-index.html">전체 시퀀스 목록</a><a href="./all-api-doc.html">전체 API 목록</a><a href="./database-doc.html">MongoDB 구조 문서</a></p>
+    </div>
   </div>
 </header>
 <main class="wrap layout" id="content"><nav aria-label="문서 목차"><a href="#plans-list">GET /plans</a><a href="#plans-detail">GET /plans/{planId}</a><a href="#payments-orders">POST /payments/orders</a><a href="#payments-confirm">POST /payments/confirm</a><a href="#payments-detail">GET /payments/{paymentId}</a><a href="#payments-auth-result">POST /payments/{paymentId}/auth-result</a><a href="#payments-cancel">POST /payments/{paymentId}/cancel</a><a href="#checkout">POST /subscriptions/checkout</a><a href="#confirm">POST /subscriptions/confirm</a><a href="#me">GET /subscriptions/me</a><a href="#cancel">POST /subscriptions/{subscriptionId}/cancel</a><a href="#resume">POST /subscriptions/{subscriptionId}/resume</a><a href="#change-preview">POST /subscriptions/{subscriptionId}/change-preview</a><a href="#change">PATCH /subscriptions/{subscriptionId}</a><a href="#billing-auth">POST /billing/auth</a><a href="#billing-issue">POST /billing/issue</a><a href="#billing-methods">GET /billing/methods</a><a href="#billing-method-default">PATCH /billing/methods/{billingMethodId}/default</a><a href="#billing-method-delete">DELETE /billing/methods/{billingMethodId}</a><a href="#invoices-list">GET /invoices</a><a href="#invoice-detail">GET /invoices/{invoiceId}</a><a href="#webhook">POST /webhooks/toss-payments</a><a href="#billing-run">POST /internal/subscription-billing/run</a><a href="#billing-retry">POST /internal/subscription-billing/{invoiceId}/retry</a><a href="#admin-payments">GET /admin/payments</a><a href="#admin-subscriptions">GET /admin/subscriptions</a><a href="#admin-payment-cancel">POST /admin/payments/{paymentId}/cancel</a><a href="#admin-subscription-adjust">POST /admin/subscriptions/{subscriptionId}/adjust</a><a href="#admin-products-create">POST /admin/products</a><a href="#admin-subscription-plans-create">POST /admin/products/{productId}/subscription-plans</a><a href="#admin-subscription-plans-update">PATCH /admin/products/{productId}/subscription-plans/{planId}</a><a href="#admin-one-time-skus-create">POST /admin/products/{productId}/one-time-skus</a><a href="#admin-one-time-skus-update">PATCH /admin/products/{productId}/one-time-skus/{skuId}</a><a href="#admin-products-status">PATCH /admin/products/{productId}/status</a></nav><div><section id="plans-list">

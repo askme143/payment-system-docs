@@ -500,7 +500,7 @@ def page(title, body, extra_head=""):
         max-width: 1180px;
       }}
       .hero {{
-        width: calc(100% - 16px);
+        width: 100%;
         padding: 34px 0 24px;
       }}
       h1 {{ font-size: clamp(28px, 8vw, 38px); }}
@@ -574,7 +574,7 @@ def page(title, body, extra_head=""):
       body {{ line-height: 1.54; }}
       .wrap {{ width: calc(100% - 12px); }}
       .hero {{
-        width: calc(100% - 12px);
+        width: 100%;
         padding: 28px 0 20px;
       }}
       .eyebrow {{ font-size: 13px; }}
@@ -634,7 +634,8 @@ def header(title, eyebrow, lead, links=None):
             f"<a href=\"{e(href)}\">{e(label)}</a>" for label, href in links
         ) + "</p>"
     return f"""<header>
-  <div class="wrap hero">
+  <div class="hero">
+    <div class="wrap">
     <p class="eyebrow">{e(eyebrow)}</p>
     <h1>{e(title)}</h1>
     <p class="lead">{e(lead)}</p>
@@ -642,6 +643,7 @@ def header(title, eyebrow, lead, links=None):
       <input type="search" data-doc-search aria-label="문서 검색" placeholder="API, 상태, 컬렉션, 플로우 검색">
     </div>
     {link_html}
+    </div>
   </div>
 </header>
 """

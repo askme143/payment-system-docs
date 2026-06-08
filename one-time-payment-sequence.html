@@ -308,7 +308,7 @@
         max-width: 1180px;
       }
       .hero {
-        width: calc(100% - 16px);
+        width: 100%;
         padding: 34px 0 24px;
       }
       h1 { font-size: clamp(28px, 8vw, 38px); }
@@ -382,7 +382,7 @@
       body { line-height: 1.54; }
       .wrap { width: calc(100% - 12px); }
       .hero {
-        width: calc(100% - 12px);
+        width: 100%;
         padding: 28px 0 20px;
       }
       .eyebrow { font-size: 13px; }
@@ -416,7 +416,8 @@
 <body>
 <a class="skip-link" href="#content">본문으로 건너뛰기</a>
 <header>
-  <div class="wrap hero">
+  <div class="hero">
+    <div class="wrap">
     <p class="eyebrow">Sequence Diagram</p>
     <h1>일반결제 플로우</h1>
     <p class="lead">구매 의도 생성, 결제 시도 생성, 토스 결제창 인증, 결제 승인, 웹훅 보정까지의 일반결제 성공 흐름입니다. 실패 후 재시도는 기존 시도를 재사용하지 않고 새 paymentId와 orderId를 발급합니다.</p>
@@ -424,6 +425,7 @@
       <input type="search" data-doc-search aria-label="문서 검색" placeholder="API, 상태, 컬렉션, 플로우 검색">
     </div>
     <p class="top-links"><a href="./sequence-index.html">전체 시퀀스 목록</a><a href="./all-api-doc.html">전체 API 목록</a><a href="./api-detail-doc.html">API 상세 설명</a><a href="./database-doc.html">MongoDB 구조 문서</a></p>
+    </div>
   </div>
 </header>
 <main class="wrap" id="content">

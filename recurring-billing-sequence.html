@@ -308,7 +308,7 @@
         max-width: 1180px;
       }
       .hero {
-        width: calc(100% - 16px);
+        width: 100%;
         padding: 34px 0 24px;
       }
       h1 { font-size: clamp(28px, 8vw, 38px); }
@@ -382,7 +382,7 @@
       body { line-height: 1.54; }
       .wrap { width: calc(100% - 12px); }
       .hero {
-        width: calc(100% - 12px);
+        width: 100%;
         padding: 28px 0 20px;
       }
       .eyebrow { font-size: 13px; }
@@ -416,7 +416,8 @@
 <body>
 <a class="skip-link" href="#content">본문으로 건너뛰기</a>
 <header>
-  <div class="wrap hero">
+  <div class="hero">
+    <div class="wrap">
     <p class="eyebrow">Sequence Diagram</p>
     <h1>정기 결제 실행 플로우</h1>
     <p class="lead">스케줄러가 다음 결제일이 도래한 활성 구독을 상품 구독 단위로 잠그고 인보이스를 생성한 뒤 공통 기본 결제수단으로 토스 자동결제를 승인하고 다음 결제일을 예약하는 운영 흐름입니다.</p>
@@ -424,6 +425,7 @@
       <input type="search" data-doc-search aria-label="문서 검색" placeholder="API, 상태, 컬렉션, 플로우 검색">
     </div>
     <p class="top-links"><a href="./sequence-index.html">전체 시퀀스 목록</a><a href="./all-api-doc.html">전체 API 목록</a><a href="./api-detail-doc.html">API 상세 설명</a><a href="./database-doc.html">MongoDB 구조 문서</a></p>
+    </div>
   </div>
 </header>
 <main class="wrap" id="content">
