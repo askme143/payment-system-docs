@@ -1,0 +1,36 @@
+diagram: {
+  shape: sequence_diagram
+  label: "체크아웃 생성 실패"
+
+  client: "웹 클라이언트"
+  client.style.fill: "#e8f3ff"
+  client.style.stroke: "#2457a6"
+  server: "우리 서버"
+  server.style.fill: "#eaf8f3"
+  server.style.stroke: "#1c7c66"
+  toss: "토스페이먼츠 서버"
+  toss.style.fill: "#f1edff"
+  toss.style.stroke: "#7b4bc4"
+
+  client -> server: |md
+구독 체크아웃 생성 요청
+
+**POST /subscriptions/checkout**
+| {
+    style.stroke: "#1c7c66"
+    style.font-color: "#334155"
+    style.font-size: 18
+    style.italic: false
+  }
+  server.note_2: "서버 검증 실패\n401 / 400 / 409\nUNAUTHORIZED / PLAN_NOT_AVAILABLE / PRODUCT_ALREADY_SUBSCRIBED"
+  server -> client: |md
+실패 응답 반환
+
+오류 화면 또는 기존 구독 화면으로 안내
+| {
+    style.stroke: "#2457a6"
+    style.font-color: "#334155"
+    style.font-size: 18
+    style.italic: false
+  }
+}

@@ -1,0 +1,57 @@
+diagram: {
+  shape: sequence_diagram
+  label: "첫 자동결제 실패"
+
+  client: "웹 클라이언트"
+  client.style.fill: "#e8f3ff"
+  client.style.stroke: "#2457a6"
+  server: "우리 서버"
+  server.style.fill: "#eaf8f3"
+  server.style.stroke: "#1c7c66"
+  toss: "토스페이먼츠 서버"
+  toss.style.fill: "#f1edff"
+  toss.style.stroke: "#7b4bc4"
+
+  client -> server: |md
+구독 확정 요청
+
+**POST /subscriptions/confirm**
+| {
+    style.stroke: "#1c7c66"
+    style.font-color: "#334155"
+    style.font-size: 18
+    style.italic: false
+  }
+  server.note_2: "빌링키 발급 성공\nbillingKey 암호화 저장"
+  server -> toss: |md
+첫 자동결제 승인 요청
+
+**POST /v1/billing/{billingKey}**
+| {
+    style.stroke: "#7b4bc4"
+    style.font-color: "#334155"
+    style.font-size: 18
+    style.italic: false
+  }
+  toss -> server: |md
+결제 실패 응답
+
+CARD_DECLINED / EXCEED_MAX_AMOUNT / INSUFFICIENT_FUNDS
+| {
+    style.stroke: "#1c7c66"
+    style.font-color: "#334155"
+    style.font-size: 18
+    style.italic: false
+  }
+  server.note_5: "구독 활성화하지 않음\nsubscription.status = payment_failed\ninvoice failed, payment failed 저장"
+  server -> client: |md
+결제 실패 응답
+
+402 FIRST_PAYMENT_FAILED
+| {
+    style.stroke: "#2457a6"
+    style.font-color: "#334155"
+    style.font-size: 18
+    style.italic: false
+  }
+}

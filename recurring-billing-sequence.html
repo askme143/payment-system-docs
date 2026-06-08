@@ -138,22 +138,46 @@
       border-radius: 8px;
     }
     .diagram { overflow-x: auto; padding-bottom: 4px; }
-    .sequence-svg {
-      display: block;
-      width: 1060px;
-      min-width: 1060px;
-      height: auto;
-      background: #fff;
+    .d2-diagram {
+      overflow-x: auto;
+      padding: 0;
+      background: #ffffff;
       border: 1px solid var(--line);
       border-radius: 8px;
     }
-    .actor-title { fill: var(--ink); font-size: 18px; font-weight: 800; }
-    .actor-subtitle { fill: var(--muted); font-size: 12px; font-weight: 600; }
-    .lifeline { stroke: #cbd5e1; stroke-width: 3; stroke-dasharray: 10 12; }
-    .msg-line { fill: none; stroke-width: 2.5; }
-    .msg-label { fill: var(--ink); font-size: 14px; font-weight: 800; }
-    .msg-code { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 14px; font-weight: 700; }
-    .msg-note { fill: var(--muted); font-size: 12px; font-weight: 600; }
+    .d2-toolbar {
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+      padding: 10px 12px;
+      border-bottom: 1px solid var(--line);
+      background: #fbfcfe;
+    }
+    .d2-toolbar a {
+      font-size: 13px;
+    }
+    .d2-source {
+      margin: 0;
+      border-radius: 0 0 8px 8px;
+    }
+    .d2-svg {
+      display: block;
+      max-width: 100%;
+      height: auto;
+      margin: 0 auto;
+      background: #ffffff;
+    }
+    .d2-details {
+      border-top: 1px solid var(--line);
+      background: #fbfcfe;
+    }
+    .d2-details summary {
+      cursor: pointer;
+      padding: 10px 12px;
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 800;
+    }
     @media (max-width: 900px) {
       .layout { grid-template-columns: 1fr; }
       nav { position: static; }
@@ -180,11 +204,191 @@
   <section id="subscription-billing-reminder">
   <h2>정기 결제 7일 전 사전 알림</h2>
   <p>다음 결제일 7일 전에 결제 예정일과 결제 금액을 회원에게 이메일로 안내합니다.</p>
-  <div class="diagram"><svg class="sequence-svg" viewBox="0 0 1060 830" role="img" aria-label="정기 결제 7일 전 사전 알림"><defs><marker id="arrow-client" viewBox="0 0 12 12" refX="10" refY="6" markerWidth="9" markerHeight="9" orient="auto-start-reverse"><path d="M 1 1 L 11 6 L 1 11 z" fill="#2457a6"></path></marker><marker id="arrow-server" viewBox="0 0 12 12" refX="10" refY="6" markerWidth="9" markerHeight="9" orient="auto-start-reverse"><path d="M 1 1 L 11 6 L 1 11 z" fill="#1c7c66"></path></marker><marker id="arrow-toss" viewBox="0 0 12 12" refX="10" refY="6" markerWidth="9" markerHeight="9" orient="auto-start-reverse"><path d="M 1 1 L 11 6 L 1 11 z" fill="#7b4bc4"></path></marker><marker id="arrow-provider" viewBox="0 0 12 12" refX="10" refY="6" markerWidth="9" markerHeight="9" orient="auto-start-reverse"><path d="M 1 1 L 11 6 L 1 11 z" fill="#7b4bc4"></path></marker><marker id="arrow-scheduler" viewBox="0 0 12 12" refX="10" refY="6" markerWidth="9" markerHeight="9" orient="auto-start-reverse"><path d="M 1 1 L 11 6 L 1 11 z" fill="#9a5b00"></path></marker><marker id="arrow-admin" viewBox="0 0 12 12" refX="10" refY="6" markerWidth="9" markerHeight="9" orient="auto-start-reverse"><path d="M 1 1 L 11 6 L 1 11 z" fill="#334155"></path></marker><marker id="arrow-system" viewBox="0 0 12 12" refX="10" refY="6" markerWidth="9" markerHeight="9" orient="auto-start-reverse"><path d="M 1 1 L 11 6 L 1 11 z" fill="#334155"></path></marker><marker id="arrow-success" viewBox="0 0 12 12" refX="10" refY="6" markerWidth="9" markerHeight="9" orient="auto-start-reverse"><path d="M 1 1 L 11 6 L 1 11 z" fill="#1c7c66"></path></marker><marker id="arrow-failure" viewBox="0 0 12 12" refX="10" refY="6" markerWidth="9" markerHeight="9" orient="auto-start-reverse"><path d="M 1 1 L 11 6 L 1 11 z" fill="#b42318"></path></marker><marker id="arrow-neutral" viewBox="0 0 12 12" refX="10" refY="6" markerWidth="9" markerHeight="9" orient="auto-start-reverse"><path d="M 1 1 L 11 6 L 1 11 z" fill="#65758a"></path></marker></defs><rect x="5" y="30" width="230" height="68" rx="8" fill="#ffffff" stroke="#9a5b00" stroke-width="2"></rect><text x="120" y="58" text-anchor="middle" class="actor-title">스케줄러</text><text x="120" y="80" text-anchor="middle" class="actor-subtitle">Billing Batch</text><line x1="120" y1="98" x2="120" y2="800" class="lifeline"></line><rect x="278" y="30" width="230" height="68" rx="8" fill="#ffffff" stroke="#1c7c66" stroke-width="2"></rect><text x="393" y="58" text-anchor="middle" class="actor-title">우리 서버</text><text x="393" y="80" text-anchor="middle" class="actor-subtitle">Subscription API</text><line x1="393" y1="98" x2="393" y2="800" class="lifeline"></line><rect x="551" y="30" width="230" height="68" rx="8" fill="#ffffff" stroke="#65758a" stroke-width="2"></rect><text x="666" y="58" text-anchor="middle" class="actor-title">이메일 발송 시스템</text><text x="666" y="80" text-anchor="middle" class="actor-subtitle">Notification Service</text><line x1="666" y1="98" x2="666" y2="800" class="lifeline"></line><rect x="825" y="30" width="230" height="68" rx="8" fill="#ffffff" stroke="#2457a6" stroke-width="2"></rect><text x="940" y="58" text-anchor="middle" class="actor-title">웹 클라이언트</text><text x="940" y="80" text-anchor="middle" class="actor-subtitle">Browser / Mobile Web</text><line x1="940" y1="98" x2="940" y2="800" class="lifeline"></line><line x1="120" y1="145" x2="393" y2="145" class="msg-line" stroke="#1c7c66" marker-end="url(#arrow-server)"></line><text x="140" y="121" class="msg-label"><desc>정기 결제 사전 알림 대상 조회</desc><tspan x="140" dy="0">정기 결제 사전 알림 대상 조회</tspan></text><text x="140" y="173" class="msg-code" fill="#1c7c66"><desc>nextBillingDate = today + 7 days</desc><tspan x="140" dy="0">nextBillingDate = today + 7 days</tspan></text><text x="140" y="199" class="msg-note"><desc>해지 예약, 결제수단 비활성, 이미 알림 발송된 회차는 제외</desc><tspan x="140" dy="0">해지 예약, 결제수단 비활성, 이미 알림 발송된 회차는 제외</tspan></text><rect x="213" y="233" width="360" height="125" rx="8" fill="#fbfcfe" stroke="#65758a"></rect><text x="233" y="257" class="msg-label"><desc>알림 본문 데이터 구성</desc><tspan x="233" dy="0">알림 본문 데이터 구성</tspan></text><text x="233" y="289" class="msg-code" fill="#65758a"><desc>billingDate, amount, planName</desc><tspan x="233" dy="0">billingDate, amount, planName</tspan></text><text x="233" y="321" class="msg-note"><desc>이메일에는 결제일과 결제 금액을 반드시 표시</desc><tspan x="233" dy="0">이메일에는 결제일과 결제 금액을 반드시 표시</tspan></text><line x1="393" y1="409" x2="666" y2="409" class="msg-line" stroke="#65758a" marker-end="url(#arrow-neutral)"></line><text x="413" y="385" class="msg-label"><desc>정기 결제 사전 알림 발송 요청</desc><tspan x="413" dy="0">정기 결제 사전 알림 발송 요청</tspan></text><text x="413" y="437" class="msg-code" fill="#65758a"><desc>template=subscription_billing_reminder</desc><tspan x="413" dy="0">template=subscription_billing_reminder</tspan></text><text x="413" y="463" class="msg-note"><desc>billingDate, amount, currency, planName, subscriptionManageUrl</desc><tspan x="413" dy="0">billingDate, amount, currency, planName, subscriptionManageUrl</tspan></text><line x1="666" y1="541" x2="940" y2="541" class="msg-line" stroke="#2457a6" marker-end="url(#arrow-client)"></line><text x="686" y="517" class="msg-label"><desc>정기 결제 예정 이메일 발송</desc><tspan x="686" dy="0">정기 결제 예정 이메일 발송</tspan></text><text x="686" y="569" class="msg-code" fill="#2457a6"><desc>결제일, 결제 금액</desc><tspan x="686" dy="0">결제일, 결제 금액</tspan></text><text x="686" y="595" class="msg-note"><desc>회원이 결제 전 결제수단을 점검할 수 있도록 관리 링크 포함</desc><tspan x="686" dy="0">회원이 결제 전 결제수단을 점검할 수 있도록 관리 링크 포함</tspan></text><rect x="213" y="629" width="360" height="125" rx="8" fill="#fbfcfe" stroke="#65758a"></rect><text x="233" y="653" class="msg-label"><desc>알림 발송 이력 저장</desc><tspan x="233" dy="0">알림 발송 이력 저장</tspan></text><text x="233" y="685" class="msg-code" fill="#65758a"><desc>reminderSentAt</desc><tspan x="233" dy="0">reminderSentAt</tspan></text><text x="233" y="717" class="msg-note"><desc>같은 billingPeriod에 중복 발송하지 않도록 기록</desc><tspan x="233" dy="0">같은 billingPeriod에 중복 발송하지 않도록 기록</tspan></text></svg></div>
+  <div class="diagram"><div class="d2-diagram">
+  <div class="d2-toolbar"><a href="diagrams/subscription-recurring-billing-subscription-billing-reminder.d2">D2 원본</a></div>
+  <img class="d2-svg" src="diagrams/subscription-recurring-billing-subscription-billing-reminder.svg" alt="정기 결제 7일 전 사전 알림">
+  <details class="d2-details">
+    <summary>D2 원본 보기</summary>
+    <pre class="d2-source"><code>diagram: {
+  shape: sequence_diagram
+  label: &quot;정기 결제 7일 전 사전 알림&quot;
+
+  scheduler: &quot;스케줄러&quot;
+  scheduler.style.fill: &quot;#fff8e6&quot;
+  scheduler.style.stroke: &quot;#9a5b00&quot;
+  server: &quot;우리 서버&quot;
+  server.style.fill: &quot;#eaf8f3&quot;
+  server.style.stroke: &quot;#1c7c66&quot;
+  email: &quot;이메일 발송 시스템&quot;
+  email.style.fill: &quot;#f8fafc&quot;
+  email.style.stroke: &quot;#65758a&quot;
+  client: &quot;웹 클라이언트&quot;
+  client.style.fill: &quot;#e8f3ff&quot;
+  client.style.stroke: &quot;#2457a6&quot;
+
+  scheduler -&gt; server: |md
+정기 결제 사전 알림 대상 조회
+
+nextBillingDate = today + 7 days
+
+해지 예약, 결제수단 비활성, 이미 알림 발송된 회차는 제외
+| {
+    style.stroke: &quot;#1c7c66&quot;
+    style.font-color: &quot;#334155&quot;
+    style.font-size: 18
+    style.italic: false
+  }
+  server.note_2: &quot;알림 본문 데이터 구성\nbillingDate, amount, planName\n이메일에는 결제일과 결제 금액을 반드시 표시&quot;
+  server -&gt; email: |md
+정기 결제 사전 알림 발송 요청
+
+template=subscription_billing_reminder
+
+billingDate, amount, currency, planName, subscriptionManageUrl
+| {
+    style.stroke: &quot;#65758a&quot;
+    style.font-color: &quot;#334155&quot;
+    style.font-size: 18
+    style.italic: false
+  }
+  email -&gt; client: |md
+정기 결제 예정 이메일 발송
+
+결제일, 결제 금액
+
+회원이 결제 전 결제수단을 점검할 수 있도록 관리 링크 포함
+| {
+    style.stroke: &quot;#2457a6&quot;
+    style.font-color: &quot;#334155&quot;
+    style.font-size: 18
+    style.italic: false
+  }
+  server.note_5: &quot;알림 발송 이력 저장\nreminderSentAt\n같은 billingPeriod에 중복 발송하지 않도록 기록&quot;
+}
+</code></pre>
+  </details>
+</div></div>
 </section><section id="subscription-recurring-billing-main">
   <h2>정기 결제 실행</h2>
   <p>최초 구독 성공 후 저장된 billingKey를 사용해 매 주기 자동결제를 실행하는 배치 흐름입니다.</p>
-  <div class="diagram"><svg class="sequence-svg" viewBox="0 0 1060 1754" role="img" aria-label="정기 결제 실행"><defs><marker id="arrow-client" viewBox="0 0 12 12" refX="10" refY="6" markerWidth="9" markerHeight="9" orient="auto-start-reverse"><path d="M 1 1 L 11 6 L 1 11 z" fill="#2457a6"></path></marker><marker id="arrow-server" viewBox="0 0 12 12" refX="10" refY="6" markerWidth="9" markerHeight="9" orient="auto-start-reverse"><path d="M 1 1 L 11 6 L 1 11 z" fill="#1c7c66"></path></marker><marker id="arrow-toss" viewBox="0 0 12 12" refX="10" refY="6" markerWidth="9" markerHeight="9" orient="auto-start-reverse"><path d="M 1 1 L 11 6 L 1 11 z" fill="#7b4bc4"></path></marker><marker id="arrow-provider" viewBox="0 0 12 12" refX="10" refY="6" markerWidth="9" markerHeight="9" orient="auto-start-reverse"><path d="M 1 1 L 11 6 L 1 11 z" fill="#7b4bc4"></path></marker><marker id="arrow-scheduler" viewBox="0 0 12 12" refX="10" refY="6" markerWidth="9" markerHeight="9" orient="auto-start-reverse"><path d="M 1 1 L 11 6 L 1 11 z" fill="#9a5b00"></path></marker><marker id="arrow-admin" viewBox="0 0 12 12" refX="10" refY="6" markerWidth="9" markerHeight="9" orient="auto-start-reverse"><path d="M 1 1 L 11 6 L 1 11 z" fill="#334155"></path></marker><marker id="arrow-system" viewBox="0 0 12 12" refX="10" refY="6" markerWidth="9" markerHeight="9" orient="auto-start-reverse"><path d="M 1 1 L 11 6 L 1 11 z" fill="#334155"></path></marker><marker id="arrow-success" viewBox="0 0 12 12" refX="10" refY="6" markerWidth="9" markerHeight="9" orient="auto-start-reverse"><path d="M 1 1 L 11 6 L 1 11 z" fill="#1c7c66"></path></marker><marker id="arrow-failure" viewBox="0 0 12 12" refX="10" refY="6" markerWidth="9" markerHeight="9" orient="auto-start-reverse"><path d="M 1 1 L 11 6 L 1 11 z" fill="#b42318"></path></marker><marker id="arrow-neutral" viewBox="0 0 12 12" refX="10" refY="6" markerWidth="9" markerHeight="9" orient="auto-start-reverse"><path d="M 1 1 L 11 6 L 1 11 z" fill="#65758a"></path></marker></defs><rect x="5" y="30" width="230" height="68" rx="8" fill="#ffffff" stroke="#9a5b00" stroke-width="2"></rect><text x="120" y="58" text-anchor="middle" class="actor-title">스케줄러</text><text x="120" y="80" text-anchor="middle" class="actor-subtitle">Billing Batch</text><line x1="120" y1="98" x2="120" y2="1724" class="lifeline"></line><rect x="210" y="30" width="230" height="68" rx="8" fill="#ffffff" stroke="#1c7c66" stroke-width="2"></rect><text x="325" y="58" text-anchor="middle" class="actor-title">우리 서버</text><text x="325" y="80" text-anchor="middle" class="actor-subtitle">Subscription API</text><line x1="325" y1="98" x2="325" y2="1724" class="lifeline"></line><rect x="415" y="30" width="230" height="68" rx="8" fill="#ffffff" stroke="#7b4bc4" stroke-width="2"></rect><text x="530" y="58" text-anchor="middle" class="actor-title">토스페이먼츠 서버</text><text x="530" y="80" text-anchor="middle" class="actor-subtitle">Billing &amp; Payment API</text><line x1="530" y1="98" x2="530" y2="1724" class="lifeline"></line><rect x="620" y="30" width="230" height="68" rx="8" fill="#ffffff" stroke="#65758a" stroke-width="2"></rect><text x="735" y="58" text-anchor="middle" class="actor-title">이메일 발송 시스템</text><text x="735" y="80" text-anchor="middle" class="actor-subtitle">Notification Service</text><line x1="735" y1="98" x2="735" y2="1724" class="lifeline"></line><rect x="825" y="30" width="230" height="68" rx="8" fill="#ffffff" stroke="#2457a6" stroke-width="2"></rect><text x="940" y="58" text-anchor="middle" class="actor-title">웹 클라이언트</text><text x="940" y="80" text-anchor="middle" class="actor-subtitle">Browser / Mobile Web</text><line x1="940" y1="98" x2="940" y2="1724" class="lifeline"></line><line x1="120" y1="145" x2="325" y2="145" class="msg-line" stroke="#1c7c66" marker-end="url(#arrow-server)"></line><text x="140" y="121" class="msg-label"><desc>정기 과금 배치 실행 요청</desc><tspan x="140" dy="0">정기 과금 배치 실행 요청</tspan></text><text x="140" y="173" class="msg-code" fill="#1c7c66"><desc>POST /internal/subscription-billing/run</desc><tspan x="140" dy="0">POST /internal/subscription-billing/run</tspan></text><text x="140" y="199" class="msg-note"><desc>cron, queue worker, 운영자 수동 실행 모두 동일 진입점 사용</desc><tspan x="140" dy="0">cron, queue worker, 운영자 수동 실행 모두 동일 진입점 사용</tspan></text><rect x="145" y="233" width="360" height="162" rx="8" fill="#fbfcfe" stroke="#65758a"></rect><text x="165" y="257" class="msg-label"><desc>결제 대상 구독 조회 및 잠금</desc><tspan x="165" dy="0">결제 대상 구독 조회 및 잠금</tspan></text><text x="165" y="289" class="msg-code" fill="#65758a"><desc>status=active AND nextBillingDate&lt;=today</desc><tspan x="165" dy="0">status=active AND</tspan><tspan x="165" dy="20">nextBillingDate&lt;=today</tspan></text><text x="165" y="341" class="msg-note"><desc>한 회원의 여러 상품 구독이 같은 날 도래해도 subscription 또는 invoice 단위로 각각 잠금</desc><tspan x="165" dy="0">한 회원의 여러 상품 구독이 같은 날 도래해도 subscription 또는</tspan><tspan x="165" dy="17">invoice 단위로 각각 잠금</tspan></text><rect x="145" y="365" width="360" height="142" rx="8" fill="#fbfcfe" stroke="#65758a"></rect><text x="165" y="389" class="msg-label"><desc>청구 회차 인보이스 생성</desc><tspan x="165" dy="0">청구 회차 인보이스 생성</tspan></text><text x="165" y="421" class="msg-code" fill="#65758a"><desc>invoice.status = pending</desc><tspan x="165" dy="0">invoice.status = pending</tspan></text><text x="165" y="453" class="msg-note"><desc>productCode, plan amount, billingPeriod, orderId, idempotencyKey 확정</desc><tspan x="165" dy="0">productCode, plan amount, billingPeriod,</tspan><tspan x="165" dy="17">orderId, idempotencyKey 확정</tspan></text><rect x="145" y="497" width="360" height="125" rx="8" fill="#fbfcfe" stroke="#65758a"></rect><text x="165" y="521" class="msg-label"><desc>공통 기본 billingKey 복호화</desc><tspan x="165" dy="0">공통 기본 billingKey 복호화</tspan></text><text x="165" y="553" class="msg-code" fill="#65758a"><desc>billingMethod.active</desc><tspan x="165" dy="0">billingMethod.active</tspan></text><text x="165" y="585" class="msg-note"><desc>회원의 기본 결제수단이 없거나 비활성이면 해당 구독 결제 시도 없이 실패 처리</desc><tspan x="165" dy="0">회원의 기본 결제수단이 없거나 비활성이면 해당 구독 결제 시도 없이 실패 처리</tspan></text><line x1="325" y1="673" x2="530" y2="673" class="msg-line" stroke="#7b4bc4" marker-end="url(#arrow-toss)"></line><text x="345" y="649" class="msg-label"><desc>자동결제 승인 요청</desc><tspan x="345" dy="0">자동결제 승인 요청</tspan></text><text x="345" y="701" class="msg-code" fill="#7b4bc4"><desc>POST /v1/billing/{billingKey}</desc><tspan x="345" dy="0">POST /v1/billing/{billingKey}</tspan></text><text x="345" y="727" class="msg-note"><desc>customerKey, amount, orderId, orderName, productCode, taxFreeAmount</desc><tspan x="345" dy="0">customerKey, amount, orderId, orderName, productCode, taxFreeAmount</tspan></text><line x1="530" y1="805" x2="325" y2="805" class="msg-line" stroke="#1c7c66" marker-end="url(#arrow-server)"></line><text x="345" y="781" class="msg-label"><desc>자동결제 승인 결과</desc><tspan x="345" dy="0">자동결제 승인 결과</tspan></text><text x="345" y="833" class="msg-code" fill="#1c7c66"><desc>paymentKey, status=DONE, approvedAt</desc><tspan x="345" dy="0">paymentKey, status=DONE, approvedAt</tspan></text><text x="345" y="859" class="msg-note"><desc>실패 시 오류 코드와 실패 사유 반환</desc><tspan x="345" dy="0">실패 시 오류 코드와 실패 사유 반환</tspan></text><rect x="270" y="893" width="520" height="125" rx="8" fill="#fbfcfe" stroke="#1c7c66" stroke-dasharray="7 6"></rect><text x="290" y="917" class="msg-label"><desc>승인 성공 처리</desc><tspan x="290" dy="0">승인 성공 처리</tspan></text><text x="290" y="949" class="msg-code" fill="#1c7c66"><desc>invoice paid, payment paid</desc><tspan x="290" dy="0">invoice paid, payment paid</tspan></text><text x="290" y="981" class="msg-note"><desc>구독은 active 유지, nextBillingDate를 다음 주기로 갱신</desc><tspan x="290" dy="0">구독은 active 유지, nextBillingDate를 다음 주기로 갱신</tspan></text><rect x="145" y="1025" width="360" height="125" rx="8" fill="#fbfcfe" stroke="#65758a"></rect><text x="165" y="1049" class="msg-label"><desc>영수증 링크와 결제 결과 구성</desc><tspan x="165" dy="0">영수증 링크와 결제 결과 구성</tspan></text><text x="165" y="1081" class="msg-code" fill="#65758a"><desc>receiptUrl, paymentKey, approvedAt</desc><tspan x="165" dy="0">receiptUrl, paymentKey, approvedAt</tspan></text><text x="165" y="1113" class="msg-note"><desc>토스 영수증 링크 또는 내부 영수증 상세 링크를 결제 성공 알림에 포함</desc><tspan x="165" dy="0">토스 영수증 링크 또는 내부 영수증 상세 링크를 결제 성공 알림에 포함</tspan></text><line x1="325" y1="1201" x2="735" y2="1201" class="msg-line" stroke="#65758a" marker-end="url(#arrow-neutral)"></line><text x="345" y="1177" class="msg-label"><desc>결제 성공 이메일 발송 요청</desc><tspan x="345" dy="0">결제 성공 이메일 발송 요청</tspan></text><text x="345" y="1229" class="msg-code" fill="#65758a"><desc>template=subscription_payment_paid</desc><tspan x="345" dy="0">template=subscription_payment_paid</tspan></text><text x="345" y="1255" class="msg-note"><desc>amount, billingDate, receiptUrl, invoiceId</desc><tspan x="345" dy="0">amount, billingDate, receiptUrl, invoiceId</tspan></text><line x1="735" y1="1333" x2="940" y2="1333" class="msg-line" stroke="#2457a6" marker-end="url(#arrow-client)"></line><text x="755" y="1309" class="msg-label"><desc>결제 성공 이메일 발송</desc><tspan x="755" dy="0">결제 성공 이메일 발송</tspan></text><text x="755" y="1361" class="msg-code" fill="#2457a6"><desc>영수증 링크 포함</desc><tspan x="755" dy="0">영수증 링크 포함</tspan></text><text x="755" y="1387" class="msg-note"><desc>회원은 이메일에서 결제 금액과 영수증 링크를 확인</desc><tspan x="755" dy="0">회원은 이메일에서 결제 금액과 영수증 링크를 확인</tspan></text><line x1="325" y1="1465" x2="120" y2="1465" class="msg-line" stroke="#65758a" marker-end="url(#arrow-neutral)"></line><text x="140" y="1441" class="msg-label"><desc>배치 실행 결과 반환</desc><tspan x="140" dy="0">배치 실행 결과 반환</tspan></text><text x="140" y="1493" class="msg-code" fill="#65758a"><desc>processed, paid, failed, skipped</desc><tspan x="140" dy="0">processed, paid, failed, skipped</tspan></text><text x="140" y="1519" class="msg-note"><desc>운영 로그와 모니터링 지표에 집계</desc><tspan x="140" dy="0">운영 로그와 모니터링 지표에 집계</tspan></text><line x1="530" y1="1597" x2="325" y2="1597" class="msg-line" stroke="#1c7c66" marker-end="url(#arrow-server)"></line><text x="345" y="1573" class="msg-label"><desc>결제 상태 웹훅 수신 및 상태 보정</desc><tspan x="345" dy="0">결제 상태 웹훅 수신 및 상태 보정</tspan></text><text x="345" y="1625" class="msg-code" fill="#1c7c66"><desc>POST /webhooks/toss-payments</desc><tspan x="345" dy="0">POST /webhooks/toss-payments</tspan></text><text x="345" y="1651" class="msg-note"><desc>이미 paid 처리된 결제는 멱등하게 200 OK 반환</desc><tspan x="345" dy="0">이미 paid 처리된 결제는 멱등하게 200 OK 반환</tspan></text></svg></div>
+  <div class="diagram"><div class="d2-diagram">
+  <div class="d2-toolbar"><a href="diagrams/subscription-recurring-billing-subscription-recurring-billing-main.d2">D2 원본</a></div>
+  <img class="d2-svg" src="diagrams/subscription-recurring-billing-subscription-recurring-billing-main.svg" alt="정기 결제 실행">
+  <details class="d2-details">
+    <summary>D2 원본 보기</summary>
+    <pre class="d2-source"><code>diagram: {
+  shape: sequence_diagram
+  label: &quot;정기 결제 실행&quot;
+
+  scheduler: &quot;스케줄러&quot;
+  scheduler.style.fill: &quot;#fff8e6&quot;
+  scheduler.style.stroke: &quot;#9a5b00&quot;
+  server: &quot;우리 서버&quot;
+  server.style.fill: &quot;#eaf8f3&quot;
+  server.style.stroke: &quot;#1c7c66&quot;
+  toss: &quot;토스페이먼츠 서버&quot;
+  toss.style.fill: &quot;#f1edff&quot;
+  toss.style.stroke: &quot;#7b4bc4&quot;
+  email: &quot;이메일 발송 시스템&quot;
+  email.style.fill: &quot;#f8fafc&quot;
+  email.style.stroke: &quot;#65758a&quot;
+  client: &quot;웹 클라이언트&quot;
+  client.style.fill: &quot;#e8f3ff&quot;
+  client.style.stroke: &quot;#2457a6&quot;
+
+  scheduler -&gt; server: |md
+정기 과금 배치 실행 요청
+
+**POST /internal/subscription-billing/run**
+
+cron, queue worker, 운영자 수동 실행 모두 동일 진입점 사용
+| {
+    style.stroke: &quot;#1c7c66&quot;
+    style.font-color: &quot;#334155&quot;
+    style.font-size: 18
+    style.italic: false
+  }
+  server.note_2: &quot;결제 대상 구독 조회 및 잠금\nstatus=active AND nextBillingDate&lt;=today\n한 회원의 여러 상품 구독이 같은 날 도래해도 subscription 또는 invoice 단위로 각각 잠금&quot;
+  server.note_3: &quot;청구 회차 인보이스 생성\ninvoice.status = pending\nproductCode, plan amount, billingPeriod, orderId, idempotencyKey 확정&quot;
+  server.note_4: &quot;공통 기본 billingKey 복호화\nbillingMethod.active\n회원의 기본 결제수단이 없거나 비활성이면 해당 구독 결제 시도 없이 실패 처리&quot;
+  server -&gt; toss: |md
+자동결제 승인 요청
+
+**POST /v1/billing/{billingKey}**
+
+customerKey, amount, orderId, orderName, productCode, taxFreeAmount
+| {
+    style.stroke: &quot;#7b4bc4&quot;
+    style.font-color: &quot;#334155&quot;
+    style.font-size: 18
+    style.italic: false
+  }
+  toss -&gt; server: |md
+자동결제 승인 결과
+
+paymentKey, status=DONE, approvedAt
+
+실패 시 오류 코드와 실패 사유 반환
+| {
+    style.stroke: &quot;#1c7c66&quot;
+    style.font-color: &quot;#334155&quot;
+    style.font-size: 18
+    style.italic: false
+  }
+  server.note_7: &quot;승인 성공 처리\ninvoice paid, payment paid\n구독은 active 유지, nextBillingDate를 다음 주기로 갱신&quot;
+  server.note_8: &quot;영수증 링크와 결제 결과 구성\nreceiptUrl, paymentKey, approvedAt\n토스 영수증 링크 또는 내부 영수증 상세 링크를 결제 성공 알림에 포함&quot;
+  server -&gt; email: |md
+결제 성공 이메일 발송 요청
+
+template=subscription_payment_paid
+
+amount, billingDate, receiptUrl, invoiceId
+| {
+    style.stroke: &quot;#65758a&quot;
+    style.font-color: &quot;#334155&quot;
+    style.font-size: 18
+    style.italic: false
+  }
+  email -&gt; client: |md
+결제 성공 이메일 발송
+
+영수증 링크 포함
+
+회원은 이메일에서 결제 금액과 영수증 링크를 확인
+| {
+    style.stroke: &quot;#2457a6&quot;
+    style.font-color: &quot;#334155&quot;
+    style.font-size: 18
+    style.italic: false
+  }
+  server -&gt; scheduler: |md
+배치 실행 결과 반환
+
+processed, paid, failed, skipped
+
+운영 로그와 모니터링 지표에 집계
+| {
+    style.stroke: &quot;#9a5b00&quot;
+    style.font-color: &quot;#334155&quot;
+    style.font-size: 18
+    style.italic: false
+  }
+  toss -&gt; server: |md
+결제 상태 웹훅 수신 및 상태 보정
+
+**POST /webhooks/toss-payments**
+
+이미 paid 처리된 결제는 멱등하게 200 OK 반환
+| {
+    style.stroke: &quot;#1c7c66&quot;
+    style.font-color: &quot;#334155&quot;
+    style.font-size: 18
+    style.italic: false
+  }
+}
+</code></pre>
+  </details>
+</div></div>
 </section>
   <section id="states">
   <h2>상태 요약</h2>

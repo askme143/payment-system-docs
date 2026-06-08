@@ -138,22 +138,46 @@
       border-radius: 8px;
     }
     .diagram { overflow-x: auto; padding-bottom: 4px; }
-    .sequence-svg {
-      display: block;
-      width: 1060px;
-      min-width: 1060px;
-      height: auto;
-      background: #fff;
+    .d2-diagram {
+      overflow-x: auto;
+      padding: 0;
+      background: #ffffff;
       border: 1px solid var(--line);
       border-radius: 8px;
     }
-    .actor-title { fill: var(--ink); font-size: 18px; font-weight: 800; }
-    .actor-subtitle { fill: var(--muted); font-size: 12px; font-weight: 600; }
-    .lifeline { stroke: #cbd5e1; stroke-width: 3; stroke-dasharray: 10 12; }
-    .msg-line { fill: none; stroke-width: 2.5; }
-    .msg-label { fill: var(--ink); font-size: 14px; font-weight: 800; }
-    .msg-code { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 14px; font-weight: 700; }
-    .msg-note { fill: var(--muted); font-size: 12px; font-weight: 600; }
+    .d2-toolbar {
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+      padding: 10px 12px;
+      border-bottom: 1px solid var(--line);
+      background: #fbfcfe;
+    }
+    .d2-toolbar a {
+      font-size: 13px;
+    }
+    .d2-source {
+      margin: 0;
+      border-radius: 0 0 8px 8px;
+    }
+    .d2-svg {
+      display: block;
+      max-width: 100%;
+      height: auto;
+      margin: 0 auto;
+      background: #ffffff;
+    }
+    .d2-details {
+      border-top: 1px solid var(--line);
+      background: #fbfcfe;
+    }
+    .d2-details summary {
+      cursor: pointer;
+      padding: 10px 12px;
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 800;
+    }
     @media (max-width: 900px) {
       .layout { grid-template-columns: 1fr; }
       nav { position: static; }
@@ -180,27 +204,317 @@
   <section id="checkout-fail">
   <h2>체크아웃 생성 실패</h2>
   <p>로그인하지 않았거나, 플랜이 비활성화됐거나, 같은 상품의 활성 구독이 이미 있는 경우입니다.</p>
-  <div class="diagram"><svg class="sequence-svg" viewBox="0 0 1060 566" role="img" aria-label="체크아웃 생성 실패"><defs><marker id="arrow-client" viewBox="0 0 12 12" refX="10" refY="6" markerWidth="9" markerHeight="9" orient="auto-start-reverse"><path d="M 1 1 L 11 6 L 1 11 z" fill="#2457a6"></path></marker><marker id="arrow-server" viewBox="0 0 12 12" refX="10" refY="6" markerWidth="9" markerHeight="9" orient="auto-start-reverse"><path d="M 1 1 L 11 6 L 1 11 z" fill="#1c7c66"></path></marker><marker id="arrow-toss" viewBox="0 0 12 12" refX="10" refY="6" markerWidth="9" markerHeight="9" orient="auto-start-reverse"><path d="M 1 1 L 11 6 L 1 11 z" fill="#7b4bc4"></path></marker><marker id="arrow-provider" viewBox="0 0 12 12" refX="10" refY="6" markerWidth="9" markerHeight="9" orient="auto-start-reverse"><path d="M 1 1 L 11 6 L 1 11 z" fill="#7b4bc4"></path></marker><marker id="arrow-scheduler" viewBox="0 0 12 12" refX="10" refY="6" markerWidth="9" markerHeight="9" orient="auto-start-reverse"><path d="M 1 1 L 11 6 L 1 11 z" fill="#9a5b00"></path></marker><marker id="arrow-admin" viewBox="0 0 12 12" refX="10" refY="6" markerWidth="9" markerHeight="9" orient="auto-start-reverse"><path d="M 1 1 L 11 6 L 1 11 z" fill="#334155"></path></marker><marker id="arrow-system" viewBox="0 0 12 12" refX="10" refY="6" markerWidth="9" markerHeight="9" orient="auto-start-reverse"><path d="M 1 1 L 11 6 L 1 11 z" fill="#334155"></path></marker><marker id="arrow-success" viewBox="0 0 12 12" refX="10" refY="6" markerWidth="9" markerHeight="9" orient="auto-start-reverse"><path d="M 1 1 L 11 6 L 1 11 z" fill="#1c7c66"></path></marker><marker id="arrow-failure" viewBox="0 0 12 12" refX="10" refY="6" markerWidth="9" markerHeight="9" orient="auto-start-reverse"><path d="M 1 1 L 11 6 L 1 11 z" fill="#b42318"></path></marker><marker id="arrow-neutral" viewBox="0 0 12 12" refX="10" refY="6" markerWidth="9" markerHeight="9" orient="auto-start-reverse"><path d="M 1 1 L 11 6 L 1 11 z" fill="#65758a"></path></marker></defs><rect x="5" y="30" width="230" height="68" rx="8" fill="#ffffff" stroke="#2457a6" stroke-width="2"></rect><text x="120" y="58" text-anchor="middle" class="actor-title">웹 클라이언트</text><text x="120" y="80" text-anchor="middle" class="actor-subtitle">Browser / Mobile Web</text><line x1="120" y1="98" x2="120" y2="536" class="lifeline"></line><rect x="415" y="30" width="230" height="68" rx="8" fill="#ffffff" stroke="#1c7c66" stroke-width="2"></rect><text x="530" y="58" text-anchor="middle" class="actor-title">우리 서버</text><text x="530" y="80" text-anchor="middle" class="actor-subtitle">Subscription API</text><line x1="530" y1="98" x2="530" y2="536" class="lifeline"></line><rect x="825" y="30" width="230" height="68" rx="8" fill="#ffffff" stroke="#7b4bc4" stroke-width="2"></rect><text x="940" y="58" text-anchor="middle" class="actor-title">토스페이먼츠 서버</text><text x="940" y="80" text-anchor="middle" class="actor-subtitle">Billing &amp; Payment API</text><line x1="940" y1="98" x2="940" y2="536" class="lifeline"></line><line x1="120" y1="145" x2="530" y2="145" class="msg-line" stroke="#1c7c66" marker-end="url(#arrow-server)"></line><text x="140" y="121" class="msg-label"><desc>구독 체크아웃 생성 요청</desc><tspan x="140" dy="0">구독 체크아웃 생성 요청</tspan></text><text x="140" y="173" class="msg-code" fill="#1c7c66"><desc>POST /subscriptions/checkout</desc><tspan x="140" dy="0">POST /subscriptions/checkout</tspan></text><rect x="270" y="233" width="520" height="125" rx="8" fill="#fff1f0" stroke="#b42318" stroke-dasharray="7 6"></rect><text x="290" y="257" class="msg-label"><desc>서버 검증 실패</desc><tspan x="290" dy="0">서버 검증 실패</tspan></text><text x="290" y="289" class="msg-code" fill="#b42318"><desc>401 / 400 / 409</desc><tspan x="290" dy="0">401 / 400 / 409</tspan></text><text x="290" y="321" class="msg-note"><desc>UNAUTHORIZED / PLAN_NOT_AVAILABLE / PRODUCT_ALREADY_SUBSCRIBED</desc><tspan x="290" dy="0">UNAUTHORIZED / PLAN_NOT_AVAILABLE / PRODUCT_ALREADY_SUBSCRIBED</tspan></text><line x1="530" y1="409" x2="120" y2="409" class="msg-line" stroke="#2457a6" marker-end="url(#arrow-client)"></line><text x="140" y="385" class="msg-label"><desc>실패 응답 반환</desc><tspan x="140" dy="0">실패 응답 반환</tspan></text><text x="140" y="437" class="msg-code" fill="#2457a6"><desc>오류 화면 또는 기존 구독 화면으로 안내</desc><tspan x="140" dy="0">오류 화면 또는 기존 구독 화면으로 안내</tspan></text></svg></div>
+  <div class="diagram"><div class="d2-diagram">
+  <div class="d2-toolbar"><a href="diagrams/initial-subscription-failure-checkout-fail.d2">D2 원본</a></div>
+  <img class="d2-svg" src="diagrams/initial-subscription-failure-checkout-fail.svg" alt="체크아웃 생성 실패">
+  <details class="d2-details">
+    <summary>D2 원본 보기</summary>
+    <pre class="d2-source"><code>diagram: {
+  shape: sequence_diagram
+  label: &quot;체크아웃 생성 실패&quot;
+
+  client: &quot;웹 클라이언트&quot;
+  client.style.fill: &quot;#e8f3ff&quot;
+  client.style.stroke: &quot;#2457a6&quot;
+  server: &quot;우리 서버&quot;
+  server.style.fill: &quot;#eaf8f3&quot;
+  server.style.stroke: &quot;#1c7c66&quot;
+  toss: &quot;토스페이먼츠 서버&quot;
+  toss.style.fill: &quot;#f1edff&quot;
+  toss.style.stroke: &quot;#7b4bc4&quot;
+
+  client -&gt; server: |md
+구독 체크아웃 생성 요청
+
+**POST /subscriptions/checkout**
+| {
+    style.stroke: &quot;#1c7c66&quot;
+    style.font-color: &quot;#334155&quot;
+    style.font-size: 18
+    style.italic: false
+  }
+  server.note_2: &quot;서버 검증 실패\n401 / 400 / 409\nUNAUTHORIZED / PLAN_NOT_AVAILABLE / PRODUCT_ALREADY_SUBSCRIBED&quot;
+  server -&gt; client: |md
+실패 응답 반환
+
+오류 화면 또는 기존 구독 화면으로 안내
+| {
+    style.stroke: &quot;#2457a6&quot;
+    style.font-color: &quot;#334155&quot;
+    style.font-size: 18
+    style.italic: false
+  }
+}
+</code></pre>
+  </details>
+</div></div>
 </section><section id="auth-fail">
   <h2>토스 빌링 인증 실패</h2>
   <p>사용자가 인증을 취소했거나 카드 등록 인증이 실패한 경우입니다.</p>
-  <div class="diagram"><svg class="sequence-svg" viewBox="0 0 1060 566" role="img" aria-label="토스 빌링 인증 실패"><defs><marker id="arrow-client" viewBox="0 0 12 12" refX="10" refY="6" markerWidth="9" markerHeight="9" orient="auto-start-reverse"><path d="M 1 1 L 11 6 L 1 11 z" fill="#2457a6"></path></marker><marker id="arrow-server" viewBox="0 0 12 12" refX="10" refY="6" markerWidth="9" markerHeight="9" orient="auto-start-reverse"><path d="M 1 1 L 11 6 L 1 11 z" fill="#1c7c66"></path></marker><marker id="arrow-toss" viewBox="0 0 12 12" refX="10" refY="6" markerWidth="9" markerHeight="9" orient="auto-start-reverse"><path d="M 1 1 L 11 6 L 1 11 z" fill="#7b4bc4"></path></marker><marker id="arrow-provider" viewBox="0 0 12 12" refX="10" refY="6" markerWidth="9" markerHeight="9" orient="auto-start-reverse"><path d="M 1 1 L 11 6 L 1 11 z" fill="#7b4bc4"></path></marker><marker id="arrow-scheduler" viewBox="0 0 12 12" refX="10" refY="6" markerWidth="9" markerHeight="9" orient="auto-start-reverse"><path d="M 1 1 L 11 6 L 1 11 z" fill="#9a5b00"></path></marker><marker id="arrow-admin" viewBox="0 0 12 12" refX="10" refY="6" markerWidth="9" markerHeight="9" orient="auto-start-reverse"><path d="M 1 1 L 11 6 L 1 11 z" fill="#334155"></path></marker><marker id="arrow-system" viewBox="0 0 12 12" refX="10" refY="6" markerWidth="9" markerHeight="9" orient="auto-start-reverse"><path d="M 1 1 L 11 6 L 1 11 z" fill="#334155"></path></marker><marker id="arrow-success" viewBox="0 0 12 12" refX="10" refY="6" markerWidth="9" markerHeight="9" orient="auto-start-reverse"><path d="M 1 1 L 11 6 L 1 11 z" fill="#1c7c66"></path></marker><marker id="arrow-failure" viewBox="0 0 12 12" refX="10" refY="6" markerWidth="9" markerHeight="9" orient="auto-start-reverse"><path d="M 1 1 L 11 6 L 1 11 z" fill="#b42318"></path></marker><marker id="arrow-neutral" viewBox="0 0 12 12" refX="10" refY="6" markerWidth="9" markerHeight="9" orient="auto-start-reverse"><path d="M 1 1 L 11 6 L 1 11 z" fill="#65758a"></path></marker></defs><rect x="5" y="30" width="230" height="68" rx="8" fill="#ffffff" stroke="#2457a6" stroke-width="2"></rect><text x="120" y="58" text-anchor="middle" class="actor-title">웹 클라이언트</text><text x="120" y="80" text-anchor="middle" class="actor-subtitle">Browser / Mobile Web</text><line x1="120" y1="98" x2="120" y2="536" class="lifeline"></line><rect x="415" y="30" width="230" height="68" rx="8" fill="#ffffff" stroke="#1c7c66" stroke-width="2"></rect><text x="530" y="58" text-anchor="middle" class="actor-title">우리 서버</text><text x="530" y="80" text-anchor="middle" class="actor-subtitle">Subscription API</text><line x1="530" y1="98" x2="530" y2="536" class="lifeline"></line><rect x="825" y="30" width="230" height="68" rx="8" fill="#ffffff" stroke="#7b4bc4" stroke-width="2"></rect><text x="940" y="58" text-anchor="middle" class="actor-title">토스페이먼츠 서버</text><text x="940" y="80" text-anchor="middle" class="actor-subtitle">Billing &amp; Payment API</text><line x1="940" y1="98" x2="940" y2="536" class="lifeline"></line><line x1="120" y1="145" x2="940" y2="145" class="msg-line" stroke="#7b4bc4" marker-end="url(#arrow-toss)"></line><text x="140" y="121" class="msg-label"><desc>빌링 인증 요청</desc><tspan x="140" dy="0">빌링 인증 요청</tspan></text><text x="140" y="173" class="msg-code" fill="#7b4bc4"><desc>TossPayments.requestBillingAuth(...)</desc><tspan x="140" dy="0">TossPayments.requestBillingAuth(...)</tspan></text><rect x="270" y="233" width="520" height="104" rx="8" fill="#fff1f0" stroke="#b42318" stroke-dasharray="7 6"></rect><text x="290" y="257" class="msg-label"><desc>인증 취소 또는 실패</desc><tspan x="290" dy="0">인증 취소 또는 실패</tspan></text><text x="290" y="289" class="msg-code" fill="#b42318"><desc>카드 등록 실패 / 사용자 취소</desc><tspan x="290" dy="0">카드 등록 실패 / 사용자 취소</tspan></text><line x1="940" y1="409" x2="120" y2="409" class="msg-line" stroke="#2457a6" marker-end="url(#arrow-client)"></line><text x="140" y="385" class="msg-label"><desc>프론트 실패 페이지로 리다이렉트</desc><tspan x="140" dy="0">프론트 실패 페이지로 리다이렉트</tspan></text><text x="140" y="437" class="msg-code" fill="#2457a6"><desc>failUrl?code=...&amp;message=...</desc><tspan x="140" dy="0">failUrl?code=...&amp;message=...</tspan></text><text x="140" y="463" class="msg-note"><desc>confirm API는 호출되지 않음</desc><tspan x="140" dy="0">confirm API는 호출되지 않음</tspan></text></svg></div>
+  <div class="diagram"><div class="d2-diagram">
+  <div class="d2-toolbar"><a href="diagrams/initial-subscription-failure-auth-fail.d2">D2 원본</a></div>
+  <img class="d2-svg" src="diagrams/initial-subscription-failure-auth-fail.svg" alt="토스 빌링 인증 실패">
+  <details class="d2-details">
+    <summary>D2 원본 보기</summary>
+    <pre class="d2-source"><code>diagram: {
+  shape: sequence_diagram
+  label: &quot;토스 빌링 인증 실패&quot;
+
+  client: &quot;웹 클라이언트&quot;
+  client.style.fill: &quot;#e8f3ff&quot;
+  client.style.stroke: &quot;#2457a6&quot;
+  server: &quot;우리 서버&quot;
+  server.style.fill: &quot;#eaf8f3&quot;
+  server.style.stroke: &quot;#1c7c66&quot;
+  toss: &quot;토스페이먼츠 서버&quot;
+  toss.style.fill: &quot;#f1edff&quot;
+  toss.style.stroke: &quot;#7b4bc4&quot;
+
+  client -&gt; toss: |md
+빌링 인증 요청
+
+TossPayments.requestBillingAuth(...)
+| {
+    style.stroke: &quot;#7b4bc4&quot;
+    style.font-color: &quot;#334155&quot;
+    style.font-size: 18
+    style.italic: false
+  }
+  server.note_2: &quot;인증 취소 또는 실패\n카드 등록 실패 / 사용자 취소&quot;
+  toss -&gt; client: |md
+프론트 실패 페이지로 리다이렉트
+
+failUrl?code=...&amp;message=...
+
+confirm API는 호출되지 않음
+| {
+    style.stroke: &quot;#2457a6&quot;
+    style.font-color: &quot;#334155&quot;
+    style.font-size: 18
+    style.italic: false
+  }
+}
+</code></pre>
+  </details>
+</div></div>
 </section><section id="confirm-fail">
   <h2>구독 확정 검증 실패</h2>
   <p>subscriptionId 누락, 소유자 불일치, customerKey 불일치, 중복 성공 요청 같은 서버 검증 실패입니다.</p>
-  <div class="diagram"><svg class="sequence-svg" viewBox="0 0 1060 566" role="img" aria-label="구독 확정 검증 실패"><defs><marker id="arrow-client" viewBox="0 0 12 12" refX="10" refY="6" markerWidth="9" markerHeight="9" orient="auto-start-reverse"><path d="M 1 1 L 11 6 L 1 11 z" fill="#2457a6"></path></marker><marker id="arrow-server" viewBox="0 0 12 12" refX="10" refY="6" markerWidth="9" markerHeight="9" orient="auto-start-reverse"><path d="M 1 1 L 11 6 L 1 11 z" fill="#1c7c66"></path></marker><marker id="arrow-toss" viewBox="0 0 12 12" refX="10" refY="6" markerWidth="9" markerHeight="9" orient="auto-start-reverse"><path d="M 1 1 L 11 6 L 1 11 z" fill="#7b4bc4"></path></marker><marker id="arrow-provider" viewBox="0 0 12 12" refX="10" refY="6" markerWidth="9" markerHeight="9" orient="auto-start-reverse"><path d="M 1 1 L 11 6 L 1 11 z" fill="#7b4bc4"></path></marker><marker id="arrow-scheduler" viewBox="0 0 12 12" refX="10" refY="6" markerWidth="9" markerHeight="9" orient="auto-start-reverse"><path d="M 1 1 L 11 6 L 1 11 z" fill="#9a5b00"></path></marker><marker id="arrow-admin" viewBox="0 0 12 12" refX="10" refY="6" markerWidth="9" markerHeight="9" orient="auto-start-reverse"><path d="M 1 1 L 11 6 L 1 11 z" fill="#334155"></path></marker><marker id="arrow-system" viewBox="0 0 12 12" refX="10" refY="6" markerWidth="9" markerHeight="9" orient="auto-start-reverse"><path d="M 1 1 L 11 6 L 1 11 z" fill="#334155"></path></marker><marker id="arrow-success" viewBox="0 0 12 12" refX="10" refY="6" markerWidth="9" markerHeight="9" orient="auto-start-reverse"><path d="M 1 1 L 11 6 L 1 11 z" fill="#1c7c66"></path></marker><marker id="arrow-failure" viewBox="0 0 12 12" refX="10" refY="6" markerWidth="9" markerHeight="9" orient="auto-start-reverse"><path d="M 1 1 L 11 6 L 1 11 z" fill="#b42318"></path></marker><marker id="arrow-neutral" viewBox="0 0 12 12" refX="10" refY="6" markerWidth="9" markerHeight="9" orient="auto-start-reverse"><path d="M 1 1 L 11 6 L 1 11 z" fill="#65758a"></path></marker></defs><rect x="5" y="30" width="230" height="68" rx="8" fill="#ffffff" stroke="#2457a6" stroke-width="2"></rect><text x="120" y="58" text-anchor="middle" class="actor-title">웹 클라이언트</text><text x="120" y="80" text-anchor="middle" class="actor-subtitle">Browser / Mobile Web</text><line x1="120" y1="98" x2="120" y2="536" class="lifeline"></line><rect x="415" y="30" width="230" height="68" rx="8" fill="#ffffff" stroke="#1c7c66" stroke-width="2"></rect><text x="530" y="58" text-anchor="middle" class="actor-title">우리 서버</text><text x="530" y="80" text-anchor="middle" class="actor-subtitle">Subscription API</text><line x1="530" y1="98" x2="530" y2="536" class="lifeline"></line><rect x="825" y="30" width="230" height="68" rx="8" fill="#ffffff" stroke="#7b4bc4" stroke-width="2"></rect><text x="940" y="58" text-anchor="middle" class="actor-title">토스페이먼츠 서버</text><text x="940" y="80" text-anchor="middle" class="actor-subtitle">Billing &amp; Payment API</text><line x1="940" y1="98" x2="940" y2="536" class="lifeline"></line><line x1="120" y1="145" x2="530" y2="145" class="msg-line" stroke="#1c7c66" marker-end="url(#arrow-server)"></line><text x="140" y="121" class="msg-label"><desc>구독 확정 요청</desc><tspan x="140" dy="0">구독 확정 요청</tspan></text><text x="140" y="173" class="msg-code" fill="#1c7c66"><desc>POST /subscriptions/confirm</desc><tspan x="140" dy="0">POST /subscriptions/confirm</tspan></text><text x="140" y="199" class="msg-note"><desc>Body + Idempotency-Key + session</desc><tspan x="140" dy="0">Body + Idempotency-Key + session</tspan></text><rect x="270" y="233" width="520" height="125" rx="8" fill="#fff1f0" stroke="#b42318" stroke-dasharray="7 6"></rect><text x="290" y="257" class="msg-label"><desc>서버 검증 실패</desc><tspan x="290" dy="0">서버 검증 실패</tspan></text><text x="290" y="289" class="msg-code" fill="#b42318"><desc>403 / 409 / 400</desc><tspan x="290" dy="0">403 / 409 / 400</tspan></text><text x="290" y="321" class="msg-note"><desc>이미 확정된 같은 요청은 200 OK로 기존 성공 결과 반환</desc><tspan x="290" dy="0">이미 확정된 같은 요청은 200 OK로 기존 성공 결과 반환</tspan></text><line x1="530" y1="409" x2="120" y2="409" class="msg-line" stroke="#2457a6" marker-end="url(#arrow-client)"></line><text x="140" y="385" class="msg-label"><desc>실패 또는 기존 성공 결과 반환</desc><tspan x="140" dy="0">실패 또는 기존 성공 결과 반환</tspan></text><text x="140" y="437" class="msg-code" fill="#2457a6"><desc>FORBIDDEN / CONFLICT / ALREADY_CONFIRMED</desc><tspan x="140" dy="0">FORBIDDEN / CONFLICT / ALREADY_CONFIRMED</tspan></text></svg></div>
+  <div class="diagram"><div class="d2-diagram">
+  <div class="d2-toolbar"><a href="diagrams/initial-subscription-failure-confirm-fail.d2">D2 원본</a></div>
+  <img class="d2-svg" src="diagrams/initial-subscription-failure-confirm-fail.svg" alt="구독 확정 검증 실패">
+  <details class="d2-details">
+    <summary>D2 원본 보기</summary>
+    <pre class="d2-source"><code>diagram: {
+  shape: sequence_diagram
+  label: &quot;구독 확정 검증 실패&quot;
+
+  client: &quot;웹 클라이언트&quot;
+  client.style.fill: &quot;#e8f3ff&quot;
+  client.style.stroke: &quot;#2457a6&quot;
+  server: &quot;우리 서버&quot;
+  server.style.fill: &quot;#eaf8f3&quot;
+  server.style.stroke: &quot;#1c7c66&quot;
+  toss: &quot;토스페이먼츠 서버&quot;
+  toss.style.fill: &quot;#f1edff&quot;
+  toss.style.stroke: &quot;#7b4bc4&quot;
+
+  client -&gt; server: |md
+구독 확정 요청
+
+**POST /subscriptions/confirm**
+
+Body + Idempotency-Key + session
+| {
+    style.stroke: &quot;#1c7c66&quot;
+    style.font-color: &quot;#334155&quot;
+    style.font-size: 18
+    style.italic: false
+  }
+  server.note_2: &quot;서버 검증 실패\n403 / 409 / 400\n이미 확정된 같은 요청은 200 OK로 기존 성공 결과 반환&quot;
+  server -&gt; client: |md
+실패 또는 기존 성공 결과 반환
+
+FORBIDDEN / CONFLICT / ALREADY_CONFIRMED
+| {
+    style.stroke: &quot;#2457a6&quot;
+    style.font-color: &quot;#334155&quot;
+    style.font-size: 18
+    style.italic: false
+  }
+}
+</code></pre>
+  </details>
+</div></div>
 </section><section id="billing-key-fail">
   <h2>빌링키 발급 실패</h2>
   
-  <div class="diagram"><svg class="sequence-svg" viewBox="0 0 1060 698" role="img" aria-label="빌링키 발급 실패"><defs><marker id="arrow-client" viewBox="0 0 12 12" refX="10" refY="6" markerWidth="9" markerHeight="9" orient="auto-start-reverse"><path d="M 1 1 L 11 6 L 1 11 z" fill="#2457a6"></path></marker><marker id="arrow-server" viewBox="0 0 12 12" refX="10" refY="6" markerWidth="9" markerHeight="9" orient="auto-start-reverse"><path d="M 1 1 L 11 6 L 1 11 z" fill="#1c7c66"></path></marker><marker id="arrow-toss" viewBox="0 0 12 12" refX="10" refY="6" markerWidth="9" markerHeight="9" orient="auto-start-reverse"><path d="M 1 1 L 11 6 L 1 11 z" fill="#7b4bc4"></path></marker><marker id="arrow-provider" viewBox="0 0 12 12" refX="10" refY="6" markerWidth="9" markerHeight="9" orient="auto-start-reverse"><path d="M 1 1 L 11 6 L 1 11 z" fill="#7b4bc4"></path></marker><marker id="arrow-scheduler" viewBox="0 0 12 12" refX="10" refY="6" markerWidth="9" markerHeight="9" orient="auto-start-reverse"><path d="M 1 1 L 11 6 L 1 11 z" fill="#9a5b00"></path></marker><marker id="arrow-admin" viewBox="0 0 12 12" refX="10" refY="6" markerWidth="9" markerHeight="9" orient="auto-start-reverse"><path d="M 1 1 L 11 6 L 1 11 z" fill="#334155"></path></marker><marker id="arrow-system" viewBox="0 0 12 12" refX="10" refY="6" markerWidth="9" markerHeight="9" orient="auto-start-reverse"><path d="M 1 1 L 11 6 L 1 11 z" fill="#334155"></path></marker><marker id="arrow-success" viewBox="0 0 12 12" refX="10" refY="6" markerWidth="9" markerHeight="9" orient="auto-start-reverse"><path d="M 1 1 L 11 6 L 1 11 z" fill="#1c7c66"></path></marker><marker id="arrow-failure" viewBox="0 0 12 12" refX="10" refY="6" markerWidth="9" markerHeight="9" orient="auto-start-reverse"><path d="M 1 1 L 11 6 L 1 11 z" fill="#b42318"></path></marker><marker id="arrow-neutral" viewBox="0 0 12 12" refX="10" refY="6" markerWidth="9" markerHeight="9" orient="auto-start-reverse"><path d="M 1 1 L 11 6 L 1 11 z" fill="#65758a"></path></marker></defs><rect x="5" y="30" width="230" height="68" rx="8" fill="#ffffff" stroke="#2457a6" stroke-width="2"></rect><text x="120" y="58" text-anchor="middle" class="actor-title">웹 클라이언트</text><text x="120" y="80" text-anchor="middle" class="actor-subtitle">Browser / Mobile Web</text><line x1="120" y1="98" x2="120" y2="668" class="lifeline"></line><rect x="415" y="30" width="230" height="68" rx="8" fill="#ffffff" stroke="#1c7c66" stroke-width="2"></rect><text x="530" y="58" text-anchor="middle" class="actor-title">우리 서버</text><text x="530" y="80" text-anchor="middle" class="actor-subtitle">Subscription API</text><line x1="530" y1="98" x2="530" y2="668" class="lifeline"></line><rect x="825" y="30" width="230" height="68" rx="8" fill="#ffffff" stroke="#7b4bc4" stroke-width="2"></rect><text x="940" y="58" text-anchor="middle" class="actor-title">토스페이먼츠 서버</text><text x="940" y="80" text-anchor="middle" class="actor-subtitle">Billing &amp; Payment API</text><line x1="940" y1="98" x2="940" y2="668" class="lifeline"></line><line x1="120" y1="145" x2="530" y2="145" class="msg-line" stroke="#1c7c66" marker-end="url(#arrow-server)"></line><text x="140" y="121" class="msg-label"><desc>구독 확정 요청</desc><tspan x="140" dy="0">구독 확정 요청</tspan></text><text x="140" y="173" class="msg-code" fill="#1c7c66"><desc>POST /subscriptions/confirm</desc><tspan x="140" dy="0">POST /subscriptions/confirm</tspan></text><line x1="530" y1="277" x2="940" y2="277" class="msg-line" stroke="#7b4bc4" marker-end="url(#arrow-toss)"></line><text x="550" y="253" class="msg-label"><desc>빌링키 발급 요청</desc><tspan x="550" dy="0">빌링키 발급 요청</tspan></text><text x="550" y="305" class="msg-code" fill="#7b4bc4"><desc>POST /v1/billing/authorizations/issue</desc><tspan x="550" dy="0">POST /v1/billing/authorizations/issue</tspan></text><line x1="940" y1="409" x2="530" y2="409" class="msg-line" stroke="#1c7c66" marker-end="url(#arrow-server)"></line><text x="550" y="385" class="msg-label"><desc>발급 실패 응답</desc><tspan x="550" dy="0">발급 실패 응답</tspan></text><text x="550" y="437" class="msg-code" fill="#1c7c66"><desc>INVALID_AUTH_KEY / NOT_MATCHES_CUSTOMER_KEY</desc><tspan x="550" dy="0">INVALID_AUTH_KEY / NOT_MATCHES_CUSTOMER_KEY</tspan></text><line x1="530" y1="541" x2="120" y2="541" class="msg-line" stroke="#2457a6" marker-end="url(#arrow-client)"></line><text x="140" y="517" class="msg-label"><desc>재인증 필요 응답</desc><tspan x="140" dy="0">재인증 필요 응답</tspan></text><text x="140" y="569" class="msg-code" fill="#2457a6"><desc>BILLING_KEY_ISSUE_FAILED</desc><tspan x="140" dy="0">BILLING_KEY_ISSUE_FAILED</tspan></text></svg></div>
+  <div class="diagram"><div class="d2-diagram">
+  <div class="d2-toolbar"><a href="diagrams/initial-subscription-failure-billing-key-fail.d2">D2 원본</a></div>
+  <img class="d2-svg" src="diagrams/initial-subscription-failure-billing-key-fail.svg" alt="빌링키 발급 실패">
+  <details class="d2-details">
+    <summary>D2 원본 보기</summary>
+    <pre class="d2-source"><code>diagram: {
+  shape: sequence_diagram
+  label: &quot;빌링키 발급 실패&quot;
+
+  client: &quot;웹 클라이언트&quot;
+  client.style.fill: &quot;#e8f3ff&quot;
+  client.style.stroke: &quot;#2457a6&quot;
+  server: &quot;우리 서버&quot;
+  server.style.fill: &quot;#eaf8f3&quot;
+  server.style.stroke: &quot;#1c7c66&quot;
+  toss: &quot;토스페이먼츠 서버&quot;
+  toss.style.fill: &quot;#f1edff&quot;
+  toss.style.stroke: &quot;#7b4bc4&quot;
+
+  client -&gt; server: |md
+구독 확정 요청
+
+**POST /subscriptions/confirm**
+| {
+    style.stroke: &quot;#1c7c66&quot;
+    style.font-color: &quot;#334155&quot;
+    style.font-size: 18
+    style.italic: false
+  }
+  server -&gt; toss: |md
+빌링키 발급 요청
+
+**POST /v1/billing/authorizations/issue**
+| {
+    style.stroke: &quot;#7b4bc4&quot;
+    style.font-color: &quot;#334155&quot;
+    style.font-size: 18
+    style.italic: false
+  }
+  toss -&gt; server: |md
+발급 실패 응답
+
+INVALID_AUTH_KEY / NOT_MATCHES_CUSTOMER_KEY
+| {
+    style.stroke: &quot;#1c7c66&quot;
+    style.font-color: &quot;#334155&quot;
+    style.font-size: 18
+    style.italic: false
+  }
+  server -&gt; client: |md
+재인증 필요 응답
+
+BILLING_KEY_ISSUE_FAILED
+| {
+    style.stroke: &quot;#2457a6&quot;
+    style.font-color: &quot;#334155&quot;
+    style.font-size: 18
+    style.italic: false
+  }
+}
+</code></pre>
+  </details>
+</div></div>
 </section><section id="first-payment-fail">
   <h2>첫 자동결제 실패</h2>
   
-  <div class="diagram"><svg class="sequence-svg" viewBox="0 0 1060 962" role="img" aria-label="첫 자동결제 실패"><defs><marker id="arrow-client" viewBox="0 0 12 12" refX="10" refY="6" markerWidth="9" markerHeight="9" orient="auto-start-reverse"><path d="M 1 1 L 11 6 L 1 11 z" fill="#2457a6"></path></marker><marker id="arrow-server" viewBox="0 0 12 12" refX="10" refY="6" markerWidth="9" markerHeight="9" orient="auto-start-reverse"><path d="M 1 1 L 11 6 L 1 11 z" fill="#1c7c66"></path></marker><marker id="arrow-toss" viewBox="0 0 12 12" refX="10" refY="6" markerWidth="9" markerHeight="9" orient="auto-start-reverse"><path d="M 1 1 L 11 6 L 1 11 z" fill="#7b4bc4"></path></marker><marker id="arrow-provider" viewBox="0 0 12 12" refX="10" refY="6" markerWidth="9" markerHeight="9" orient="auto-start-reverse"><path d="M 1 1 L 11 6 L 1 11 z" fill="#7b4bc4"></path></marker><marker id="arrow-scheduler" viewBox="0 0 12 12" refX="10" refY="6" markerWidth="9" markerHeight="9" orient="auto-start-reverse"><path d="M 1 1 L 11 6 L 1 11 z" fill="#9a5b00"></path></marker><marker id="arrow-admin" viewBox="0 0 12 12" refX="10" refY="6" markerWidth="9" markerHeight="9" orient="auto-start-reverse"><path d="M 1 1 L 11 6 L 1 11 z" fill="#334155"></path></marker><marker id="arrow-system" viewBox="0 0 12 12" refX="10" refY="6" markerWidth="9" markerHeight="9" orient="auto-start-reverse"><path d="M 1 1 L 11 6 L 1 11 z" fill="#334155"></path></marker><marker id="arrow-success" viewBox="0 0 12 12" refX="10" refY="6" markerWidth="9" markerHeight="9" orient="auto-start-reverse"><path d="M 1 1 L 11 6 L 1 11 z" fill="#1c7c66"></path></marker><marker id="arrow-failure" viewBox="0 0 12 12" refX="10" refY="6" markerWidth="9" markerHeight="9" orient="auto-start-reverse"><path d="M 1 1 L 11 6 L 1 11 z" fill="#b42318"></path></marker><marker id="arrow-neutral" viewBox="0 0 12 12" refX="10" refY="6" markerWidth="9" markerHeight="9" orient="auto-start-reverse"><path d="M 1 1 L 11 6 L 1 11 z" fill="#65758a"></path></marker></defs><rect x="5" y="30" width="230" height="68" rx="8" fill="#ffffff" stroke="#2457a6" stroke-width="2"></rect><text x="120" y="58" text-anchor="middle" class="actor-title">웹 클라이언트</text><text x="120" y="80" text-anchor="middle" class="actor-subtitle">Browser / Mobile Web</text><line x1="120" y1="98" x2="120" y2="932" class="lifeline"></line><rect x="415" y="30" width="230" height="68" rx="8" fill="#ffffff" stroke="#1c7c66" stroke-width="2"></rect><text x="530" y="58" text-anchor="middle" class="actor-title">우리 서버</text><text x="530" y="80" text-anchor="middle" class="actor-subtitle">Subscription API</text><line x1="530" y1="98" x2="530" y2="932" class="lifeline"></line><rect x="825" y="30" width="230" height="68" rx="8" fill="#ffffff" stroke="#7b4bc4" stroke-width="2"></rect><text x="940" y="58" text-anchor="middle" class="actor-title">토스페이먼츠 서버</text><text x="940" y="80" text-anchor="middle" class="actor-subtitle">Billing &amp; Payment API</text><line x1="940" y1="98" x2="940" y2="932" class="lifeline"></line><line x1="120" y1="145" x2="530" y2="145" class="msg-line" stroke="#1c7c66" marker-end="url(#arrow-server)"></line><text x="140" y="121" class="msg-label"><desc>구독 확정 요청</desc><tspan x="140" dy="0">구독 확정 요청</tspan></text><text x="140" y="173" class="msg-code" fill="#1c7c66"><desc>POST /subscriptions/confirm</desc><tspan x="140" dy="0">POST /subscriptions/confirm</tspan></text><rect x="350" y="233" width="360" height="104" rx="8" fill="#fbfcfe" stroke="#65758a"></rect><text x="370" y="257" class="msg-label"><desc>빌링키 발급 성공</desc><tspan x="370" dy="0">빌링키 발급 성공</tspan></text><text x="370" y="289" class="msg-code" fill="#65758a"><desc>billingKey 암호화 저장</desc><tspan x="370" dy="0">billingKey 암호화 저장</tspan></text><line x1="530" y1="409" x2="940" y2="409" class="msg-line" stroke="#7b4bc4" marker-end="url(#arrow-toss)"></line><text x="550" y="385" class="msg-label"><desc>첫 자동결제 승인 요청</desc><tspan x="550" dy="0">첫 자동결제 승인 요청</tspan></text><text x="550" y="437" class="msg-code" fill="#7b4bc4"><desc>POST /v1/billing/{billingKey}</desc><tspan x="550" dy="0">POST /v1/billing/{billingKey}</tspan></text><line x1="940" y1="541" x2="530" y2="541" class="msg-line" stroke="#1c7c66" marker-end="url(#arrow-server)"></line><text x="550" y="517" class="msg-label"><desc>결제 실패 응답</desc><tspan x="550" dy="0">결제 실패 응답</tspan></text><text x="550" y="569" class="msg-code" fill="#1c7c66"><desc>CARD_DECLINED / EXCEED_MAX_AMOUNT / INSUFFICIENT_FUNDS</desc><tspan x="550" dy="0">CARD_DECLINED / EXCEED_MAX_AMOUNT / INSUFFICIENT_FUNDS</tspan></text><rect x="270" y="629" width="520" height="125" rx="8" fill="#fff1f0" stroke="#b42318" stroke-dasharray="7 6"></rect><text x="290" y="653" class="msg-label"><desc>구독 활성화하지 않음</desc><tspan x="290" dy="0">구독 활성화하지 않음</tspan></text><text x="290" y="685" class="msg-code" fill="#b42318"><desc>subscription.status = payment_failed</desc><tspan x="290" dy="0">subscription.status = payment_failed</tspan></text><text x="290" y="717" class="msg-note"><desc>invoice failed, payment failed 저장</desc><tspan x="290" dy="0">invoice failed, payment failed 저장</tspan></text><line x1="530" y1="805" x2="120" y2="805" class="msg-line" stroke="#2457a6" marker-end="url(#arrow-client)"></line><text x="140" y="781" class="msg-label"><desc>결제 실패 응답</desc><tspan x="140" dy="0">결제 실패 응답</tspan></text><text x="140" y="833" class="msg-code" fill="#2457a6"><desc>402 FIRST_PAYMENT_FAILED</desc><tspan x="140" dy="0">402 FIRST_PAYMENT_FAILED</tspan></text></svg></div>
+  <div class="diagram"><div class="d2-diagram">
+  <div class="d2-toolbar"><a href="diagrams/initial-subscription-failure-first-payment-fail.d2">D2 원본</a></div>
+  <img class="d2-svg" src="diagrams/initial-subscription-failure-first-payment-fail.svg" alt="첫 자동결제 실패">
+  <details class="d2-details">
+    <summary>D2 원본 보기</summary>
+    <pre class="d2-source"><code>diagram: {
+  shape: sequence_diagram
+  label: &quot;첫 자동결제 실패&quot;
+
+  client: &quot;웹 클라이언트&quot;
+  client.style.fill: &quot;#e8f3ff&quot;
+  client.style.stroke: &quot;#2457a6&quot;
+  server: &quot;우리 서버&quot;
+  server.style.fill: &quot;#eaf8f3&quot;
+  server.style.stroke: &quot;#1c7c66&quot;
+  toss: &quot;토스페이먼츠 서버&quot;
+  toss.style.fill: &quot;#f1edff&quot;
+  toss.style.stroke: &quot;#7b4bc4&quot;
+
+  client -&gt; server: |md
+구독 확정 요청
+
+**POST /subscriptions/confirm**
+| {
+    style.stroke: &quot;#1c7c66&quot;
+    style.font-color: &quot;#334155&quot;
+    style.font-size: 18
+    style.italic: false
+  }
+  server.note_2: &quot;빌링키 발급 성공\nbillingKey 암호화 저장&quot;
+  server -&gt; toss: |md
+첫 자동결제 승인 요청
+
+**POST /v1/billing/{billingKey}**
+| {
+    style.stroke: &quot;#7b4bc4&quot;
+    style.font-color: &quot;#334155&quot;
+    style.font-size: 18
+    style.italic: false
+  }
+  toss -&gt; server: |md
+결제 실패 응답
+
+CARD_DECLINED / EXCEED_MAX_AMOUNT / INSUFFICIENT_FUNDS
+| {
+    style.stroke: &quot;#1c7c66&quot;
+    style.font-color: &quot;#334155&quot;
+    style.font-size: 18
+    style.italic: false
+  }
+  server.note_5: &quot;구독 활성화하지 않음\nsubscription.status = payment_failed\ninvoice failed, payment failed 저장&quot;
+  server -&gt; client: |md
+결제 실패 응답
+
+402 FIRST_PAYMENT_FAILED
+| {
+    style.stroke: &quot;#2457a6&quot;
+    style.font-color: &quot;#334155&quot;
+    style.font-size: 18
+    style.italic: false
+  }
+}
+</code></pre>
+  </details>
+</div></div>
 </section><section id="webhook-fail">
   <h2>웹훅 실패 또는 중복 이벤트</h2>
   
-  <div class="diagram"><svg class="sequence-svg" viewBox="0 0 1060 566" role="img" aria-label="웹훅 실패 또는 중복 이벤트"><defs><marker id="arrow-client" viewBox="0 0 12 12" refX="10" refY="6" markerWidth="9" markerHeight="9" orient="auto-start-reverse"><path d="M 1 1 L 11 6 L 1 11 z" fill="#2457a6"></path></marker><marker id="arrow-server" viewBox="0 0 12 12" refX="10" refY="6" markerWidth="9" markerHeight="9" orient="auto-start-reverse"><path d="M 1 1 L 11 6 L 1 11 z" fill="#1c7c66"></path></marker><marker id="arrow-toss" viewBox="0 0 12 12" refX="10" refY="6" markerWidth="9" markerHeight="9" orient="auto-start-reverse"><path d="M 1 1 L 11 6 L 1 11 z" fill="#7b4bc4"></path></marker><marker id="arrow-provider" viewBox="0 0 12 12" refX="10" refY="6" markerWidth="9" markerHeight="9" orient="auto-start-reverse"><path d="M 1 1 L 11 6 L 1 11 z" fill="#7b4bc4"></path></marker><marker id="arrow-scheduler" viewBox="0 0 12 12" refX="10" refY="6" markerWidth="9" markerHeight="9" orient="auto-start-reverse"><path d="M 1 1 L 11 6 L 1 11 z" fill="#9a5b00"></path></marker><marker id="arrow-admin" viewBox="0 0 12 12" refX="10" refY="6" markerWidth="9" markerHeight="9" orient="auto-start-reverse"><path d="M 1 1 L 11 6 L 1 11 z" fill="#334155"></path></marker><marker id="arrow-system" viewBox="0 0 12 12" refX="10" refY="6" markerWidth="9" markerHeight="9" orient="auto-start-reverse"><path d="M 1 1 L 11 6 L 1 11 z" fill="#334155"></path></marker><marker id="arrow-success" viewBox="0 0 12 12" refX="10" refY="6" markerWidth="9" markerHeight="9" orient="auto-start-reverse"><path d="M 1 1 L 11 6 L 1 11 z" fill="#1c7c66"></path></marker><marker id="arrow-failure" viewBox="0 0 12 12" refX="10" refY="6" markerWidth="9" markerHeight="9" orient="auto-start-reverse"><path d="M 1 1 L 11 6 L 1 11 z" fill="#b42318"></path></marker><marker id="arrow-neutral" viewBox="0 0 12 12" refX="10" refY="6" markerWidth="9" markerHeight="9" orient="auto-start-reverse"><path d="M 1 1 L 11 6 L 1 11 z" fill="#65758a"></path></marker></defs><rect x="5" y="30" width="230" height="68" rx="8" fill="#ffffff" stroke="#1c7c66" stroke-width="2"></rect><text x="120" y="58" text-anchor="middle" class="actor-title">우리 서버</text><text x="120" y="80" text-anchor="middle" class="actor-subtitle">Subscription API</text><line x1="120" y1="98" x2="120" y2="536" class="lifeline"></line><rect x="825" y="30" width="230" height="68" rx="8" fill="#ffffff" stroke="#7b4bc4" stroke-width="2"></rect><text x="940" y="58" text-anchor="middle" class="actor-title">토스페이먼츠 서버</text><text x="940" y="80" text-anchor="middle" class="actor-subtitle">Billing &amp; Payment API</text><line x1="940" y1="98" x2="940" y2="536" class="lifeline"></line><line x1="940" y1="145" x2="120" y2="145" class="msg-line" stroke="#1c7c66" marker-end="url(#arrow-server)"></line><text x="140" y="121" class="msg-label"><desc>웹훅 이벤트 수신</desc><tspan x="140" dy="0">웹훅 이벤트 수신</tspan></text><text x="140" y="173" class="msg-code" fill="#1c7c66"><desc>POST /webhooks/toss-payments</desc><tspan x="140" dy="0">POST /webhooks/toss-payments</tspan></text><rect x="270" y="233" width="520" height="104" rx="8" fill="#fff1f0" stroke="#b42318" stroke-dasharray="7 6"></rect><text x="290" y="257" class="msg-label"><desc>서명 검증 실패 또는 레코드 없음</desc><tspan x="290" dy="0">서명 검증 실패 또는 레코드 없음</tspan></text><text x="290" y="289" class="msg-code" fill="#b42318"><desc>401 / 404</desc><tspan x="290" dy="0">401 / 404</tspan></text><rect x="270" y="365" width="520" height="104" rx="8" fill="#fbfcfe" stroke="#1c7c66" stroke-dasharray="7 6"></rect><text x="290" y="389" class="msg-label"><desc>중복 이벤트</desc><tspan x="290" dy="0">중복 이벤트</tspan></text><text x="290" y="421" class="msg-code" fill="#1c7c66"><desc>이미 처리됨: 변경 없이 200 OK</desc><tspan x="290" dy="0">이미 처리됨: 변경 없이 200 OK</tspan></text></svg></div>
+  <div class="diagram"><div class="d2-diagram">
+  <div class="d2-toolbar"><a href="diagrams/initial-subscription-failure-webhook-fail.d2">D2 원본</a></div>
+  <img class="d2-svg" src="diagrams/initial-subscription-failure-webhook-fail.svg" alt="웹훅 실패 또는 중복 이벤트">
+  <details class="d2-details">
+    <summary>D2 원본 보기</summary>
+    <pre class="d2-source"><code>diagram: {
+  shape: sequence_diagram
+  label: &quot;웹훅 실패 또는 중복 이벤트&quot;
+
+  server: &quot;우리 서버&quot;
+  server.style.fill: &quot;#eaf8f3&quot;
+  server.style.stroke: &quot;#1c7c66&quot;
+  toss: &quot;토스페이먼츠 서버&quot;
+  toss.style.fill: &quot;#f1edff&quot;
+  toss.style.stroke: &quot;#7b4bc4&quot;
+
+  toss -&gt; server: |md
+웹훅 이벤트 수신
+
+**POST /webhooks/toss-payments**
+| {
+    style.stroke: &quot;#1c7c66&quot;
+    style.font-color: &quot;#334155&quot;
+    style.font-size: 18
+    style.italic: false
+  }
+  server.note_2: &quot;서명 검증 실패 또는 레코드 없음\n401 / 404&quot;
+  server.note_3: &quot;중복 이벤트\n이미 처리됨: 변경 없이 200 OK&quot;
+}
+</code></pre>
+  </details>
+</div></div>
 </section>
   
 </main>

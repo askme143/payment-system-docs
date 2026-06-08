@@ -1,0 +1,24 @@
+diagram: {
+  shape: sequence_diagram
+  label: "웹훅 실패 또는 중복 이벤트"
+
+  server: "우리 서버"
+  server.style.fill: "#eaf8f3"
+  server.style.stroke: "#1c7c66"
+  toss: "토스페이먼츠 서버"
+  toss.style.fill: "#f1edff"
+  toss.style.stroke: "#7b4bc4"
+
+  toss -> server: |md
+웹훅 이벤트 수신
+
+**POST /webhooks/toss-payments**
+| {
+    style.stroke: "#1c7c66"
+    style.font-color: "#334155"
+    style.font-size: 18
+    style.italic: false
+  }
+  server.note_2: "서명 검증 실패 또는 레코드 없음\n401 / 404"
+  server.note_3: "중복 이벤트\n이미 처리됨: 변경 없이 200 OK"
+}

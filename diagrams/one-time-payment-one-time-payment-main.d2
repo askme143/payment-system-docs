@@ -1,0 +1,139 @@
+diagram: {
+  shape: sequence_diagram
+  label: "일반결제 성공"
+
+  client: "웹 클라이언트"
+  client.style.fill: "#e8f3ff"
+  client.style.stroke: "#2457a6"
+  server: "우리 서버"
+  server.style.fill: "#eaf8f3"
+  server.style.stroke: "#1c7c66"
+  toss: "토스페이먼츠 서버"
+  toss.style.fill: "#f1edff"
+  toss.style.stroke: "#7b4bc4"
+
+  client -> server: |md
+일반결제 주문 생성 요청
+
+**POST /payments/orders**
+
+items, successUrl, failUrl, optional checkoutId
+| {
+    style.stroke: "#1c7c66"
+    style.font-color: "#334155"
+    style.font-size: 18
+    style.italic: false
+  }
+  server.note_2: "구매 의도와 결제 시도 생성\ncheckoutId, paymentId, orderId, attemptNo\n첫 시도면 checkoutId를 만들고, 재시도면 같은 checkoutId 아래 새 paymentId/orderId를 발급"
+  server.note_3: "주문 가능 여부와 금액 검증\npayment.status=ready\n서버가 최종 amount, orderName, orderId를 계산하고 저장"
+  server -> client: |md
+토스 결제창 호출 데이터 반환
+
+checkoutId, paymentId, orderId, amount, orderName
+
+프론트는 서버가 계산한 금액만 사용
+| {
+    style.stroke: "#2457a6"
+    style.font-color: "#334155"
+    style.font-size: 18
+    style.italic: false
+  }
+  client -> toss: |md
+토스 결제창 인증 요청
+
+TossPayments.requestPayment(...)
+
+orderId, amount, successUrl?paymentId=..., failUrl?paymentId=...
+| {
+    style.stroke: "#7b4bc4"
+    style.font-color: "#334155"
+    style.font-size: 18
+    style.italic: false
+  }
+  toss -> client: |md
+프론트 성공 페이지로 리다이렉트
+
+**/payments/success?paymentKey=...&orderId=...&amount=...**
+
+인증 성공 상태이며 아직 최종 승인 전
+| {
+    style.stroke: "#2457a6"
+    style.font-color: "#334155"
+    style.font-size: 18
+    style.italic: false
+  }
+  client -> server: |md
+프론트 성공 페이지가 결제 승인 요청
+
+**POST /payments/confirm**
+
+paymentId, paymentKey, orderId, amount, Idempotency-Key
+| {
+    style.stroke: "#1c7c66"
+    style.font-color: "#334155"
+    style.font-size: 18
+    style.italic: false
+  }
+  server.note_8: "시도 소유자, 상태, 금액 재검증\npayment.status == ready && payment.amount == request.amount\n현재 paymentId/orderId만 승인하고 이전 실패 시도는 재사용하지 않음"
+  server -> toss: |md
+토스 일반결제 승인 요청
+
+**POST /v1/payments/confirm**
+
+시크릿 키 Basic 인증은 서버에서만 사용
+| {
+    style.stroke: "#7b4bc4"
+    style.font-color: "#334155"
+    style.font-size: 18
+    style.italic: false
+  }
+  toss -> server: |md
+결제 승인 결과
+
+paymentKey, status=DONE, approvedAt
+
+실패 시 오류 코드와 메시지를 해당 결제 시도에 기록
+| {
+    style.stroke: "#1c7c66"
+    style.font-color: "#334155"
+    style.font-size: 18
+    style.italic: false
+  }
+  server.note_11: "승인 성공 분기\ncheckout paid, payment paid\n같은 checkoutId의 이전 failed/canceled 시도는 이력으로 유지"
+  server -> client: |md
+결제 완료 결과 반환
+
+checkoutId, paymentId, status=paid, receiptUrl
+
+프론트는 결제 완료 화면으로 이동
+| {
+    style.stroke: "#2457a6"
+    style.font-color: "#334155"
+    style.font-size: 18
+    style.italic: false
+  }
+  client -> server: |md
+결제 상세 조회
+
+**GET /payments/{paymentId}**
+
+완료 화면 새로고침이나 마이페이지 진입 시 사용
+| {
+    style.stroke: "#1c7c66"
+    style.font-color: "#334155"
+    style.font-size: 18
+    style.italic: false
+  }
+  toss -> server: |md
+결제 상태 웹훅 수신 및 상태 보정
+
+**POST /webhooks/toss-payments**
+
+승인 응답과 웹훅은 같은 paymentKey 기준으로 멱등 처리
+| {
+    style.stroke: "#1c7c66"
+    style.font-color: "#334155"
+    style.font-size: 18
+    style.italic: false
+  }
+}

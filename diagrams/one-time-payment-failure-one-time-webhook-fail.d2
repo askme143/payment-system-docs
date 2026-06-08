@@ -1,0 +1,24 @@
+diagram: {
+  shape: sequence_diagram
+  label: "일반결제 웹훅 실패 또는 중복 이벤트"
+
+  server: "우리 서버"
+  server.style.fill: "#eaf8f3"
+  server.style.stroke: "#1c7c66"
+  toss: "토스페이먼츠 서버"
+  toss.style.fill: "#f1edff"
+  toss.style.stroke: "#7b4bc4"
+
+  toss -> server: |md
+결제 상태 웹훅 수신
+
+**POST /webhooks/toss-payments**
+| {
+    style.stroke: "#1c7c66"
+    style.font-color: "#334155"
+    style.font-size: 18
+    style.italic: false
+  }
+  server.note_2: "서명 검증 실패 또는 내부 결제 없음\n401 / 404"
+  server.note_3: "중복 이벤트\n이미 처리됨: 변경 없이 200 OK\npaymentKey와 eventId 기준으로 중복 처리 방지"
+}

@@ -2,7 +2,8 @@
 import argparse
 import html
 import json
-import textwrap
+import shutil
+import subprocess
 from pathlib import Path
 
 
@@ -19,6 +20,17 @@ THEME = {
     "neutral": "#65758a"
 }
 
+ACTOR_FILLS = {
+    "client": "#e8f3ff",
+    "server": "#eaf8f3",
+    "toss": "#f1edff",
+    "provider": "#f1edff",
+    "scheduler": "#fff8e6",
+    "admin": "#f1f5f9",
+    "system": "#f1f5f9",
+    "neutral": "#f8fafc"
+}
+
 
 def e(value):
     return html.escape(str(value), quote=True)
@@ -28,24 +40,92 @@ def fmt_api(api):
     return f"{api['method']} {api['path']}"
 
 
-def svg_text_lines(value, max_chars):
-    return textwrap.wrap(
-        str(value),
-        width=max_chars,
-        break_long_words=True,
-        break_on_hyphens=False
-    ) or [""]
+def diagram_asset_id(sequence, diagram):
+    return f"{sequence['id']}-{diagram['id']}"
 
 
-def render_svg_text(x, y, css_class, value, max_chars, fill=None, line_height=18):
-    fill_attr = f" fill=\"{fill}\"" if fill else ""
-    lines = svg_text_lines(value, max_chars)
-    description = f"<desc>{e(value)}</desc>"
-    tspans = "".join(
-        f"<tspan x=\"{x}\" dy=\"{0 if idx == 0 else line_height}\">{e(line)}</tspan>"
-        for idx, line in enumerate(lines)
-    )
-    return f"<text x=\"{x}\" y=\"{y}\" class=\"{css_class}\"{fill_attr}>{description}{tspans}</text>", len(lines)
+def d2_path(sequence, diagram):
+    return f"diagrams/{diagram_asset_id(sequence, diagram)}.d2"
+
+
+def d2_quote(value):
+    return '"' + str(value).replace("\\", "\\\\").replace('"', '\\"').replace("\n", "\\n") + '"'
+
+
+def d2_markdown_block(value):
+    return "|md\n" + str(value).replace("|", "\\|") + "\n|"
+
+
+def text_lines(*values):
+    return [str(value) for value in values if value]
+
+
+def is_uri_line(value):
+    text = str(value).strip()
+    if text.startswith("/"):
+        return True
+    parts = text.split(maxsplit=1)
+    return len(parts) == 2 and parts[0] in {"GET", "POST", "PUT", "PATCH", "DELETE", "HEAD", "OPTIONS"} and parts[1].startswith("/")
+
+
+def message_label(label, code=None, note=None):
+    rendered_code = f"**{code}**" if code and is_uri_line(code) else code
+    return "\n\n".join(text_lines(label, rendered_code, note))
+
+
+def note_label(label, code=None, note=None):
+    return "\n".join(text_lines(label, code, note))
+
+
+def step_code(step, apis):
+    if step.get("apiId") in apis:
+        return fmt_api(apis[step["apiId"]])
+    if step.get("externalCall"):
+        ext = step["externalCall"]
+        return f"{ext['method']} {ext['path']}"
+    return step.get("code")
+
+
+def append_d2_message(lines, indent, from_id, to_id, label, stroke, markdown=False):
+    prefix = " " * indent
+    rendered_label = d2_markdown_block(label) if markdown else d2_quote(label)
+    lines.append(f"{prefix}{from_id} -> {to_id}: {rendered_label} {{")
+    lines.append(f"{prefix}  style.stroke: {d2_quote(stroke)}")
+    lines.append(f"{prefix}  style.font-color: \"#334155\"")
+    lines.append(f"{prefix}  style.font-size: 18")
+    lines.append(f"{prefix}  style.italic: false")
+    lines.append(f"{prefix}}}")
+
+
+def render_d2_diagram(diagram, actors_by_id, apis):
+    lines = [
+        "diagram: {",
+        "  shape: sequence_diagram",
+        f"  label: {d2_quote(diagram['title'])}",
+        "",
+    ]
+    for actor_id in diagram["actorIds"]:
+        actor = actors_by_id[actor_id]
+        lines.append(f"  {actor_id}: {d2_quote(actor['label'])}")
+        lines.append(f"  {actor_id}.style.fill: {d2_quote(actor_fill(actor))}")
+        lines.append(f"  {actor_id}.style.stroke: {d2_quote(actor_stroke(actor))}")
+    lines.append("")
+
+    for idx, step in enumerate(diagram["steps"], start=1):
+        code = step_code(step, apis)
+        if step["type"] == "message":
+            label = message_label(step["label"], code, step.get("note"))
+            to_actor = actors_by_id[step["to"]]
+            append_d2_message(lines, 2, step["from"], step["to"], label, actor_stroke(to_actor), markdown=True)
+        elif step["type"] == "self":
+            actor_id = step["from"]
+            lines.append(f"  {actor_id}.note_{idx}: {d2_quote(note_label(step['label'], code, step.get('note')))}")
+        else:
+            actor_id = step.get("from") or ("server" if "server" in diagram["actorIds"] else diagram["actorIds"][0])
+            message = code or step["label"]
+            lines.append(f"  {actor_id}.note_{idx}: {d2_quote(note_label(step['label'], message, step.get('note')))}")
+    lines.append("}")
+    return "\n".join(lines) + "\n"
 
 
 def load_data(path):
@@ -228,22 +308,46 @@ def page(title, body, extra_head=""):
       border-radius: 8px;
     }}
     .diagram {{ overflow-x: auto; padding-bottom: 4px; }}
-    .sequence-svg {{
-      display: block;
-      width: 1060px;
-      min-width: 1060px;
-      height: auto;
-      background: #fff;
+    .d2-diagram {{
+      overflow-x: auto;
+      padding: 0;
+      background: #ffffff;
       border: 1px solid var(--line);
       border-radius: 8px;
     }}
-    .actor-title {{ fill: var(--ink); font-size: 18px; font-weight: 800; }}
-    .actor-subtitle {{ fill: var(--muted); font-size: 12px; font-weight: 600; }}
-    .lifeline {{ stroke: #cbd5e1; stroke-width: 3; stroke-dasharray: 10 12; }}
-    .msg-line {{ fill: none; stroke-width: 2.5; }}
-    .msg-label {{ fill: var(--ink); font-size: 14px; font-weight: 800; }}
-    .msg-code {{ font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 14px; font-weight: 700; }}
-    .msg-note {{ fill: var(--muted); font-size: 12px; font-weight: 600; }}
+    .d2-toolbar {{
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+      padding: 10px 12px;
+      border-bottom: 1px solid var(--line);
+      background: #fbfcfe;
+    }}
+    .d2-toolbar a {{
+      font-size: 13px;
+    }}
+    .d2-source {{
+      margin: 0;
+      border-radius: 0 0 8px 8px;
+    }}
+    .d2-svg {{
+      display: block;
+      max-width: 100%;
+      height: auto;
+      margin: 0 auto;
+      background: #ffffff;
+    }}
+    .d2-details {{
+      border-top: 1px solid var(--line);
+      background: #fbfcfe;
+    }}
+    .d2-details summary {{
+      cursor: pointer;
+      padding: 10px 12px;
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 800;
+    }}
     @media (max-width: 900px) {{
       .layout {{ grid-template-columns: 1fr; }}
       nav {{ position: static; }}
@@ -425,6 +529,14 @@ def actor_theme(actor):
     return actor.get("theme") or actor.get("kind") or "neutral"
 
 
+def actor_stroke(actor):
+    return THEME.get(actor_theme(actor), THEME["neutral"])
+
+
+def actor_fill(actor):
+    return ACTOR_FILLS.get(actor_theme(actor), ACTOR_FILLS["neutral"])
+
+
 def render_diagram(diagram, actors_by_id, apis):
     actor_ids = diagram["actorIds"]
     width = 1060
@@ -552,7 +664,30 @@ def render_diagram(diagram, actors_by_id, apis):
     return "".join(parts)
 
 
-def render_sequence_page(data, sequence):
+render_diagram = render_d2_diagram
+
+
+def render_d2_block(sequence, diagram, actors_by_id, apis, rendered_d2_ids=None):
+    rendered_d2_ids = rendered_d2_ids or set()
+    source = render_d2_diagram(diagram, actors_by_id, apis)
+    source_href = d2_path(sequence, diagram)
+    asset_id = diagram_asset_id(sequence, diagram)
+    if asset_id in rendered_d2_ids:
+        return f"""<div class="d2-diagram">
+  <div class="d2-toolbar"><a href="{e(source_href)}">D2 원본</a></div>
+  <img class="d2-svg" src="diagrams/{e(asset_id)}.svg" alt="{e(diagram["title"])}">
+  <details class="d2-details">
+    <summary>D2 원본 보기</summary>
+    <pre class="d2-source"><code>{e(source)}</code></pre>
+  </details>
+</div>"""
+    return f"""<div class="d2-diagram">
+  <div class="d2-toolbar"><a href="{e(source_href)}">D2 원본</a></div>
+  <pre class="d2-source"><code>{e(source)}</code></pre>
+</div>"""
+
+
+def render_sequence_page(data, sequence, rendered_d2_ids=None):
     apis, _ = api_maps(data)
     actors_by_id = {actor["id"]: actor for actor in data["actors"]}
     api_links = "".join(
@@ -564,7 +699,7 @@ def render_sequence_page(data, sequence):
         diagrams.append(f"""<section id="{e(diagram['id'])}">
   <h2>{e(diagram['title'])}</h2>
   {f'<p>{e(diagram["description"])}</p>' if diagram.get("description") else ''}
-  <div class="diagram">{render_diagram(diagram, actors_by_id, apis)}</div>
+  <div class="diagram">{render_d2_block(sequence, diagram, actors_by_id, apis, rendered_d2_ids)}</div>
 </section>""")
     state_summary = []
     for diagram in sequence.get("diagrams", []):
@@ -596,15 +731,44 @@ def render_sequence_page(data, sequence):
     return page(sequence["title"], body)
 
 
-def generate_docs(data_path, out_dir):
+def render_d2_svgs(d2_files):
+    d2 = shutil.which("d2")
+    if not d2 or not d2_files:
+        return set()
+    rendered = set()
+    for path in d2_files:
+        output = path.with_suffix(".svg")
+        subprocess.run([d2, "--layout", "dagre", "--theme", "4", str(path), str(output)], check=True)
+        if output.exists():
+            rendered.add(path.stem)
+    return rendered
+
+
+def generate_docs(data_path, out_dir, render_d2=False, rendered_d2_ids=None):
     data_path = Path(data_path)
     out_dir = Path(out_dir)
     data = load_data(data_path)
     validate_data(data)
     out_dir.mkdir(parents=True, exist_ok=True)
+    diagrams_dir = out_dir / "diagrams"
+    diagrams_dir.mkdir(parents=True, exist_ok=True)
 
     outputs = []
     pages = data["site"]["pages"]
+    d2_files = []
+    actors_by_id = {actor["id"]: actor for actor in data["actors"]}
+    apis, _ = api_maps(data)
+    for sequence in data["sequences"]:
+        if sequence["status"] == "available":
+            for diagram in sequence.get("diagrams", []):
+                d2_file = out_dir / d2_path(sequence, diagram)
+                d2_file.write_text(render_d2_diagram(diagram, actors_by_id, apis), encoding="utf-8")
+                d2_files.append(d2_file)
+
+    rendered_ids = set(rendered_d2_ids or [])
+    if render_d2:
+        rendered_ids |= render_d2_svgs(d2_files)
+
     rendered = {
         pages["sequenceIndex"]["file"]: render_sequence_index(data),
         pages["apiCatalog"]["file"]: render_api_catalog(data),
@@ -612,7 +776,7 @@ def generate_docs(data_path, out_dir):
     }
     for sequence in data["sequences"]:
         if sequence["status"] == "available":
-            rendered[sequence["file"]] = render_sequence_page(data, sequence)
+            rendered[sequence["file"]] = render_sequence_page(data, sequence, rendered_ids)
 
     for filename, content in rendered.items():
         path = out_dir / filename
@@ -625,8 +789,9 @@ def main():
     parser = argparse.ArgumentParser(description="Generate payment documentation HTML from JSON data.")
     parser.add_argument("--data", default="docs-data/documentation.json", help="Path to documentation JSON.")
     parser.add_argument("--out", default=".", help="Output directory for generated HTML files.")
+    parser.add_argument("--render-d2", action="store_true", help="Render generated D2 files to SVG when d2 is available.")
     args = parser.parse_args()
-    generated = generate_docs(args.data, args.out)
+    generated = generate_docs(args.data, args.out, render_d2=args.render_d2)
     for path in generated:
         print(path)
 

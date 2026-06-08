@@ -1,0 +1,84 @@
+diagram: {
+  shape: sequence_diagram
+  label: "전체 취소 및 부분 취소"
+
+  client: "웹 클라이언트"
+  client.style.fill: "#e8f3ff"
+  client.style.stroke: "#2457a6"
+  server: "우리 서버"
+  server.style.fill: "#eaf8f3"
+  server.style.stroke: "#1c7c66"
+  toss: "토스페이먼츠 서버"
+  toss.style.fill: "#f1edff"
+  toss.style.stroke: "#7b4bc4"
+  email: "이메일 발송 시스템"
+  email.style.fill: "#f8fafc"
+  email.style.stroke: "#65758a"
+
+  client -> server: |md
+일반결제 취소 요청
+
+**POST /payments/{paymentId}/cancel**
+
+cancelAmount, cancelReason, Idempotency-Key
+| {
+    style.stroke: "#1c7c66"
+    style.font-color: "#334155"
+    style.font-size: 18
+    style.italic: false
+  }
+  server.note_2: "소유권 및 상태 검증\npayment.userId == session.userId, status in paid/partial_canceled\nfailed, expired, canceled 상태는 취소 거부"
+  server.note_3: "부분 취소 누적 금액 검증\ncancelAmount <= cancelableAmount\ncancelAmount 생략 시 남은 금액 전체 취소"
+  server.note_4: "멱등 재시도\nsame paymentId + Idempotency-Key\n이미 성공한 취소 결과가 있으면 토스 재호출 없이 200 OK"
+  server.note_5: "취소 요청 저장\ncancel.status = pending\n요청 금액, 사유, 요청자, 멱등 키 저장"
+  server -> toss: |md
+토스 결제 취소 요청
+
+**POST /v1/payments/{paymentKey}/cancel**
+
+cancelReason, cancelAmount
+| {
+    style.stroke: "#7b4bc4"
+    style.font-color: "#334155"
+    style.font-size: 18
+    style.italic: false
+  }
+  toss -> server: |md
+취소 승인 결과
+
+cancels[], cancelableAmount
+
+토스 응답 금액과 내부 금액 대조
+| {
+    style.stroke: "#1c7c66"
+    style.font-color: "#334155"
+    style.font-size: 18
+    style.italic: false
+  }
+  server.note_8: "결제 상태 및 취소 이력 반영\npayment.status = canceled 또는 partial_canceled\ncancelHistory에 providerCancelId, canceledAt, receiptUrl 저장"
+  server -> email: |md
+취소 완료 알림 발송
+
+cancelHistory
+
+전체/부분 취소 금액과 영수증 링크 포함
+| {
+    style.stroke: "#65758a"
+    style.font-color: "#334155"
+    style.font-size: 18
+    style.italic: false
+  }
+  server -> client: |md
+취소 결과 반환
+
+status, canceledAmount, cancelableAmount, cancelHistory
+
+프론트는 결제 상세의 취소 이력을 갱신
+| {
+    style.stroke: "#2457a6"
+    style.font-color: "#334155"
+    style.font-size: 18
+    style.italic: false
+  }
+  server.note_11: "토스 취소 실패\nprovider_error / provider_rejected\npending 취소를 failed로 저장하고 재시도 가능 여부 안내"
+}

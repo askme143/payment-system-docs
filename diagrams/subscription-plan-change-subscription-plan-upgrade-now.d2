@@ -1,0 +1,127 @@
+diagram: {
+  shape: sequence_diagram
+  label: "즉시 업그레이드 및 차액 결제"
+
+  client: "웹 클라이언트"
+  client.style.fill: "#e8f3ff"
+  client.style.stroke: "#2457a6"
+  server: "우리 서버"
+  server.style.fill: "#eaf8f3"
+  server.style.stroke: "#1c7c66"
+  toss: "토스페이먼츠 서버"
+  toss.style.fill: "#f1edff"
+  toss.style.stroke: "#7b4bc4"
+
+  client -> server: |md
+플랜 변경 미리보기 요청
+
+**POST /subscriptions/{subscriptionId}/change-preview**
+
+targetPlanId
+| {
+    style.stroke: "#1c7c66"
+    style.font-color: "#334155"
+    style.font-size: 18
+    style.italic: false
+  }
+  server.note_2: "회원과 구독 소유권 검증\nstatus IN active, grace_period\n해지 예약, 정지, 이미 변경 예약된 구독은 정책에 따라 거부 또는 예약 교체"
+  server.note_3: "서버가 업그레이드 판정\ntargetPlan.productCode == subscription.productCode\ntargetPlan.productCode가 현재 구독의 productCode와 같아야 하며 업그레이드는 즉시 변경으로 고정"
+  server -> client: |md
+즉시 결제 금액과 다음 결제일 안내
+
+amount, nextBillingDate, confirmationToken
+
+프론트는 결제 금액과 결제일 안내를 보여주고 유저 확인을 받음
+| {
+    style.stroke: "#2457a6"
+    style.font-color: "#334155"
+    style.font-size: 18
+    style.italic: false
+  }
+  client -> server: |md
+유저 확인 후 플랜 변경 확정 요청
+
+**PATCH /subscriptions/{subscriptionId}**
+
+confirmationToken, confirmed=true, Idempotency-Key
+| {
+    style.stroke: "#1c7c66"
+    style.font-color: "#334155"
+    style.font-size: 18
+    style.italic: false
+  }
+  server.note_6: "확인 토큰 재검증 및 결제 회차 생성\ninvoice.type = plan_change\n토큰의 금액, targetPlanId, serverDecision이 현재 상태와 일치해야 함"
+  server -> toss: |md
+차액 자동결제 승인 요청
+
+**POST /v1/billing/{billingKey}**
+
+customerKey, amount=prorationAmount, orderId, orderName
+| {
+    style.stroke: "#7b4bc4"
+    style.font-color: "#334155"
+    style.font-size: 18
+    style.italic: false
+  }
+  toss -> server: |md
+차액 결제 승인 결과
+
+paymentKey, status=DONE
+
+실패 시 플랜 변경은 적용하지 않고 결제 실패 사유 저장
+| {
+    style.stroke: "#1c7c66"
+    style.font-color: "#334155"
+    style.font-size: 18
+    style.italic: false
+  }
+  server.note_9: "승인 성공 후 플랜 즉시 반영\nproductCode 유지, planId=targetPlanId, invoice paid\n권한, 사용량 한도, 다음 결제 예정 금액을 새 플랜 기준으로 갱신"
+  server -> client: |md
+결제 성공 이메일 발송
+
+receiptUrl, amount, invoiceId
+
+즉시 결제 시 이메일로 영수증 링크를 발송
+| {
+    style.stroke: "#2457a6"
+    style.font-color: "#334155"
+    style.font-size: 18
+    style.italic: false
+  }
+  server -> client: |md
+플랜 변경 결과 반환
+
+status=active, planChanged=true
+
+프론트는 구독 상세 정보를 다시 조회
+| {
+    style.stroke: "#2457a6"
+    style.font-color: "#334155"
+    style.font-size: 18
+    style.italic: false
+  }
+  client -> server: |md
+현재 구독 상태 조회
+
+**GET /subscriptions/me**
+
+변경된 플랜, 다음 결제일, 다음 결제 금액 표시
+| {
+    style.stroke: "#1c7c66"
+    style.font-color: "#334155"
+    style.font-size: 18
+    style.italic: false
+  }
+  toss -> server: |md
+차액 결제 웹훅 수신 및 상태 보정
+
+**POST /webhooks/toss-payments**
+
+이미 paid 처리된 plan_change 인보이스면 멱등하게 200 OK
+| {
+    style.stroke: "#1c7c66"
+    style.font-color: "#334155"
+    style.font-size: 18
+    style.italic: false
+  }
+}

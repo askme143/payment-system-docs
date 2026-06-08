@@ -1,0 +1,151 @@
+diagram: {
+  shape: sequence_diagram
+  label: "신규 회원 최초 구독 성공"
+
+  client: "웹 클라이언트"
+  client.style.fill: "#e8f3ff"
+  client.style.stroke: "#2457a6"
+  server: "우리 서버"
+  server.style.fill: "#eaf8f3"
+  server.style.stroke: "#1c7c66"
+  toss: "토스페이먼츠 서버"
+  toss.style.fill: "#f1edff"
+  toss.style.stroke: "#7b4bc4"
+
+  client -> server: |md
+구독 체크아웃 생성 요청
+
+**POST /subscriptions/checkout**
+
+planId, successUrl, failUrl
+| {
+    style.stroke: "#1c7c66"
+    style.font-color: "#334155"
+    style.font-size: 18
+    style.italic: false
+  }
+  server.note_2: "상품별 중복 구독 검증\nUNIQUE active(userId, productCode)\n같은 상품의 활성 구독은 거부하고 다른 상품의 활성 구독은 허용"
+  server.note_3: "주문 및 구독 대기 상태 생성\npending_billing_auth\norderId, customerKey, amount 계산"
+  server -> client: |md
+토스 SDK 호출 데이터 반환
+
+subscriptionId, orderId, customerKey, amount
+
+successUrl에는 subscriptionId 포함
+| {
+    style.stroke: "#2457a6"
+    style.font-color: "#334155"
+    style.font-size: 18
+    style.italic: false
+  }
+  client.note_5: "프론트가 구독 컨텍스트 보관\nsubscriptionId\nsessionStorage, URL state, route state 등"
+  client -> toss: |md
+빌링 인증 요청
+
+TossPayments.requestBillingAuth(...)
+
+customerKey, successUrl?subscriptionId=..., failUrl
+| {
+    style.stroke: "#7b4bc4"
+    style.font-color: "#334155"
+    style.font-size: 18
+    style.italic: false
+  }
+  toss -> client: |md
+프론트 성공 페이지로 리다이렉트
+
+**/billing/success?subscriptionId=...&authKey=...**
+
+토스는 서버 confirm API로 직접 POST하지 않음
+| {
+    style.stroke: "#2457a6"
+    style.font-color: "#334155"
+    style.font-size: 18
+    style.italic: false
+  }
+  client -> server: |md
+프론트 성공 페이지가 구독 확정 요청
+
+**POST /subscriptions/confirm**
+
+Body: subscriptionId, authKey, customerKey / Header: Idempotency-Key / Cookie: session
+| {
+    style.stroke: "#1c7c66"
+    style.font-color: "#334155"
+    style.font-size: 18
+    style.italic: false
+  }
+  server -> toss: |md
+빌링키 발급 요청
+
+**POST /v1/billing/authorizations/issue**
+
+authKey, customerKey
+| {
+    style.stroke: "#7b4bc4"
+    style.font-color: "#334155"
+    style.font-size: 18
+    style.italic: false
+  }
+  toss -> server: |md
+빌링키 발급 응답
+
+billingKey, card, authenticatedAt
+
+서버가 billingKey를 암호화 저장
+| {
+    style.stroke: "#1c7c66"
+    style.font-color: "#334155"
+    style.font-size: 18
+    style.italic: false
+  }
+  server -> toss: |md
+첫 자동결제 승인 요청
+
+**POST /v1/billing/{billingKey}**
+
+customerKey, amount, orderId, orderName
+| {
+    style.stroke: "#7b4bc4"
+    style.font-color: "#334155"
+    style.font-size: 18
+    style.italic: false
+  }
+  toss -> server: |md
+첫 결제 승인 결과
+
+paymentKey, status=DONE, approvedAt
+
+실패 시 failure 객체 또는 오류 코드 반환
+| {
+    style.stroke: "#1c7c66"
+    style.font-color: "#334155"
+    style.font-size: 18
+    style.italic: false
+  }
+  server.note_13: "성공 분기\n결제 paid, 인보이스 paid, 구독 active\nnextBillingDate 생성"
+  server -> client: |md
+구독 활성화 결과 반환
+
+status=active, paymentStatus=paid
+
+프론트는 현재 구독 화면으로 이동
+| {
+    style.stroke: "#2457a6"
+    style.font-color: "#334155"
+    style.font-size: 18
+    style.italic: false
+  }
+  toss -> server: |md
+결제 상태 웹훅 수신 및 상태 보정
+
+**POST /webhooks/toss-payments**
+
+멱등 처리 후 이미 처리된 결제면 200 OK
+| {
+    style.stroke: "#1c7c66"
+    style.font-color: "#334155"
+    style.font-size: 18
+    style.italic: false
+  }
+}

@@ -1,0 +1,56 @@
+diagram: {
+  shape: sequence_diagram
+  label: "정기 결제 7일 전 사전 알림"
+
+  scheduler: "스케줄러"
+  scheduler.style.fill: "#fff8e6"
+  scheduler.style.stroke: "#9a5b00"
+  server: "우리 서버"
+  server.style.fill: "#eaf8f3"
+  server.style.stroke: "#1c7c66"
+  email: "이메일 발송 시스템"
+  email.style.fill: "#f8fafc"
+  email.style.stroke: "#65758a"
+  client: "웹 클라이언트"
+  client.style.fill: "#e8f3ff"
+  client.style.stroke: "#2457a6"
+
+  scheduler -> server: |md
+정기 결제 사전 알림 대상 조회
+
+nextBillingDate = today + 7 days
+
+해지 예약, 결제수단 비활성, 이미 알림 발송된 회차는 제외
+| {
+    style.stroke: "#1c7c66"
+    style.font-color: "#334155"
+    style.font-size: 18
+    style.italic: false
+  }
+  server.note_2: "알림 본문 데이터 구성\nbillingDate, amount, planName\n이메일에는 결제일과 결제 금액을 반드시 표시"
+  server -> email: |md
+정기 결제 사전 알림 발송 요청
+
+template=subscription_billing_reminder
+
+billingDate, amount, currency, planName, subscriptionManageUrl
+| {
+    style.stroke: "#65758a"
+    style.font-color: "#334155"
+    style.font-size: 18
+    style.italic: false
+  }
+  email -> client: |md
+정기 결제 예정 이메일 발송
+
+결제일, 결제 금액
+
+회원이 결제 전 결제수단을 점검할 수 있도록 관리 링크 포함
+| {
+    style.stroke: "#2457a6"
+    style.font-color: "#334155"
+    style.font-size: 18
+    style.italic: false
+  }
+  server.note_5: "알림 발송 이력 저장\nreminderSentAt\n같은 billingPeriod에 중복 발송하지 않도록 기록"
+}

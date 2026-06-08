@@ -1,0 +1,81 @@
+diagram: {
+  shape: sequence_diagram
+  label: "운영자 결제 취소"
+
+  admin: "관리자"
+  admin.style.fill: "#f1f5f9"
+  admin.style.stroke: "#334155"
+  server: "우리 서버"
+  server.style.fill: "#eaf8f3"
+  server.style.stroke: "#1c7c66"
+  toss: "토스페이먼츠 서버"
+  toss.style.fill: "#f1edff"
+  toss.style.stroke: "#7b4bc4"
+  email: "이메일 발송 시스템"
+  email.style.fill: "#f8fafc"
+  email.style.stroke: "#65758a"
+
+  admin -> server: |md
+운영자 결제 취소 요청
+
+**POST /admin/payments/{paymentId}/cancel**
+
+cancelAmount, cancelReason, reasonMessage, notifyCustomer
+| {
+    style.stroke: "#1c7c66"
+    style.font-color: "#334155"
+    style.font-size: 18
+    style.italic: false
+  }
+  server.note_2: "관리자 권한 검증\npermission == payment_cancel\n관리자 ID, 요청 IP, 사유를 감사 로그에 기록"
+  server.note_3: "취소 가능 금액 검증\ncancelAmount <= cancelableAmount\n회원용 API와 같은 금액 검증 정책 사용"
+  server -> toss: |md
+토스 결제 취소 요청
+
+**POST /v1/payments/{paymentKey}/cancel**
+
+운영자 사유는 내부 감사 로그에 보관
+| {
+    style.stroke: "#7b4bc4"
+    style.font-color: "#334155"
+    style.font-size: 18
+    style.italic: false
+  }
+  toss -> server: |md
+취소 승인 결과
+
+cancels[], cancelableAmount
+
+providerCancelId와 영수증 URL 저장
+| {
+    style.stroke: "#1c7c66"
+    style.font-color: "#334155"
+    style.font-size: 18
+    style.italic: false
+  }
+  server.note_6: "운영자 취소 이력 반영\ncancelHistory.requestedBy = admin\noperatorAuditId와 연결"
+  server -> email: |md
+회원 알림 발송
+
+notifyCustomer == true
+
+취소 완료 금액과 결제 상세 링크 포함
+| {
+    style.stroke: "#65758a"
+    style.font-color: "#334155"
+    style.font-size: 18
+    style.italic: false
+  }
+  server -> admin: |md
+운영자 취소 결과 반환
+
+operatorAuditId, status, cancelHistory
+
+관리자 콘솔은 감사 로그 링크를 표시
+| {
+    style.stroke: "#334155"
+    style.font-color: "#334155"
+    style.font-size: 18
+    style.italic: false
+  }
+}

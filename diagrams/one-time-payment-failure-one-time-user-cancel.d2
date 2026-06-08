@@ -1,0 +1,53 @@
+diagram: {
+  shape: sequence_diagram
+  label: "사용자 결제 취소"
+
+  client: "웹 클라이언트"
+  client.style.fill: "#e8f3ff"
+  client.style.stroke: "#2457a6"
+  server: "우리 서버"
+  server.style.fill: "#eaf8f3"
+  server.style.stroke: "#1c7c66"
+  toss: "토스페이먼츠 서버"
+  toss.style.fill: "#f1edff"
+  toss.style.stroke: "#7b4bc4"
+
+  client -> toss: |md
+토스 결제창 인증 요청
+
+TossPayments.requestPayment(...)
+
+orderId, amount, successUrl, failUrl
+| {
+    style.stroke: "#7b4bc4"
+    style.font-color: "#334155"
+    style.font-size: 18
+    style.italic: false
+  }
+  server.note_2: "사용자가 결제창 취소\nPAY_PROCESS_CANCELED\n사용자의 명시적 취소 결정"
+  toss -> client: |md
+프론트 실패 페이지로 리다이렉트
+
+failUrl?code=PAY_PROCESS_CANCELED&message=...&orderId=...
+
+paymentKey가 없으므로 payments-confirm API는 호출하지 않음
+| {
+    style.stroke: "#2457a6"
+    style.font-color: "#334155"
+    style.font-size: 18
+    style.italic: false
+  }
+  client -> server: |md
+결제창 인증 실패 결과 기록
+
+**POST /payments/{paymentId}/auth-result**
+
+ready 시도를 failed로 변경하고 failure.reason=user_canceled 저장
+| {
+    style.stroke: "#1c7c66"
+    style.font-color: "#334155"
+    style.font-size: 18
+    style.italic: false
+  }
+  server.note_5: "사용자 취소 상태 저장\npayment.status = failed, failure.reason=user_canceled\n재시도 가능하지만 기존 paymentId/orderId는 재사용하지 않음"
+}

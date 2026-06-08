@@ -1,0 +1,41 @@
+diagram: {
+  shape: sequence_diagram
+  label: "결제 승인 전 서버 검증 실패"
+
+  client: "웹 클라이언트"
+  client.style.fill: "#e8f3ff"
+  client.style.stroke: "#2457a6"
+  server: "우리 서버"
+  server.style.fill: "#eaf8f3"
+  server.style.stroke: "#1c7c66"
+  toss: "토스페이먼츠 서버"
+  toss.style.fill: "#f1edff"
+  toss.style.stroke: "#7b4bc4"
+
+  client -> server: |md
+결제 승인 요청
+
+**POST /payments/confirm**
+
+paymentId, paymentKey, orderId, amount, Idempotency-Key
+| {
+    style.stroke: "#1c7c66"
+    style.font-color: "#334155"
+    style.font-size: 18
+    style.italic: false
+  }
+  server.note_2: "시도 소유자, 상태, 금액 검증 실패\n403 / 409 / 400\npayment.amount != request.amount 또는 payment.status != ready"
+  server -> client: |md
+승인 차단 응답
+
+PAYMENT_CONFIRM_VALIDATION_FAILED
+
+토스 승인 API를 호출하지 않음
+| {
+    style.stroke: "#2457a6"
+    style.font-color: "#334155"
+    style.font-size: 18
+    style.italic: false
+  }
+  server.note_4: "검증 실패 상태 저장\npayment.status=failed, failure.reason=validation_failed\n명백한 재시도는 새 paymentId/orderId로만 진행"
+}

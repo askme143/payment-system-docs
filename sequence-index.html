@@ -138,22 +138,46 @@
       border-radius: 8px;
     }
     .diagram { overflow-x: auto; padding-bottom: 4px; }
-    .sequence-svg {
-      display: block;
-      width: 1060px;
-      min-width: 1060px;
-      height: auto;
-      background: #fff;
+    .d2-diagram {
+      overflow-x: auto;
+      padding: 0;
+      background: #ffffff;
       border: 1px solid var(--line);
       border-radius: 8px;
     }
-    .actor-title { fill: var(--ink); font-size: 18px; font-weight: 800; }
-    .actor-subtitle { fill: var(--muted); font-size: 12px; font-weight: 600; }
-    .lifeline { stroke: #cbd5e1; stroke-width: 3; stroke-dasharray: 10 12; }
-    .msg-line { fill: none; stroke-width: 2.5; }
-    .msg-label { fill: var(--ink); font-size: 14px; font-weight: 800; }
-    .msg-code { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 14px; font-weight: 700; }
-    .msg-note { fill: var(--muted); font-size: 12px; font-weight: 600; }
+    .d2-toolbar {
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+      padding: 10px 12px;
+      border-bottom: 1px solid var(--line);
+      background: #fbfcfe;
+    }
+    .d2-toolbar a {
+      font-size: 13px;
+    }
+    .d2-source {
+      margin: 0;
+      border-radius: 0 0 8px 8px;
+    }
+    .d2-svg {
+      display: block;
+      max-width: 100%;
+      height: auto;
+      margin: 0 auto;
+      background: #ffffff;
+    }
+    .d2-details {
+      border-top: 1px solid var(--line);
+      background: #fbfcfe;
+    }
+    .d2-details summary {
+      cursor: pointer;
+      padding: 10px 12px;
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 800;
+    }
     @media (max-width: 900px) {
       .layout { grid-template-columns: 1fr; }
       nav { position: static; }
@@ -225,16 +249,21 @@
   <h3><a href="./one-time-payment-failure-sequence.html">일반결제 실패 및 재시도 플로우</a></h3>
   <p>주문 생성 실패, 사용자 취소, 결제수단 인증 실패, 승인 전 서버 검증 실패, 토스 승인 실패, 실패 후 다른 결제수단 재시도를 나눠 설명합니다.</p>
   <ul><li><code>POST /payments/orders</code></li><li><code>POST /payments/confirm</code></li><li><code>GET /payments/{paymentId}</code></li><li><code>POST /payments/{paymentId}/auth-result</code></li><li><code>POST /webhooks/toss-payments</code></li></ul>
+</article><article class="card">
+  <span class="status">available</span>
+  <h3><a href="./admin-product-management-sequence.html">어드민 상품 관리 플로우</a></h3>
+  <p>관리자가 공통 Product를 만들고, 구독상품은 구독 플랜으로, 일반상품은 단건 구매 SKU로 분리해 판매 조건과 상태를 관리하는 흐름입니다.</p>
+  <ul><li><code>POST /admin/products</code></li><li><code>POST /admin/products/{productId}/subscription-plans</code></li><li><code>PATCH /admin/products/{productId}/subscription-plans/{planId}</code></li><li><code>POST /admin/products/{productId}/one-time-skus</code></li><li><code>PATCH /admin/products/{productId}/one-time-skus/{skuId}</code></li><li><code>PATCH /admin/products/{productId}/status</code></li></ul>
+</article><article class="card">
+  <span class="status">available</span>
+  <h3><a href="./payment-cancel-refund-sequence.html">결제 취소/환불 플로우</a></h3>
+  <p>승인 완료된 일반결제를 회원 또는 운영자가 전체/부분 취소하고, 토스 취소 API 결과를 내부 결제 상태와 취소 이력에 반영하는 흐름입니다.</p>
+  <ul><li><code>POST /payments/{paymentId}/cancel</code></li><li><code>POST /admin/payments/{paymentId}/cancel</code></li></ul>
 </article></div>
   </section>
   <section id="planned">
     <h2>추가 예정</h2>
-    <div class="grid"><article class="card">
-  <span class="status">planned</span>
-  <h3>결제 취소/환불 플로우</h3>
-  <p>전체 취소, 부분 취소, 토스 취소 API 호출, 내부 환불 상태 반영 흐름입니다.</p>
-  <ul><li><code>POST /payments/{paymentId}/cancel</code></li><li><code>POST /admin/payments/{paymentId}/cancel</code></li></ul>
-</article></div>
+    <div class="grid"></div>
   </section>
 </main>
 </body>

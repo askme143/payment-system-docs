@@ -1,0 +1,55 @@
+diagram: {
+  shape: sequence_diagram
+  label: "기간 종료 시 해지 예약"
+
+  client: "웹 클라이언트"
+  client.style.fill: "#e8f3ff"
+  client.style.stroke: "#2457a6"
+  server: "우리 서버"
+  server.style.fill: "#eaf8f3"
+  server.style.stroke: "#1c7c66"
+  scheduler: "스케줄러"
+  scheduler.style.fill: "#fff8e6"
+  scheduler.style.stroke: "#9a5b00"
+
+  client -> server: |md
+기간 종료 시 해지 예약 요청
+
+**POST /subscriptions/{subscriptionId}/cancel**
+
+cancelReason, feedback, Idempotency-Key
+| {
+    style.stroke: "#1c7c66"
+    style.font-color: "#334155"
+    style.font-size: 18
+    style.italic: false
+  }
+  server.note_2: "회원과 구독 소유권 검증\nsession.userId == subscription.userId\n이미 cancel_scheduled면 기존 예약 결과 반환"
+  server.note_3: "해지 예정일 확정\ncancelAt = currentPeriodEnd\n잔여 기간 권한은 유지"
+  server.note_4: "해지 예약 상태 저장\nstatus=cancel_scheduled, nextBillingDate=null\n정기 과금 배치 조회 조건에서 제외"
+  server -> client: |md
+해지 예약 결과 반환
+
+cancelAt, accessUntil, resumeAvailable=true
+
+프론트는 구독 상세 화면에 해지 예정 배지를 표시
+| {
+    style.stroke: "#2457a6"
+    style.font-color: "#334155"
+    style.font-size: 18
+    style.italic: false
+  }
+  scheduler -> server: |md
+정기 과금 배치 실행
+
+**POST /internal/subscription-billing/run**
+
+nextBillingDate가 null인 구독은 결제 대상 아님
+| {
+    style.stroke: "#1c7c66"
+    style.font-color: "#334155"
+    style.font-size: 18
+    style.italic: false
+  }
+  server.note_7: "기간 종료 시 구독 종료 처리\ncancel_scheduled -> canceled\ncurrentPeriodEnd 이후 접근 권한 비활성화"
+}

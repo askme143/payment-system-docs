@@ -138,22 +138,46 @@
       border-radius: 8px;
     }
     .diagram { overflow-x: auto; padding-bottom: 4px; }
-    .sequence-svg {
-      display: block;
-      width: 1060px;
-      min-width: 1060px;
-      height: auto;
-      background: #fff;
+    .d2-diagram {
+      overflow-x: auto;
+      padding: 0;
+      background: #ffffff;
       border: 1px solid var(--line);
       border-radius: 8px;
     }
-    .actor-title { fill: var(--ink); font-size: 18px; font-weight: 800; }
-    .actor-subtitle { fill: var(--muted); font-size: 12px; font-weight: 600; }
-    .lifeline { stroke: #cbd5e1; stroke-width: 3; stroke-dasharray: 10 12; }
-    .msg-line { fill: none; stroke-width: 2.5; }
-    .msg-label { fill: var(--ink); font-size: 14px; font-weight: 800; }
-    .msg-code { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 14px; font-weight: 700; }
-    .msg-note { fill: var(--muted); font-size: 12px; font-weight: 600; }
+    .d2-toolbar {
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+      padding: 10px 12px;
+      border-bottom: 1px solid var(--line);
+      background: #fbfcfe;
+    }
+    .d2-toolbar a {
+      font-size: 13px;
+    }
+    .d2-source {
+      margin: 0;
+      border-radius: 0 0 8px 8px;
+    }
+    .d2-svg {
+      display: block;
+      max-width: 100%;
+      height: auto;
+      margin: 0 auto;
+      background: #ffffff;
+    }
+    .d2-details {
+      border-top: 1px solid var(--line);
+      background: #fbfcfe;
+    }
+    .d2-details summary {
+      cursor: pointer;
+      padding: 10px 12px;
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 800;
+    }
     @media (max-width: 900px) {
       .layout { grid-template-columns: 1fr; }
       nav { position: static; }
@@ -182,7 +206,7 @@
   <h2>일반결제 API</h2>
   <table>
     <thead><tr><th>API</th><th>역할</th><th>상세</th></tr></thead>
-    <tbody><tr id="payments-orders"><td><code>POST /payments/orders</code></td><td>일반결제 결제창 호출 전에 내부 주문을 생성합니다.</td><td><a href="./api-detail-doc.html#payments-orders">상세 보기</a></td></tr><tr id="payments-confirm"><td><code>POST /payments/confirm</code></td><td>토스 결제 인증 후 일반결제를 최종 승인합니다.</td><td><a href="./api-detail-doc.html#payments-confirm">상세 보기</a></td></tr><tr id="payments-detail"><td><code>GET /payments/{paymentId}</code></td><td>내부 결제 상태와 토스 승인 결과를 조회합니다.</td><td><a href="./api-detail-doc.html#payments-detail">상세 보기</a></td></tr><tr id="payments-auth-result"><td><code>POST /payments/{paymentId}/auth-result</code></td><td>토스 결제창 인증 실패 또는 사용자 취소 결과를 프론트 실패 페이지가 서버에 기록합니다.</td><td><a href="./api-detail-doc.html#payments-auth-result">상세 보기</a></td></tr><tr id="payments-cancel"><td><code>POST /payments/{paymentId}/cancel</code></td><td>결제를 전체 또는 부분 취소합니다.</td><td><span class="status">상세 예정</span></td></tr></tbody>
+    <tbody><tr id="payments-orders"><td><code>POST /payments/orders</code></td><td>일반결제 결제창 호출 전에 내부 주문을 생성합니다.</td><td><a href="./api-detail-doc.html#payments-orders">상세 보기</a></td></tr><tr id="payments-confirm"><td><code>POST /payments/confirm</code></td><td>토스 결제 인증 후 일반결제를 최종 승인합니다.</td><td><a href="./api-detail-doc.html#payments-confirm">상세 보기</a></td></tr><tr id="payments-detail"><td><code>GET /payments/{paymentId}</code></td><td>내부 결제 상태와 토스 승인 결과를 조회합니다.</td><td><a href="./api-detail-doc.html#payments-detail">상세 보기</a></td></tr><tr id="payments-auth-result"><td><code>POST /payments/{paymentId}/auth-result</code></td><td>토스 결제창 인증 실패 또는 사용자 취소 결과를 프론트 실패 페이지가 서버에 기록합니다.</td><td><a href="./api-detail-doc.html#payments-auth-result">상세 보기</a></td></tr><tr id="payments-cancel"><td><code>POST /payments/{paymentId}/cancel</code></td><td>승인 완료된 일반결제를 전체 또는 부분 취소하고 내부 취소 이력을 저장합니다.</td><td><a href="./api-detail-doc.html#payments-cancel">상세 보기</a></td></tr></tbody>
   </table>
 </section><section id="subscriptions">
   <h2>구독 API</h2>
@@ -218,7 +242,7 @@
   <h2>관리자 API</h2>
   <table>
     <thead><tr><th>API</th><th>역할</th><th>상세</th></tr></thead>
-    <tbody><tr id="admin-payments"><td><code>GET /admin/payments</code></td><td>CS와 운영자가 결제 목록을 검색합니다.</td><td><span class="status">상세 예정</span></td></tr><tr id="admin-subscriptions"><td><code>GET /admin/subscriptions</code></td><td>구독 목록, 상태, 다음 결제일, 결제 실패 여부를 검색합니다.</td><td><span class="status">상세 예정</span></td></tr><tr id="admin-payment-cancel"><td><code>POST /admin/payments/{paymentId}/cancel</code></td><td>관리자가 전체 또는 부분 환불을 실행합니다.</td><td><span class="status">상세 예정</span></td></tr><tr id="admin-subscription-adjust"><td><code>POST /admin/subscriptions/{subscriptionId}/adjust</code></td><td>관리자가 구독 상태, 다음 결제일, 실패 상태를 수동 보정합니다.</td><td><span class="status">상세 예정</span></td></tr></tbody>
+    <tbody><tr id="admin-payments"><td><code>GET /admin/payments</code></td><td>CS와 운영자가 결제 목록을 검색합니다.</td><td><span class="status">상세 예정</span></td></tr><tr id="admin-subscriptions"><td><code>GET /admin/subscriptions</code></td><td>구독 목록, 상태, 다음 결제일, 결제 실패 여부를 검색합니다.</td><td><span class="status">상세 예정</span></td></tr><tr id="admin-payment-cancel"><td><code>POST /admin/payments/{paymentId}/cancel</code></td><td>관리자가 회원 요청, 중복 결제, 장애 보정 사유로 일반결제를 전체 또는 부분 취소합니다.</td><td><a href="./api-detail-doc.html#admin-payment-cancel">상세 보기</a></td></tr><tr id="admin-subscription-adjust"><td><code>POST /admin/subscriptions/{subscriptionId}/adjust</code></td><td>관리자가 구독 상태, 다음 결제일, 실패 상태를 수동 보정합니다.</td><td><span class="status">상세 예정</span></td></tr><tr id="admin-products-create"><td><code>POST /admin/products</code></td><td>관리자가 공통 Product를 생성하고 구독상품 또는 일반상품 타입을 지정합니다.</td><td><a href="./api-detail-doc.html#admin-products-create">상세 보기</a></td></tr><tr id="admin-subscription-plans-create"><td><code>POST /admin/products/{productId}/subscription-plans</code></td><td>구독상품에 월간, 연간 같은 구독 플랜을 추가합니다.</td><td><a href="./api-detail-doc.html#admin-subscription-plans-create">상세 보기</a></td></tr><tr id="admin-subscription-plans-update"><td><code>PATCH /admin/products/{productId}/subscription-plans/{planId}</code></td><td>구독 플랜의 표시 정보, 판매 상태, 신규 가입 가격 정책을 수정합니다.</td><td><span class="status">상세 예정</span></td></tr><tr id="admin-one-time-skus-create"><td><code>POST /admin/products/{productId}/one-time-skus</code></td><td>일반상품에 단건 구매용 SKU와 판매 가격, 재고 정책을 추가합니다.</td><td><a href="./api-detail-doc.html#admin-one-time-skus-create">상세 보기</a></td></tr><tr id="admin-one-time-skus-update"><td><code>PATCH /admin/products/{productId}/one-time-skus/{skuId}</code></td><td>일반상품 SKU의 가격, 재고 정책, 판매 상태를 수정합니다.</td><td><span class="status">상세 예정</span></td></tr><tr id="admin-products-status"><td><code>PATCH /admin/products/{productId}/status</code></td><td>상품을 초안, 판매중, 판매중지, 아카이브 상태로 전환합니다.</td><td><span class="status">상세 예정</span></td></tr></tbody>
   </table>
 </section></div></main>
 </body>

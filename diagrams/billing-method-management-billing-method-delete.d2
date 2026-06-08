@@ -1,0 +1,64 @@
+diagram: {
+  shape: sequence_diagram
+  label: "결제 수단 삭제"
+
+  client: "웹 클라이언트"
+  client.style.fill: "#e8f3ff"
+  client.style.stroke: "#2457a6"
+  server: "우리 서버"
+  server.style.fill: "#eaf8f3"
+  server.style.stroke: "#1c7c66"
+
+  client -> server: |md
+결제수단 목록 조회
+
+**GET /billing/methods**
+
+기본 결제수단과 삭제 가능 여부를 함께 표시
+| {
+    style.stroke: "#1c7c66"
+    style.font-color: "#334155"
+    style.font-size: 18
+    style.italic: false
+  }
+  client -> server: |md
+결제수단 삭제 요청
+
+**DELETE /billing/methods/{billingMethodId}**
+
+billingMethodId, Idempotency-Key
+| {
+    style.stroke: "#1c7c66"
+    style.font-color: "#334155"
+    style.font-size: 18
+    style.italic: false
+  }
+  server.note_3: "소유권과 구독 상태 검증\nactiveSubscriptionCount, activeBillingMethodCount\n활성 구독이 1개 이상 있으면 삭제 후 결제수단이 0개가 되는 요청은 거부"
+  server.note_4: "마지막 결제수단 삭제 거부\n409 BILLING_METHOD_REQUIRED\n활성 구독이 1개 이상 있는 회원은 공통 결제수단이 최소 1개 남아야 합니다"
+  server.note_5: "기본 결제수단 삭제 거부\n409 DEFAULT_BILLING_METHOD_REQUIRED\n다른 결제수단을 먼저 기본값으로 지정한 뒤 삭제하도록 안내"
+  server.note_6: "삭제 가능 결제수단 비활성화\nbillingMethod.status=inactive\n과거 결제 내역 추적을 위해 물리 삭제 대신 비활성화"
+  server -> client: |md
+삭제 결과 반환
+
+deleted=true 또는 409 errorCode
+
+거부 시 프론트는 결제수단 추가 또는 기본값 변경을 안내
+| {
+    style.stroke: "#2457a6"
+    style.font-color: "#334155"
+    style.font-size: 18
+    style.italic: false
+  }
+  client -> server: |md
+결제수단 목록 재조회
+
+**GET /billing/methods**
+
+비활성화된 결제수단은 기본 목록에서 제외
+| {
+    style.stroke: "#1c7c66"
+    style.font-color: "#334155"
+    style.font-size: 18
+    style.italic: false
+  }
+}

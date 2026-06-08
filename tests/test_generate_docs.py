@@ -3,11 +3,11 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from scripts.generate_docs import generate_docs, render_diagram
+from scripts.generate_docs import generate_docs, render_d2_diagram
 
 
 class GenerateDocsTest(unittest.TestCase):
-    def test_wraps_long_svg_text_inside_sequence_boxes(self):
+    def test_renders_sequence_steps_as_d2_source(self):
         actors = {
             "server": {"id": "server", "label": "우리 서버", "subtitle": "API", "kind": "server"}
         }
@@ -26,12 +26,83 @@ class GenerateDocsTest(unittest.TestCase):
             ]
         }
 
-        svg = render_diagram(diagram, actors, {})
+        source = render_d2_diagram(diagram, actors, {})
 
-        self.assertIn("<desc>payment.status == ready &amp;&amp; payment.amount == request.amount</desc>", svg)
-        self.assertIn("<tspan x=\"370\" dy=\"0\">payment.status == ready &amp;&amp;</tspan>", svg)
-        self.assertIn("<tspan x=\"370\" dy=\"20\">payment.amount == request.amount</tspan>", svg)
-        self.assertIn("height=\"145\"", svg)
+        self.assertIn("shape: sequence_diagram", source)
+        self.assertIn('server: "우리 서버"', source)
+        self.assertIn('server.style.fill: "#eaf8f3"', source)
+        self.assertIn('server.note_1: "시도 소유자, 상태, 금액 재검증', source)
+        self.assertNotIn("group_1: {", source)
+        self.assertNotIn("server -> server:", source)
+        self.assertIn("payment.status == ready && payment.amount == request.amount", source)
+        self.assertIn("현재 paymentId/orderId만 승인하고 이전 실패 시도는 재사용하지 않음", source)
+
+    def test_renders_message_details_as_notes_for_readability(self):
+        actors = {
+            "client": {"id": "client", "label": "웹 클라이언트", "subtitle": "Browser", "kind": "client"},
+            "server": {"id": "server", "label": "우리 서버", "subtitle": "API", "kind": "server"}
+        }
+        apis = {
+            "payments-confirm": {
+                "method": "POST",
+                "path": "/payments/confirm"
+            }
+        }
+        diagram = {
+            "id": "main",
+            "title": "결제 승인",
+            "actorIds": ["client", "server"],
+            "steps": [
+                {
+                    "type": "message",
+                    "from": "client",
+                    "to": "server",
+                    "label": "프론트 성공 페이지가 결제 승인 요청",
+                    "apiId": "payments-confirm",
+                    "note": "paymentId, paymentKey, orderId, amount, Idempotency-Key"
+                }
+            ]
+        }
+
+        source = render_d2_diagram(diagram, actors, apis)
+
+        self.assertIn("client -> server: |md", source)
+        self.assertIn('style.stroke: "#1c7c66"', source)
+        self.assertIn('style.font-color: "#334155"', source)
+        self.assertIn('style.font-size: 18', source)
+        self.assertIn('style.italic: false', source)
+        self.assertNotIn('style.bold: true', source)
+        self.assertIn("프론트 성공 페이지가 결제 승인 요청", source)
+        self.assertIn("**POST /payments/confirm**", source)
+        self.assertIn("paymentId, paymentKey, orderId, amount, Idempotency-Key", source)
+        self.assertNotIn("**paymentId, paymentKey, orderId, amount, Idempotency-Key**", source)
+        self.assertNotIn('client -> server: "프론트 성공 페이지가 결제 승인 요청"', source)
+
+    def test_only_uri_lines_are_bold_in_message_labels(self):
+        actors = {
+            "server": {"id": "server", "label": "우리 서버", "subtitle": "API", "kind": "server"},
+            "client": {"id": "client", "label": "웹 클라이언트", "subtitle": "Browser", "kind": "client"}
+        }
+        diagram = {
+            "id": "main",
+            "title": "결제 완료",
+            "actorIds": ["server", "client"],
+            "steps": [
+                {
+                    "type": "message",
+                    "from": "server",
+                    "to": "client",
+                    "label": "결제 완료 결과 반환",
+                    "code": "checkoutId, paymentId, status=paid, receiptUrl",
+                    "note": "프론트는 결제 완료 화면으로 이동"
+                }
+            ]
+        }
+
+        source = render_d2_diagram(diagram, actors, {})
+
+        self.assertIn("checkoutId, paymentId, status=paid, receiptUrl", source)
+        self.assertNotIn("**checkoutId, paymentId, status=paid, receiptUrl**", source)
 
     def test_generates_catalog_detail_and_sequence_pages(self):
         data = {
@@ -147,6 +218,75 @@ class GenerateDocsTest(unittest.TestCase):
             self.assertIn("Idempotency-Key", detail)
             self.assertIn("구독 확정 요청", sequence)
             self.assertIn("href=\"./all-api-doc.html#subscriptions-confirm\"", sequence)
+            self.assertIn("diagrams/initial-subscription-success-main.d2", sequence)
+            self.assertIn("shape: sequence_diagram", (out_dir / "diagrams" / "initial-subscription-success-main.d2").read_text(encoding="utf-8"))
+
+    def test_sequence_page_uses_svg_when_d2_rendering_is_enabled(self):
+        data = {
+            "version": "1.0.0",
+            "site": {
+                "title": "결제 시스템",
+                "pages": {
+                    "sequenceIndex": {"title": "시퀀스 목록", "file": "sequence-index.html"},
+                    "apiCatalog": {"title": "전체 API 목록", "file": "all-api-doc.html"},
+                    "apiDetails": {"title": "API 상세", "file": "api-detail-doc.html"}
+                }
+            },
+            "actors": [
+                {"id": "client", "label": "웹 클라이언트", "subtitle": "Browser", "kind": "client"},
+                {"id": "server", "label": "우리 서버", "subtitle": "API", "kind": "server"}
+            ],
+            "apiCategories": [{"id": "payments", "title": "결제 API", "order": 1}],
+            "apis": [
+                {
+                    "id": "payments-confirm",
+                    "categoryId": "payments",
+                    "method": "POST",
+                    "path": "/payments/confirm",
+                    "role": "결제를 승인합니다.",
+                    "visibility": "authenticated",
+                    "detailStatus": "planned",
+                    "detailAnchor": "payments-confirm"
+                }
+            ],
+            "apiDetails": {},
+            "sequences": [
+                {
+                    "id": "payment",
+                    "title": "결제",
+                    "file": "payment.html",
+                    "status": "available",
+                    "kind": "success",
+                    "summary": "결제 흐름입니다.",
+                    "apiIds": ["payments-confirm"],
+                    "actorIds": ["client", "server"],
+                    "diagrams": [
+                        {
+                            "id": "main",
+                            "title": "결제 승인",
+                            "actorIds": ["client", "server"],
+                            "relatedApiIds": ["payments-confirm"],
+                            "steps": [
+                                {"type": "message", "from": "client", "to": "server", "label": "승인 요청", "apiId": "payments-confirm"}
+                            ]
+                        }
+                    ]
+                }
+            ],
+            "policies": {"idempotency": [], "httpStatus": [], "security": [], "tosspayments": []}
+        }
+
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            data_path = root / "documentation.json"
+            out_dir = root / "site"
+            data_path.write_text(json.dumps(data, ensure_ascii=False), encoding="utf-8")
+
+            generate_docs(data_path, out_dir, rendered_d2_ids={"payment-main"})
+
+            sequence = (out_dir / "payment.html").read_text(encoding="utf-8")
+
+            self.assertIn('<img class="d2-svg" src="diagrams/payment-main.svg"', sequence)
 
     def test_real_documentation_includes_subscription_cancel_flow(self):
         with tempfile.TemporaryDirectory() as tmp:
@@ -375,6 +515,58 @@ class GenerateDocsTest(unittest.TestCase):
             self.assertIn("auth_result_not_reported", detail)
             self.assertIn("create_new_payment_attempt", detail)
             self.assertIn("토스 시크릿 키, 카드 전체 번호", detail)
+
+    def test_real_documentation_includes_payment_cancel_refund_flow(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            out_dir = Path(tmp)
+
+            generated = generate_docs("docs-data/documentation.json", out_dir)
+
+            self.assertIn(
+                "payment-cancel-refund-sequence.html",
+                {path.name for path in generated}
+            )
+            catalog = (out_dir / "all-api-doc.html").read_text(encoding="utf-8")
+            detail = (out_dir / "api-detail-doc.html").read_text(encoding="utf-8")
+            sequence = (out_dir / "payment-cancel-refund-sequence.html").read_text(encoding="utf-8")
+
+            self.assertIn("href=\"./api-detail-doc.html#payments-cancel\"", catalog)
+            self.assertIn("href=\"./api-detail-doc.html#admin-payment-cancel\"", catalog)
+            self.assertIn("POST /payments/{paymentId}/cancel", detail)
+            self.assertIn("POST /admin/payments/{paymentId}/cancel", detail)
+            self.assertIn("cancelAmount", detail)
+            self.assertIn("POST /v1/payments/{paymentKey}/cancel", detail)
+            self.assertIn("전체 취소 및 부분 취소", sequence)
+            self.assertIn("부분 취소 누적 금액 검증", sequence)
+            self.assertIn("payment.status = canceled 또는 partial_canceled", sequence)
+            self.assertIn("운영자 결제 취소", sequence)
+            self.assertIn("cancelHistory", sequence)
+
+    def test_real_documentation_includes_admin_product_management_flow(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            out_dir = Path(tmp)
+
+            generated = generate_docs("docs-data/documentation.json", out_dir)
+
+            self.assertIn(
+                "admin-product-management-sequence.html",
+                {path.name for path in generated}
+            )
+            catalog = (out_dir / "all-api-doc.html").read_text(encoding="utf-8")
+            detail = (out_dir / "api-detail-doc.html").read_text(encoding="utf-8")
+            sequence = (out_dir / "admin-product-management-sequence.html").read_text(encoding="utf-8")
+
+            self.assertIn("POST /admin/products", catalog)
+            self.assertIn("POST /admin/products/{productId}/subscription-plans", catalog)
+            self.assertIn("POST /admin/products/{productId}/one-time-skus", catalog)
+            self.assertIn("공통 Product 아래에서 구독상품과 일반상품을 분리", detail)
+            self.assertIn("productType", detail)
+            self.assertIn("subscriptionPlans", detail)
+            self.assertIn("oneTimeSkus", detail)
+            self.assertIn("구독상품 생성 및 플랜 구성", sequence)
+            self.assertIn("일반상품 생성 및 SKU 구성", sequence)
+            self.assertIn("구독 플랜은 기존 활성 구독의 과거 가격을 덮어쓰지 않습니다", sequence)
+            self.assertIn("일반상품 SKU는 주문 생성 시점에 가격 스냅샷으로 고정합니다", sequence)
 
 
 if __name__ == "__main__":

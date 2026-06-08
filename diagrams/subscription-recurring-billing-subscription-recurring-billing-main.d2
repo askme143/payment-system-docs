@@ -1,0 +1,110 @@
+diagram: {
+  shape: sequence_diagram
+  label: "정기 결제 실행"
+
+  scheduler: "스케줄러"
+  scheduler.style.fill: "#fff8e6"
+  scheduler.style.stroke: "#9a5b00"
+  server: "우리 서버"
+  server.style.fill: "#eaf8f3"
+  server.style.stroke: "#1c7c66"
+  toss: "토스페이먼츠 서버"
+  toss.style.fill: "#f1edff"
+  toss.style.stroke: "#7b4bc4"
+  email: "이메일 발송 시스템"
+  email.style.fill: "#f8fafc"
+  email.style.stroke: "#65758a"
+  client: "웹 클라이언트"
+  client.style.fill: "#e8f3ff"
+  client.style.stroke: "#2457a6"
+
+  scheduler -> server: |md
+정기 과금 배치 실행 요청
+
+**POST /internal/subscription-billing/run**
+
+cron, queue worker, 운영자 수동 실행 모두 동일 진입점 사용
+| {
+    style.stroke: "#1c7c66"
+    style.font-color: "#334155"
+    style.font-size: 18
+    style.italic: false
+  }
+  server.note_2: "결제 대상 구독 조회 및 잠금\nstatus=active AND nextBillingDate<=today\n한 회원의 여러 상품 구독이 같은 날 도래해도 subscription 또는 invoice 단위로 각각 잠금"
+  server.note_3: "청구 회차 인보이스 생성\ninvoice.status = pending\nproductCode, plan amount, billingPeriod, orderId, idempotencyKey 확정"
+  server.note_4: "공통 기본 billingKey 복호화\nbillingMethod.active\n회원의 기본 결제수단이 없거나 비활성이면 해당 구독 결제 시도 없이 실패 처리"
+  server -> toss: |md
+자동결제 승인 요청
+
+**POST /v1/billing/{billingKey}**
+
+customerKey, amount, orderId, orderName, productCode, taxFreeAmount
+| {
+    style.stroke: "#7b4bc4"
+    style.font-color: "#334155"
+    style.font-size: 18
+    style.italic: false
+  }
+  toss -> server: |md
+자동결제 승인 결과
+
+paymentKey, status=DONE, approvedAt
+
+실패 시 오류 코드와 실패 사유 반환
+| {
+    style.stroke: "#1c7c66"
+    style.font-color: "#334155"
+    style.font-size: 18
+    style.italic: false
+  }
+  server.note_7: "승인 성공 처리\ninvoice paid, payment paid\n구독은 active 유지, nextBillingDate를 다음 주기로 갱신"
+  server.note_8: "영수증 링크와 결제 결과 구성\nreceiptUrl, paymentKey, approvedAt\n토스 영수증 링크 또는 내부 영수증 상세 링크를 결제 성공 알림에 포함"
+  server -> email: |md
+결제 성공 이메일 발송 요청
+
+template=subscription_payment_paid
+
+amount, billingDate, receiptUrl, invoiceId
+| {
+    style.stroke: "#65758a"
+    style.font-color: "#334155"
+    style.font-size: 18
+    style.italic: false
+  }
+  email -> client: |md
+결제 성공 이메일 발송
+
+영수증 링크 포함
+
+회원은 이메일에서 결제 금액과 영수증 링크를 확인
+| {
+    style.stroke: "#2457a6"
+    style.font-color: "#334155"
+    style.font-size: 18
+    style.italic: false
+  }
+  server -> scheduler: |md
+배치 실행 결과 반환
+
+processed, paid, failed, skipped
+
+운영 로그와 모니터링 지표에 집계
+| {
+    style.stroke: "#9a5b00"
+    style.font-color: "#334155"
+    style.font-size: 18
+    style.italic: false
+  }
+  toss -> server: |md
+결제 상태 웹훅 수신 및 상태 보정
+
+**POST /webhooks/toss-payments**
+
+이미 paid 처리된 결제는 멱등하게 200 OK 반환
+| {
+    style.stroke: "#1c7c66"
+    style.font-color: "#334155"
+    style.font-size: 18
+    style.italic: false
+  }
+}

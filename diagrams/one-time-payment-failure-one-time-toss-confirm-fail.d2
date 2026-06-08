@@ -1,0 +1,76 @@
+diagram: {
+  shape: sequence_diagram
+  label: "토스 일반결제 승인 실패"
+
+  client: "웹 클라이언트"
+  client.style.fill: "#e8f3ff"
+  client.style.stroke: "#2457a6"
+  server: "우리 서버"
+  server.style.fill: "#eaf8f3"
+  server.style.stroke: "#1c7c66"
+  toss: "토스페이먼츠 서버"
+  toss.style.fill: "#f1edff"
+  toss.style.stroke: "#7b4bc4"
+
+  client -> server: |md
+결제 승인 요청
+
+**POST /payments/confirm**
+
+paymentId, paymentKey, orderId, amount
+| {
+    style.stroke: "#1c7c66"
+    style.font-color: "#334155"
+    style.font-size: 18
+    style.italic: false
+  }
+  server -> toss: |md
+토스 일반결제 승인 요청
+
+**POST /v1/payments/confirm**
+
+결제 인증 유효 시간 안에 호출
+| {
+    style.stroke: "#7b4bc4"
+    style.font-color: "#334155"
+    style.font-size: 18
+    style.italic: false
+  }
+  toss -> server: |md
+승인 실패 응답
+
+REJECT_CARD_COMPANY / NOT_FOUND_PAYMENT / INVALID_REQUEST
+
+토스 에러 코드와 메시지를 원본 응답 요약으로 저장
+| {
+    style.stroke: "#1c7c66"
+    style.font-color: "#334155"
+    style.font-size: 18
+    style.italic: false
+  }
+  server.note_4: "현재 결제 시도 실패 저장\npayment.status = failed\ncheckout은 재시도 가능 상태로 유지"
+  server -> client: |md
+결제 실패 응답
+
+402 PAYMENT_CONFIRM_FAILED
+
+재시도 가능 여부와 사용자 표시 메시지 포함
+| {
+    style.stroke: "#2457a6"
+    style.font-color: "#334155"
+    style.font-size: 18
+    style.italic: false
+  }
+  toss -> server: |md
+실패 웹훅 수신 및 멱등 보정
+
+**POST /webhooks/toss-payments**
+
+이미 실패 처리된 paymentKey면 상태 변경 없이 200 OK
+| {
+    style.stroke: "#1c7c66"
+    style.font-color: "#334155"
+    style.font-size: 18
+    style.italic: false
+  }
+}

@@ -1,0 +1,96 @@
+diagram: {
+  shape: sequence_diagram
+  label: "정기 결제 재시도 결과 처리"
+
+  scheduler: "스케줄러"
+  scheduler.style.fill: "#fff8e6"
+  scheduler.style.stroke: "#9a5b00"
+  server: "우리 서버"
+  server.style.fill: "#eaf8f3"
+  server.style.stroke: "#1c7c66"
+  toss: "토스페이먼츠 서버"
+  toss.style.fill: "#f1edff"
+  toss.style.stroke: "#7b4bc4"
+  email: "이메일 발송 시스템"
+  email.style.fill: "#f8fafc"
+  email.style.stroke: "#65758a"
+  client: "웹 클라이언트"
+  client.style.fill: "#e8f3ff"
+  client.style.stroke: "#2457a6"
+
+  scheduler -> server: |md
+실패 결제 재시도 요청
+
+**POST /internal/subscription-billing/{invoiceId}/retry**
+
+예약 배치 또는 운영자 수동 재시도
+| {
+    style.stroke: "#1c7c66"
+    style.font-color: "#334155"
+    style.font-size: 18
+    style.italic: false
+  }
+  server.note_2: "재시도 대상 검증 및 잠금\ninvoice.status=failed AND nextRetryAt<=now\n이미 paid, canceled, final_failed인 회차는 건너뜀"
+  server -> toss: |md
+자동결제 재승인 요청
+
+**POST /v1/billing/{billingKey}**
+
+같은 invoiceId에 새 orderId 또는 재시도용 idempotencyKey 사용
+| {
+    style.stroke: "#7b4bc4"
+    style.font-color: "#334155"
+    style.font-size: 18
+    style.italic: false
+  }
+  toss -> server: |md
+재시도 승인 결과
+
+DONE 또는 실패 코드
+
+성공과 실패를 같은 트랜잭션 경계에서 상태 반영
+| {
+    style.stroke: "#1c7c66"
+    style.font-color: "#334155"
+    style.font-size: 18
+    style.italic: false
+  }
+  server.note_5: "재시도 성공\ninvoice paid, subscription active\nnextBillingDate를 정상 주기로 갱신하고 영수증 링크를 생성"
+  server.note_6: "재시도 실패 또는 한도 초과\ninvoice final_failed\nmaxAttempts 도달 시 구독을 suspended 또는 canceled로 전환"
+  server -> email: |md
+재시도 결과 이메일 발송 요청
+
+paid: receiptUrl / failed: retryAt or billingMethodUpdateUrl
+
+성공 시 영수증 링크, 실패 시 다음 재시도 일자 또는 결제수단 수정 링크 포함
+| {
+    style.stroke: "#65758a"
+    style.font-color: "#334155"
+    style.font-size: 18
+    style.italic: false
+  }
+  email -> client: |md
+재시도 결과 이메일 발송
+
+receiptUrl / retryAt / billingMethodUpdateUrl / canceled
+
+해지 처리된 경우 해지 완료 알림과 재구독 안내 링크 포함
+| {
+    style.stroke: "#2457a6"
+    style.font-color: "#334155"
+    style.font-size: 18
+    style.italic: false
+  }
+  client -> server: |md
+인보이스 최신 상태 조회
+
+**GET /invoices/{invoiceId}**
+
+회원 화면에서 결제 성공 여부와 서비스 이용 상태를 표시
+| {
+    style.stroke: "#1c7c66"
+    style.font-color: "#334155"
+    style.font-size: 18
+    style.italic: false
+  }
+}

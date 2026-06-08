@@ -1,0 +1,90 @@
+diagram: {
+  shape: sequence_diagram
+  label: "다음 주기 플랜 변경 예약"
+
+  client: "웹 클라이언트"
+  client.style.fill: "#e8f3ff"
+  client.style.stroke: "#2457a6"
+  server: "우리 서버"
+  server.style.fill: "#eaf8f3"
+  server.style.stroke: "#1c7c66"
+  scheduler: "스케줄러"
+  scheduler.style.fill: "#fff8e6"
+  scheduler.style.stroke: "#9a5b00"
+
+  client -> server: |md
+플랜 변경 미리보기 요청
+
+**POST /subscriptions/{subscriptionId}/change-preview**
+
+targetPlanId
+| {
+    style.stroke: "#1c7c66"
+    style.font-color: "#334155"
+    style.font-size: 18
+    style.italic: false
+  }
+  server.note_2: "서버가 다운그레이드 판정\nserverDecision=downgrade, targetPlan.productCode == subscription.productCode\n다운그레이드는 다음 결제일 반영으로 고정"
+  server -> client: |md
+다음 결제일 변경 예정 안내
+
+nextBillingDate, effectiveAt, confirmationToken
+
+프론트는 구체적인 다음 결제일을 보여주고 유저 확인을 받음
+| {
+    style.stroke: "#2457a6"
+    style.font-color: "#334155"
+    style.font-size: 18
+    style.italic: false
+  }
+  client -> server: |md
+유저 확인 후 플랜 변경 확정 요청
+
+**PATCH /subscriptions/{subscriptionId}**
+
+confirmationToken, confirmed=true, Idempotency-Key
+| {
+    style.stroke: "#1c7c66"
+    style.font-color: "#334155"
+    style.font-size: 18
+    style.italic: false
+  }
+  server.note_5: "변경 예약 저장\npendingPlanId=targetPlanId\neffectiveAt=currentPeriodEnd, 현재 기간 권한은 유지"
+  server -> client: |md
+변경 예약 결과 반환
+
+pendingPlan, effectiveAt, currentPlan
+
+프론트는 다음 주기 변경 예정 배지를 표시
+| {
+    style.stroke: "#2457a6"
+    style.font-color: "#334155"
+    style.font-size: 18
+    style.italic: false
+  }
+  client -> server: |md
+현재 구독 상태 조회
+
+**GET /subscriptions/me**
+
+현재 플랜과 예약된 목표 플랜을 함께 표시
+| {
+    style.stroke: "#1c7c66"
+    style.font-color: "#334155"
+    style.font-size: 18
+    style.italic: false
+  }
+  scheduler -> server: |md
+정기 과금 배치 실행
+
+**POST /internal/subscription-billing/run**
+
+currentPeriodEnd에 도달한 변경 예약을 결제 대상 선정 전에 반영
+| {
+    style.stroke: "#1c7c66"
+    style.font-color: "#334155"
+    style.font-size: 18
+    style.italic: false
+  }
+  server.note_9: "새 플랜으로 다음 회차 청구\nproductCode 유지, planId=pendingPlanId, pendingPlanId=null\n인보이스 금액과 다음 결제일은 새 플랜 기준으로 계산"
+}

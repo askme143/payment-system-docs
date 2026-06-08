@@ -1,0 +1,379 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>어드민 상품 관리 플로우</title>
+  <style>
+    :root {
+      --bg: #f5f7fb;
+      --surface: #ffffff;
+      --ink: #17202a;
+      --muted: #65758a;
+      --line: #d8e0ea;
+      --accent: #1c7c66;
+      --blue: #2457a6;
+      --danger: #b42318;
+      --soft: #e5f4ef;
+      --shadow: 0 14px 34px rgba(20, 35, 55, 0.08);
+      --code-bg: #111827;
+      --code-ink: #e5e7eb;
+    }
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      color: var(--ink);
+      background: var(--bg);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      line-height: 1.58;
+    }
+    header {
+      background: var(--surface);
+      border-bottom: 1px solid var(--line);
+    }
+    .wrap {
+      width: min(1180px, calc(100% - 36px));
+      margin: 0 auto;
+    }
+    .hero { padding: 42px 0 28px; }
+    .eyebrow {
+      margin: 0 0 10px;
+      color: var(--accent);
+      font-size: 14px;
+      font-weight: 800;
+    }
+    h1 {
+      margin: 0;
+      font-size: clamp(30px, 5vw, 48px);
+      line-height: 1.14;
+      letter-spacing: 0;
+    }
+    .lead {
+      max-width: 900px;
+      margin: 16px 0 0;
+      color: var(--muted);
+      font-size: 18px;
+    }
+    main { padding: 28px 0 54px; }
+    .layout {
+      display: grid;
+      grid-template-columns: 260px 1fr;
+      gap: 24px;
+    }
+    nav {
+      position: sticky;
+      top: 18px;
+      align-self: start;
+      padding: 14px;
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      box-shadow: var(--shadow);
+    }
+    nav a {
+      display: block;
+      padding: 8px 10px;
+      color: var(--muted);
+      text-decoration: none;
+      border-radius: 6px;
+      font-size: 14px;
+      font-weight: 700;
+      line-height: 1.35;
+      overflow-wrap: anywhere;
+      word-break: break-word;
+    }
+    nav a:hover { color: var(--ink); background: var(--soft); }
+    section {
+      margin-bottom: 24px;
+      padding: 24px;
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      box-shadow: var(--shadow);
+    }
+    h2 { margin: 0 0 16px; font-size: 24px; letter-spacing: 0; }
+    h3 { margin: 22px 0 8px; font-size: 18px; letter-spacing: 0; }
+    p { margin: 0 0 14px; }
+    a { color: var(--blue); font-weight: 800; text-decoration: none; }
+    code { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 0.95em; }
+    pre {
+      margin: 10px 0 0;
+      padding: 14px;
+      overflow-x: auto;
+      color: var(--code-ink);
+      background: var(--code-bg);
+      border-radius: 8px;
+      font-size: 13px;
+      line-height: 1.5;
+    }
+    table { width: 100%; border-collapse: collapse; font-size: 14px; }
+    th, td { padding: 11px 12px; text-align: left; vertical-align: top; border-bottom: 1px solid var(--line); }
+    th { color: var(--muted); background: #fbfcfe; font-weight: 800; }
+    .top-links { display: flex; flex-wrap: wrap; gap: 14px; margin-top: 16px; }
+    .grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+    .card, .box {
+      padding: 16px;
+      background: #fbfcfe;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+    }
+    .status {
+      display: inline-flex;
+      align-items: center;
+      min-height: 24px;
+      padding: 2px 8px;
+      border-radius: 999px;
+      color: var(--accent);
+      background: var(--soft);
+      font-size: 12px;
+      font-weight: 900;
+    }
+    .note {
+      margin-top: 14px;
+      padding: 13px 15px;
+      color: #7a4a00;
+      background: #fff5dd;
+      border: 1px solid #eed39a;
+      border-radius: 8px;
+    }
+    .diagram { overflow-x: auto; padding-bottom: 4px; }
+    .d2-diagram {
+      overflow-x: auto;
+      padding: 0;
+      background: #ffffff;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+    }
+    .d2-toolbar {
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+      padding: 10px 12px;
+      border-bottom: 1px solid var(--line);
+      background: #fbfcfe;
+    }
+    .d2-toolbar a {
+      font-size: 13px;
+    }
+    .d2-source {
+      margin: 0;
+      border-radius: 0 0 8px 8px;
+    }
+    .d2-svg {
+      display: block;
+      max-width: 100%;
+      height: auto;
+      margin: 0 auto;
+      background: #ffffff;
+    }
+    .d2-details {
+      border-top: 1px solid var(--line);
+      background: #fbfcfe;
+    }
+    .d2-details summary {
+      cursor: pointer;
+      padding: 10px 12px;
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 800;
+    }
+    @media (max-width: 900px) {
+      .layout { grid-template-columns: 1fr; }
+      nav { position: static; }
+      .grid { grid-template-columns: 1fr; }
+      .wrap { width: min(100% - 24px, 1180px); }
+    }
+  </style>
+  
+</head>
+<body>
+<header>
+  <div class="wrap hero">
+    <p class="eyebrow">Sequence Diagram</p>
+    <h1>어드민 상품 관리 플로우</h1>
+    <p class="lead">관리자가 공통 Product를 만들고, 구독상품은 구독 플랜으로, 일반상품은 단건 구매 SKU로 분리해 판매 조건과 상태를 관리하는 흐름입니다.</p>
+    <p class="top-links"><a href="./sequence-index.html">전체 시퀀스 목록</a><a href="./all-api-doc.html">전체 API 목록</a><a href="./api-detail-doc.html">API 상세 설명</a></p>
+  </div>
+</header>
+<main class="wrap">
+  <section>
+    <h2>사용 API</h2>
+    <div class="grid"><div class="box"><a href="./all-api-doc.html#admin-products-create"><code>POST /admin/products</code></a><p>관리자가 공통 Product를 생성하고 구독상품 또는 일반상품 타입을 지정합니다.</p></div><div class="box"><a href="./all-api-doc.html#admin-subscription-plans-create"><code>POST /admin/products/{productId}/subscription-plans</code></a><p>구독상품에 월간, 연간 같은 구독 플랜을 추가합니다.</p></div><div class="box"><a href="./all-api-doc.html#admin-subscription-plans-update"><code>PATCH /admin/products/{productId}/subscription-plans/{planId}</code></a><p>구독 플랜의 표시 정보, 판매 상태, 신규 가입 가격 정책을 수정합니다.</p></div><div class="box"><a href="./all-api-doc.html#admin-one-time-skus-create"><code>POST /admin/products/{productId}/one-time-skus</code></a><p>일반상품에 단건 구매용 SKU와 판매 가격, 재고 정책을 추가합니다.</p></div><div class="box"><a href="./all-api-doc.html#admin-one-time-skus-update"><code>PATCH /admin/products/{productId}/one-time-skus/{skuId}</code></a><p>일반상품 SKU의 가격, 재고 정책, 판매 상태를 수정합니다.</p></div><div class="box"><a href="./all-api-doc.html#admin-products-status"><code>PATCH /admin/products/{productId}/status</code></a><p>상품을 초안, 판매중, 판매중지, 아카이브 상태로 전환합니다.</p></div></div>
+  </section>
+  <section id="subscription-product">
+  <h2>구독상품 생성 및 플랜 구성</h2>
+  <p>공통 Product를 subscription 타입으로 만든 뒤 월간, 연간, Basic, Pro 같은 구독 플랜을 추가하고 판매 상태를 전환합니다.</p>
+  <div class="diagram"><div class="d2-diagram">
+  <div class="d2-toolbar"><a href="diagrams/admin-product-management-subscription-product.d2">D2 원본</a></div>
+  <img class="d2-svg" src="diagrams/admin-product-management-subscription-product.svg" alt="구독상품 생성 및 플랜 구성">
+  <details class="d2-details">
+    <summary>D2 원본 보기</summary>
+    <pre class="d2-source"><code>diagram: {
+  shape: sequence_diagram
+  label: &quot;구독상품 생성 및 플랜 구성&quot;
+
+  admin: &quot;관리자&quot;
+  admin.style.fill: &quot;#f1f5f9&quot;
+  admin.style.stroke: &quot;#334155&quot;
+  server: &quot;우리 서버&quot;
+  server.style.fill: &quot;#eaf8f3&quot;
+  server.style.stroke: &quot;#1c7c66&quot;
+
+  admin -&gt; server: |md
+공통 상품 생성 요청
+
+**POST /admin/products**
+
+productCode, productType=subscription, name, status=draft
+| {
+    style.stroke: &quot;#1c7c66&quot;
+    style.font-color: &quot;#334155&quot;
+    style.font-size: 18
+    style.italic: false
+  }
+  server.note_2: &quot;상품 코드와 타입 검증\nUNIQUE productCode, productType=subscription\nProduct에는 공통 표시 정보만 저장하고 판매 조건은 플랜 API에서 관리&quot;
+  server -&gt; admin: |md
+초안 상품 생성 결과 반환
+
+productId, productCode, subscriptionPlans=[]
+| {
+    style.stroke: &quot;#334155&quot;
+    style.font-color: &quot;#334155&quot;
+    style.font-size: 18
+    style.italic: false
+  }
+  admin -&gt; server: |md
+구독 플랜 생성 요청
+
+**POST /admin/products/{productId}/subscription-plans**
+
+planCode, billingPeriod, amount, entitlements
+| {
+    style.stroke: &quot;#1c7c66&quot;
+    style.font-color: &quot;#334155&quot;
+    style.font-size: 18
+    style.italic: false
+  }
+  server.note_5: &quot;구독상품 전용 플랜 검증\nproduct.productType == subscription\n일반상품에는 subscriptionPlans를 만들 수 없음&quot;
+  server.note_6: &quot;플랜 가격 정책 저장\nplanVersion or new planId\n구독 플랜은 기존 활성 구독의 과거 가격을 덮어쓰지 않습니다&quot;
+  admin -&gt; server: |md
+플랜 표시 정보 또는 판매 상태 수정
+
+**PATCH /admin/products/{productId}/subscription-plans/{planId}**
+
+신규 가입 가능 여부, 노출 순서, 권한 정책 변경
+| {
+    style.stroke: &quot;#1c7c66&quot;
+    style.font-color: &quot;#334155&quot;
+    style.font-size: 18
+    style.italic: false
+  }
+  admin -&gt; server: |md
+상품 판매 상태 전환
+
+**PATCH /admin/products/{productId}/status**
+
+draft -&gt; active 또는 active -&gt; suspended
+| {
+    style.stroke: &quot;#1c7c66&quot;
+    style.font-color: &quot;#334155&quot;
+    style.font-size: 18
+    style.italic: false
+  }
+}
+</code></pre>
+  </details>
+</div></div>
+</section><section id="one-time-product">
+  <h2>일반상품 생성 및 SKU 구성</h2>
+  <p>공통 Product를 one_time 타입으로 만든 뒤 단건 구매 SKU와 가격, 재고, 구매 제한 정책을 추가합니다.</p>
+  <div class="diagram"><div class="d2-diagram">
+  <div class="d2-toolbar"><a href="diagrams/admin-product-management-one-time-product.d2">D2 원본</a></div>
+  <img class="d2-svg" src="diagrams/admin-product-management-one-time-product.svg" alt="일반상품 생성 및 SKU 구성">
+  <details class="d2-details">
+    <summary>D2 원본 보기</summary>
+    <pre class="d2-source"><code>diagram: {
+  shape: sequence_diagram
+  label: &quot;일반상품 생성 및 SKU 구성&quot;
+
+  admin: &quot;관리자&quot;
+  admin.style.fill: &quot;#f1f5f9&quot;
+  admin.style.stroke: &quot;#334155&quot;
+  server: &quot;우리 서버&quot;
+  server.style.fill: &quot;#eaf8f3&quot;
+  server.style.stroke: &quot;#1c7c66&quot;
+
+  admin -&gt; server: |md
+공통 상품 생성 요청
+
+**POST /admin/products**
+
+productCode, productType=one_time, name, status=draft
+| {
+    style.stroke: &quot;#1c7c66&quot;
+    style.font-color: &quot;#334155&quot;
+    style.font-size: 18
+    style.italic: false
+  }
+  server.note_2: &quot;상품 코드와 타입 검증\nUNIQUE productCode, productType=one_time\nProduct에는 공통 표시 정보만 저장하고 단건 판매 조건은 SKU API에서 관리&quot;
+  server -&gt; admin: |md
+초안 상품 생성 결과 반환
+
+productId, productCode, oneTimeSkus=[]
+| {
+    style.stroke: &quot;#334155&quot;
+    style.font-color: &quot;#334155&quot;
+    style.font-size: 18
+    style.italic: false
+  }
+  admin -&gt; server: |md
+일반상품 SKU 생성 요청
+
+**POST /admin/products/{productId}/one-time-skus**
+
+skuCode, amount, stockPolicy, purchaseLimit
+| {
+    style.stroke: &quot;#1c7c66&quot;
+    style.font-color: &quot;#334155&quot;
+    style.font-size: 18
+    style.italic: false
+  }
+  server.note_5: &quot;일반상품 전용 SKU 검증\nproduct.productType == one_time\n구독상품에는 oneTimeSkus를 만들 수 없음&quot;
+  server.note_6: &quot;SKU 가격과 재고 정책 저장\namount, currency, stockPolicy\n일반상품 SKU는 주문 생성 시점에 가격 스냅샷으로 고정합니다&quot;
+  admin -&gt; server: |md
+SKU 가격, 재고, 판매 상태 수정
+
+**PATCH /admin/products/{productId}/one-time-skus/{skuId}**
+
+이미 생성된 결제 시도 금액은 변경하지 않음
+| {
+    style.stroke: &quot;#1c7c66&quot;
+    style.font-color: &quot;#334155&quot;
+    style.font-size: 18
+    style.italic: false
+  }
+  admin -&gt; server: |md
+상품 판매 상태 전환
+
+**PATCH /admin/products/{productId}/status**
+
+active -&gt; suspended이면 신규 주문 생성 차단
+| {
+    style.stroke: &quot;#1c7c66&quot;
+    style.font-color: &quot;#334155&quot;
+    style.font-size: 18
+    style.italic: false
+  }
+}
+</code></pre>
+  </details>
+</div></div>
+</section>
+  <section id="states">
+  <h2>상태 요약</h2>
+  <table><thead><tr><th>시점</th><th>구독 상태</th><th>결제 상태</th><th>설명</th></tr></thead><tbody><tr><td>초안 구독상품 생성</td><td><code>draft product</code></td><td><code>-</code></td><td>공통 Product가 생성되지만 플랜이 없으면 공개 /plans에는 노출하지 않습니다.</td></tr><tr><td>구독 플랜 활성화</td><td><code>active plan</code></td><td><code>recurring ready</code></td><td>신규 구독과 플랜 변경 플로우가 같은 productCode 안의 활성 플랜만 선택할 수 있습니다.</td></tr><tr><td>초안 일반상품 생성</td><td><code>-</code></td><td><code>draft product</code></td><td>공통 Product가 생성되지만 SKU가 없으면 일반결제 주문 생성에서 선택할 수 없습니다.</td></tr><tr><td>SKU 활성화</td><td><code>-</code></td><td><code>one_time purchasable</code></td><td>일반결제 주문 생성 API는 활성 SKU만 조회하고 서버 가격으로 amount를 다시 계산합니다.</td></tr></tbody></table>
+</section>
+</main>
+</body>
+</html>

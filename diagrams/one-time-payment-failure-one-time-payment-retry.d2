@@ -1,0 +1,66 @@
+diagram: {
+  shape: sequence_diagram
+  label: "실패 후 다른 결제수단으로 재시도"
+
+  client: "웹 클라이언트"
+  client.style.fill: "#e8f3ff"
+  client.style.stroke: "#2457a6"
+  server: "우리 서버"
+  server.style.fill: "#eaf8f3"
+  server.style.stroke: "#1c7c66"
+  toss: "토스페이먼츠 서버"
+  toss.style.fill: "#f1edff"
+  toss.style.stroke: "#7b4bc4"
+
+  server.note_1: "이전 결제 시도 실패 또는 취소\nfailed / expired\n이전 paymentId/orderId는 이력으로 유지"
+  client -> server: |md
+다시 결제 버튼 클릭 후 새 주문 생성 요청
+
+**POST /payments/orders**
+
+기존 checkoutId와 동일 items 전달
+| {
+    style.stroke: "#1c7c66"
+    style.font-color: "#334155"
+    style.font-size: 18
+    style.italic: false
+  }
+  server.note_3: "새 결제 시도 발급\nattemptNo += 1, new paymentId, new orderId\n이전 실패 시도를 덮어쓰지 않음"
+  server -> client: |md
+새 토스 결제창 호출 데이터 반환
+
+checkoutId, paymentId=pay_002, orderId=ord_002
+
+다른 결제수단 선택 가능
+| {
+    style.stroke: "#2457a6"
+    style.font-color: "#334155"
+    style.font-size: 18
+    style.italic: false
+  }
+  client -> toss: |md
+새 결제 시도로 토스 인증 요청
+
+TossPayments.requestPayment(...)
+
+새 orderId와 같은 amount 사용
+| {
+    style.stroke: "#7b4bc4"
+    style.font-color: "#334155"
+    style.font-size: 18
+    style.italic: false
+  }
+  client -> server: |md
+새 결제 시도 승인 요청
+
+**POST /payments/confirm**
+
+pay_002, ord_002, paymentKey
+| {
+    style.stroke: "#1c7c66"
+    style.font-color: "#334155"
+    style.font-size: 18
+    style.italic: false
+  }
+  server.note_7: "재시도 성공 시 checkout 완료\ncheckout.status=paid, payment.status=paid\n이전 시도들은 failed/expired 이력으로 유지"
+}

@@ -1,0 +1,55 @@
+diagram: {
+  shape: sequence_diagram
+  label: "빌링키 발급 실패"
+
+  client: "웹 클라이언트"
+  client.style.fill: "#e8f3ff"
+  client.style.stroke: "#2457a6"
+  server: "우리 서버"
+  server.style.fill: "#eaf8f3"
+  server.style.stroke: "#1c7c66"
+  toss: "토스페이먼츠 서버"
+  toss.style.fill: "#f1edff"
+  toss.style.stroke: "#7b4bc4"
+
+  client -> server: |md
+구독 확정 요청
+
+**POST /subscriptions/confirm**
+| {
+    style.stroke: "#1c7c66"
+    style.font-color: "#334155"
+    style.font-size: 18
+    style.italic: false
+  }
+  server -> toss: |md
+빌링키 발급 요청
+
+**POST /v1/billing/authorizations/issue**
+| {
+    style.stroke: "#7b4bc4"
+    style.font-color: "#334155"
+    style.font-size: 18
+    style.italic: false
+  }
+  toss -> server: |md
+발급 실패 응답
+
+INVALID_AUTH_KEY / NOT_MATCHES_CUSTOMER_KEY
+| {
+    style.stroke: "#1c7c66"
+    style.font-color: "#334155"
+    style.font-size: 18
+    style.italic: false
+  }
+  server -> client: |md
+재인증 필요 응답
+
+BILLING_KEY_ISSUE_FAILED
+| {
+    style.stroke: "#2457a6"
+    style.font-color: "#334155"
+    style.font-size: 18
+    style.italic: false
+  }
+}

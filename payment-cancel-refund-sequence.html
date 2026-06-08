@@ -1,0 +1,398 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>결제 취소/환불 플로우</title>
+  <style>
+    :root {
+      --bg: #f5f7fb;
+      --surface: #ffffff;
+      --ink: #17202a;
+      --muted: #65758a;
+      --line: #d8e0ea;
+      --accent: #1c7c66;
+      --blue: #2457a6;
+      --danger: #b42318;
+      --soft: #e5f4ef;
+      --shadow: 0 14px 34px rgba(20, 35, 55, 0.08);
+      --code-bg: #111827;
+      --code-ink: #e5e7eb;
+    }
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      color: var(--ink);
+      background: var(--bg);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      line-height: 1.58;
+    }
+    header {
+      background: var(--surface);
+      border-bottom: 1px solid var(--line);
+    }
+    .wrap {
+      width: min(1180px, calc(100% - 36px));
+      margin: 0 auto;
+    }
+    .hero { padding: 42px 0 28px; }
+    .eyebrow {
+      margin: 0 0 10px;
+      color: var(--accent);
+      font-size: 14px;
+      font-weight: 800;
+    }
+    h1 {
+      margin: 0;
+      font-size: clamp(30px, 5vw, 48px);
+      line-height: 1.14;
+      letter-spacing: 0;
+    }
+    .lead {
+      max-width: 900px;
+      margin: 16px 0 0;
+      color: var(--muted);
+      font-size: 18px;
+    }
+    main { padding: 28px 0 54px; }
+    .layout {
+      display: grid;
+      grid-template-columns: 260px 1fr;
+      gap: 24px;
+    }
+    nav {
+      position: sticky;
+      top: 18px;
+      align-self: start;
+      padding: 14px;
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      box-shadow: var(--shadow);
+    }
+    nav a {
+      display: block;
+      padding: 8px 10px;
+      color: var(--muted);
+      text-decoration: none;
+      border-radius: 6px;
+      font-size: 14px;
+      font-weight: 700;
+      line-height: 1.35;
+      overflow-wrap: anywhere;
+      word-break: break-word;
+    }
+    nav a:hover { color: var(--ink); background: var(--soft); }
+    section {
+      margin-bottom: 24px;
+      padding: 24px;
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      box-shadow: var(--shadow);
+    }
+    h2 { margin: 0 0 16px; font-size: 24px; letter-spacing: 0; }
+    h3 { margin: 22px 0 8px; font-size: 18px; letter-spacing: 0; }
+    p { margin: 0 0 14px; }
+    a { color: var(--blue); font-weight: 800; text-decoration: none; }
+    code { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 0.95em; }
+    pre {
+      margin: 10px 0 0;
+      padding: 14px;
+      overflow-x: auto;
+      color: var(--code-ink);
+      background: var(--code-bg);
+      border-radius: 8px;
+      font-size: 13px;
+      line-height: 1.5;
+    }
+    table { width: 100%; border-collapse: collapse; font-size: 14px; }
+    th, td { padding: 11px 12px; text-align: left; vertical-align: top; border-bottom: 1px solid var(--line); }
+    th { color: var(--muted); background: #fbfcfe; font-weight: 800; }
+    .top-links { display: flex; flex-wrap: wrap; gap: 14px; margin-top: 16px; }
+    .grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+    .card, .box {
+      padding: 16px;
+      background: #fbfcfe;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+    }
+    .status {
+      display: inline-flex;
+      align-items: center;
+      min-height: 24px;
+      padding: 2px 8px;
+      border-radius: 999px;
+      color: var(--accent);
+      background: var(--soft);
+      font-size: 12px;
+      font-weight: 900;
+    }
+    .note {
+      margin-top: 14px;
+      padding: 13px 15px;
+      color: #7a4a00;
+      background: #fff5dd;
+      border: 1px solid #eed39a;
+      border-radius: 8px;
+    }
+    .diagram { overflow-x: auto; padding-bottom: 4px; }
+    .d2-diagram {
+      overflow-x: auto;
+      padding: 0;
+      background: #ffffff;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+    }
+    .d2-toolbar {
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+      padding: 10px 12px;
+      border-bottom: 1px solid var(--line);
+      background: #fbfcfe;
+    }
+    .d2-toolbar a {
+      font-size: 13px;
+    }
+    .d2-source {
+      margin: 0;
+      border-radius: 0 0 8px 8px;
+    }
+    .d2-svg {
+      display: block;
+      max-width: 100%;
+      height: auto;
+      margin: 0 auto;
+      background: #ffffff;
+    }
+    .d2-details {
+      border-top: 1px solid var(--line);
+      background: #fbfcfe;
+    }
+    .d2-details summary {
+      cursor: pointer;
+      padding: 10px 12px;
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 800;
+    }
+    @media (max-width: 900px) {
+      .layout { grid-template-columns: 1fr; }
+      nav { position: static; }
+      .grid { grid-template-columns: 1fr; }
+      .wrap { width: min(100% - 24px, 1180px); }
+    }
+  </style>
+  
+</head>
+<body>
+<header>
+  <div class="wrap hero">
+    <p class="eyebrow">Sequence Diagram</p>
+    <h1>결제 취소/환불 플로우</h1>
+    <p class="lead">승인 완료된 일반결제를 회원 또는 운영자가 전체/부분 취소하고, 토스 취소 API 결과를 내부 결제 상태와 취소 이력에 반영하는 흐름입니다.</p>
+    <p class="top-links"><a href="./sequence-index.html">전체 시퀀스 목록</a><a href="./all-api-doc.html">전체 API 목록</a><a href="./api-detail-doc.html">API 상세 설명</a></p>
+  </div>
+</header>
+<main class="wrap">
+  <section>
+    <h2>사용 API</h2>
+    <div class="grid"><div class="box"><a href="./all-api-doc.html#payments-cancel"><code>POST /payments/{paymentId}/cancel</code></a><p>승인 완료된 일반결제를 전체 또는 부분 취소하고 내부 취소 이력을 저장합니다.</p></div><div class="box"><a href="./all-api-doc.html#admin-payment-cancel"><code>POST /admin/payments/{paymentId}/cancel</code></a><p>관리자가 회원 요청, 중복 결제, 장애 보정 사유로 일반결제를 전체 또는 부분 취소합니다.</p></div></div>
+  </section>
+  <section id="payment-cancel-refund-main">
+  <h2>전체 취소 및 부분 취소</h2>
+  <p>회원이 마이페이지에서 일반결제 취소를 요청했을 때 취소 가능 금액을 검증하고 토스 취소 API를 호출한 뒤 내부 상태를 canceled 또는 partial_canceled로 저장합니다.</p>
+  <div class="diagram"><div class="d2-diagram">
+  <div class="d2-toolbar"><a href="diagrams/payment-cancel-refund-payment-cancel-refund-main.d2">D2 원본</a></div>
+  <img class="d2-svg" src="diagrams/payment-cancel-refund-payment-cancel-refund-main.svg" alt="전체 취소 및 부분 취소">
+  <details class="d2-details">
+    <summary>D2 원본 보기</summary>
+    <pre class="d2-source"><code>diagram: {
+  shape: sequence_diagram
+  label: &quot;전체 취소 및 부분 취소&quot;
+
+  client: &quot;웹 클라이언트&quot;
+  client.style.fill: &quot;#e8f3ff&quot;
+  client.style.stroke: &quot;#2457a6&quot;
+  server: &quot;우리 서버&quot;
+  server.style.fill: &quot;#eaf8f3&quot;
+  server.style.stroke: &quot;#1c7c66&quot;
+  toss: &quot;토스페이먼츠 서버&quot;
+  toss.style.fill: &quot;#f1edff&quot;
+  toss.style.stroke: &quot;#7b4bc4&quot;
+  email: &quot;이메일 발송 시스템&quot;
+  email.style.fill: &quot;#f8fafc&quot;
+  email.style.stroke: &quot;#65758a&quot;
+
+  client -&gt; server: |md
+일반결제 취소 요청
+
+**POST /payments/{paymentId}/cancel**
+
+cancelAmount, cancelReason, Idempotency-Key
+| {
+    style.stroke: &quot;#1c7c66&quot;
+    style.font-color: &quot;#334155&quot;
+    style.font-size: 18
+    style.italic: false
+  }
+  server.note_2: &quot;소유권 및 상태 검증\npayment.userId == session.userId, status in paid/partial_canceled\nfailed, expired, canceled 상태는 취소 거부&quot;
+  server.note_3: &quot;부분 취소 누적 금액 검증\ncancelAmount &lt;= cancelableAmount\ncancelAmount 생략 시 남은 금액 전체 취소&quot;
+  server.note_4: &quot;멱등 재시도\nsame paymentId + Idempotency-Key\n이미 성공한 취소 결과가 있으면 토스 재호출 없이 200 OK&quot;
+  server.note_5: &quot;취소 요청 저장\ncancel.status = pending\n요청 금액, 사유, 요청자, 멱등 키 저장&quot;
+  server -&gt; toss: |md
+토스 결제 취소 요청
+
+**POST /v1/payments/{paymentKey}/cancel**
+
+cancelReason, cancelAmount
+| {
+    style.stroke: &quot;#7b4bc4&quot;
+    style.font-color: &quot;#334155&quot;
+    style.font-size: 18
+    style.italic: false
+  }
+  toss -&gt; server: |md
+취소 승인 결과
+
+cancels[], cancelableAmount
+
+토스 응답 금액과 내부 금액 대조
+| {
+    style.stroke: &quot;#1c7c66&quot;
+    style.font-color: &quot;#334155&quot;
+    style.font-size: 18
+    style.italic: false
+  }
+  server.note_8: &quot;결제 상태 및 취소 이력 반영\npayment.status = canceled 또는 partial_canceled\ncancelHistory에 providerCancelId, canceledAt, receiptUrl 저장&quot;
+  server -&gt; email: |md
+취소 완료 알림 발송
+
+cancelHistory
+
+전체/부분 취소 금액과 영수증 링크 포함
+| {
+    style.stroke: &quot;#65758a&quot;
+    style.font-color: &quot;#334155&quot;
+    style.font-size: 18
+    style.italic: false
+  }
+  server -&gt; client: |md
+취소 결과 반환
+
+status, canceledAmount, cancelableAmount, cancelHistory
+
+프론트는 결제 상세의 취소 이력을 갱신
+| {
+    style.stroke: &quot;#2457a6&quot;
+    style.font-color: &quot;#334155&quot;
+    style.font-size: 18
+    style.italic: false
+  }
+  server.note_11: &quot;토스 취소 실패\nprovider_error / provider_rejected\npending 취소를 failed로 저장하고 재시도 가능 여부 안내&quot;
+}
+</code></pre>
+  </details>
+</div></div>
+</section><section id="admin-payment-cancel">
+  <h2>운영자 결제 취소</h2>
+  <p>관리자가 CS 요청이나 장애 보정 사유로 일반결제를 취소할 때 권한과 감사 로그를 남기고 동일한 취소 서비스로 처리합니다.</p>
+  <div class="diagram"><div class="d2-diagram">
+  <div class="d2-toolbar"><a href="diagrams/payment-cancel-refund-admin-payment-cancel.d2">D2 원본</a></div>
+  <img class="d2-svg" src="diagrams/payment-cancel-refund-admin-payment-cancel.svg" alt="운영자 결제 취소">
+  <details class="d2-details">
+    <summary>D2 원본 보기</summary>
+    <pre class="d2-source"><code>diagram: {
+  shape: sequence_diagram
+  label: &quot;운영자 결제 취소&quot;
+
+  admin: &quot;관리자&quot;
+  admin.style.fill: &quot;#f1f5f9&quot;
+  admin.style.stroke: &quot;#334155&quot;
+  server: &quot;우리 서버&quot;
+  server.style.fill: &quot;#eaf8f3&quot;
+  server.style.stroke: &quot;#1c7c66&quot;
+  toss: &quot;토스페이먼츠 서버&quot;
+  toss.style.fill: &quot;#f1edff&quot;
+  toss.style.stroke: &quot;#7b4bc4&quot;
+  email: &quot;이메일 발송 시스템&quot;
+  email.style.fill: &quot;#f8fafc&quot;
+  email.style.stroke: &quot;#65758a&quot;
+
+  admin -&gt; server: |md
+운영자 결제 취소 요청
+
+**POST /admin/payments/{paymentId}/cancel**
+
+cancelAmount, cancelReason, reasonMessage, notifyCustomer
+| {
+    style.stroke: &quot;#1c7c66&quot;
+    style.font-color: &quot;#334155&quot;
+    style.font-size: 18
+    style.italic: false
+  }
+  server.note_2: &quot;관리자 권한 검증\npermission == payment_cancel\n관리자 ID, 요청 IP, 사유를 감사 로그에 기록&quot;
+  server.note_3: &quot;취소 가능 금액 검증\ncancelAmount &lt;= cancelableAmount\n회원용 API와 같은 금액 검증 정책 사용&quot;
+  server -&gt; toss: |md
+토스 결제 취소 요청
+
+**POST /v1/payments/{paymentKey}/cancel**
+
+운영자 사유는 내부 감사 로그에 보관
+| {
+    style.stroke: &quot;#7b4bc4&quot;
+    style.font-color: &quot;#334155&quot;
+    style.font-size: 18
+    style.italic: false
+  }
+  toss -&gt; server: |md
+취소 승인 결과
+
+cancels[], cancelableAmount
+
+providerCancelId와 영수증 URL 저장
+| {
+    style.stroke: &quot;#1c7c66&quot;
+    style.font-color: &quot;#334155&quot;
+    style.font-size: 18
+    style.italic: false
+  }
+  server.note_6: &quot;운영자 취소 이력 반영\ncancelHistory.requestedBy = admin\noperatorAuditId와 연결&quot;
+  server -&gt; email: |md
+회원 알림 발송
+
+notifyCustomer == true
+
+취소 완료 금액과 결제 상세 링크 포함
+| {
+    style.stroke: &quot;#65758a&quot;
+    style.font-color: &quot;#334155&quot;
+    style.font-size: 18
+    style.italic: false
+  }
+  server -&gt; admin: |md
+운영자 취소 결과 반환
+
+operatorAuditId, status, cancelHistory
+
+관리자 콘솔은 감사 로그 링크를 표시
+| {
+    style.stroke: &quot;#334155&quot;
+    style.font-color: &quot;#334155&quot;
+    style.font-size: 18
+    style.italic: false
+  }
+}
+</code></pre>
+  </details>
+</div></div>
+</section>
+  <section id="states">
+  <h2>상태 요약</h2>
+  <table><thead><tr><th>시점</th><th>구독 상태</th><th>결제 상태</th><th>설명</th></tr></thead><tbody><tr><td>취소 전</td><td><code>-</code></td><td><code>paid</code></td><td>승인 완료 결제이며 cancelableAmount가 남아 있습니다.</td></tr><tr><td>부분 취소 후</td><td><code>-</code></td><td><code>partial_canceled</code></td><td>일부 금액만 취소됐고 남은 금액은 추가 취소할 수 있습니다.</td></tr><tr><td>전체 취소 후</td><td><code>-</code></td><td><code>canceled</code></td><td>취소 가능 금액이 0이며 추가 취소 요청은 멱등 결과 또는 409로 처리합니다.</td></tr><tr><td>운영자 취소 전</td><td><code>-</code></td><td><code>paid 또는 partial_canceled</code></td><td>관리자가 취소 가능 금액과 사유를 확인합니다.</td></tr><tr><td>운영자 취소 후</td><td><code>-</code></td><td><code>canceled 또는 partial_canceled</code></td><td>회원 결제 내역과 운영 감사 로그가 같은 취소 건을 가리킵니다.</td></tr></tbody></table>
+</section>
+</main>
+</body>
+</html>

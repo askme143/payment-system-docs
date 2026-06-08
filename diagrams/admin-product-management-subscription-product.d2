@@ -1,0 +1,73 @@
+diagram: {
+  shape: sequence_diagram
+  label: "구독상품 생성 및 플랜 구성"
+
+  admin: "관리자"
+  admin.style.fill: "#f1f5f9"
+  admin.style.stroke: "#334155"
+  server: "우리 서버"
+  server.style.fill: "#eaf8f3"
+  server.style.stroke: "#1c7c66"
+
+  admin -> server: |md
+공통 상품 생성 요청
+
+**POST /admin/products**
+
+productCode, productType=subscription, name, status=draft
+| {
+    style.stroke: "#1c7c66"
+    style.font-color: "#334155"
+    style.font-size: 18
+    style.italic: false
+  }
+  server.note_2: "상품 코드와 타입 검증\nUNIQUE productCode, productType=subscription\nProduct에는 공통 표시 정보만 저장하고 판매 조건은 플랜 API에서 관리"
+  server -> admin: |md
+초안 상품 생성 결과 반환
+
+productId, productCode, subscriptionPlans=[]
+| {
+    style.stroke: "#334155"
+    style.font-color: "#334155"
+    style.font-size: 18
+    style.italic: false
+  }
+  admin -> server: |md
+구독 플랜 생성 요청
+
+**POST /admin/products/{productId}/subscription-plans**
+
+planCode, billingPeriod, amount, entitlements
+| {
+    style.stroke: "#1c7c66"
+    style.font-color: "#334155"
+    style.font-size: 18
+    style.italic: false
+  }
+  server.note_5: "구독상품 전용 플랜 검증\nproduct.productType == subscription\n일반상품에는 subscriptionPlans를 만들 수 없음"
+  server.note_6: "플랜 가격 정책 저장\nplanVersion or new planId\n구독 플랜은 기존 활성 구독의 과거 가격을 덮어쓰지 않습니다"
+  admin -> server: |md
+플랜 표시 정보 또는 판매 상태 수정
+
+**PATCH /admin/products/{productId}/subscription-plans/{planId}**
+
+신규 가입 가능 여부, 노출 순서, 권한 정책 변경
+| {
+    style.stroke: "#1c7c66"
+    style.font-color: "#334155"
+    style.font-size: 18
+    style.italic: false
+  }
+  admin -> server: |md
+상품 판매 상태 전환
+
+**PATCH /admin/products/{productId}/status**
+
+draft -> active 또는 active -> suspended
+| {
+    style.stroke: "#1c7c66"
+    style.font-color: "#334155"
+    style.font-size: 18
+    style.italic: false
+  }
+}

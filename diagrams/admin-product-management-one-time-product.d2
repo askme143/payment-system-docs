@@ -1,0 +1,73 @@
+diagram: {
+  shape: sequence_diagram
+  label: "일반상품 생성 및 SKU 구성"
+
+  admin: "관리자"
+  admin.style.fill: "#f1f5f9"
+  admin.style.stroke: "#334155"
+  server: "우리 서버"
+  server.style.fill: "#eaf8f3"
+  server.style.stroke: "#1c7c66"
+
+  admin -> server: |md
+공통 상품 생성 요청
+
+**POST /admin/products**
+
+productCode, productType=one_time, name, status=draft
+| {
+    style.stroke: "#1c7c66"
+    style.font-color: "#334155"
+    style.font-size: 18
+    style.italic: false
+  }
+  server.note_2: "상품 코드와 타입 검증\nUNIQUE productCode, productType=one_time\nProduct에는 공통 표시 정보만 저장하고 단건 판매 조건은 SKU API에서 관리"
+  server -> admin: |md
+초안 상품 생성 결과 반환
+
+productId, productCode, oneTimeSkus=[]
+| {
+    style.stroke: "#334155"
+    style.font-color: "#334155"
+    style.font-size: 18
+    style.italic: false
+  }
+  admin -> server: |md
+일반상품 SKU 생성 요청
+
+**POST /admin/products/{productId}/one-time-skus**
+
+skuCode, amount, stockPolicy, purchaseLimit
+| {
+    style.stroke: "#1c7c66"
+    style.font-color: "#334155"
+    style.font-size: 18
+    style.italic: false
+  }
+  server.note_5: "일반상품 전용 SKU 검증\nproduct.productType == one_time\n구독상품에는 oneTimeSkus를 만들 수 없음"
+  server.note_6: "SKU 가격과 재고 정책 저장\namount, currency, stockPolicy\n일반상품 SKU는 주문 생성 시점에 가격 스냅샷으로 고정합니다"
+  admin -> server: |md
+SKU 가격, 재고, 판매 상태 수정
+
+**PATCH /admin/products/{productId}/one-time-skus/{skuId}**
+
+이미 생성된 결제 시도 금액은 변경하지 않음
+| {
+    style.stroke: "#1c7c66"
+    style.font-color: "#334155"
+    style.font-size: 18
+    style.italic: false
+  }
+  admin -> server: |md
+상품 판매 상태 전환
+
+**PATCH /admin/products/{productId}/status**
+
+active -> suspended이면 신규 주문 생성 차단
+| {
+    style.stroke: "#1c7c66"
+    style.font-color: "#334155"
+    style.font-size: 18
+    style.italic: false
+  }
+}

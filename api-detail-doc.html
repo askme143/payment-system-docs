@@ -138,22 +138,46 @@
       border-radius: 8px;
     }
     .diagram { overflow-x: auto; padding-bottom: 4px; }
-    .sequence-svg {
-      display: block;
-      width: 1060px;
-      min-width: 1060px;
-      height: auto;
-      background: #fff;
+    .d2-diagram {
+      overflow-x: auto;
+      padding: 0;
+      background: #ffffff;
       border: 1px solid var(--line);
       border-radius: 8px;
     }
-    .actor-title { fill: var(--ink); font-size: 18px; font-weight: 800; }
-    .actor-subtitle { fill: var(--muted); font-size: 12px; font-weight: 600; }
-    .lifeline { stroke: #cbd5e1; stroke-width: 3; stroke-dasharray: 10 12; }
-    .msg-line { fill: none; stroke-width: 2.5; }
-    .msg-label { fill: var(--ink); font-size: 14px; font-weight: 800; }
-    .msg-code { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 14px; font-weight: 700; }
-    .msg-note { fill: var(--muted); font-size: 12px; font-weight: 600; }
+    .d2-toolbar {
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+      padding: 10px 12px;
+      border-bottom: 1px solid var(--line);
+      background: #fbfcfe;
+    }
+    .d2-toolbar a {
+      font-size: 13px;
+    }
+    .d2-source {
+      margin: 0;
+      border-radius: 0 0 8px 8px;
+    }
+    .d2-svg {
+      display: block;
+      max-width: 100%;
+      height: auto;
+      margin: 0 auto;
+      background: #ffffff;
+    }
+    .d2-details {
+      border-top: 1px solid var(--line);
+      background: #fbfcfe;
+    }
+    .d2-details summary {
+      cursor: pointer;
+      padding: 10px 12px;
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 800;
+    }
     @media (max-width: 900px) {
       .layout { grid-template-columns: 1fr; }
       nav { position: static; }
@@ -172,7 +196,7 @@
     <p class="top-links"><a href="./sequence-index.html">전체 시퀀스 목록</a><a href="./all-api-doc.html">전체 API 목록</a></p>
   </div>
 </header>
-<main class="wrap layout"><nav><a href="#payments-orders">POST /payments/orders</a><a href="#payments-confirm">POST /payments/confirm</a><a href="#payments-detail">GET /payments/{paymentId}</a><a href="#payments-auth-result">POST /payments/{paymentId}/auth-result</a><a href="#checkout">POST /subscriptions/checkout</a><a href="#confirm">POST /subscriptions/confirm</a><a href="#me">GET /subscriptions/me</a><a href="#cancel">POST /subscriptions/{subscriptionId}/cancel</a><a href="#resume">POST /subscriptions/{subscriptionId}/resume</a><a href="#change-preview">POST /subscriptions/{subscriptionId}/change-preview</a><a href="#change">PATCH /subscriptions/{subscriptionId}</a><a href="#invoice-detail">GET /invoices/{invoiceId}</a><a href="#webhook">POST /webhooks/toss-payments</a><a href="#billing-run">POST /internal/subscription-billing/run</a><a href="#billing-retry">POST /internal/subscription-billing/{invoiceId}/retry</a></nav><div><section id="payments-orders">
+<main class="wrap layout"><nav><a href="#payments-orders">POST /payments/orders</a><a href="#payments-confirm">POST /payments/confirm</a><a href="#payments-detail">GET /payments/{paymentId}</a><a href="#payments-auth-result">POST /payments/{paymentId}/auth-result</a><a href="#payments-cancel">POST /payments/{paymentId}/cancel</a><a href="#checkout">POST /subscriptions/checkout</a><a href="#confirm">POST /subscriptions/confirm</a><a href="#me">GET /subscriptions/me</a><a href="#cancel">POST /subscriptions/{subscriptionId}/cancel</a><a href="#resume">POST /subscriptions/{subscriptionId}/resume</a><a href="#change-preview">POST /subscriptions/{subscriptionId}/change-preview</a><a href="#change">PATCH /subscriptions/{subscriptionId}</a><a href="#invoice-detail">GET /invoices/{invoiceId}</a><a href="#webhook">POST /webhooks/toss-payments</a><a href="#billing-run">POST /internal/subscription-billing/run</a><a href="#billing-retry">POST /internal/subscription-billing/{invoiceId}/retry</a><a href="#admin-payment-cancel">POST /admin/payments/{paymentId}/cancel</a><a href="#admin-products-create">POST /admin/products</a><a href="#admin-subscription-plans-create">POST /admin/products/{productId}/subscription-plans</a><a href="#admin-one-time-skus-create">POST /admin/products/{productId}/one-time-skus</a></nav><div><section id="payments-orders">
   <h2><code>POST /payments/orders</code></h2>
   <p>프론트가 일반결제 결제창을 열기 전에 서버가 구매 가능 여부와 최종 금액을 검증하고, 구매 의도(checkoutId) 아래 새 결제 시도를 생성하는 API입니다.</p>
   
@@ -352,6 +376,48 @@
   <h3>처리 로직</h3>
   <ol><li>회원 인증 후 paymentId가 현재 회원의 결제 시도인지 확인합니다.</li><li>request.orderId가 내부 결제 시도의 orderId와 일치하는지 확인합니다.</li><li>현재 payment.status가 ready인지 확인합니다. paid, failed, expired이면 상태를 변경하지 않고 현재 상태를 반환하거나 409로 응답합니다.</li><li>code가 PAY_PROCESS_CANCELED이면 status=failed, failure.phase=before_confirm, failure.reason=user_canceled로 저장합니다.</li><li>그 외 결제창 인증 실패 코드는 status=failed, failure.phase=before_confirm, failure.reason=auth_failed로 저장합니다.</li><li>providerCode와 message는 프론트 표시와 운영 분석을 위해 저장하되, 금전 상태의 최종 근거로 사용하지 않습니다.</li><li>재시도 가능 상태이므로 같은 checkoutId로 payments-orders를 다시 호출해 새 paymentId와 새 orderId를 발급할 수 있도록 응답합니다.</li></ol>
   <div class="note">이 API는 토스 승인 전 실패 또는 사용자 취소를 기록합니다. paymentKey가 없으므로 토스 승인 API는 호출하지 않습니다.</div><div class="note">프론트 실패 페이지가 이 API 호출에 실패하거나 사용자가 이탈하면 결제 시도는 ready로 남고, 만료 정책이 이후 expired로 정리합니다.</div><div class="note">payment.status는 ready, paid, failed, expired처럼 큰 수명주기만 표현하고 세부 원인은 failure.phase와 failure.reason으로 구분합니다.</div>
+</section><section id="payments-cancel">
+  <h2><code>POST /payments/{paymentId}/cancel</code></h2>
+  <p>회원이 승인 완료된 일반결제를 전체 또는 부분 취소하는 API입니다. 서버가 취소 가능 금액과 소유권을 검증한 뒤 토스페이먼츠 결제 취소 API를 호출하고 내부 결제 상태와 취소 이력을 함께 반영합니다.</p>
+  
+  <h3>Header</h3>
+<table><thead><tr><th>이름</th><th>필수</th><th>설명</th></tr></thead><tbody><tr><td><code>Content-Type</code></td><td>예</td><td>application/json</td></tr><tr><td><code>Idempotency-Key</code></td><td>예</td><td>취소 버튼 중복 클릭, 네트워크 재시도, 토스 응답 지연 시 같은 취소 요청을 한 번만 처리하기 위한 키입니다.</td></tr></tbody></table>
+  <h3>Cookie</h3>
+<table><thead><tr><th>이름</th><th>필수</th><th>설명</th></tr></thead><tbody><tr><td><code>SESSION</code></td><td>예</td><td>취소 요청 회원 인증 세션입니다.</td></tr></tbody></table>
+  <h3>Body</h3><pre><code>{
+  &quot;cancelAmount&quot;: 12000,
+  &quot;cancelReason&quot;: &quot;customer_request&quot;,
+  &quot;reasonMessage&quot;: &quot;사용자 요청 환불&quot;,
+  &quot;refundBankAccount&quot;: null
+}</code></pre>
+  <h3>Body 필드</h3>
+<table><thead><tr><th>이름</th><th>필수</th><th>설명</th></tr></thead><tbody><tr><td><code>cancelAmount</code></td><td>아니오</td><td>취소 금액입니다. 생략하면 남은 취소 가능 금액 전체를 취소합니다. 부분 취소 시 1원 이상이며 남은 금액 이하여야 합니다.</td></tr><tr><td><code>cancelReason</code></td><td>예</td><td>취소 사유 코드입니다. customer_request, duplicate_payment, product_unavailable, operator_adjustment 등을 사용합니다.</td></tr><tr><td><code>reasonMessage</code></td><td>아니오</td><td>회원에게 노출하지 않는 내부 참고용 상세 사유입니다.</td></tr><tr><td><code>refundBankAccount</code></td><td>아니오</td><td>가상계좌 등 환불 계좌가 필요한 결제수단에서만 입력합니다. 카드 결제 취소에서는 생략합니다.</td></tr></tbody></table>
+  
+  <h3>Response 200</h3><p>전체 취소, 부분 취소, 또는 같은 멱등 키 재시도에 대한 기존 취소 결과</p><pre><code>{
+  &quot;paymentId&quot;: &quot;pay_20260608_0001&quot;,
+  &quot;paymentKey&quot;: &quot;tgen_20260608_payment_key&quot;,
+  &quot;status&quot;: &quot;partial_canceled&quot;,
+  &quot;paidAmount&quot;: 50000,
+  &quot;canceledAmount&quot;: 12000,
+  &quot;cancelableAmount&quot;: 38000,
+  &quot;latestCancel&quot;: {
+    &quot;cancelId&quot;: &quot;cnl_20260608_0001&quot;,
+    &quot;cancelAmount&quot;: 12000,
+    &quot;cancelReason&quot;: &quot;customer_request&quot;,
+    &quot;canceledAt&quot;: &quot;2026-06-08T10:25:30+09:00&quot;,
+    &quot;receiptUrl&quot;: &quot;https://dashboard.tosspayments.com/receipt/redirection&quot;
+  },
+  &quot;cancelHistory&quot;: [
+    {
+      &quot;cancelId&quot;: &quot;cnl_20260608_0001&quot;,
+      &quot;cancelAmount&quot;: 12000,
+      &quot;status&quot;: &quot;succeeded&quot;
+    }
+  ]
+}</code></pre><h3>Response 400</h3><p>취소 금액이 0 이하이거나 남은 취소 가능 금액을 초과한 요청</p><h3>Response 403</h3><p>현재 회원이 소유하지 않은 결제 취소 요청</p><h3>Response 404</h3><p>존재하지 않는 결제</p><h3>Response 409</h3><p>이미 전액 취소됐거나 paid 상태가 아니어서 취소할 수 없는 결제</p><h3>Response 502</h3><p>토스페이먼츠 취소 API 호출 실패 또는 응답 검증 실패</p>
+  <h3>처리 로직</h3>
+  <ol><li>회원 인증 후 paymentId가 현재 회원의 승인 완료 결제인지 확인합니다.</li><li>결제 상태가 paid 또는 partial_canceled인지 확인하고 failed, expired, canceled 상태는 거부합니다.</li><li>cancelAmount가 없으면 cancelableAmount 전체 취소로 해석하고, 값이 있으면 부분 취소 누적 금액 검증을 수행합니다.</li><li>Idempotency-Key와 paymentId 기준으로 이미 성공한 같은 취소 요청이 있으면 토스 API를 다시 호출하지 않고 기존 결과를 200 OK로 반환합니다.</li><li>내부 취소 요청 레코드를 cancel_pending으로 저장한 뒤 토스페이먼츠 결제 취소 API POST /v1/payments/{paymentKey}/cancel을 호출합니다.</li><li>토스 응답의 canceledAmount, cancelableAmount, cancels 배열을 내부 결제 금액과 대조합니다.</li><li>남은 취소 가능 금액이 0이면 payment.status = canceled, 남은 금액이 있으면 payment.status = partial_canceled로 저장합니다.</li><li>cancelHistory에 취소 금액, 사유, 요청자, providerCancelId, canceledAt, 영수증 URL을 추가합니다.</li><li>취소 완료 후 주문/이용권/재고 보정이 필요한 도메인 이벤트를 발행합니다.</li></ol>
+  <div class="note">이 API는 승인 완료된 일반결제 취소만 다룹니다. 토스 결제창에서 사용자가 결제를 닫은 승인 전 취소는 payments-auth-result API가 기록합니다.</div><div class="note">부분 취소를 여러 번 허용하되 누적 취소 금액은 paidAmount를 넘을 수 없습니다.</div><div class="note">토스 취소 API 성공 후 내부 상태 저장에 실패하면 보정 배치나 운영자 도구가 paymentKey 기준으로 취소 이력을 재동기화해야 합니다.</div>
 </section><section id="checkout">
   <h2><code>POST /subscriptions/checkout</code></h2>
   <p>프론트가 선택한 플랜으로 해당 상품의 구독을 시작할 수 있는지 검증하고 토스 빌링 인증에 필요한 값을 생성합니다.</p>
@@ -736,6 +802,143 @@
   <h3>처리 로직</h3>
   <ol><li>Internal-Job-Token 또는 내부 인증 정책으로 호출자를 검증합니다.</li><li>invoiceId의 인보이스가 실패 상태이고 재시도 가능한 구독에 속하는지 확인합니다.</li><li>force=false이면 nextRetryAt이 현재 시각 이전인지 확인합니다.</li><li>인보이스와 구독을 잠그고 같은 회차가 동시에 재시도되지 않도록 합니다.</li><li>저장된 billingKey를 복호화하고 토스 자동결제 승인 API를 다시 호출합니다.</li><li>재시도 성공 시 invoice와 payment를 paid로 저장하고 구독을 active로 복구하며 다음 결제일을 갱신합니다.</li><li>재시도 성공 이메일에는 결제 금액, 결제일, receiptUrl, invoiceId를 포함합니다.</li><li>재시도 실패 시 attemptCount를 증가시키고 다음 재시도 일자 또는 최종 실패 상태를 계산합니다.</li><li>재시도가 남아 있으면 retryAt을 포함한 실패 이메일을 발송 큐에 넣습니다.</li><li>결제수단 수정이 필요한 실패 사유이면 billingMethodUpdateUrl을 포함한 안내 이메일을 발송 큐에 넣습니다.</li><li>최종 실패로 해지 또는 정지 처리되면 해지 처리 알림과 subscriptionManageUrl을 포함한 이메일을 발송 큐에 넣습니다.</li></ol>
   <div class="note">같은 invoiceId의 재시도는 Idempotency-Key와 인보이스 잠금으로 중복 결제를 방지합니다.</div><div class="note">dryRun=true이면 결제 승인과 이메일 큐 적재를 수행하지 않습니다.</div>
+</section><section id="admin-payment-cancel">
+  <h2><code>POST /admin/payments/{paymentId}/cancel</code></h2>
+  <p>관리자가 CS 요청, 중복 결제, 장애 보정 사유로 일반결제를 전체 또는 부분 취소하는 API입니다. 회원 소유권 대신 관리자 권한과 감사 로그를 검증하고, 처리 결과는 회원용 결제 조회와 같은 취소 이력에 반영합니다.</p>
+  
+  <h3>Header</h3>
+<table><thead><tr><th>이름</th><th>필수</th><th>설명</th></tr></thead><tbody><tr><td><code>Content-Type</code></td><td>예</td><td>application/json</td></tr><tr><td><code>Idempotency-Key</code></td><td>예</td><td>운영자 도구 재시도와 중복 클릭을 같은 취소 건으로 묶기 위한 키입니다.</td></tr></tbody></table>
+  <h3>Cookie</h3>
+<table><thead><tr><th>이름</th><th>필수</th><th>설명</th></tr></thead><tbody><tr><td><code>ADMIN_SESSION</code></td><td>예</td><td>관리자 콘솔 인증 세션입니다.</td></tr></tbody></table>
+  <h3>Body</h3><pre><code>{
+  &quot;cancelAmount&quot;: 50000,
+  &quot;cancelReason&quot;: &quot;duplicate_payment&quot;,
+  &quot;reasonMessage&quot;: &quot;동일 주문 중복 승인 확인&quot;,
+  &quot;notifyCustomer&quot;: true
+}</code></pre>
+  <h3>Body 필드</h3>
+<table><thead><tr><th>이름</th><th>필수</th><th>설명</th></tr></thead><tbody><tr><td><code>cancelAmount</code></td><td>아니오</td><td>관리자가 취소할 금액입니다. 생략하면 남은 취소 가능 금액 전체를 취소합니다.</td></tr><tr><td><code>cancelReason</code></td><td>예</td><td>운영 취소 사유 코드입니다. duplicate_payment, customer_request, service_incident, operator_adjustment 등을 사용합니다.</td></tr><tr><td><code>reasonMessage</code></td><td>예</td><td>감사 로그와 CS 이력에 남길 상세 사유입니다.</td></tr><tr><td><code>notifyCustomer</code></td><td>아니오</td><td>취소 완료 알림 발송 여부입니다. 기본값은 true입니다.</td></tr></tbody></table>
+  
+  <h3>Response 200</h3><p>운영자 취소 성공 또는 같은 멱등 키 재시도에 대한 기존 결과</p><pre><code>{
+  &quot;paymentId&quot;: &quot;pay_20260608_0001&quot;,
+  &quot;status&quot;: &quot;canceled&quot;,
+  &quot;paidAmount&quot;: 50000,
+  &quot;canceledAmount&quot;: 50000,
+  &quot;cancelableAmount&quot;: 0,
+  &quot;operatorAuditId&quot;: &quot;audit_20260608_0001&quot;,
+  &quot;cancelHistory&quot;: [
+    {
+      &quot;cancelId&quot;: &quot;cnl_20260608_0002&quot;,
+      &quot;cancelAmount&quot;: 50000,
+      &quot;requestedBy&quot;: &quot;admin&quot;,
+      &quot;status&quot;: &quot;succeeded&quot;
+    }
+  ]
+}</code></pre><h3>Response 400</h3><p>취소 금액이나 운영 취소 사유가 유효하지 않은 요청</p><h3>Response 401</h3><p>관리자 인증이 없거나 만료된 요청</p><h3>Response 403</h3><p>결제 취소 권한이 없는 관리자 계정</p><h3>Response 404</h3><p>존재하지 않는 결제</p><h3>Response 409</h3><p>이미 전액 취소됐거나 취소할 수 없는 결제 상태</p><h3>Response 502</h3><p>토스페이먼츠 취소 API 호출 실패 또는 응답 검증 실패</p>
+  <h3>처리 로직</h3>
+  <ol><li>관리자 인증과 payment_cancel 권한을 확인합니다.</li><li>결제 상태, paymentKey, paidAmount, cancelableAmount, 기존 cancelHistory를 조회합니다.</li><li>cancelAmount가 남은 취소 가능 금액 이내인지 검증하고 전체 취소인지 부분 취소인지 결정합니다.</li><li>운영자 ID, 요청 IP, cancelReason, reasonMessage를 감사 로그에 먼저 기록합니다.</li><li>토스페이먼츠 결제 취소 API POST /v1/payments/{paymentKey}/cancel을 호출하고 응답 금액을 내부 금액과 대조합니다.</li><li>결제 상태를 canceled 또는 partial_canceled로 저장하고 cancelHistory에 requestedBy=admin 정보를 추가합니다.</li><li>notifyCustomer가 true이면 결제 취소 완료 알림을 발송 큐에 넣습니다.</li><li>같은 Idempotency-Key 재시도는 기존 operatorAuditId와 취소 결과를 반환합니다.</li></ol>
+  <div class="note">운영자 API는 회원 소유권을 보지 않지만 관리자 권한과 감사 로그가 필수입니다.</div><div class="note">회원용 payments-cancel API와 같은 내부 취소 서비스와 토스 취소 호출 정책을 공유합니다.</div><div class="note">운영자 보정 취소도 회원 결제 내역의 cancelHistory에 표시할 수 있어야 합니다.</div>
+</section><section id="admin-products-create">
+  <h2><code>POST /admin/products</code></h2>
+  <p>관리자가 공통 Product 아래에서 구독상품과 일반상품을 분리해 생성하는 API입니다. Product는 이름, 코드, 노출 상태 같은 공통 속성만 보관하고, 구독상품은 subscriptionPlans로, 일반상품은 oneTimeSkus로 판매 조건을 따로 관리합니다.</p>
+  
+  <h3>Header</h3>
+<table><thead><tr><th>이름</th><th>필수</th><th>설명</th></tr></thead><tbody><tr><td><code>Content-Type</code></td><td>예</td><td>application/json</td></tr></tbody></table>
+  <h3>Cookie</h3>
+<table><thead><tr><th>이름</th><th>필수</th><th>설명</th></tr></thead><tbody><tr><td><code>ADMIN_SESSION</code></td><td>예</td><td>관리자 콘솔 인증 세션입니다.</td></tr></tbody></table>
+  <h3>Body</h3><pre><code>{
+  &quot;productCode&quot;: &quot;ANALYTICS&quot;,
+  &quot;productType&quot;: &quot;subscription&quot;,
+  &quot;name&quot;: &quot;Analytics&quot;,
+  &quot;description&quot;: &quot;분석 대시보드 구독 상품&quot;,
+  &quot;displayOrder&quot;: 10,
+  &quot;status&quot;: &quot;draft&quot;
+}</code></pre>
+  <h3>Body 필드</h3>
+<table><thead><tr><th>이름</th><th>필수</th><th>설명</th></tr></thead><tbody><tr><td><code>productCode</code></td><td>예</td><td>상품을 결제, 구독, 권한 정책에서 식별하는 고유 코드입니다.</td></tr><tr><td><code>productType</code></td><td>예</td><td>subscription 또는 one_time입니다. 생성 후 결제 타입 혼선을 막기 위해 변경하지 않습니다.</td></tr><tr><td><code>name</code></td><td>예</td><td>관리자와 고객 화면에 표시할 상품명입니다.</td></tr><tr><td><code>status</code></td><td>아니오</td><td>draft, active, suspended, archived 중 하나입니다. 기본값은 draft입니다.</td></tr></tbody></table>
+  
+  <h3>Response 201</h3><p>상품 생성 성공</p><pre><code>{
+  &quot;productId&quot;: &quot;prod_analytics&quot;,
+  &quot;productCode&quot;: &quot;ANALYTICS&quot;,
+  &quot;productType&quot;: &quot;subscription&quot;,
+  &quot;status&quot;: &quot;draft&quot;,
+  &quot;subscriptionPlans&quot;: [],
+  &quot;oneTimeSkus&quot;: []
+}</code></pre><h3>Response 400</h3><p>상품 코드, 타입, 표시 정보가 유효하지 않은 요청</p><h3>Response 403</h3><p>상품 관리 권한이 없는 관리자 계정</p><h3>Response 409</h3><p>이미 같은 productCode가 존재하는 요청</p>
+  <h3>처리 로직</h3>
+  <ol><li>관리자 인증과 product_manage 권한을 확인합니다.</li><li>productCode 형식과 중복 여부를 검증합니다.</li><li>productType이 subscription 또는 one_time인지 확인합니다.</li><li>공통 Product만 draft 상태로 생성하고 타입별 판매 조건은 별도 API에서 생성하도록 분리합니다.</li><li>관리자 ID, 요청 IP, productType, 변경 전후 값을 감사 로그에 저장합니다.</li></ol>
+  <div class="note">공통 Product 아래에서 구독상품과 일반상품을 분리하면 상품 노출 정보와 결제 생명주기 정책이 섞이지 않습니다.</div><div class="note">productType은 생성 후 변경하지 않는 것을 원칙으로 합니다. 타입 전환이 필요하면 새 Product를 만들고 기존 상품은 archived로 전환합니다.</div>
+</section><section id="admin-subscription-plans-create">
+  <h2><code>POST /admin/products/{productId}/subscription-plans</code></h2>
+  <p>구독상품 Product에 월간, 연간, Basic, Pro 같은 구독 플랜을 추가하는 API입니다. 플랜 가격은 신규 구독과 다음 정기 결제 계산에 쓰이며, 기존 활성 구독의 과거 결제 스냅샷을 덮어쓰지 않습니다.</p>
+  
+  <h3>Header</h3>
+<table><thead><tr><th>이름</th><th>필수</th><th>설명</th></tr></thead><tbody><tr><td><code>Content-Type</code></td><td>예</td><td>application/json</td></tr></tbody></table>
+  <h3>Cookie</h3>
+<table><thead><tr><th>이름</th><th>필수</th><th>설명</th></tr></thead><tbody><tr><td><code>ADMIN_SESSION</code></td><td>예</td><td>관리자 콘솔 인증 세션입니다.</td></tr></tbody></table>
+  <h3>Body</h3><pre><code>{
+  &quot;planCode&quot;: &quot;ANALYTICS_BASIC_MONTHLY&quot;,
+  &quot;planName&quot;: &quot;Analytics Basic 월간&quot;,
+  &quot;billingPeriod&quot;: &quot;monthly&quot;,
+  &quot;amount&quot;: 9900,
+  &quot;currency&quot;: &quot;KRW&quot;,
+  &quot;status&quot;: &quot;active&quot;,
+  &quot;entitlements&quot;: {
+    &quot;seatLimit&quot;: 3,
+    &quot;reportLimit&quot;: 100
+  }
+}</code></pre>
+  <h3>Body 필드</h3>
+<table><thead><tr><th>이름</th><th>필수</th><th>설명</th></tr></thead><tbody><tr><td><code>planCode</code></td><td>예</td><td>같은 상품 안에서 플랜을 식별하는 코드입니다.</td></tr><tr><td><code>billingPeriod</code></td><td>예</td><td>monthly 또는 yearly처럼 정기 결제 주기를 나타냅니다.</td></tr><tr><td><code>amount</code></td><td>예</td><td>신규 구독과 다음 정기 결제에 적용할 플랜 금액입니다.</td></tr><tr><td><code>entitlements</code></td><td>아니오</td><td>플랜별 권한, 사용량 한도, 기능 제한 정책입니다.</td></tr></tbody></table>
+  
+  <h3>Response 201</h3><p>구독 플랜 생성 성공</p><pre><code>{
+  &quot;productId&quot;: &quot;prod_analytics&quot;,
+  &quot;productType&quot;: &quot;subscription&quot;,
+  &quot;planId&quot;: &quot;plan_analytics_basic_monthly&quot;,
+  &quot;status&quot;: &quot;active&quot;,
+  &quot;billingPeriod&quot;: &quot;monthly&quot;,
+  &quot;amount&quot;: 9900,
+  &quot;currency&quot;: &quot;KRW&quot;
+}</code></pre><h3>Response 400</h3><p>금액, 결제 주기, 권한 정책이 유효하지 않은 요청</p><h3>Response 404</h3><p>존재하지 않는 상품</p><h3>Response 409</h3><p>일반상품에 구독 플랜을 추가하려 했거나 같은 planCode가 이미 존재하는 요청</p>
+  <h3>처리 로직</h3>
+  <ol><li>관리자 인증과 product_manage 권한을 확인합니다.</li><li>productId가 존재하고 productType이 subscription인지 검증합니다.</li><li>planCode 중복, amount 양수, currency, billingPeriod를 검증합니다.</li><li>구독 플랜을 생성하고 신규 구독 가능 여부와 권한 정책을 연결합니다.</li><li>구독 플랜은 기존 활성 구독의 과거 가격을 덮어쓰지 않습니다.</li><li>플랜 생성 이력을 감사 로그에 남기고 공개 /plans 응답에는 active 플랜만 노출합니다.</li></ol>
+  <div class="note">가격 변경은 기존 planId를 직접 덮어쓰기보다 신규 planVersion 또는 새 planId를 만들어 적용 범위를 명확히 합니다.</div><div class="note">구독 플랜 변경 플로우는 같은 productCode 안에서만 허용한다는 기존 정책을 유지합니다.</div>
+</section><section id="admin-one-time-skus-create">
+  <h2><code>POST /admin/products/{productId}/one-time-skus</code></h2>
+  <p>일반상품 Product에 단건 구매용 SKU를 추가하는 API입니다. SKU는 주문 생성 시점에 가격 스냅샷으로 고정되며, 이후 가격 수정은 이미 생성된 주문이나 결제 시도 금액을 바꾸지 않습니다.</p>
+  
+  <h3>Header</h3>
+<table><thead><tr><th>이름</th><th>필수</th><th>설명</th></tr></thead><tbody><tr><td><code>Content-Type</code></td><td>예</td><td>application/json</td></tr></tbody></table>
+  <h3>Cookie</h3>
+<table><thead><tr><th>이름</th><th>필수</th><th>설명</th></tr></thead><tbody><tr><td><code>ADMIN_SESSION</code></td><td>예</td><td>관리자 콘솔 인증 세션입니다.</td></tr></tbody></table>
+  <h3>Body</h3><pre><code>{
+  &quot;skuCode&quot;: &quot;REPORT_PACK_100&quot;,
+  &quot;skuName&quot;: &quot;리포트 100건 패키지&quot;,
+  &quot;amount&quot;: 50000,
+  &quot;currency&quot;: &quot;KRW&quot;,
+  &quot;status&quot;: &quot;active&quot;,
+  &quot;stockPolicy&quot;: {
+    &quot;type&quot;: &quot;limited&quot;,
+    &quot;quantity&quot;: 1000
+  },
+  &quot;purchaseLimit&quot;: {
+    &quot;perUser&quot;: 5
+  }
+}</code></pre>
+  <h3>Body 필드</h3>
+<table><thead><tr><th>이름</th><th>필수</th><th>설명</th></tr></thead><tbody><tr><td><code>skuCode</code></td><td>예</td><td>같은 일반상품 안에서 단건 구매 옵션을 식별하는 코드입니다.</td></tr><tr><td><code>amount</code></td><td>예</td><td>주문 생성 시 가격 스냅샷으로 복사할 판매 금액입니다.</td></tr><tr><td><code>stockPolicy</code></td><td>아니오</td><td>무제한, 제한 수량, 외부 재고 연동 같은 재고 정책입니다.</td></tr><tr><td><code>purchaseLimit</code></td><td>아니오</td><td>회원별 또는 주문별 구매 제한 정책입니다.</td></tr></tbody></table>
+  
+  <h3>Response 201</h3><p>일반상품 SKU 생성 성공</p><pre><code>{
+  &quot;productId&quot;: &quot;prod_reports&quot;,
+  &quot;productType&quot;: &quot;one_time&quot;,
+  &quot;skuId&quot;: &quot;sku_report_pack_100&quot;,
+  &quot;status&quot;: &quot;active&quot;,
+  &quot;amount&quot;: 50000,
+  &quot;currency&quot;: &quot;KRW&quot;
+}</code></pre><h3>Response 400</h3><p>금액, 재고 정책, 구매 제한 정책이 유효하지 않은 요청</p><h3>Response 404</h3><p>존재하지 않는 상품</p><h3>Response 409</h3><p>구독상품에 일반 SKU를 추가하려 했거나 같은 skuCode가 이미 존재하는 요청</p>
+  <h3>처리 로직</h3>
+  <ol><li>관리자 인증과 product_manage 권한을 확인합니다.</li><li>productId가 존재하고 productType이 one_time인지 검증합니다.</li><li>skuCode 중복, amount 양수, currency, 재고 정책을 검증합니다.</li><li>일반상품 SKU를 생성하고 주문 생성 API가 참조할 판매 가능 상태로 저장합니다.</li><li>일반상품 SKU는 주문 생성 시점에 가격 스냅샷으로 고정합니다.</li><li>SKU 생성 이력을 감사 로그에 남기고 판매 중인 SKU만 결제 주문 생성에서 선택할 수 있게 합니다.</li></ol>
+  <div class="note">일반상품 가격 수정은 미결제 checkout의 서버 재계산에는 반영될 수 있지만, 이미 승인 요청 중인 payment의 amount는 바꾸지 않습니다.</div><div class="note">재고 차감은 주문 생성 또는 결제 승인 시점 중 하나로 정책을 고정하고 중복 차감을 방지해야 합니다.</div>
 </section></div></main>
 </body>
 </html>

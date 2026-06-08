@@ -1,0 +1,41 @@
+diagram: {
+  shape: sequence_diagram
+  label: "결제창 실패 결과 미보고 및 만료"
+
+  client: "웹 클라이언트"
+  client.style.fill: "#e8f3ff"
+  client.style.stroke: "#2457a6"
+  server: "우리 서버"
+  server.style.fill: "#eaf8f3"
+  server.style.stroke: "#1c7c66"
+  toss: "토스페이먼츠 서버"
+  toss.style.fill: "#f1edff"
+  toss.style.stroke: "#7b4bc4"
+
+  toss -> client: |md
+프론트 실패 페이지로 리다이렉트
+
+failUrl?code=...&message=...&orderId=...
+
+paymentKey 없음
+| {
+    style.stroke: "#2457a6"
+    style.font-color: "#334155"
+    style.font-size: 18
+    style.italic: false
+  }
+  server.note_2: "실패 결과 기록 API 미도달\nPOST /payments/{paymentId}/auth-result 누락\n네트워크 오류, 탭 닫기, 앱 종료 등"
+  server.note_3: "만료 정책 실행\nready timeout\nN분 이상 ready이면 expired 처리"
+  client -> server: |md
+결제 상태 조회
+
+**GET /payments/{paymentId}**
+
+status=expired, failure.reason=auth_result_not_reported
+| {
+    style.stroke: "#1c7c66"
+    style.font-color: "#334155"
+    style.font-size: 18
+    style.italic: false
+  }
+}
