@@ -270,6 +270,10 @@
       font-weight: 800;
     }
     @media (max-width: 900px) {
+      header {
+        width: 100%;
+        overflow: hidden;
+      }
       .layout { grid-template-columns: 1fr; }
       nav {
         position: sticky;
@@ -299,13 +303,26 @@
         white-space: normal;
       }
       .grid { grid-template-columns: 1fr; }
-      .wrap { width: min(100% - 16px, 1180px); }
-      .hero { padding: 34px 0 24px; }
+      .wrap {
+        width: calc(100% - 16px);
+        max-width: 1180px;
+      }
+      .hero {
+        width: calc(100% - 16px);
+        padding: 34px 0 24px;
+      }
       h1 { font-size: clamp(28px, 8vw, 38px); }
       .lead { font-size: 16px; }
-      .search-panel { margin-top: 18px; }
+      .search-panel {
+        width: 100%;
+        max-width: none;
+        margin-top: 18px;
+      }
       .search-panel input { min-height: 46px; }
-      .top-links { gap: 8px; }
+      .top-links {
+        width: 100%;
+        gap: 8px;
+      }
       .top-links a {
         min-height: 44px;
         flex: 1 1 220px;
@@ -333,7 +350,8 @@
         margin-inline: -2px;
         -webkit-overflow-scrolling: touch;
       }
-      table { min-width: 720px; font-size: 13px; }
+      table { min-width: 560px; font-size: 13px; }
+      table.has-many-columns { min-width: 720px; }
       th, td { padding: 10px 11px; }
       pre {
         font-size: 12px;
@@ -362,8 +380,11 @@
     }
     @media (max-width: 520px) {
       body { line-height: 1.54; }
-      .wrap { width: min(100% - 12px, 1180px); }
-      .hero { padding: 28px 0 20px; }
+      .wrap { width: calc(100% - 12px); }
+      .hero {
+        width: calc(100% - 12px);
+        padding: 28px 0 20px;
+      }
       .eyebrow { font-size: 13px; }
       h1 { font-size: clamp(26px, 9vw, 34px); }
       h2 { font-size: 21px; }
@@ -377,7 +398,8 @@
         padding-inline: 8px;
       }
       nav a { max-width: 78vw; }
-      table { min-width: 680px; }
+      table { min-width: 540px; }
+      table.has-many-columns { min-width: 680px; }
       .d2-svg { width: 820px; }
     }
     @media (prefers-reduced-motion: reduce) {
@@ -572,7 +594,7 @@ active -&gt; suspended이면 신규 주문 생성 차단
 </section>
   <section id="states">
   <h2>상태 요약</h2>
-  <div class="table-scroll"><table><thead><tr><th>시점</th><th>구독 상태</th><th>결제 상태</th><th>설명</th></tr></thead><tbody><tr><td>초안 구독상품 생성</td><td><code>draft product</code></td><td><code>-</code></td><td>공통 Product가 생성되지만 플랜이 없으면 공개 /plans에는 노출하지 않습니다.</td></tr><tr><td>구독 플랜 활성화</td><td><code>active plan</code></td><td><code>recurring ready</code></td><td>신규 구독과 플랜 변경 플로우가 같은 productCode 안의 활성 플랜만 선택할 수 있습니다.</td></tr><tr><td>초안 일반상품 생성</td><td><code>-</code></td><td><code>draft product</code></td><td>공통 Product가 생성되지만 SKU가 없으면 일반결제 주문 생성에서 선택할 수 없습니다.</td></tr><tr><td>SKU 활성화</td><td><code>-</code></td><td><code>one_time purchasable</code></td><td>일반결제 주문 생성 API는 활성 SKU만 조회하고 서버 가격으로 amount를 다시 계산합니다.</td></tr></tbody></table></div>
+  <div class="table-scroll"><table class="has-many-columns"><thead><tr><th>시점</th><th>구독 상태</th><th>결제 상태</th><th>설명</th></tr></thead><tbody><tr><td>초안 구독상품 생성</td><td><code>draft product</code></td><td><code>-</code></td><td>공통 Product가 생성되지만 플랜이 없으면 공개 /plans에는 노출하지 않습니다.</td></tr><tr><td>구독 플랜 활성화</td><td><code>active plan</code></td><td><code>recurring ready</code></td><td>신규 구독과 플랜 변경 플로우가 같은 productCode 안의 활성 플랜만 선택할 수 있습니다.</td></tr><tr><td>초안 일반상품 생성</td><td><code>-</code></td><td><code>draft product</code></td><td>공통 Product가 생성되지만 SKU가 없으면 일반결제 주문 생성에서 선택할 수 없습니다.</td></tr><tr><td>SKU 활성화</td><td><code>-</code></td><td><code>one_time purchasable</code></td><td>일반결제 주문 생성 API는 활성 SKU만 조회하고 서버 가격으로 amount를 다시 계산합니다.</td></tr></tbody></table></div>
 </section>
 </main>
 <script>

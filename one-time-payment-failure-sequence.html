@@ -270,6 +270,10 @@
       font-weight: 800;
     }
     @media (max-width: 900px) {
+      header {
+        width: 100%;
+        overflow: hidden;
+      }
       .layout { grid-template-columns: 1fr; }
       nav {
         position: sticky;
@@ -299,13 +303,26 @@
         white-space: normal;
       }
       .grid { grid-template-columns: 1fr; }
-      .wrap { width: min(100% - 16px, 1180px); }
-      .hero { padding: 34px 0 24px; }
+      .wrap {
+        width: calc(100% - 16px);
+        max-width: 1180px;
+      }
+      .hero {
+        width: calc(100% - 16px);
+        padding: 34px 0 24px;
+      }
       h1 { font-size: clamp(28px, 8vw, 38px); }
       .lead { font-size: 16px; }
-      .search-panel { margin-top: 18px; }
+      .search-panel {
+        width: 100%;
+        max-width: none;
+        margin-top: 18px;
+      }
       .search-panel input { min-height: 46px; }
-      .top-links { gap: 8px; }
+      .top-links {
+        width: 100%;
+        gap: 8px;
+      }
       .top-links a {
         min-height: 44px;
         flex: 1 1 220px;
@@ -333,7 +350,8 @@
         margin-inline: -2px;
         -webkit-overflow-scrolling: touch;
       }
-      table { min-width: 720px; font-size: 13px; }
+      table { min-width: 560px; font-size: 13px; }
+      table.has-many-columns { min-width: 720px; }
       th, td { padding: 10px 11px; }
       pre {
         font-size: 12px;
@@ -362,8 +380,11 @@
     }
     @media (max-width: 520px) {
       body { line-height: 1.54; }
-      .wrap { width: min(100% - 12px, 1180px); }
-      .hero { padding: 28px 0 20px; }
+      .wrap { width: calc(100% - 12px); }
+      .hero {
+        width: calc(100% - 12px);
+        padding: 28px 0 20px;
+      }
       .eyebrow { font-size: 13px; }
       h1 { font-size: clamp(26px, 9vw, 34px); }
       h2 { font-size: 21px; }
@@ -377,7 +398,8 @@
         padding-inline: 8px;
       }
       nav a { max-width: 78vw; }
-      table { min-width: 680px; }
+      table { min-width: 540px; }
+      table.has-many-columns { min-width: 680px; }
       .d2-svg { width: 820px; }
     }
     @media (prefers-reduced-motion: reduce) {
@@ -861,7 +883,7 @@ pay_002, ord_002, paymentKey
 </section>
   <section id="states">
   <h2>상태 요약</h2>
-  <div class="table-scroll"><table><thead><tr><th>시점</th><th>구독 상태</th><th>결제 상태</th><th>설명</th></tr></thead><tbody><tr><td>주문 생성 실패</td><td><code>-</code></td><td><code>not_created</code></td><td>결제 시도를 만들지 않거나 실패 로그만 남깁니다.</td></tr><tr><td>사용자 취소 직후</td><td><code>-</code></td><td><code>failed</code></td><td>돈은 결제되지 않았고 failure.reason=user_canceled인 실패 시도로 기록됩니다.</td></tr><tr><td>재시도 가능 상태</td><td><code>-</code></td><td><code>retry_available</code></td><td>같은 checkoutId 아래 새 결제 시도를 만들 수 있습니다.</td></tr><tr><td>인증 실패 후</td><td><code>-</code></td><td><code>failed</code></td><td>토스 승인이 발생하지 않았고 failure.reason=auth_failed인 실패 시도로 기록됩니다.</td></tr><tr><td>승인 전 검증 실패</td><td><code>-</code></td><td><code>failed</code></td><td>금액 변조나 중복 승인 가능성을 차단하고 failure.phase=confirm, failure.reason=validation_failed를 남깁니다.</td></tr><tr><td>실패 결과 미보고</td><td><code>-</code></td><td><code>ready</code></td><td>서버는 실패 원인을 확정하지 못하므로 결제 시도를 즉시 failed로 바꾸지 않습니다.</td></tr><tr><td>만료 정책 실행 후</td><td><code>-</code></td><td><code>expired</code></td><td>승인되지 않은 ready 결제 시도를 expired로 정리하고 필요하면 failure.reason=auth_result_not_reported를 남깁니다.</td></tr><tr><td>토스 승인 실패 후</td><td><code>-</code></td><td><code>failed</code></td><td>실패 코드, 실패 메시지, 재시도 가능 여부를 현재 결제 시도에 저장합니다.</td></tr><tr><td>실패 웹훅 보정 후</td><td><code>-</code></td><td><code>failed</code></td><td>늦게 도착한 이벤트가 있어도 같은 paymentKey 기준으로 멱등하게 유지합니다.</td></tr><tr><td>이전 시도 실패 후</td><td><code>-</code></td><td><code>retry_available</code></td><td>같은 구매 의도 아래 새 결제 시도를 만들 수 있습니다.</td></tr><tr><td>새 시도 생성 후</td><td><code>-</code></td><td><code>ready</code></td><td>새 paymentId와 orderId로 토스 결제창을 다시 호출합니다.</td></tr><tr><td>재시도 성공 후</td><td><code>-</code></td><td><code>paid</code></td><td>checkoutId 기준 최종 구매가 완료되고 모든 시도 이력이 보존됩니다.</td></tr></tbody></table></div>
+  <div class="table-scroll"><table class="has-many-columns"><thead><tr><th>시점</th><th>구독 상태</th><th>결제 상태</th><th>설명</th></tr></thead><tbody><tr><td>주문 생성 실패</td><td><code>-</code></td><td><code>not_created</code></td><td>결제 시도를 만들지 않거나 실패 로그만 남깁니다.</td></tr><tr><td>사용자 취소 직후</td><td><code>-</code></td><td><code>failed</code></td><td>돈은 결제되지 않았고 failure.reason=user_canceled인 실패 시도로 기록됩니다.</td></tr><tr><td>재시도 가능 상태</td><td><code>-</code></td><td><code>retry_available</code></td><td>같은 checkoutId 아래 새 결제 시도를 만들 수 있습니다.</td></tr><tr><td>인증 실패 후</td><td><code>-</code></td><td><code>failed</code></td><td>토스 승인이 발생하지 않았고 failure.reason=auth_failed인 실패 시도로 기록됩니다.</td></tr><tr><td>승인 전 검증 실패</td><td><code>-</code></td><td><code>failed</code></td><td>금액 변조나 중복 승인 가능성을 차단하고 failure.phase=confirm, failure.reason=validation_failed를 남깁니다.</td></tr><tr><td>실패 결과 미보고</td><td><code>-</code></td><td><code>ready</code></td><td>서버는 실패 원인을 확정하지 못하므로 결제 시도를 즉시 failed로 바꾸지 않습니다.</td></tr><tr><td>만료 정책 실행 후</td><td><code>-</code></td><td><code>expired</code></td><td>승인되지 않은 ready 결제 시도를 expired로 정리하고 필요하면 failure.reason=auth_result_not_reported를 남깁니다.</td></tr><tr><td>토스 승인 실패 후</td><td><code>-</code></td><td><code>failed</code></td><td>실패 코드, 실패 메시지, 재시도 가능 여부를 현재 결제 시도에 저장합니다.</td></tr><tr><td>실패 웹훅 보정 후</td><td><code>-</code></td><td><code>failed</code></td><td>늦게 도착한 이벤트가 있어도 같은 paymentKey 기준으로 멱등하게 유지합니다.</td></tr><tr><td>이전 시도 실패 후</td><td><code>-</code></td><td><code>retry_available</code></td><td>같은 구매 의도 아래 새 결제 시도를 만들 수 있습니다.</td></tr><tr><td>새 시도 생성 후</td><td><code>-</code></td><td><code>ready</code></td><td>새 paymentId와 orderId로 토스 결제창을 다시 호출합니다.</td></tr><tr><td>재시도 성공 후</td><td><code>-</code></td><td><code>paid</code></td><td>checkoutId 기준 최종 구매가 완료되고 모든 시도 이력이 보존됩니다.</td></tr></tbody></table></div>
 </section>
 </main>
 <script>

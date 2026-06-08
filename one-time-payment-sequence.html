@@ -270,6 +270,10 @@
       font-weight: 800;
     }
     @media (max-width: 900px) {
+      header {
+        width: 100%;
+        overflow: hidden;
+      }
       .layout { grid-template-columns: 1fr; }
       nav {
         position: sticky;
@@ -299,13 +303,26 @@
         white-space: normal;
       }
       .grid { grid-template-columns: 1fr; }
-      .wrap { width: min(100% - 16px, 1180px); }
-      .hero { padding: 34px 0 24px; }
+      .wrap {
+        width: calc(100% - 16px);
+        max-width: 1180px;
+      }
+      .hero {
+        width: calc(100% - 16px);
+        padding: 34px 0 24px;
+      }
       h1 { font-size: clamp(28px, 8vw, 38px); }
       .lead { font-size: 16px; }
-      .search-panel { margin-top: 18px; }
+      .search-panel {
+        width: 100%;
+        max-width: none;
+        margin-top: 18px;
+      }
       .search-panel input { min-height: 46px; }
-      .top-links { gap: 8px; }
+      .top-links {
+        width: 100%;
+        gap: 8px;
+      }
       .top-links a {
         min-height: 44px;
         flex: 1 1 220px;
@@ -333,7 +350,8 @@
         margin-inline: -2px;
         -webkit-overflow-scrolling: touch;
       }
-      table { min-width: 720px; font-size: 13px; }
+      table { min-width: 560px; font-size: 13px; }
+      table.has-many-columns { min-width: 720px; }
       th, td { padding: 10px 11px; }
       pre {
         font-size: 12px;
@@ -362,8 +380,11 @@
     }
     @media (max-width: 520px) {
       body { line-height: 1.54; }
-      .wrap { width: min(100% - 12px, 1180px); }
-      .hero { padding: 28px 0 20px; }
+      .wrap { width: calc(100% - 12px); }
+      .hero {
+        width: calc(100% - 12px);
+        padding: 28px 0 20px;
+      }
       .eyebrow { font-size: 13px; }
       h1 { font-size: clamp(26px, 9vw, 34px); }
       h2 { font-size: 21px; }
@@ -377,7 +398,8 @@
         padding-inline: 8px;
       }
       nav a { max-width: 78vw; }
-      table { min-width: 680px; }
+      table { min-width: 540px; }
+      table.has-many-columns { min-width: 680px; }
       .d2-svg { width: 820px; }
     }
     @media (prefers-reduced-motion: reduce) {
@@ -558,7 +580,7 @@ checkoutId, paymentId, status=paid, receiptUrl
 </section>
   <section id="states">
   <h2>상태 요약</h2>
-  <div class="table-scroll"><table><thead><tr><th>시점</th><th>구독 상태</th><th>결제 상태</th><th>설명</th></tr></thead><tbody><tr><td>구매 의도 생성 후</td><td><code>-</code></td><td><code>checkout_open</code></td><td>checkoutId가 생성되고 첫 결제 시도를 만들 수 있습니다.</td></tr><tr><td>결제 시도 생성 후</td><td><code>-</code></td><td><code>ready</code></td><td>paymentId와 orderId가 생성되어 토스 결제창 인증을 시작할 수 있습니다.</td></tr><tr><td>토스 인증 성공 후</td><td><code>-</code></td><td><code>authorized</code></td><td>paymentKey, orderId, amount가 프론트 성공 페이지로 돌아왔지만 서버 승인은 아직 완료되지 않았습니다.</td></tr><tr><td>결제 승인 성공 후</td><td><code>-</code></td><td><code>paid</code></td><td>현재 checkoutId의 최종 성공 결제 시도가 확정되고 이전 실패 시도들은 이력으로 남습니다.</td></tr></tbody></table></div>
+  <div class="table-scroll"><table class="has-many-columns"><thead><tr><th>시점</th><th>구독 상태</th><th>결제 상태</th><th>설명</th></tr></thead><tbody><tr><td>구매 의도 생성 후</td><td><code>-</code></td><td><code>checkout_open</code></td><td>checkoutId가 생성되고 첫 결제 시도를 만들 수 있습니다.</td></tr><tr><td>결제 시도 생성 후</td><td><code>-</code></td><td><code>ready</code></td><td>paymentId와 orderId가 생성되어 토스 결제창 인증을 시작할 수 있습니다.</td></tr><tr><td>토스 인증 성공 후</td><td><code>-</code></td><td><code>authorized</code></td><td>paymentKey, orderId, amount가 프론트 성공 페이지로 돌아왔지만 서버 승인은 아직 완료되지 않았습니다.</td></tr><tr><td>결제 승인 성공 후</td><td><code>-</code></td><td><code>paid</code></td><td>현재 checkoutId의 최종 성공 결제 시도가 확정되고 이전 실패 시도들은 이력으로 남습니다.</td></tr></tbody></table></div>
 </section>
 </main>
 <script>

@@ -270,6 +270,10 @@
       font-weight: 800;
     }
     @media (max-width: 900px) {
+      header {
+        width: 100%;
+        overflow: hidden;
+      }
       .layout { grid-template-columns: 1fr; }
       nav {
         position: sticky;
@@ -299,13 +303,26 @@
         white-space: normal;
       }
       .grid { grid-template-columns: 1fr; }
-      .wrap { width: min(100% - 16px, 1180px); }
-      .hero { padding: 34px 0 24px; }
+      .wrap {
+        width: calc(100% - 16px);
+        max-width: 1180px;
+      }
+      .hero {
+        width: calc(100% - 16px);
+        padding: 34px 0 24px;
+      }
       h1 { font-size: clamp(28px, 8vw, 38px); }
       .lead { font-size: 16px; }
-      .search-panel { margin-top: 18px; }
+      .search-panel {
+        width: 100%;
+        max-width: none;
+        margin-top: 18px;
+      }
       .search-panel input { min-height: 46px; }
-      .top-links { gap: 8px; }
+      .top-links {
+        width: 100%;
+        gap: 8px;
+      }
       .top-links a {
         min-height: 44px;
         flex: 1 1 220px;
@@ -333,7 +350,8 @@
         margin-inline: -2px;
         -webkit-overflow-scrolling: touch;
       }
-      table { min-width: 720px; font-size: 13px; }
+      table { min-width: 560px; font-size: 13px; }
+      table.has-many-columns { min-width: 720px; }
       th, td { padding: 10px 11px; }
       pre {
         font-size: 12px;
@@ -362,8 +380,11 @@
     }
     @media (max-width: 520px) {
       body { line-height: 1.54; }
-      .wrap { width: min(100% - 12px, 1180px); }
-      .hero { padding: 28px 0 20px; }
+      .wrap { width: calc(100% - 12px); }
+      .hero {
+        width: calc(100% - 12px);
+        padding: 28px 0 20px;
+      }
       .eyebrow { font-size: 13px; }
       h1 { font-size: clamp(26px, 9vw, 34px); }
       h2 { font-size: 21px; }
@@ -377,7 +398,8 @@
         padding-inline: 8px;
       }
       nav a { max-width: 78vw; }
-      table { min-width: 680px; }
+      table { min-width: 540px; }
+      table.has-many-columns { min-width: 680px; }
       .d2-svg { width: 820px; }
     }
     @media (prefers-reduced-motion: reduce) {
@@ -488,7 +510,7 @@ invoiceId, failureReason, canceledAt, resubscribeUrl 포함
 </section>
   <section id="states">
   <h2>상태 요약</h2>
-  <div class="table-scroll"><table><thead><tr><th>시점</th><th>구독 상태</th><th>결제 상태</th><th>설명</th></tr></thead><tbody><tr><td>최종 실패 전</td><td><code>past_due</code></td><td><code>final_failed</code></td><td>마지막 재시도가 실패했고 구독 종료 조건을 검증합니다.</td></tr><tr><td>구독 종료 후</td><td><code>canceled</code></td><td><code>final_failed</code></td><td>구독은 즉시 종료되고 다음 과금일은 제거됩니다.</td></tr><tr><td>재이용</td><td><code>new subscription required</code></td><td><code>-</code></td><td>다시 이용하려면 기존 구독 복구가 아니라 새 구독을 시작합니다.</td></tr></tbody></table></div>
+  <div class="table-scroll"><table class="has-many-columns"><thead><tr><th>시점</th><th>구독 상태</th><th>결제 상태</th><th>설명</th></tr></thead><tbody><tr><td>최종 실패 전</td><td><code>past_due</code></td><td><code>final_failed</code></td><td>마지막 재시도가 실패했고 구독 종료 조건을 검증합니다.</td></tr><tr><td>구독 종료 후</td><td><code>canceled</code></td><td><code>final_failed</code></td><td>구독은 즉시 종료되고 다음 과금일은 제거됩니다.</td></tr><tr><td>재이용</td><td><code>new subscription required</code></td><td><code>-</code></td><td>다시 이용하려면 기존 구독 복구가 아니라 새 구독을 시작합니다.</td></tr></tbody></table></div>
 </section>
 </main>
 <script>

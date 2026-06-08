@@ -270,6 +270,10 @@
       font-weight: 800;
     }
     @media (max-width: 900px) {
+      header {
+        width: 100%;
+        overflow: hidden;
+      }
       .layout { grid-template-columns: 1fr; }
       nav {
         position: sticky;
@@ -299,13 +303,26 @@
         white-space: normal;
       }
       .grid { grid-template-columns: 1fr; }
-      .wrap { width: min(100% - 16px, 1180px); }
-      .hero { padding: 34px 0 24px; }
+      .wrap {
+        width: calc(100% - 16px);
+        max-width: 1180px;
+      }
+      .hero {
+        width: calc(100% - 16px);
+        padding: 34px 0 24px;
+      }
       h1 { font-size: clamp(28px, 8vw, 38px); }
       .lead { font-size: 16px; }
-      .search-panel { margin-top: 18px; }
+      .search-panel {
+        width: 100%;
+        max-width: none;
+        margin-top: 18px;
+      }
       .search-panel input { min-height: 46px; }
-      .top-links { gap: 8px; }
+      .top-links {
+        width: 100%;
+        gap: 8px;
+      }
       .top-links a {
         min-height: 44px;
         flex: 1 1 220px;
@@ -333,7 +350,8 @@
         margin-inline: -2px;
         -webkit-overflow-scrolling: touch;
       }
-      table { min-width: 720px; font-size: 13px; }
+      table { min-width: 560px; font-size: 13px; }
+      table.has-many-columns { min-width: 720px; }
       th, td { padding: 10px 11px; }
       pre {
         font-size: 12px;
@@ -362,8 +380,11 @@
     }
     @media (max-width: 520px) {
       body { line-height: 1.54; }
-      .wrap { width: min(100% - 12px, 1180px); }
-      .hero { padding: 28px 0 20px; }
+      .wrap { width: calc(100% - 12px); }
+      .hero {
+        width: calc(100% - 12px);
+        padding: 28px 0 20px;
+      }
       .eyebrow { font-size: 13px; }
       h1 { font-size: clamp(26px, 9vw, 34px); }
       h2 { font-size: 21px; }
@@ -377,7 +398,8 @@
         padding-inline: 8px;
       }
       nav a { max-width: 78vw; }
-      table { min-width: 680px; }
+      table { min-width: 540px; }
+      table.has-many-columns { min-width: 680px; }
       .d2-svg { width: 820px; }
     }
     @media (prefers-reduced-motion: reduce) {
@@ -1524,7 +1546,7 @@
   &quot;version&quot;: 2,
   &quot;effectiveFor&quot;: &quot;new_subscriptions_and_next_cycles&quot;
 }</code></pre><h3>Response 400</h3><p>변경 가능한 필드가 없거나 금액, 상태, 권한 정책이 유효하지 않은 요청</p><h3>Response 403</h3><p>상품 관리 권한이 없는 관리자 계정</p><h3>Response 404</h3><p>존재하지 않는 상품 또는 구독 플랜</p><h3>Response 409</h3><p>일반상품의 SKU를 구독 플랜 API로 수정하려 했거나 비활성화할 수 없는 기본 플랜</p>
-  <h3>실패 규칙</h3><div class="table-scroll"><table><thead><tr><th>코드</th><th>HTTP</th><th>재시도</th><th>설명</th><th>결과 상태</th></tr></thead><tbody><tr><td><code>PRODUCT_TYPE_MISMATCH</code></td><td>409</td><td>아니오</td><td>one_time 상품에 구독 플랜 수정 API를 호출한 경우입니다.</td><td>-</td></tr><tr><td><code>PLAN_IN_USE_PRICE_SNAPSHOT_LOCKED</code></td><td>409</td><td>아니오</td><td>이미 생성된 invoice 또는 결제 시도의 금액 스냅샷을 직접 변경하려 한 경우입니다.</td><td>-</td></tr></tbody></table></div>
+  <h3>실패 규칙</h3><div class="table-scroll"><table class="has-many-columns"><thead><tr><th>코드</th><th>HTTP</th><th>재시도</th><th>설명</th><th>결과 상태</th></tr></thead><tbody><tr><td><code>PRODUCT_TYPE_MISMATCH</code></td><td>409</td><td>아니오</td><td>one_time 상품에 구독 플랜 수정 API를 호출한 경우입니다.</td><td>-</td></tr><tr><td><code>PLAN_IN_USE_PRICE_SNAPSHOT_LOCKED</code></td><td>409</td><td>아니오</td><td>이미 생성된 invoice 또는 결제 시도의 금액 스냅샷을 직접 변경하려 한 경우입니다.</td><td>-</td></tr></tbody></table></div>
   <h3>처리 로직</h3>
   <ol><li>관리자 인증과 product_manage 권한을 확인합니다.</li><li>productId와 planId가 존재하고 product.productType == subscription인지 검증합니다.</li><li>amount, currency, status, entitlements를 검증하고 변경 가능한 필드만 반영합니다.</li><li>가격이나 권한 정책이 바뀌면 기존 invoice와 payment는 그대로 두고 신규 가입 또는 다음 정기결제 계산에서 참조할 planVersion을 갱신합니다.</li><li>suspended 또는 hidden 상태의 플랜은 공개 플랜 목록, 신규 구독 체크아웃, 플랜 변경 후보에서 제외합니다.</li><li>관리자 ID, 요청 IP, 변경 전후 값, changeReason을 감사 로그에 저장합니다.</li></ol>
   <div class="note">가격 변경은 과거 청구 금액을 덮어쓰지 않습니다. 운영 화면에서는 적용 범위를 신규 가입, 다음 주기, 신규 planVersion 중 하나로 명확히 표시해야 합니다.</div><div class="note">구독 플랜 변경 플로우는 현재 구독과 같은 productCode의 활성 플랜만 선택할 수 있습니다.</div>
@@ -1599,7 +1621,7 @@
   },
   &quot;effectiveFor&quot;: &quot;new_orders&quot;
 }</code></pre><h3>Response 400</h3><p>변경 가능한 필드가 없거나 금액, 재고 정책, 구매 제한 정책이 유효하지 않은 요청</p><h3>Response 403</h3><p>상품 관리 권한이 없는 관리자 계정</p><h3>Response 404</h3><p>존재하지 않는 상품 또는 SKU</p><h3>Response 409</h3><p>구독상품의 플랜을 SKU API로 수정하려 했거나 진행 중인 결제 금액을 직접 변경하려 한 요청</p>
-  <h3>실패 규칙</h3><div class="table-scroll"><table><thead><tr><th>코드</th><th>HTTP</th><th>재시도</th><th>설명</th><th>결과 상태</th></tr></thead><tbody><tr><td><code>PRODUCT_TYPE_MISMATCH</code></td><td>409</td><td>아니오</td><td>subscription 상품에 일반상품 SKU 수정 API를 호출한 경우입니다.</td><td>-</td></tr><tr><td><code>PAYMENT_AMOUNT_SNAPSHOT_LOCKED</code></td><td>409</td><td>아니오</td><td>이미 생성된 결제 시도 금액을 SKU 수정으로 바꾸려 한 경우입니다.</td><td>-</td></tr><tr><td><code>STOCK_POLICY_CONFLICT</code></td><td>409</td><td>아니오</td><td>새 재고 정책이 이미 판매되었거나 예약된 수량보다 작은 재고를 만들 때 발생합니다.</td><td>-</td></tr></tbody></table></div>
+  <h3>실패 규칙</h3><div class="table-scroll"><table class="has-many-columns"><thead><tr><th>코드</th><th>HTTP</th><th>재시도</th><th>설명</th><th>결과 상태</th></tr></thead><tbody><tr><td><code>PRODUCT_TYPE_MISMATCH</code></td><td>409</td><td>아니오</td><td>subscription 상품에 일반상품 SKU 수정 API를 호출한 경우입니다.</td><td>-</td></tr><tr><td><code>PAYMENT_AMOUNT_SNAPSHOT_LOCKED</code></td><td>409</td><td>아니오</td><td>이미 생성된 결제 시도 금액을 SKU 수정으로 바꾸려 한 경우입니다.</td><td>-</td></tr><tr><td><code>STOCK_POLICY_CONFLICT</code></td><td>409</td><td>아니오</td><td>새 재고 정책이 이미 판매되었거나 예약된 수량보다 작은 재고를 만들 때 발생합니다.</td><td>-</td></tr></tbody></table></div>
   <h3>처리 로직</h3>
   <ol><li>관리자 인증과 product_manage 권한을 확인합니다.</li><li>productId와 skuId가 존재하고 product.productType == one_time인지 검증합니다.</li><li>amount, currency, status, stockPolicy, purchaseLimit를 검증하고 변경 가능한 필드만 반영합니다.</li><li>SKU 가격 변경은 이후 새 주문 생성의 서버 재계산에만 적용하고, 이미 생성된 order, checkout, payment의 amount는 변경하지 않습니다.</li><li>suspended 또는 hidden 상태의 SKU는 일반결제 주문 생성 후보에서 제외합니다.</li><li>재고 정책 변경 시 이미 결제 완료된 주문 수량과 예약 수량을 기준으로 음수 재고가 발생하지 않는지 확인합니다.</li><li>관리자 ID, 요청 IP, 변경 전후 값, changeReason을 감사 로그에 저장합니다.</li></ol>
   <div class="note">일반상품 SKU는 주문 생성 시점에 가격 스냅샷으로 고정합니다. 따라서 가격 수정 후에도 기존 결제 시도의 Toss 승인 amount와 내부 payment amount는 동일해야 합니다.</div><div class="note">판매 중지된 SKU라도 기존 결제 내역, 환불, 영수증 조회를 위해 SKU 기록은 보존합니다.</div>
@@ -1625,7 +1647,7 @@
   &quot;status&quot;: &quot;active&quot;,
   &quot;effectiveAt&quot;: &quot;2026-06-08T10:00:00+09:00&quot;
 }</code></pre><h3>Response 400</h3><p>상태 값, 전환 사유, 적용 시각이 유효하지 않은 요청</p><h3>Response 403</h3><p>상품 관리 권한이 없는 관리자 계정</p><h3>Response 404</h3><p>존재하지 않는 상품</p><h3>Response 409</h3><p>필수 플랜 또는 SKU가 없거나 현재 상태에서 허용되지 않는 전환</p>
-  <h3>실패 규칙</h3><div class="table-scroll"><table><thead><tr><th>코드</th><th>HTTP</th><th>재시도</th><th>설명</th><th>결과 상태</th></tr></thead><tbody><tr><td><code>INVALID_STATUS_TRANSITION</code></td><td>409</td><td>아니오</td><td>archived 상품을 active로 되돌리는 등 허용되지 않는 상태 전환입니다.</td><td>-</td></tr><tr><td><code>MISSING_ACTIVE_SELLING_UNIT</code></td><td>409</td><td>아니오</td><td>구독상품에 활성 플랜이 없거나 일반상품에 활성 SKU가 없어 active로 전환할 수 없는 경우입니다.</td><td>-</td></tr></tbody></table></div>
+  <h3>실패 규칙</h3><div class="table-scroll"><table class="has-many-columns"><thead><tr><th>코드</th><th>HTTP</th><th>재시도</th><th>설명</th><th>결과 상태</th></tr></thead><tbody><tr><td><code>INVALID_STATUS_TRANSITION</code></td><td>409</td><td>아니오</td><td>archived 상품을 active로 되돌리는 등 허용되지 않는 상태 전환입니다.</td><td>-</td></tr><tr><td><code>MISSING_ACTIVE_SELLING_UNIT</code></td><td>409</td><td>아니오</td><td>구독상품에 활성 플랜이 없거나 일반상품에 활성 SKU가 없어 active로 전환할 수 없는 경우입니다.</td><td>-</td></tr></tbody></table></div>
   <h3>처리 로직</h3>
   <ol><li>관리자 인증과 product_manage 권한을 확인합니다.</li><li>productId가 존재하는지 확인하고 현재 status에서 목표 status로 전환 가능한지 검증합니다.</li><li>active 전환 시 subscription 상품은 active 플랜이 1개 이상, one_time 상품은 active SKU가 1개 이상 있는지 확인합니다.</li><li>suspended 전환 시 신규 구독 체크아웃과 일반결제 주문 생성을 차단하지만 기존 활성 구독의 다음 결제 정책은 별도 운영 정책에 따릅니다.</li><li>archived 전환은 신규 판매와 공개 목록 노출을 차단하고, 기존 결제 내역, 환불, 인보이스 조회를 위해 Product 기록은 보존합니다.</li><li>상태 변경 이벤트를 저장하고 공개 상품 목록, 플랜 목록, 주문 생성 캐시를 무효화합니다.</li><li>관리자 ID, 요청 IP, previousStatus, status, reason을 감사 로그에 저장합니다.</li></ol>
   <div class="note">Product 상태는 상위 판매 가능 상태이고, 실제 결제 금액과 권한은 subscriptionPlans 또는 oneTimeSkus가 보유합니다.</div><div class="note">suspended와 archived는 신규 판매를 막지만 기존 결제 내역과 환불 플로우가 참조할 수 있도록 Product와 하위 판매 단위 기록을 보존합니다.</div><div class="note">구독상품 판매 중지는 신규 가입을 차단하는 의미이며, 기존 활성 구독의 유지, 해지, 다음 결제 차단 여부는 별도 운영 정책으로 결정합니다.</div>

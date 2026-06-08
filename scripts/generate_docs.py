@@ -462,6 +462,10 @@ def page(title, body, extra_head=""):
       font-weight: 800;
     }}
     @media (max-width: 900px) {{
+      header {{
+        width: 100%;
+        overflow: hidden;
+      }}
       .layout {{ grid-template-columns: 1fr; }}
       nav {{
         position: sticky;
@@ -491,13 +495,26 @@ def page(title, body, extra_head=""):
         white-space: normal;
       }}
       .grid {{ grid-template-columns: 1fr; }}
-      .wrap {{ width: min(100% - 16px, 1180px); }}
-      .hero {{ padding: 34px 0 24px; }}
+      .wrap {{
+        width: calc(100% - 16px);
+        max-width: 1180px;
+      }}
+      .hero {{
+        width: calc(100% - 16px);
+        padding: 34px 0 24px;
+      }}
       h1 {{ font-size: clamp(28px, 8vw, 38px); }}
       .lead {{ font-size: 16px; }}
-      .search-panel {{ margin-top: 18px; }}
+      .search-panel {{
+        width: 100%;
+        max-width: none;
+        margin-top: 18px;
+      }}
       .search-panel input {{ min-height: 46px; }}
-      .top-links {{ gap: 8px; }}
+      .top-links {{
+        width: 100%;
+        gap: 8px;
+      }}
       .top-links a {{
         min-height: 44px;
         flex: 1 1 220px;
@@ -525,7 +542,8 @@ def page(title, body, extra_head=""):
         margin-inline: -2px;
         -webkit-overflow-scrolling: touch;
       }}
-      table {{ min-width: 720px; font-size: 13px; }}
+      table {{ min-width: 560px; font-size: 13px; }}
+      table.has-many-columns {{ min-width: 720px; }}
       th, td {{ padding: 10px 11px; }}
       pre {{
         font-size: 12px;
@@ -554,8 +572,11 @@ def page(title, body, extra_head=""):
     }}
     @media (max-width: 520px) {{
       body {{ line-height: 1.54; }}
-      .wrap {{ width: min(100% - 12px, 1180px); }}
-      .hero {{ padding: 28px 0 20px; }}
+      .wrap {{ width: calc(100% - 12px); }}
+      .hero {{
+        width: calc(100% - 12px);
+        padding: 28px 0 20px;
+      }}
       .eyebrow {{ font-size: 13px; }}
       h1 {{ font-size: clamp(26px, 9vw, 34px); }}
       h2 {{ font-size: 21px; }}
@@ -569,7 +590,8 @@ def page(title, body, extra_head=""):
         padding-inline: 8px;
       }}
       nav a {{ max-width: 78vw; }}
-      table {{ min-width: 680px; }}
+      table {{ min-width: 540px; }}
+      table.has-many-columns {{ min-width: 680px; }}
       .d2-svg {{ width: 820px; }}
     }}
     @media (prefers-reduced-motion: reduce) {{
@@ -629,8 +651,9 @@ def nav(items):
     return "<nav aria-label=\"문서 목차\">" + "".join(f"<a href=\"#{e(anchor)}\">{e(label)}</a>" for anchor, label in items) + "</nav>"
 
 
-def table(html_table):
-    return f"<div class=\"table-scroll\">{html_table}</div>"
+def table(html_table, columns=3):
+    class_name = " class=\"has-many-columns\"" if columns >= 4 else ""
+    return f"<div class=\"table-scroll\">{html_table.replace('<table>', f'<table{class_name}>', 1)}</div>"
 
 
 def api_maps(data):
@@ -766,7 +789,8 @@ def render_failure_rules(rules):
         "<h3>실패 규칙</h3>"
         + table(
             "<table><thead><tr><th>코드</th><th>HTTP</th><th>재시도</th><th>설명</th><th>결과 상태</th></tr></thead>"
-            f"<tbody>{rows}</tbody></table>"
+            f"<tbody>{rows}</tbody></table>",
+            columns=5
         )
     )
 
@@ -911,7 +935,7 @@ def render_database_doc(data):
         fields_table = table(f"""<table>
     <thead><tr><th>필드</th><th>타입</th><th>필수</th><th>설명</th><th>상세</th></tr></thead>
     <tbody>{''.join(field_rows)}</tbody>
-  </table>""")
+  </table>""", columns=5)
         sections.append(f"""<section id="{e(collection['id'])}">
   <h2>{e(collection['title'])} <code>{e(collection['name'])}</code></h2>
   <p>{e(collection['description'])}</p>
@@ -933,7 +957,7 @@ def render_database_doc(data):
         )
         sections.append(f"""<section id="relationships">
   <h2>문서 관계</h2>
-  {table(f"<table><thead><tr><th>From</th><th>To</th><th>유형</th><th>설명</th></tr></thead><tbody>{rows}</tbody></table>")}
+  {table(f"<table><thead><tr><th>From</th><th>To</th><th>유형</th><th>설명</th></tr></thead><tbody>{rows}</tbody></table>", columns=4)}
 </section>""")
 
     if database.get("apiAccess"):
@@ -948,7 +972,7 @@ def render_database_doc(data):
         )
         sections.append(f"""<section id="api-access">
   <h2>API별 읽기/쓰기</h2>
-  {table(f"<table><thead><tr><th>API</th><th>Read</th><th>Write</th><th>설명</th></tr></thead><tbody>{rows}</tbody></table>")}
+  {table(f"<table><thead><tr><th>API</th><th>Read</th><th>Write</th><th>설명</th></tr></thead><tbody>{rows}</tbody></table>", columns=4)}
 </section>""")
 
     if database.get("stateModels"):
@@ -1159,7 +1183,7 @@ def render_sequence_page(data, sequence, rendered_d2_ids=None):
     if state_summary:
         state_section = f"""<section id="states">
   <h2>상태 요약</h2>
-  {table(f"<table><thead><tr><th>시점</th><th>구독 상태</th><th>결제 상태</th><th>설명</th></tr></thead><tbody>{''.join(state_summary)}</tbody></table>")}
+  {table(f"<table><thead><tr><th>시점</th><th>구독 상태</th><th>결제 상태</th><th>설명</th></tr></thead><tbody>{''.join(state_summary)}</tbody></table>", columns=4)}
 </section>"""
 
     body = header(

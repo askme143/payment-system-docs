@@ -270,6 +270,10 @@
       font-weight: 800;
     }
     @media (max-width: 900px) {
+      header {
+        width: 100%;
+        overflow: hidden;
+      }
       .layout { grid-template-columns: 1fr; }
       nav {
         position: sticky;
@@ -299,13 +303,26 @@
         white-space: normal;
       }
       .grid { grid-template-columns: 1fr; }
-      .wrap { width: min(100% - 16px, 1180px); }
-      .hero { padding: 34px 0 24px; }
+      .wrap {
+        width: calc(100% - 16px);
+        max-width: 1180px;
+      }
+      .hero {
+        width: calc(100% - 16px);
+        padding: 34px 0 24px;
+      }
       h1 { font-size: clamp(28px, 8vw, 38px); }
       .lead { font-size: 16px; }
-      .search-panel { margin-top: 18px; }
+      .search-panel {
+        width: 100%;
+        max-width: none;
+        margin-top: 18px;
+      }
       .search-panel input { min-height: 46px; }
-      .top-links { gap: 8px; }
+      .top-links {
+        width: 100%;
+        gap: 8px;
+      }
       .top-links a {
         min-height: 44px;
         flex: 1 1 220px;
@@ -333,7 +350,8 @@
         margin-inline: -2px;
         -webkit-overflow-scrolling: touch;
       }
-      table { min-width: 720px; font-size: 13px; }
+      table { min-width: 560px; font-size: 13px; }
+      table.has-many-columns { min-width: 720px; }
       th, td { padding: 10px 11px; }
       pre {
         font-size: 12px;
@@ -362,8 +380,11 @@
     }
     @media (max-width: 520px) {
       body { line-height: 1.54; }
-      .wrap { width: min(100% - 12px, 1180px); }
-      .hero { padding: 28px 0 20px; }
+      .wrap { width: calc(100% - 12px); }
+      .hero {
+        width: calc(100% - 12px);
+        padding: 28px 0 20px;
+      }
       .eyebrow { font-size: 13px; }
       h1 { font-size: clamp(26px, 9vw, 34px); }
       h2 { font-size: 21px; }
@@ -377,7 +398,8 @@
         padding-inline: 8px;
       }
       nav a { max-width: 78vw; }
-      table { min-width: 680px; }
+      table { min-width: 540px; }
+      table.has-many-columns { min-width: 680px; }
       .d2-svg { width: 820px; }
     }
     @media (prefers-reduced-motion: reduce) {
@@ -620,7 +642,7 @@ receiptUrl / retryAt / billingMethodUpdateUrl / canceled
 </section>
   <section id="states">
   <h2>상태 요약</h2>
-  <div class="table-scroll"><table><thead><tr><th>시점</th><th>구독 상태</th><th>결제 상태</th><th>설명</th></tr></thead><tbody><tr><td>자동결제 실패 직후</td><td><code>past_due</code></td><td><code>failed</code></td><td>실패 인보이스와 결제 시도가 저장되고 재시도 가능 여부를 판단합니다.</td></tr><tr><td>재시도 예약 후</td><td><code>grace_period</code></td><td><code>retry_scheduled</code></td><td>서비스 이용은 정책상 유예할 수 있고 다음 재시도 시각이 예약됩니다.</td></tr><tr><td>실패 웹훅 보정 후</td><td><code>grace_period</code></td><td><code>failed</code></td><td>토스 이벤트가 늦게 도착해도 내부 실패 상태를 멱등하게 유지합니다.</td></tr><tr><td>재시도 시작 전</td><td><code>grace_period</code></td><td><code>failed</code></td><td>실패 회차가 재시도 가능 상태이며 중복 실행을 막기 위해 잠깁니다.</td></tr><tr><td>재시도 성공 후</td><td><code>active</code></td><td><code>paid</code></td><td>유예 상태가 해제되고 다음 정기 결제일이 정상 갱신됩니다.</td></tr><tr><td>최종 실패 후</td><td><code>suspended</code></td><td><code>final_failed</code></td><td>서비스 이용을 제한하고 회원에게 결제수단 변경 또는 재개를 안내합니다.</td></tr></tbody></table></div>
+  <div class="table-scroll"><table class="has-many-columns"><thead><tr><th>시점</th><th>구독 상태</th><th>결제 상태</th><th>설명</th></tr></thead><tbody><tr><td>자동결제 실패 직후</td><td><code>past_due</code></td><td><code>failed</code></td><td>실패 인보이스와 결제 시도가 저장되고 재시도 가능 여부를 판단합니다.</td></tr><tr><td>재시도 예약 후</td><td><code>grace_period</code></td><td><code>retry_scheduled</code></td><td>서비스 이용은 정책상 유예할 수 있고 다음 재시도 시각이 예약됩니다.</td></tr><tr><td>실패 웹훅 보정 후</td><td><code>grace_period</code></td><td><code>failed</code></td><td>토스 이벤트가 늦게 도착해도 내부 실패 상태를 멱등하게 유지합니다.</td></tr><tr><td>재시도 시작 전</td><td><code>grace_period</code></td><td><code>failed</code></td><td>실패 회차가 재시도 가능 상태이며 중복 실행을 막기 위해 잠깁니다.</td></tr><tr><td>재시도 성공 후</td><td><code>active</code></td><td><code>paid</code></td><td>유예 상태가 해제되고 다음 정기 결제일이 정상 갱신됩니다.</td></tr><tr><td>최종 실패 후</td><td><code>suspended</code></td><td><code>final_failed</code></td><td>서비스 이용을 제한하고 회원에게 결제수단 변경 또는 재개를 안내합니다.</td></tr></tbody></table></div>
 </section>
 </main>
 <script>
