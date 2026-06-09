@@ -145,7 +145,7 @@
         },
         "theme": {
           "type": "string",
-          "enum": ["client", "server", "toss", "danger", "neutral"]
+          "enum": ["client", "server", "toss", "scheduler", "admin", "danger", "neutral"]
         }
       }
     },
@@ -484,8 +484,21 @@
             "type": "string"
           }
         },
+        "name": {
+          "type": "string"
+        },
         "unique": {
           "type": "boolean"
+        },
+        "sparse": {
+          "type": "boolean"
+        },
+        "partialFilterExpression": {
+          "$ref": "#/$defs/jsonValue"
+        },
+        "expireAfterSeconds": {
+          "type": "integer",
+          "minimum": 0
         },
         "description": {
           "type": "string"

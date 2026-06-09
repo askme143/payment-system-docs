@@ -779,7 +779,7 @@ productId, productCode, oneTimeSkus=[]
 
 **POST /admin/products/{productId}/one-time-skus**
 
-skuCode, amount, stockPolicy, purchaseLimit
+skuCode, amount, stockPolicy=unlimited 기본값, limited일 때 totalStock
 | {
     style.stroke: &quot;#1c7c66&quot;
     style.font-color: &quot;#334155&quot;
@@ -787,7 +787,7 @@ skuCode, amount, stockPolicy, purchaseLimit
     style.italic: false
   }
   server.note_5: &quot;일반상품 전용 SKU 검증\nproduct.productType == one_time\n구독상품에는 oneTimeSkus를 만들 수 없음&quot;
-  server.note_6: &quot;SKU 가격과 재고 정책 저장\namount, currency, stockPolicy\n일반상품 SKU는 주문 생성 시점에 가격 스냅샷으로 고정합니다&quot;
+  server.note_6: &quot;SKU 가격과 재고 정책 저장\namount, currency, stockPolicy; limited =&gt; totalStock, reservedStock=0, soldStock=0\n일반상품 SKU는 주문 생성 시점에 가격 스냅샷을 고정하고, limited SKU만 재고를 예약합니다&quot;
   admin -&gt; server: |md
 SKU 가격, 재고, 판매 상태 수정
 

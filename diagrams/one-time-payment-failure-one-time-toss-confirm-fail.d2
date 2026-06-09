@@ -48,7 +48,7 @@ REJECT_CARD_COMPANY / NOT_FOUND_PAYMENT / INVALID_REQUEST
     style.font-size: 18
     style.italic: false
   }
-  server.note_4: "현재 결제 시도 실패 저장\npayment.status = failed\ncheckout은 재시도 가능 상태로 유지"
+  server.note_4: "현재 결제 시도 실패 저장\npayment.status = failed\nreservedStock을 해제하고 checkout은 재시도 가능 상태로 유지"
   server -> client: |md
 결제 실패 응답
 

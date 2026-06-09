@@ -686,7 +686,7 @@ items, successUrl, failUrl, optional checkoutId
     style.italic: false
   }
   server.note_2: &quot;구매 의도와 결제 시도 생성\ncheckoutId, paymentId, orderId, attemptNo\n첫 시도면 checkoutId를 만들고, 재시도면 같은 checkoutId 아래 새 paymentId/orderId를 발급&quot;
-  server.note_3: &quot;주문 가능 여부와 금액 검증\npayment.status=ready\n서버가 최종 amount, orderName, orderId를 계산하고 저장&quot;
+  server.note_3: &quot;주문 가능 여부와 금액 검증\npayment.status=ready, reservedStock += quantity\n서버가 최종 amount, orderName, orderId를 계산하고 limited SKU 재고를 예약&quot;
   server -&gt; client: |md
 토스 결제창 호출 데이터 반환
 
@@ -760,7 +760,7 @@ paymentKey, status=DONE, approvedAt
     style.font-size: 18
     style.italic: false
   }
-  server.note_11: &quot;승인 성공 분기\ncheckout paid, payment paid\n같은 checkoutId의 이전 failed/canceled 시도는 이력으로 유지&quot;
+  server.note_11: &quot;승인 성공 분기\ncheckout paid, payment paid, reservedStock -&gt; soldStock\n예약 재고를 판매 확정으로 전환하고 같은 checkoutId의 이전 failed/canceled 시도는 이력으로 유지&quot;
   server -&gt; client: |md
 결제 완료 결과 반환
 
@@ -804,7 +804,7 @@ checkoutId, paymentId, status=paid, receiptUrl
 </section>
   <section id="states">
   <h2>상태 요약</h2>
-  <div class="table-scroll"><table class="has-many-columns"><thead><tr><th>시점</th><th>구독 상태</th><th>결제 상태</th><th>설명</th></tr></thead><tbody><tr><td data-label="시점">구매 의도 생성 후</td><td data-label="구독 상태"><code>-</code></td><td data-label="결제 상태"><code>checkout_open</code></td><td data-label="설명">checkoutId가 생성되고 첫 결제 시도를 만들 수 있습니다.</td></tr><tr><td data-label="시점">결제 시도 생성 후</td><td data-label="구독 상태"><code>-</code></td><td data-label="결제 상태"><code>ready</code></td><td data-label="설명">paymentId와 orderId가 생성되어 토스 결제창 인증을 시작할 수 있습니다.</td></tr><tr><td data-label="시점">토스 인증 성공 후</td><td data-label="구독 상태"><code>-</code></td><td data-label="결제 상태"><code>authorized</code></td><td data-label="설명">paymentKey, orderId, amount가 프론트 성공 페이지로 돌아왔지만 서버 승인은 아직 완료되지 않았습니다.</td></tr><tr><td data-label="시점">결제 승인 성공 후</td><td data-label="구독 상태"><code>-</code></td><td data-label="결제 상태"><code>paid</code></td><td data-label="설명">현재 checkoutId의 최종 성공 결제 시도가 확정되고 이전 실패 시도들은 이력으로 남습니다.</td></tr></tbody></table></div>
+  <div class="table-scroll"><table class="has-many-columns"><thead><tr><th>시점</th><th>구독 상태</th><th>결제 상태</th><th>설명</th></tr></thead><tbody><tr><td data-label="시점">구매 의도 생성 후</td><td data-label="구독 상태"><code>-</code></td><td data-label="결제 상태"><code>checkout_open</code></td><td data-label="설명">checkoutId가 생성되고 첫 결제 시도를 만들 수 있습니다.</td></tr><tr><td data-label="시점">결제 시도 생성 후</td><td data-label="구독 상태"><code>-</code></td><td data-label="결제 상태"><code>ready</code></td><td data-label="설명">paymentId와 orderId가 생성되고 limited SKU 재고가 예약되어 토스 결제창 인증을 시작할 수 있습니다.</td></tr><tr><td data-label="시점">토스 인증 성공 후</td><td data-label="구독 상태"><code>-</code></td><td data-label="결제 상태"><code>authorized</code></td><td data-label="설명">paymentKey, orderId, amount가 프론트 성공 페이지로 돌아왔지만 서버 승인은 아직 완료되지 않았습니다.</td></tr><tr><td data-label="시점">결제 승인 성공 후</td><td data-label="구독 상태"><code>-</code></td><td data-label="결제 상태"><code>paid</code></td><td data-label="설명">현재 checkoutId의 최종 성공 결제 시도가 확정되고 예약 재고는 soldStock으로 이동하며 이전 실패 시도들은 이력으로 남습니다.</td></tr></tbody></table></div>
 </section>
 </main>
 <script>

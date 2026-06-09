@@ -8,6 +8,190 @@ from scripts.generate_docs import generate_docs, render_d2_diagram
 
 
 class GenerateDocsTest(unittest.TestCase):
+    def _collection_by_id(self, data, collection_id):
+        return next(collection for collection in data["database"]["collections"] if collection["id"] == collection_id)
+
+    def _index_by_name(self, collection, index_name):
+        return next(index for index in collection["indexes"] if index.get("name") == index_name)
+
+    def test_actor_theme_schema_covers_documented_themes(self):
+        data = json.loads(Path("docs-data/documentation.json").read_text(encoding="utf-8"))
+        schema = json.loads(Path("docs-data/schema/documentation.schema.json").read_text(encoding="utf-8"))
+
+        documented_themes = {actor["theme"] for actor in data["actors"] if "theme" in actor}
+        schema_themes = set(schema["$defs"]["actor"]["properties"]["theme"]["enum"])
+
+        self.assertTrue(documented_themes.issubset(schema_themes))
+
+    def test_schema_allows_mongodb_index_safety_metadata(self):
+        schema = json.loads(Path("docs-data/schema/documentation.schema.json").read_text(encoding="utf-8"))
+        index_properties = schema["$defs"]["dbIndex"]["properties"]
+
+        self.assertIn("name", index_properties)
+        self.assertIn("sparse", index_properties)
+        self.assertIn("partialFilterExpression", index_properties)
+        self.assertIn("expireAfterSeconds", index_properties)
+
+    def test_payment_safety_indexes_are_documented(self):
+        data = json.loads(Path("docs-data/documentation.json").read_text(encoding="utf-8"))
+        payments = self._collection_by_id(data, "payments")
+
+        payment_key = self._index_by_name(payments, "uniq_payments_payment_key_sparse")
+        self.assertEqual(payment_key["fields"], ["payment_key"])
+        self.assertTrue(payment_key["unique"])
+        self.assertTrue(payment_key["sparse"])
+        payment_key_field = next(field for field in payments["fields"] if field["name"] == "payment_key")
+        payment_key_contract = payment_key_field["description"] + " " + payment_key.get("description", "")
+        self.assertIn("생략", payment_key_contract)
+        self.assertIn("null", payment_key_contract)
+
+        paid_checkout = self._index_by_name(payments, "uniq_payments_paid_checkout")
+        self.assertEqual(paid_checkout["fields"], ["checkout_id"])
+        self.assertTrue(paid_checkout["unique"])
+        self.assertEqual(paid_checkout["partialFilterExpression"], {"checkout_id": {"$type": "string"}, "status": "paid"})
+
+        paid_billing_cycle = self._index_by_name(payments, "uniq_payments_subscription_billing_cycle_paid")
+        self.assertEqual(paid_billing_cycle["fields"], ["subscription_id", "billing_cycle_key"])
+        self.assertTrue(paid_billing_cycle["unique"])
+        self.assertEqual(
+            paid_billing_cycle["partialFilterExpression"],
+            {"subscription_id": {"$type": "objectId"}, "billing_cycle_key": {"$type": "string"}, "status": "paid"}
+        )
+
+    def test_subscription_and_billing_safety_indexes_are_documented(self):
+        data = json.loads(Path("docs-data/documentation.json").read_text(encoding="utf-8"))
+        subscriptions = self._collection_by_id(data, "subscriptions")
+        billing_methods = self._collection_by_id(data, "billing-methods")
+        invoices = self._collection_by_id(data, "invoices")
+
+        active_subscription = self._index_by_name(subscriptions, "uniq_subscriptions_user_product_service_holding")
+        self.assertEqual(active_subscription["fields"], ["user_id", "product_code"])
+        self.assertTrue(active_subscription["unique"])
+        self.assertEqual(active_subscription["partialFilterExpression"], {"status": {"$in": ["pending", "active", "past_due", "cancel_scheduled"]}})
+
+        default_method = self._index_by_name(billing_methods, "uniq_billing_methods_active_default")
+        self.assertEqual(default_method["fields"], ["user_id", "is_default"])
+        self.assertTrue(default_method["unique"])
+        self.assertEqual(default_method["partialFilterExpression"], {"is_default": True, "status": "active"})
+
+        billing_cycle = self._index_by_name(invoices, "uniq_invoices_subscription_billing_cycle")
+        self.assertEqual(billing_cycle["fields"], ["subscription_id", "billing_cycle_key"])
+        self.assertTrue(billing_cycle["unique"])
+        self.assertEqual(
+            billing_cycle["partialFilterExpression"],
+            {
+                "subscription_id": {"$type": "objectId"},
+                "billing_cycle_key": {"$type": "string"},
+                "status": {"$in": ["issued", "paid"]}
+            }
+        )
+
+    def test_operational_safety_collections_are_documented(self):
+        data = json.loads(Path("docs-data/documentation.json").read_text(encoding="utf-8"))
+        collection_ids = {collection["id"] for collection in data["database"]["collections"]}
+        self.assertTrue({"idempotency-keys", "operation-locks", "operator-audits"}.issubset(collection_ids))
+
+        idempotency = self._collection_by_id(data, "idempotency-keys")
+        idempotency_fields = {field["name"] for field in idempotency["fields"]}
+        idempotency_unique = self._index_by_name(idempotency, "uniq_idempotency_keys_scope_key")
+        idempotency_ttl = self._index_by_name(idempotency, "ttl_idempotency_keys_expires_at")
+        self.assertIn("request_hash", idempotency_fields)
+        self.assertEqual(idempotency_unique["fields"], ["scope", "key_hash"])
+        self.assertTrue(idempotency_unique["unique"])
+        self.assertEqual(idempotency_ttl["fields"], ["expires_at"])
+        self.assertEqual(idempotency_ttl["expireAfterSeconds"], 0)
+
+        locks = self._collection_by_id(data, "operation-locks")
+        lock_fields = {field["name"]: field for field in locks["fields"]}
+        lock_unique = self._index_by_name(locks, "uniq_operation_locks_lock_key")
+        lock_ttl = self._index_by_name(locks, "ttl_operation_locks_locked_until_at")
+        self.assertIn("fencing_token", lock_fields)
+        self.assertIn("fencing_counter_key", lock_fields)
+        self.assertEqual(lock_unique["fields"], ["lock_key"])
+        self.assertTrue(lock_unique["unique"])
+        self.assertEqual(lock_ttl["fields"], ["locked_until_at"])
+        self.assertEqual(lock_ttl["expireAfterSeconds"], 0)
+        lock_fencing_contract = " ".join(
+            [
+                locks["description"],
+                lock_fields["fencing_token"]["description"],
+                lock_fields["fencing_counter_key"]["description"]
+            ]
+        )
+        self.assertIn("단조", lock_fencing_contract)
+        self.assertIn("TTL", lock_fencing_contract)
+        self.assertIn("durable", lock_fencing_contract)
+
+        audits = self._collection_by_id(data, "operator-audits")
+        audit_fields = {field["name"] for field in audits["fields"]}
+        self.assertTrue({"operator_id", "action", "target_type", "target_id", "previous_state", "next_state", "result", "created_at"}.issubset(audit_fields))
+        self.assertTrue({"idempotency_scope", "idempotency_key_hash", "idempotency_request_hash"}.issubset(audit_fields))
+
+    def test_database_docs_render_partial_sparse_and_ttl_indexes(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            out_dir = Path(tmp)
+
+            generate_docs("docs-data/documentation.json", out_dir)
+
+            database = (out_dir / "database-doc.html").read_text(encoding="utf-8")
+
+            self.assertIn("uniq_payments_payment_key_sparse", database)
+            self.assertIn('data-label="Sparse">예</td>', database)
+            self.assertIn("partialFilterExpression", database)
+            self.assertIn("uniq_payments_paid_checkout", database)
+            self.assertIn("$type", database)
+            self.assertIn("ttl_idempotency_keys_expires_at", database)
+            self.assertIn("expireAfterSeconds", database)
+
+    def test_validate_data_rejects_index_fields_missing_from_collection(self):
+        data = json.loads(Path("docs-data/documentation.json").read_text(encoding="utf-8"))
+        payments = self._collection_by_id(data, "payments")
+        payments["indexes"].append({
+            "name": "idx_bad_missing_field",
+            "fields": ["missing_field"],
+            "description": "이 테스트는 존재하지 않는 필드를 거부해야 합니다."
+        })
+
+        with self.assertRaisesRegex(ValueError, "references missing field missing_field"):
+            with tempfile.TemporaryDirectory() as tmp:
+                generate_docs(data, Path(tmp), render_d2=False)
+
+    def test_payment_safety_api_access_is_documented(self):
+        data = json.loads(Path("docs-data/documentation.json").read_text(encoding="utf-8"))
+        api_ids = [item["apiId"] for item in data["database"]["apiAccess"]]
+        self.assertEqual(len(api_ids), len(set(api_ids)))
+        access_by_api = {item["apiId"]: item for item in data["database"]["apiAccess"]}
+
+        payments_confirm = access_by_api["payments-confirm"]
+        self.assertIn("idempotency-keys", payments_confirm["reads"])
+        self.assertIn("idempotency-keys", payments_confirm["writes"])
+        self.assertIn("payments", payments_confirm["writes"])
+
+        billing_run = access_by_api["internal-billing-run"]
+        self.assertIn("operation-locks", billing_run["reads"])
+        self.assertIn("operation-locks", billing_run["writes"])
+
+        admin_adjust = access_by_api["admin-subscription-adjust"]
+        self.assertIn("operator-audits", admin_adjust["writes"])
+        self.assertIn("idempotency-keys", admin_adjust["writes"])
+
+        existing_api_ids = {api["id"] for api in data["apis"]}
+        for safety_collection_id in ["idempotency-keys", "operation-locks", "operator-audits"]:
+            collection = self._collection_by_id(data, safety_collection_id)
+            for api_id in collection["relatedApis"]:
+                if api_id not in existing_api_ids:
+                    continue
+                self.assertIn(api_id, access_by_api)
+                self.assertIn(
+                    safety_collection_id,
+                    access_by_api[api_id]["reads"] + access_by_api[api_id]["writes"]
+                )
+
+        relationships = {(item["from"], item["to"]) for item in data["database"]["relationships"]}
+        self.assertIn(("operator_audits.idempotency_key_id", "idempotency_keys._id"), relationships)
+        self.assertIn(("operator_audits.operator_id", "users._id"), relationships)
+        self.assertIn(("invoices.subscription_id", "subscriptions._id"), relationships)
+
     def test_documentation_includes_core_mongodb_collections(self):
         data = json.loads(Path("docs-data/documentation.json").read_text(encoding="utf-8"))
         collection_ids = {collection["id"] for collection in data["database"]["collections"]}
@@ -262,6 +446,13 @@ class GenerateDocsTest(unittest.TestCase):
                                 "type": "ObjectId",
                                 "required": True,
                                 "description": "구독 문서 ID입니다."
+                            },
+                            {
+                                "name": "userId",
+                                "type": "ObjectId",
+                                "required": True,
+                                "ref": "users._id",
+                                "description": "구독 소유 사용자입니다."
                             },
                             {
                                 "name": "status",
@@ -734,6 +925,8 @@ class GenerateDocsTest(unittest.TestCase):
             self.assertIn("paymentKey, orderId, amount", sequence)
             self.assertIn("승인 응답과 웹훅은 같은 paymentKey 기준으로 멱등 처리", sequence)
             self.assertIn("checkoutId, paymentId, orderId, attemptNo", sequence)
+            self.assertIn("reservedStock += quantity", sequence)
+            self.assertIn("reservedStock -&gt; soldStock", sequence)
             self.assertIn("이전 failed/canceled 시도는 이력으로 유지", sequence)
 
     def test_real_documentation_includes_one_time_payment_failure_flow(self):
@@ -760,6 +953,7 @@ class GenerateDocsTest(unittest.TestCase):
             self.assertIn("PAYMENT_CONFIRM_FAILED", sequence)
             self.assertIn("이미 실패 처리된 paymentKey면 상태 변경 없이 200 OK", sequence)
             self.assertIn("실패 후 다른 결제수단으로 재시도", sequence)
+            self.assertIn("reservedStock을 해제", sequence)
             self.assertIn("new paymentId, new orderId", sequence)
             self.assertIn("결제창 실패 결과 미보고 및 만료", sequence)
             self.assertIn("auth_result_not_reported", sequence)
@@ -872,11 +1066,19 @@ class GenerateDocsTest(unittest.TestCase):
             self.assertIn("oneTimeSkus", detail)
             self.assertIn("changeReason", detail)
             self.assertIn("effectiveFor", detail)
+            self.assertIn("생략하면 unlimited", detail)
+            self.assertIn("대부분의 일반상품은 unlimited SKU", detail)
+            self.assertIn("totalStock", detail)
+            self.assertIn("reservedStock", detail)
+            self.assertIn("soldStock", detail)
+            self.assertIn("availableStock", detail)
+            self.assertIn("totalStock - reservedStock - soldStock", detail)
             self.assertIn("MISSING_ACTIVE_SELLING_UNIT", detail)
             self.assertIn("구독상품 생성 및 플랜 구성", sequence)
             self.assertIn("일반상품 생성 및 SKU 구성", sequence)
             self.assertIn("구독 플랜은 기존 활성 구독의 과거 가격을 덮어쓰지 않습니다", sequence)
-            self.assertIn("일반상품 SKU는 주문 생성 시점에 가격 스냅샷으로 고정합니다", sequence)
+            self.assertIn("stockPolicy=unlimited 기본값", sequence)
+            self.assertIn("limited SKU만 재고를 예약합니다", sequence)
 
     def test_real_documentation_includes_admin_subscription_adjustment_flow(self):
         with tempfile.TemporaryDirectory() as tmp:

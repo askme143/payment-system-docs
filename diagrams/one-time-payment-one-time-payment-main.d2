@@ -25,7 +25,7 @@ items, successUrl, failUrl, optional checkoutId
     style.italic: false
   }
   server.note_2: "구매 의도와 결제 시도 생성\ncheckoutId, paymentId, orderId, attemptNo\n첫 시도면 checkoutId를 만들고, 재시도면 같은 checkoutId 아래 새 paymentId/orderId를 발급"
-  server.note_3: "주문 가능 여부와 금액 검증\npayment.status=ready\n서버가 최종 amount, orderName, orderId를 계산하고 저장"
+  server.note_3: "주문 가능 여부와 금액 검증\npayment.status=ready, reservedStock += quantity\n서버가 최종 amount, orderName, orderId를 계산하고 limited SKU 재고를 예약"
   server -> client: |md
 토스 결제창 호출 데이터 반환
 
@@ -99,7 +99,7 @@ paymentKey, status=DONE, approvedAt
     style.font-size: 18
     style.italic: false
   }
-  server.note_11: "승인 성공 분기\ncheckout paid, payment paid\n같은 checkoutId의 이전 failed/canceled 시도는 이력으로 유지"
+  server.note_11: "승인 성공 분기\ncheckout paid, payment paid, reservedStock -> soldStock\n예약 재고를 판매 확정으로 전환하고 같은 checkoutId의 이전 failed/canceled 시도는 이력으로 유지"
   server -> client: |md
 결제 완료 결과 반환
 

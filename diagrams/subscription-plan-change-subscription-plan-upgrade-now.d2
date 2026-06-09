@@ -48,7 +48,7 @@ targetPlanId
     style.font-size: 18
     style.italic: false
   }
-  server.note_4: "회원과 구독 소유권 검증\nstatus IN active, grace_period\n해지 예약, 정지, 이미 변경 예약된 구독은 정책에 따라 거부 또는 예약 교체"
+  server.note_4: "회원과 구독 소유권 검증\nstatus == active\n해지 예약, 정지, 이미 변경 예약된 구독은 정책에 따라 거부 또는 예약 교체"
   server.note_5: "서버가 업그레이드 판정\ntargetPlan.productCode == subscription.productCode\ntargetPlan.productCode가 현재 구독의 productCode와 같아야 하며 업그레이드는 즉시 변경으로 고정"
   server -> client: |md
 즉시 결제 금액과 다음 결제일 안내

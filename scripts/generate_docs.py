@@ -183,6 +183,14 @@ def validate_data(data):
     if data.get("database"):
         collection_ids = {collection["id"] for collection in data["database"]["collections"]}
         for collection in data["database"]["collections"]:
+            field_names = {field["name"] for field in collection["fields"]}
+            for index in collection.get("indexes", []):
+                index_label = index.get("name") or ", ".join(index["fields"])
+                for field_name in index["fields"]:
+                    if field_name not in field_names:
+                        raise ValueError(
+                            f"Collection {collection['id']} index {index_label} references missing field {field_name}"
+                        )
             for risk_id in collection.get("riskIds", []):
                 if risk_id not in risk_ids:
                     raise ValueError(f"Collection {collection['id']} references missing risk {risk_id}")
@@ -1213,21 +1221,38 @@ def render_database_doc(data):
                 f"<td>{e('; '.join(details) or '-')}</td>"
                 "</tr>"
             )
-        index_rows = "".join(
-            "<tr>"
-            f"<td><code>{e(', '.join(index['fields']))}</code></td>"
-            f"<td>{'예' if index.get('unique') else '아니오'}</td>"
-            f"<td>{e(index.get('description', '-'))}</td>"
-            "</tr>"
-            for index in collection.get("indexes", [])
-        )
+        index_rows = []
+        for index in collection.get("indexes", []):
+            partial_filter = "-"
+            if "partialFilterExpression" in index:
+                partial_filter = (
+                    "partialFilterExpression: "
+                    + json.dumps(index["partialFilterExpression"], ensure_ascii=False)
+                )
+            ttl_seconds = "-"
+            if "expireAfterSeconds" in index:
+                ttl_seconds = f"expireAfterSeconds: {index['expireAfterSeconds']}"
+            index_rows.append(
+                "<tr>"
+                f"<td><code>{e(index.get('name', '-'))}</code></td>"
+                f"<td><code>{e(', '.join(index.get('fields', [])))}</code></td>"
+                f"<td>{'예' if index.get('unique') else '아니오'}</td>"
+                f"<td>{'예' if index.get('sparse') else '아니오'}</td>"
+                f"<td><code>{e(partial_filter)}</code></td>"
+                f"<td><code>{e(ttl_seconds)}</code></td>"
+                f"<td>{e(index.get('description', '-'))}</td>"
+                "</tr>"
+            )
+        index_rows = "".join(index_rows)
         indexes = ""
         if index_rows:
             indexes = (
                 "<h3>인덱스</h3>"
                 + table(
-                    "<table><thead><tr><th>필드</th><th>유니크</th><th>설명</th></tr></thead>"
-                    f"<tbody>{index_rows}</tbody></table>"
+                    "<table><thead><tr><th>이름</th><th>필드</th><th>유니크</th><th>Sparse</th>"
+                    "<th>Partial Filter</th><th>TTL Seconds</th><th>설명</th></tr></thead>"
+                    f"<tbody>{index_rows}</tbody></table>",
+                    columns=7
                 )
             )
         related_apis = "".join(
@@ -1583,9 +1608,12 @@ def render_d2_svgs(d2_files):
 
 
 def generate_docs(data_path, out_dir, render_d2=False, rendered_d2_ids=None):
-    data_path = Path(data_path)
     out_dir = Path(out_dir)
-    data = load_data(data_path)
+    if isinstance(data_path, dict):
+        data = data_path
+    else:
+        data_path = Path(data_path)
+        data = load_data(data_path)
     validate_data(data)
     out_dir.mkdir(parents=True, exist_ok=True)
     diagrams_dir = out_dir / "diagrams"

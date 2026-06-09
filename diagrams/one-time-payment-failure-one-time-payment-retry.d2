@@ -25,7 +25,7 @@ diagram: {
     style.font-size: 18
     style.italic: false
   }
-  server.note_3: "새 결제 시도 발급\nattemptNo += 1, new paymentId, new orderId\n이전 실패 시도를 덮어쓰지 않음"
+  server.note_3: "새 결제 시도 발급\nattemptNo += 1, new paymentId, new orderId, reservedStock += quantity\n이전 실패 시도를 덮어쓰지 않고 새 시도에 대한 재고를 다시 예약"
   server -> client: |md
 새 토스 결제창 호출 데이터 반환
 
@@ -62,5 +62,5 @@ pay_002, ord_002, paymentKey
     style.font-size: 18
     style.italic: false
   }
-  server.note_7: "재시도 성공 시 checkout 완료\ncheckout.status=paid, payment.status=paid\n이전 시도들은 failed/expired 이력으로 유지"
+  server.note_7: "재시도 성공 시 checkout 완료\ncheckout.status=paid, payment.status=paid, reservedStock -> soldStock\n새 예약 재고를 판매 확정하고 이전 시도들은 failed/expired 이력으로 유지"
 }

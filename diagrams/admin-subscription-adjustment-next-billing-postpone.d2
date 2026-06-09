@@ -36,7 +36,7 @@ adjustmentType=postpone_next_billing, postponeBy.days, reasonCode
     style.font-size: 18
     style.italic: false
   }
-  server.note_3: "관리자 권한 및 상태 검증\nstatus in active/past_due/grace_period\n해지 완료 구독이나 진행 중 청구와 충돌하면 409"
+  server.note_3: "관리자 권한 및 상태 검증\nstatus in active/past_due\n해지 완료 구독이나 진행 중 청구와 충돌하면 409"
   server.note_4: "연기 일수 검증\npostponeBy.days > 0 && postponeBy.days <= policy.maxPostponeDays\n음수, 0일, 과도한 미래 연기는 거부"
   server.note_5: "새 다음 결제일 계산\nnew nextBillingAt = current nextBillingAt + postponeBy.days\n예: 2026-07-01 + 7일 = 2026-07-08"
   server.note_6: "구독 상태와 감사 로그 반영\nsubscription.nextBillingAt = new nextBillingAt\npreviousState와 currentState에 변경 전후 nextBillingAt 저장"

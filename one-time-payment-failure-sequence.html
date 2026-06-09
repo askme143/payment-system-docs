@@ -761,7 +761,7 @@ ready 시도를 failed로 변경하고 failure.reason=user_canceled 저장
     style.font-size: 18
     style.italic: false
   }
-  server.note_5: &quot;사용자 취소 상태 저장\npayment.status = failed, failure.reason=user_canceled\n재시도 가능하지만 기존 paymentId/orderId는 재사용하지 않음&quot;
+  server.note_5: &quot;사용자 취소 상태 저장\npayment.status = failed, failure.reason=user_canceled\nreservedStock을 해제하고 재시도 가능하지만 기존 paymentId/orderId는 재사용하지 않음&quot;
 }
 </code></pre>
   </details>
@@ -818,7 +818,7 @@ paymentKey가 없으므로 payments-confirm API는 호출하지 않음
 
 **POST /payments/{paymentId}/auth-result**
 
-ready 시도를 failed로 변경하고 failure.reason=auth_failed 저장
+ready 시도를 failed로 변경하고 failure.reason=auth_failed 저장, reservedStock 해제
 | {
     style.stroke: &quot;#1c7c66&quot;
     style.font-color: &quot;#334155&quot;
@@ -916,7 +916,7 @@ paymentKey 없음
     style.italic: false
   }
   server.note_2: &quot;실패 결과 기록 API 미도달\nPOST /payments/{paymentId}/auth-result 누락\n네트워크 오류, 탭 닫기, 앱 종료 등&quot;
-  server.note_3: &quot;만료 정책 실행\nready timeout\nN분 이상 ready이면 expired 처리&quot;
+  server.note_3: &quot;만료 정책 실행\nready timeout\nN분 이상 ready이면 expired 처리하고 reservedStock 해제&quot;
   client -&gt; server: |md
 결제 상태 조회
 
@@ -991,7 +991,7 @@ REJECT_CARD_COMPANY / NOT_FOUND_PAYMENT / INVALID_REQUEST
     style.font-size: 18
     style.italic: false
   }
-  server.note_4: &quot;현재 결제 시도 실패 저장\npayment.status = failed\ncheckout은 재시도 가능 상태로 유지&quot;
+  server.note_4: &quot;현재 결제 시도 실패 저장\npayment.status = failed\nreservedStock을 해제하고 checkout은 재시도 가능 상태로 유지&quot;
   server -&gt; client: |md
 결제 실패 응답
 
@@ -1055,7 +1055,7 @@ REJECT_CARD_COMPANY / NOT_FOUND_PAYMENT / INVALID_REQUEST
     style.font-size: 18
     style.italic: false
   }
-  server.note_3: &quot;새 결제 시도 발급\nattemptNo += 1, new paymentId, new orderId\n이전 실패 시도를 덮어쓰지 않음&quot;
+  server.note_3: &quot;새 결제 시도 발급\nattemptNo += 1, new paymentId, new orderId, reservedStock += quantity\n이전 실패 시도를 덮어쓰지 않고 새 시도에 대한 재고를 다시 예약&quot;
   server -&gt; client: |md
 새 토스 결제창 호출 데이터 반환
 
@@ -1092,7 +1092,7 @@ pay_002, ord_002, paymentKey
     style.font-size: 18
     style.italic: false
   }
-  server.note_7: &quot;재시도 성공 시 checkout 완료\ncheckout.status=paid, payment.status=paid\n이전 시도들은 failed/expired 이력으로 유지&quot;
+  server.note_7: &quot;재시도 성공 시 checkout 완료\ncheckout.status=paid, payment.status=paid, reservedStock -&gt; soldStock\n새 예약 재고를 판매 확정하고 이전 시도들은 failed/expired 이력으로 유지&quot;
 }
 </code></pre>
   </details>
@@ -1135,7 +1135,7 @@ pay_002, ord_002, paymentKey
 </section>
   <section id="states">
   <h2>상태 요약</h2>
-  <div class="table-scroll"><table class="has-many-columns"><thead><tr><th>시점</th><th>구독 상태</th><th>결제 상태</th><th>설명</th></tr></thead><tbody><tr><td data-label="시점">주문 생성 실패</td><td data-label="구독 상태"><code>-</code></td><td data-label="결제 상태"><code>not_created</code></td><td data-label="설명">결제 시도를 만들지 않거나 실패 로그만 남깁니다.</td></tr><tr><td data-label="시점">사용자 취소 직후</td><td data-label="구독 상태"><code>-</code></td><td data-label="결제 상태"><code>failed</code></td><td data-label="설명">돈은 결제되지 않았고 failure.reason=user_canceled인 실패 시도로 기록됩니다.</td></tr><tr><td data-label="시점">재시도 가능 상태</td><td data-label="구독 상태"><code>-</code></td><td data-label="결제 상태"><code>retry_available</code></td><td data-label="설명">같은 checkoutId 아래 새 결제 시도를 만들 수 있습니다.</td></tr><tr><td data-label="시점">인증 실패 후</td><td data-label="구독 상태"><code>-</code></td><td data-label="결제 상태"><code>failed</code></td><td data-label="설명">토스 승인이 발생하지 않았고 failure.reason=auth_failed인 실패 시도로 기록됩니다.</td></tr><tr><td data-label="시점">승인 전 검증 실패</td><td data-label="구독 상태"><code>-</code></td><td data-label="결제 상태"><code>failed</code></td><td data-label="설명">금액 변조나 중복 승인 가능성을 차단하고 failure.phase=confirm, failure.reason=validation_failed를 남깁니다.</td></tr><tr><td data-label="시점">실패 결과 미보고</td><td data-label="구독 상태"><code>-</code></td><td data-label="결제 상태"><code>ready</code></td><td data-label="설명">서버는 실패 원인을 확정하지 못하므로 결제 시도를 즉시 failed로 바꾸지 않습니다.</td></tr><tr><td data-label="시점">만료 정책 실행 후</td><td data-label="구독 상태"><code>-</code></td><td data-label="결제 상태"><code>expired</code></td><td data-label="설명">승인되지 않은 ready 결제 시도를 expired로 정리하고 필요하면 failure.reason=auth_result_not_reported를 남깁니다.</td></tr><tr><td data-label="시점">토스 승인 실패 후</td><td data-label="구독 상태"><code>-</code></td><td data-label="결제 상태"><code>failed</code></td><td data-label="설명">실패 코드, 실패 메시지, 재시도 가능 여부를 현재 결제 시도에 저장합니다.</td></tr><tr><td data-label="시점">실패 웹훅 보정 후</td><td data-label="구독 상태"><code>-</code></td><td data-label="결제 상태"><code>failed</code></td><td data-label="설명">늦게 도착한 이벤트가 있어도 같은 paymentKey 기준으로 멱등하게 유지합니다.</td></tr><tr><td data-label="시점">이전 시도 실패 후</td><td data-label="구독 상태"><code>-</code></td><td data-label="결제 상태"><code>retry_available</code></td><td data-label="설명">같은 구매 의도 아래 새 결제 시도를 만들 수 있습니다.</td></tr><tr><td data-label="시점">새 시도 생성 후</td><td data-label="구독 상태"><code>-</code></td><td data-label="결제 상태"><code>ready</code></td><td data-label="설명">새 paymentId와 orderId로 토스 결제창을 다시 호출합니다.</td></tr><tr><td data-label="시점">재시도 성공 후</td><td data-label="구독 상태"><code>-</code></td><td data-label="결제 상태"><code>paid</code></td><td data-label="설명">checkoutId 기준 최종 구매가 완료되고 모든 시도 이력이 보존됩니다.</td></tr></tbody></table></div>
+  <div class="table-scroll"><table class="has-many-columns"><thead><tr><th>시점</th><th>구독 상태</th><th>결제 상태</th><th>설명</th></tr></thead><tbody><tr><td data-label="시점">주문 생성 실패</td><td data-label="구독 상태"><code>-</code></td><td data-label="결제 상태"><code>not_created</code></td><td data-label="설명">결제 시도를 만들지 않거나 실패 로그만 남깁니다.</td></tr><tr><td data-label="시점">사용자 취소 직후</td><td data-label="구독 상태"><code>-</code></td><td data-label="결제 상태"><code>failed</code></td><td data-label="설명">돈은 결제되지 않았고 failure.reason=user_canceled인 실패 시도로 기록되며 예약 재고는 해제됩니다.</td></tr><tr><td data-label="시점">재시도 가능 상태</td><td data-label="구독 상태"><code>-</code></td><td data-label="결제 상태"><code>retry_available</code></td><td data-label="설명">같은 checkoutId 아래 새 결제 시도를 만들 수 있습니다.</td></tr><tr><td data-label="시점">인증 실패 후</td><td data-label="구독 상태"><code>-</code></td><td data-label="결제 상태"><code>failed</code></td><td data-label="설명">토스 승인이 발생하지 않았고 failure.reason=auth_failed인 실패 시도로 기록되며 예약 재고는 해제됩니다.</td></tr><tr><td data-label="시점">승인 전 검증 실패</td><td data-label="구독 상태"><code>-</code></td><td data-label="결제 상태"><code>failed</code></td><td data-label="설명">금액 변조나 중복 승인 가능성을 차단하고 failure.phase=confirm, failure.reason=validation_failed를 남깁니다.</td></tr><tr><td data-label="시점">실패 결과 미보고</td><td data-label="구독 상태"><code>-</code></td><td data-label="결제 상태"><code>ready</code></td><td data-label="설명">서버는 실패 원인을 확정하지 못하므로 결제 시도를 즉시 failed로 바꾸지 않습니다.</td></tr><tr><td data-label="시점">만료 정책 실행 후</td><td data-label="구독 상태"><code>-</code></td><td data-label="결제 상태"><code>expired</code></td><td data-label="설명">승인되지 않은 ready 결제 시도를 expired로 정리하고 예약 재고를 해제하며 필요하면 failure.reason=auth_result_not_reported를 남깁니다.</td></tr><tr><td data-label="시점">토스 승인 실패 후</td><td data-label="구독 상태"><code>-</code></td><td data-label="결제 상태"><code>failed</code></td><td data-label="설명">실패 코드, 실패 메시지, 재시도 가능 여부를 현재 결제 시도에 저장하고 예약 재고를 해제합니다.</td></tr><tr><td data-label="시점">실패 웹훅 보정 후</td><td data-label="구독 상태"><code>-</code></td><td data-label="결제 상태"><code>failed</code></td><td data-label="설명">늦게 도착한 이벤트가 있어도 같은 paymentKey 기준으로 멱등하게 유지합니다.</td></tr><tr><td data-label="시점">이전 시도 실패 후</td><td data-label="구독 상태"><code>-</code></td><td data-label="결제 상태"><code>retry_available</code></td><td data-label="설명">같은 구매 의도 아래 새 결제 시도를 만들 수 있습니다.</td></tr><tr><td data-label="시점">새 시도 생성 후</td><td data-label="구독 상태"><code>-</code></td><td data-label="결제 상태"><code>ready</code></td><td data-label="설명">새 paymentId와 orderId로 토스 결제창을 다시 호출합니다.</td></tr><tr><td data-label="시점">재시도 성공 후</td><td data-label="구독 상태"><code>-</code></td><td data-label="결제 상태"><code>paid</code></td><td data-label="설명">checkoutId 기준 최종 구매가 완료되고 모든 시도 이력이 보존됩니다.</td></tr></tbody></table></div>
 </section>
 </main>
 <script>
