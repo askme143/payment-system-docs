@@ -528,20 +528,23 @@
         width: 100%;
         min-width: 0;
         border-collapse: separate;
-        border-spacing: 0 8px;
+        border-spacing: 0;
         font-size: 13px;
       }
       thead { display: none; }
-      tbody,
       tr,
       td {
         display: block;
       }
+      tbody {
+        display: grid;
+        gap: 8px;
+      }
       tr {
         overflow: clip;
-        border: 1px solid var(--line);
         border-radius: 8px;
         background: var(--surface);
+        box-shadow: inset 0 0 0 1px var(--line);
       }
       td {
         display: grid;
@@ -549,10 +552,10 @@
         gap: 10px;
         align-items: start;
         padding: 9px 10px;
-        border-bottom: 1px solid var(--line);
+        border-bottom: 0;
         overflow-wrap: anywhere;
       }
-      td:last-child { border-bottom: 0; }
+      td:not(:last-child) { border-bottom: 1px solid var(--line); }
       td::before {
         content: attr(data-label);
         color: var(--muted);
@@ -653,7 +656,10 @@
   <p>로그인하지 않았거나, 플랜이 비활성화됐거나, 같은 상품의 활성 구독이 이미 있는 경우입니다.</p>
   <div class="diagram"><div class="d2-diagram">
   <div class="d2-toolbar"><a href="diagrams/initial-subscription-failure-checkout-fail.d2">D2 원본</a></div>
-  <pre class="d2-source"><code>diagram: {
+  <img class="d2-svg" src="diagrams/initial-subscription-failure-checkout-fail.svg" alt="체크아웃 생성 실패">
+  <details class="d2-details">
+    <summary>D2 원본 보기</summary>
+    <pre class="d2-source"><code>diagram: {
   shape: sequence_diagram
   label: &quot;체크아웃 생성 실패&quot;
 
@@ -712,13 +718,17 @@
   }
 }
 </code></pre>
+  </details>
 </div></div>
 </section><section id="auth-fail">
   <h2>토스 빌링 인증 실패</h2>
   <p>사용자가 인증을 취소했거나 카드 등록 인증이 실패한 경우입니다.</p>
   <div class="diagram"><div class="d2-diagram">
   <div class="d2-toolbar"><a href="diagrams/initial-subscription-failure-auth-fail.d2">D2 원본</a></div>
-  <pre class="d2-source"><code>diagram: {
+  <img class="d2-svg" src="diagrams/initial-subscription-failure-auth-fail.svg" alt="토스 빌링 인증 실패">
+  <details class="d2-details">
+    <summary>D2 원본 보기</summary>
+    <pre class="d2-source"><code>diagram: {
   shape: sequence_diagram
   label: &quot;토스 빌링 인증 실패&quot;
 
@@ -757,13 +767,17 @@ confirm API는 호출되지 않음
   }
 }
 </code></pre>
+  </details>
 </div></div>
 </section><section id="confirm-fail">
   <h2>구독 확정 검증 실패</h2>
   <p>subscriptionId 누락, 소유자 불일치, customerKey 불일치, 중복 성공 요청 같은 서버 검증 실패입니다.</p>
   <div class="diagram"><div class="d2-diagram">
   <div class="d2-toolbar"><a href="diagrams/initial-subscription-failure-confirm-fail.d2">D2 원본</a></div>
-  <pre class="d2-source"><code>diagram: {
+  <img class="d2-svg" src="diagrams/initial-subscription-failure-confirm-fail.svg" alt="구독 확정 검증 실패">
+  <details class="d2-details">
+    <summary>D2 원본 보기</summary>
+    <pre class="d2-source"><code>diagram: {
   shape: sequence_diagram
   label: &quot;구독 확정 검증 실패&quot;
 
@@ -802,13 +816,17 @@ FORBIDDEN / CONFLICT / ALREADY_CONFIRMED
   }
 }
 </code></pre>
+  </details>
 </div></div>
 </section><section id="billing-key-fail">
   <h2>빌링키 발급 실패</h2>
   
   <div class="diagram"><div class="d2-diagram">
   <div class="d2-toolbar"><a href="diagrams/initial-subscription-failure-billing-key-fail.d2">D2 원본</a></div>
-  <pre class="d2-source"><code>diagram: {
+  <img class="d2-svg" src="diagrams/initial-subscription-failure-billing-key-fail.svg" alt="빌링키 발급 실패">
+  <details class="d2-details">
+    <summary>D2 원본 보기</summary>
+    <pre class="d2-source"><code>diagram: {
   shape: sequence_diagram
   label: &quot;빌링키 발급 실패&quot;
 
@@ -864,13 +882,17 @@ BILLING_KEY_ISSUE_FAILED
   }
 }
 </code></pre>
+  </details>
 </div></div>
 </section><section id="first-payment-fail">
   <h2>첫 자동결제 실패</h2>
   
   <div class="diagram"><div class="d2-diagram">
   <div class="d2-toolbar"><a href="diagrams/initial-subscription-failure-first-payment-fail.d2">D2 원본</a></div>
-  <pre class="d2-source"><code>diagram: {
+  <img class="d2-svg" src="diagrams/initial-subscription-failure-first-payment-fail.svg" alt="첫 자동결제 실패">
+  <details class="d2-details">
+    <summary>D2 원본 보기</summary>
+    <pre class="d2-source"><code>diagram: {
   shape: sequence_diagram
   label: &quot;첫 자동결제 실패&quot;
 
@@ -928,13 +950,17 @@ CARD_DECLINED / EXCEED_MAX_AMOUNT / INSUFFICIENT_FUNDS
   }
 }
 </code></pre>
+  </details>
 </div></div>
 </section><section id="webhook-fail">
   <h2>웹훅 실패 또는 중복 이벤트</h2>
   
   <div class="diagram"><div class="d2-diagram">
   <div class="d2-toolbar"><a href="diagrams/initial-subscription-failure-webhook-fail.d2">D2 원본</a></div>
-  <pre class="d2-source"><code>diagram: {
+  <img class="d2-svg" src="diagrams/initial-subscription-failure-webhook-fail.svg" alt="웹훅 실패 또는 중복 이벤트">
+  <details class="d2-details">
+    <summary>D2 원본 보기</summary>
+    <pre class="d2-source"><code>diagram: {
   shape: sequence_diagram
   label: &quot;웹훅 실패 또는 중복 이벤트&quot;
 
@@ -959,6 +985,7 @@ CARD_DECLINED / EXCEED_MAX_AMOUNT / INSUFFICIENT_FUNDS
   server.note_3: &quot;중복 이벤트\n이미 처리됨: 변경 없이 200 OK&quot;
 }
 </code></pre>
+  </details>
 </div></div>
 </section>
   

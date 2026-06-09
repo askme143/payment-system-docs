@@ -377,7 +377,11 @@ class GenerateDocsTest(unittest.TestCase):
             self.assertIn("margin-inline: 0;", detail)
             self.assertIn("td::before", detail)
             self.assertIn("content: attr(data-label);", detail)
-            self.assertIn("border-spacing: 0 8px;", detail)
+            self.assertIn("border-spacing: 0;", detail)
+            self.assertIn("display: grid;", detail)
+            self.assertIn("gap: 8px;", detail)
+            self.assertIn("box-shadow: inset 0 0 0 1px var(--line);", detail)
+            self.assertIn("td:not(:last-child)", detail)
             self.assertIn("@media (max-width: 480px)", detail)
             self.assertIn('aria-current", "true"', detail)
             self.assertIn("overflow-x: auto;", detail)
@@ -457,6 +461,76 @@ class GenerateDocsTest(unittest.TestCase):
             data_path.write_text(json.dumps(data, ensure_ascii=False), encoding="utf-8")
 
             generate_docs(data_path, out_dir, rendered_d2_ids={"payment-main"})
+
+            sequence = (out_dir / "payment.html").read_text(encoding="utf-8")
+
+            self.assertIn('<img class="d2-svg" src="diagrams/payment-main.svg"', sequence)
+
+    def test_sequence_page_uses_existing_svg_without_rerendering_d2(self):
+        data = {
+            "version": "1.0.0",
+            "site": {
+                "title": "결제 시스템",
+                "pages": {
+                    "sequenceIndex": {"title": "시퀀스 목록", "file": "sequence-index.html"},
+                    "apiCatalog": {"title": "전체 API 목록", "file": "all-api-doc.html"},
+                    "apiDetails": {"title": "API 상세", "file": "api-detail-doc.html"}
+                }
+            },
+            "actors": [
+                {"id": "client", "label": "웹 클라이언트", "subtitle": "Browser", "kind": "client"},
+                {"id": "server", "label": "우리 서버", "subtitle": "API", "kind": "server"}
+            ],
+            "apiCategories": [{"id": "payments", "title": "결제 API", "order": 1}],
+            "apis": [
+                {
+                    "id": "payments-confirm",
+                    "categoryId": "payments",
+                    "method": "POST",
+                    "path": "/payments/confirm",
+                    "role": "결제를 승인합니다.",
+                    "visibility": "authenticated",
+                    "detailStatus": "planned",
+                    "detailAnchor": "payments-confirm"
+                }
+            ],
+            "apiDetails": {},
+            "sequences": [
+                {
+                    "id": "payment",
+                    "title": "결제",
+                    "file": "payment.html",
+                    "status": "available",
+                    "kind": "success",
+                    "summary": "결제 흐름입니다.",
+                    "apiIds": ["payments-confirm"],
+                    "actorIds": ["client", "server"],
+                    "diagrams": [
+                        {
+                            "id": "main",
+                            "title": "결제 승인",
+                            "actorIds": ["client", "server"],
+                            "relatedApiIds": ["payments-confirm"],
+                            "steps": [
+                                {"type": "message", "from": "client", "to": "server", "label": "승인 요청", "apiId": "payments-confirm"}
+                            ]
+                        }
+                    ]
+                }
+            ],
+            "policies": {"idempotency": [], "httpStatus": [], "security": [], "tosspayments": []}
+        }
+
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            data_path = root / "documentation.json"
+            out_dir = root / "site"
+            diagrams_dir = out_dir / "diagrams"
+            diagrams_dir.mkdir(parents=True)
+            data_path.write_text(json.dumps(data, ensure_ascii=False), encoding="utf-8")
+            (diagrams_dir / "payment-main.svg").write_text("<svg></svg>", encoding="utf-8")
+
+            generate_docs(data_path, out_dir)
 
             sequence = (out_dir / "payment.html").read_text(encoding="utf-8")
 

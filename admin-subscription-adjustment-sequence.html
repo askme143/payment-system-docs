@@ -528,20 +528,23 @@
         width: 100%;
         min-width: 0;
         border-collapse: separate;
-        border-spacing: 0 8px;
+        border-spacing: 0;
         font-size: 13px;
       }
       thead { display: none; }
-      tbody,
       tr,
       td {
         display: block;
       }
+      tbody {
+        display: grid;
+        gap: 8px;
+      }
       tr {
         overflow: clip;
-        border: 1px solid var(--line);
         border-radius: 8px;
         background: var(--surface);
+        box-shadow: inset 0 0 0 1px var(--line);
       }
       td {
         display: grid;
@@ -549,10 +552,10 @@
         gap: 10px;
         align-items: start;
         padding: 9px 10px;
-        border-bottom: 1px solid var(--line);
+        border-bottom: 0;
         overflow-wrap: anywhere;
       }
-      td:last-child { border-bottom: 0; }
+      td:not(:last-child) { border-bottom: 1px solid var(--line); }
       td::before {
         content: attr(data-label);
         color: var(--muted);
@@ -653,7 +656,10 @@
   <p>토스 결제는 성공했지만 내부 payment, invoice, subscription 상태 반영이 실패했을 때 paymentKey 또는 invoiceId를 근거로 외부 결제 상태를 조회하고 내부 상태를 맞춥니다.</p>
   <div class="diagram"><div class="d2-diagram">
   <div class="d2-toolbar"><a href="diagrams/admin-subscription-adjustment-provider-payment-sync.d2">D2 원본</a></div>
-  <pre class="d2-source"><code>diagram: {
+  <img class="d2-svg" src="diagrams/admin-subscription-adjustment-provider-payment-sync.svg" alt="토스 결제 성공 누락 보정">
+  <details class="d2-details">
+    <summary>D2 원본 보기</summary>
+    <pre class="d2-source"><code>diagram: {
   shape: sequence_diagram
   label: &quot;토스 결제 성공 누락 보정&quot;
 
@@ -748,13 +754,17 @@ operatorAuditId, previousState, currentState
   server.note_10: &quot;토스 조회 또는 검증 실패\nprovider_error / amount_mismatch / ownership_mismatch\n내부 상태를 변경하지 않고 실패 감사 로그 저장&quot;
 }
 </code></pre>
+  </details>
 </div></div>
 </section><section id="next-billing-postpone">
   <h2>다음 결제일 연기</h2>
   <p>장애 보상이나 CS 연장처럼 현재 다음 결제일을 기준으로 이용 기간을 N일 미룰 때 사용하는 보정입니다. 절대 날짜 덮어쓰기와 구분해 감사 로그에 연장 일수를 남깁니다.</p>
   <div class="diagram"><div class="d2-diagram">
   <div class="d2-toolbar"><a href="diagrams/admin-subscription-adjustment-next-billing-postpone.d2">D2 원본</a></div>
-  <pre class="d2-source"><code>diagram: {
+  <img class="d2-svg" src="diagrams/admin-subscription-adjustment-next-billing-postpone.svg" alt="다음 결제일 연기">
+  <details class="d2-details">
+    <summary>D2 원본 보기</summary>
+    <pre class="d2-source"><code>diagram: {
   shape: sequence_diagram
   label: &quot;다음 결제일 연기&quot;
 
@@ -822,13 +832,17 @@ operatorAuditId, previousState, currentState
   }
 }
 </code></pre>
+  </details>
 </div></div>
 </section><section id="policy-status-override">
   <h2>정책 예외 상태 보정</h2>
   <p>환불 후 구독 유지/종료, 결제 실패 상태 수동 해제, 마이그레이션 실수 복구처럼 토스 상태만으로 결정할 수 없는 운영 정책 보정입니다.</p>
   <div class="diagram"><div class="d2-diagram">
   <div class="d2-toolbar"><a href="diagrams/admin-subscription-adjustment-policy-status-override.d2">D2 원본</a></div>
-  <pre class="d2-source"><code>diagram: {
+  <img class="d2-svg" src="diagrams/admin-subscription-adjustment-policy-status-override.svg" alt="정책 예외 상태 보정">
+  <details class="d2-details">
+    <summary>D2 원본 보기</summary>
+    <pre class="d2-source"><code>diagram: {
   shape: sequence_diagram
   label: &quot;정책 예외 상태 보정&quot;
 
@@ -897,6 +911,7 @@ operatorAuditId, status, nextBillingAt
   }
 }
 </code></pre>
+  </details>
 </div></div>
 </section>
   <section id="states">

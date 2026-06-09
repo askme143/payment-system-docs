@@ -528,20 +528,23 @@
         width: 100%;
         min-width: 0;
         border-collapse: separate;
-        border-spacing: 0 8px;
+        border-spacing: 0;
         font-size: 13px;
       }
       thead { display: none; }
-      tbody,
       tr,
       td {
         display: block;
       }
+      tbody {
+        display: grid;
+        gap: 8px;
+      }
       tr {
         overflow: clip;
-        border: 1px solid var(--line);
         border-radius: 8px;
         background: var(--surface);
+        box-shadow: inset 0 0 0 1px var(--line);
       }
       td {
         display: grid;
@@ -549,10 +552,10 @@
         gap: 10px;
         align-items: start;
         padding: 9px 10px;
-        border-bottom: 1px solid var(--line);
+        border-bottom: 0;
         overflow-wrap: anywhere;
       }
-      td:last-child { border-bottom: 0; }
+      td:not(:last-child) { border-bottom: 1px solid var(--line); }
       td::before {
         content: attr(data-label);
         color: var(--muted);
@@ -653,7 +656,10 @@
   <p>해지 요청 즉시 서비스 접근을 끊지 않고 현재 이용 기간 종료일까지 권한을 유지한 뒤 다음 과금에서 제외합니다.</p>
   <div class="diagram"><div class="d2-diagram">
   <div class="d2-toolbar"><a href="diagrams/subscription-cancel-subscription-cancel-end-of-period.d2">D2 원본</a></div>
-  <pre class="d2-source"><code>diagram: {
+  <img class="d2-svg" src="diagrams/subscription-cancel-subscription-cancel-end-of-period.svg" alt="기간 종료 시 해지 예약">
+  <details class="d2-details">
+    <summary>D2 원본 보기</summary>
+    <pre class="d2-source"><code>diagram: {
   shape: sequence_diagram
   label: &quot;기간 종료 시 해지 예약&quot;
 
@@ -708,13 +714,17 @@ nextBillingDate가 null인 구독은 결제 대상 아님
   }
 }
 </code></pre>
+  </details>
 </div></div>
 </section><section id="subscription-cancel-expiration">
   <h2>해지 예약 만료 처리</h2>
   <p>cancel_scheduled 상태의 구독이 currentPeriodEnd 또는 cancelAt을 지난 뒤 최종 canceled 상태로 마감되고, 이후 회원 화면에서는 재개가 아니라 재구독을 안내하는 흐름입니다.</p>
   <div class="diagram"><div class="d2-diagram">
   <div class="d2-toolbar"><a href="diagrams/subscription-cancel-subscription-cancel-expiration.d2">D2 원본</a></div>
-  <pre class="d2-source"><code>diagram: {
+  <img class="d2-svg" src="diagrams/subscription-cancel-subscription-cancel-expiration.svg" alt="해지 예약 만료 처리">
+  <details class="d2-details">
+    <summary>D2 원본 보기</summary>
+    <pre class="d2-source"><code>diagram: {
   shape: sequence_diagram
   label: &quot;해지 예약 만료 처리&quot;
 
@@ -770,6 +780,7 @@ subscriptions-resume으로 되돌릴 수 없고 신규 구독 또는 재구독�
   }
 }
 </code></pre>
+  </details>
 </div></div>
 </section>
   <section id="states">

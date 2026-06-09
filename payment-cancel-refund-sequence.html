@@ -528,20 +528,23 @@
         width: 100%;
         min-width: 0;
         border-collapse: separate;
-        border-spacing: 0 8px;
+        border-spacing: 0;
         font-size: 13px;
       }
       thead { display: none; }
-      tbody,
       tr,
       td {
         display: block;
       }
+      tbody {
+        display: grid;
+        gap: 8px;
+      }
       tr {
         overflow: clip;
-        border: 1px solid var(--line);
         border-radius: 8px;
         background: var(--surface);
+        box-shadow: inset 0 0 0 1px var(--line);
       }
       td {
         display: grid;
@@ -549,10 +552,10 @@
         gap: 10px;
         align-items: start;
         padding: 9px 10px;
-        border-bottom: 1px solid var(--line);
+        border-bottom: 0;
         overflow-wrap: anywhere;
       }
-      td:last-child { border-bottom: 0; }
+      td:not(:last-child) { border-bottom: 1px solid var(--line); }
       td::before {
         content: attr(data-label);
         color: var(--muted);
@@ -653,7 +656,10 @@
   <p>회원이 마이페이지에서 일반결제 취소를 요청했을 때 취소 가능 금액을 검증하고 토스 취소 API를 호출한 뒤 내부 상태를 canceled 또는 partial_canceled로 저장합니다.</p>
   <div class="diagram"><div class="d2-diagram">
   <div class="d2-toolbar"><a href="diagrams/payment-cancel-refund-payment-cancel-refund-main.d2">D2 원본</a></div>
-  <pre class="d2-source"><code>diagram: {
+  <img class="d2-svg" src="diagrams/payment-cancel-refund-payment-cancel-refund-main.svg" alt="전체 취소 및 부분 취소">
+  <details class="d2-details">
+    <summary>D2 원본 보기</summary>
+    <pre class="d2-source"><code>diagram: {
   shape: sequence_diagram
   label: &quot;전체 취소 및 부분 취소&quot;
 
@@ -738,13 +744,17 @@ status, canceledAmount, cancelableAmount, cancelHistory
   server.note_11: &quot;토스 취소 실패\nprovider_error / provider_rejected\npending 취소를 failed로 저장하고 재시도 가능 여부 안내&quot;
 }
 </code></pre>
+  </details>
 </div></div>
 </section><section id="admin-payment-cancel">
   <h2>운영자 결제 취소</h2>
   <p>관리자가 CS 요청이나 장애 보정 사유로 일반결제를 취소할 때 권한과 감사 로그를 남기고 동일한 취소 서비스로 처리합니다.</p>
   <div class="diagram"><div class="d2-diagram">
   <div class="d2-toolbar"><a href="diagrams/payment-cancel-refund-admin-payment-cancel.d2">D2 원본</a></div>
-  <pre class="d2-source"><code>diagram: {
+  <img class="d2-svg" src="diagrams/payment-cancel-refund-admin-payment-cancel.svg" alt="운영자 결제 취소">
+  <details class="d2-details">
+    <summary>D2 원본 보기</summary>
+    <pre class="d2-source"><code>diagram: {
   shape: sequence_diagram
   label: &quot;운영자 결제 취소&quot;
 
@@ -838,6 +848,7 @@ operatorAuditId, status, cancelHistory
   }
 }
 </code></pre>
+  </details>
 </div></div>
 </section>
   <section id="states">

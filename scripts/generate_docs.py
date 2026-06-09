@@ -744,20 +744,23 @@ def page(title, body, extra_head=""):
         width: 100%;
         min-width: 0;
         border-collapse: separate;
-        border-spacing: 0 8px;
+        border-spacing: 0;
         font-size: 13px;
       }}
       thead {{ display: none; }}
-      tbody,
       tr,
       td {{
         display: block;
       }}
+      tbody {{
+        display: grid;
+        gap: 8px;
+      }}
       tr {{
         overflow: clip;
-        border: 1px solid var(--line);
         border-radius: 8px;
         background: var(--surface);
+        box-shadow: inset 0 0 0 1px var(--line);
       }}
       td {{
         display: grid;
@@ -765,10 +768,10 @@ def page(title, body, extra_head=""):
         gap: 10px;
         align-items: start;
         padding: 9px 10px;
-        border-bottom: 1px solid var(--line);
+        border-bottom: 0;
         overflow-wrap: anywhere;
       }}
-      td:last-child {{ border-bottom: 0; }}
+      td:not(:last-child) {{ border-bottom: 1px solid var(--line); }}
       td::before {{
         content: attr(data-label);
         color: var(--muted);
@@ -1600,7 +1603,8 @@ def generate_docs(data_path, out_dir, render_d2=False, rendered_d2_ids=None):
                 d2_file.write_text(render_d2_diagram(diagram, actors_by_id, apis), encoding="utf-8")
                 d2_files.append(d2_file)
 
-    rendered_ids = set(rendered_d2_ids or [])
+    rendered_ids = {path.stem for path in diagrams_dir.glob("*.svg")}
+    rendered_ids |= set(rendered_d2_ids or [])
     if render_d2:
         rendered_ids |= render_d2_svgs(d2_files)
 

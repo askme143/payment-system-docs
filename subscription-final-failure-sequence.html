@@ -528,20 +528,23 @@
         width: 100%;
         min-width: 0;
         border-collapse: separate;
-        border-spacing: 0 8px;
+        border-spacing: 0;
         font-size: 13px;
       }
       thead { display: none; }
-      tbody,
       tr,
       td {
         display: block;
       }
+      tbody {
+        display: grid;
+        gap: 8px;
+      }
       tr {
         overflow: clip;
-        border: 1px solid var(--line);
         border-radius: 8px;
         background: var(--surface);
+        box-shadow: inset 0 0 0 1px var(--line);
       }
       td {
         display: grid;
@@ -549,10 +552,10 @@
         gap: 10px;
         align-items: start;
         padding: 9px 10px;
-        border-bottom: 1px solid var(--line);
+        border-bottom: 0;
         overflow-wrap: anywhere;
       }
-      td:last-child { border-bottom: 0; }
+      td:not(:last-child) { border-bottom: 1px solid var(--line); }
       td::before {
         content: attr(data-label);
         color: var(--muted);
@@ -650,7 +653,10 @@
   <p>마지막 자동 재시도까지 실패하면 인보이스를 final_failed로 확정하고 구독을 canceled로 종료한 뒤 재구독 안내 메일을 발송합니다.</p>
   <div class="diagram"><div class="d2-diagram">
   <div class="d2-toolbar"><a href="diagrams/subscription-final-failure-final-failure-cancel.d2">D2 원본</a></div>
-  <pre class="d2-source"><code>diagram: {
+  <img class="d2-svg" src="diagrams/subscription-final-failure-final-failure-cancel.svg" alt="최종 실패 후 즉시 구독 종료">
+  <details class="d2-details">
+    <summary>D2 원본 보기</summary>
+    <pre class="d2-source"><code>diagram: {
   shape: sequence_diagram
   label: &quot;최종 실패 후 즉시 구독 종료&quot;
 
@@ -720,6 +726,7 @@ invoiceId, failureReason, canceledAt, resubscribeUrl 포함
   }
 }
 </code></pre>
+  </details>
 </div></div>
 </section>
   <section id="states">

@@ -528,20 +528,23 @@
         width: 100%;
         min-width: 0;
         border-collapse: separate;
-        border-spacing: 0 8px;
+        border-spacing: 0;
         font-size: 13px;
       }
       thead { display: none; }
-      tbody,
       tr,
       td {
         display: block;
       }
+      tbody {
+        display: grid;
+        gap: 8px;
+      }
       tr {
         overflow: clip;
-        border: 1px solid var(--line);
         border-radius: 8px;
         background: var(--surface);
+        box-shadow: inset 0 0 0 1px var(--line);
       }
       td {
         display: grid;
@@ -549,10 +552,10 @@
         gap: 10px;
         align-items: start;
         padding: 9px 10px;
-        border-bottom: 1px solid var(--line);
+        border-bottom: 0;
         overflow-wrap: anywhere;
       }
-      td:last-child { border-bottom: 0; }
+      td:not(:last-child) { border-bottom: 1px solid var(--line); }
       td::before {
         content: attr(data-label);
         color: var(--muted);
@@ -653,7 +656,10 @@
   <p>회원이 새 카드를 빌링 인증하고, 서버가 토스에서 새 빌링키를 발급받아 결제수단으로 저장하는 흐름입니다.</p>
   <div class="diagram"><div class="d2-diagram">
   <div class="d2-toolbar"><a href="diagrams/billing-method-management-billing-method-add.d2">D2 원본</a></div>
-  <pre class="d2-source"><code>diagram: {
+  <img class="d2-svg" src="diagrams/billing-method-management-billing-method-add.svg" alt="결제 수단 추가">
+  <details class="d2-details">
+    <summary>D2 원본 보기</summary>
+    <pre class="d2-source"><code>diagram: {
   shape: sequence_diagram
   label: &quot;결제 수단 추가&quot;
 
@@ -779,13 +785,17 @@ billingMethodId, isDefault, displayName
   }
 }
 </code></pre>
+  </details>
 </div></div>
 </section><section id="billing-method-set-default">
   <h2>기본 결제수단 지정</h2>
   <p>활성 결제수단 중 하나를 모든 상품 구독의 다음 정기결제에 사용할 공통 기본 결제수단으로 지정하는 흐름입니다.</p>
   <div class="diagram"><div class="d2-diagram">
   <div class="d2-toolbar"><a href="diagrams/billing-method-management-billing-method-set-default.d2">D2 원본</a></div>
-  <pre class="d2-source"><code>diagram: {
+  <img class="d2-svg" src="diagrams/billing-method-management-billing-method-set-default.svg" alt="기본 결제수단 지정">
+  <details class="d2-details">
+    <summary>D2 원본 보기</summary>
+    <pre class="d2-source"><code>diagram: {
   shape: sequence_diagram
   label: &quot;기본 결제수단 지정&quot;
 
@@ -848,13 +858,17 @@ billingMethodId, isDefault=true
   }
 }
 </code></pre>
+  </details>
 </div></div>
 </section><section id="billing-method-delete">
   <h2>결제 수단 삭제</h2>
   <p>회원이 사용하지 않는 결제수단을 비활성화하되, 활성 구독이 1개 이상 있는 회원은 공통 결제수단이 최소 1개 남아야 합니다.</p>
   <div class="diagram"><div class="d2-diagram">
   <div class="d2-toolbar"><a href="diagrams/billing-method-management-billing-method-delete.d2">D2 원본</a></div>
-  <pre class="d2-source"><code>diagram: {
+  <img class="d2-svg" src="diagrams/billing-method-management-billing-method-delete.svg" alt="결제 수단 삭제">
+  <details class="d2-details">
+    <summary>D2 원본 보기</summary>
+    <pre class="d2-source"><code>diagram: {
   shape: sequence_diagram
   label: &quot;결제 수단 삭제&quot;
 
@@ -919,6 +933,7 @@ deleted=true 또는 409 errorCode
   }
 }
 </code></pre>
+  </details>
 </div></div>
 </section>
   <section id="states">

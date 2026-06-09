@@ -528,20 +528,23 @@
         width: 100%;
         min-width: 0;
         border-collapse: separate;
-        border-spacing: 0 8px;
+        border-spacing: 0;
         font-size: 13px;
       }
       thead { display: none; }
-      tbody,
       tr,
       td {
         display: block;
       }
+      tbody {
+        display: grid;
+        gap: 8px;
+      }
       tr {
         overflow: clip;
-        border: 1px solid var(--line);
         border-radius: 8px;
         background: var(--surface);
+        box-shadow: inset 0 0 0 1px var(--line);
       }
       td {
         display: grid;
@@ -549,10 +552,10 @@
         gap: 10px;
         align-items: start;
         padding: 9px 10px;
-        border-bottom: 1px solid var(--line);
+        border-bottom: 0;
         overflow-wrap: anywhere;
       }
-      td:last-child { border-bottom: 0; }
+      td:not(:last-child) { border-bottom: 1px solid var(--line); }
       td::before {
         content: attr(data-label);
         color: var(--muted);
@@ -653,7 +656,10 @@
   <p>로그인하지 않았거나, 상품을 구매할 수 없거나, 서버가 계산한 금액을 확정할 수 없는 경우입니다.</p>
   <div class="diagram"><div class="d2-diagram">
   <div class="d2-toolbar"><a href="diagrams/one-time-payment-failure-one-time-order-fail.d2">D2 원본</a></div>
-  <pre class="d2-source"><code>diagram: {
+  <img class="d2-svg" src="diagrams/one-time-payment-failure-one-time-order-fail.svg" alt="일반결제 주문 생성 실패">
+  <details class="d2-details">
+    <summary>D2 원본 보기</summary>
+    <pre class="d2-source"><code>diagram: {
   shape: sequence_diagram
   label: &quot;일반결제 주문 생성 실패&quot;
 
@@ -694,13 +700,17 @@ items, successUrl, failUrl
   }
 }
 </code></pre>
+  </details>
 </div></div>
 </section><section id="one-time-user-cancel">
   <h2>사용자 결제 취소</h2>
   <p>사용자가 토스 결제창에서 닫기 또는 취소를 선택한 경우입니다. 카드사 거절 같은 결제 실패와 분리해 구매 포기 지표로 관리합니다.</p>
   <div class="diagram"><div class="d2-diagram">
   <div class="d2-toolbar"><a href="diagrams/one-time-payment-failure-one-time-user-cancel.d2">D2 원본</a></div>
-  <pre class="d2-source"><code>diagram: {
+  <img class="d2-svg" src="diagrams/one-time-payment-failure-one-time-user-cancel.svg" alt="사용자 결제 취소">
+  <details class="d2-details">
+    <summary>D2 원본 보기</summary>
+    <pre class="d2-source"><code>diagram: {
   shape: sequence_diagram
   label: &quot;사용자 결제 취소&quot;
 
@@ -754,13 +764,17 @@ ready 시도를 failed로 변경하고 failure.reason=user_canceled 저장
   server.note_5: &quot;사용자 취소 상태 저장\npayment.status = failed, failure.reason=user_canceled\n재시도 가능하지만 기존 paymentId/orderId는 재사용하지 않음&quot;
 }
 </code></pre>
+  </details>
 </div></div>
 </section><section id="one-time-auth-fail">
   <h2>결제수단 인증 실패</h2>
   <p>카드 인증 실패, 앱카드 인증 실패, 결제수단 오류처럼 사용자의 취소가 아닌 인증 실패입니다.</p>
   <div class="diagram"><div class="d2-diagram">
   <div class="d2-toolbar"><a href="diagrams/one-time-payment-failure-one-time-auth-fail.d2">D2 원본</a></div>
-  <pre class="d2-source"><code>diagram: {
+  <img class="d2-svg" src="diagrams/one-time-payment-failure-one-time-auth-fail.svg" alt="결제수단 인증 실패">
+  <details class="d2-details">
+    <summary>D2 원본 보기</summary>
+    <pre class="d2-source"><code>diagram: {
   shape: sequence_diagram
   label: &quot;결제수단 인증 실패&quot;
 
@@ -813,13 +827,17 @@ ready 시도를 failed로 변경하고 failure.reason=auth_failed 저장
   }
 }
 </code></pre>
+  </details>
 </div></div>
 </section><section id="one-time-confirm-validation-fail">
   <h2>결제 승인 전 서버 검증 실패</h2>
   <p>successUrl로 돌아온 값이 내부 결제 시도와 맞지 않거나 이미 처리된 시도인 경우입니다. 금액 변조나 중복 승인 가능성이 있으면 현재 시도를 실패로 닫습니다.</p>
   <div class="diagram"><div class="d2-diagram">
   <div class="d2-toolbar"><a href="diagrams/one-time-payment-failure-one-time-confirm-validation-fail.d2">D2 원본</a></div>
-  <pre class="d2-source"><code>diagram: {
+  <img class="d2-svg" src="diagrams/one-time-payment-failure-one-time-confirm-validation-fail.svg" alt="결제 승인 전 서버 검증 실패">
+  <details class="d2-details">
+    <summary>D2 원본 보기</summary>
+    <pre class="d2-source"><code>diagram: {
   shape: sequence_diagram
   label: &quot;결제 승인 전 서버 검증 실패&quot;
 
@@ -861,13 +879,17 @@ PAYMENT_CONFIRM_VALIDATION_FAILED
   server.note_4: &quot;검증 실패 상태 저장\npayment.status=failed, failure.reason=validation_failed\n명백한 재시도는 새 paymentId/orderId로만 진행&quot;
 }
 </code></pre>
+  </details>
 </div></div>
 </section><section id="one-time-auth-result-missing-expire">
   <h2>결제창 실패 결과 미보고 및 만료</h2>
   <p>토스가 failUrl로 보냈지만 프론트의 실패 결과 기록 API 호출이 실패하거나 사용자가 이탈한 경우입니다.</p>
   <div class="diagram"><div class="d2-diagram">
   <div class="d2-toolbar"><a href="diagrams/one-time-payment-failure-one-time-auth-result-missing-expire.d2">D2 원본</a></div>
-  <pre class="d2-source"><code>diagram: {
+  <img class="d2-svg" src="diagrams/one-time-payment-failure-one-time-auth-result-missing-expire.svg" alt="결제창 실패 결과 미보고 및 만료">
+  <details class="d2-details">
+    <summary>D2 원본 보기</summary>
+    <pre class="d2-source"><code>diagram: {
   shape: sequence_diagram
   label: &quot;결제창 실패 결과 미보고 및 만료&quot;
 
@@ -909,13 +931,17 @@ status=expired, failure.reason=auth_result_not_reported
   }
 }
 </code></pre>
+  </details>
 </div></div>
 </section><section id="one-time-toss-confirm-fail">
   <h2>토스 일반결제 승인 실패</h2>
   <p>서버 검증은 통과했지만 토스 결제 승인 API에서 결제가 거절되거나 인증 시간이 만료된 경우입니다.</p>
   <div class="diagram"><div class="d2-diagram">
   <div class="d2-toolbar"><a href="diagrams/one-time-payment-failure-one-time-toss-confirm-fail.d2">D2 원본</a></div>
-  <pre class="d2-source"><code>diagram: {
+  <img class="d2-svg" src="diagrams/one-time-payment-failure-one-time-toss-confirm-fail.svg" alt="토스 일반결제 승인 실패">
+  <details class="d2-details">
+    <summary>D2 원본 보기</summary>
+    <pre class="d2-source"><code>diagram: {
   shape: sequence_diagram
   label: &quot;토스 일반결제 승인 실패&quot;
 
@@ -992,13 +1018,17 @@ REJECT_CARD_COMPANY / NOT_FOUND_PAYMENT / INVALID_REQUEST
   }
 }
 </code></pre>
+  </details>
 </div></div>
 </section><section id="one-time-payment-retry">
   <h2>실패 후 다른 결제수단으로 재시도</h2>
   <p>사용자가 실패 화면에서 결제 버튼을 다시 누르면 기존 실패 시도를 재사용하지 않고 같은 checkoutId 아래 새 paymentId와 새 orderId를 발급합니다.</p>
   <div class="diagram"><div class="d2-diagram">
   <div class="d2-toolbar"><a href="diagrams/one-time-payment-failure-one-time-payment-retry.d2">D2 원본</a></div>
-  <pre class="d2-source"><code>diagram: {
+  <img class="d2-svg" src="diagrams/one-time-payment-failure-one-time-payment-retry.svg" alt="실패 후 다른 결제수단으로 재시도">
+  <details class="d2-details">
+    <summary>D2 원본 보기</summary>
+    <pre class="d2-source"><code>diagram: {
   shape: sequence_diagram
   label: &quot;실패 후 다른 결제수단으로 재시도&quot;
 
@@ -1065,13 +1095,17 @@ pay_002, ord_002, paymentKey
   server.note_7: &quot;재시도 성공 시 checkout 완료\ncheckout.status=paid, payment.status=paid\n이전 시도들은 failed/expired 이력으로 유지&quot;
 }
 </code></pre>
+  </details>
 </div></div>
 </section><section id="one-time-webhook-fail">
   <h2>일반결제 웹훅 실패 또는 중복 이벤트</h2>
   <p>웹훅 서명 검증에 실패했거나 이미 처리한 결제 이벤트가 다시 도착한 경우입니다.</p>
   <div class="diagram"><div class="d2-diagram">
   <div class="d2-toolbar"><a href="diagrams/one-time-payment-failure-one-time-webhook-fail.d2">D2 원본</a></div>
-  <pre class="d2-source"><code>diagram: {
+  <img class="d2-svg" src="diagrams/one-time-payment-failure-one-time-webhook-fail.svg" alt="일반결제 웹훅 실패 또는 중복 이벤트">
+  <details class="d2-details">
+    <summary>D2 원본 보기</summary>
+    <pre class="d2-source"><code>diagram: {
   shape: sequence_diagram
   label: &quot;일반결제 웹훅 실패 또는 중복 이벤트&quot;
 
@@ -1096,6 +1130,7 @@ pay_002, ord_002, paymentKey
   server.note_3: &quot;중복 이벤트\n이미 처리됨: 변경 없이 200 OK\npaymentKey와 eventId 기준으로 중복 처리 방지&quot;
 }
 </code></pre>
+  </details>
 </div></div>
 </section>
   <section id="states">
