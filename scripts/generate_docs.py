@@ -219,7 +219,6 @@ def page(title, body, extra_head=""):
     * {{ box-sizing: border-box; }}
     html {{
       max-width: 100%;
-      overflow-x: hidden;
       scroll-behavior: smooth;
       -webkit-text-size-adjust: 100%;
       text-size-adjust: 100%;
@@ -228,7 +227,6 @@ def page(title, body, extra_head=""):
       width: 100%;
       max-width: 100%;
       margin: 0;
-      overflow-x: hidden;
       color: var(--ink);
       background: var(--bg);
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
@@ -475,7 +473,6 @@ def page(title, body, extra_head=""):
     @media (max-width: 900px) {{
       header {{
         width: 100%;
-        overflow: hidden;
       }}
       .layout {{ grid-template-columns: 1fr; }}
       nav {{
@@ -547,7 +544,6 @@ def page(title, body, extra_head=""):
       section {{
         max-width: 100%;
         padding: 18px;
-        overflow: hidden;
       }}
       section,
       .card,
