@@ -68,6 +68,8 @@ class GenerateDocsTest(unittest.TestCase):
         self.assertEqual(active_subscription["fields"], ["user_id", "product_code"])
         self.assertTrue(active_subscription["unique"])
         self.assertEqual(active_subscription["partialFilterExpression"], {"status": {"$in": ["pending", "active", "past_due", "cancel_scheduled"]}})
+        subscription_fields = {field["name"] for field in subscriptions["fields"]}
+        self.assertNotIn("billing_method_id", subscription_fields)
 
         default_method = self._index_by_name(billing_methods, "uniq_billing_methods_active_default")
         self.assertEqual(default_method["fields"], ["user_id", "is_default"])
@@ -191,6 +193,7 @@ class GenerateDocsTest(unittest.TestCase):
         self.assertIn(("operator_audits.idempotency_key_id", "idempotency_keys._id"), relationships)
         self.assertIn(("operator_audits.operator_id", "users._id"), relationships)
         self.assertIn(("invoices.subscription_id", "subscriptions._id"), relationships)
+        self.assertNotIn(("subscriptions.billing_method_id", "billing_methods._id"), relationships)
 
     def test_documentation_includes_core_mongodb_collections(self):
         data = json.loads(Path("docs-data/documentation.json").read_text(encoding="utf-8"))

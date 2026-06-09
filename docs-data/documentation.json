@@ -8259,13 +8259,6 @@
             "description": "구독의 현재 상태입니다."
           },
           {
-            "name": "billing_method_id",
-            "type": "ObjectId",
-            "required": false,
-            "ref": "billing_methods._id",
-            "description": "자동결제에 사용할 기본 결제수단입니다."
-          },
-          {
             "name": "next_billing_at",
             "type": "Date",
             "required": false,
@@ -9326,12 +9319,6 @@
         "to": "subscription_plans._id",
         "type": "reference",
         "description": "구독은 현재 적용 중인 구독 플랜을 참조합니다."
-      },
-      {
-        "from": "subscriptions.billing_method_id",
-        "to": "billing_methods._id",
-        "type": "reference",
-        "description": "활성 구독은 기본 결제수단을 참조합니다."
       },
       {
         "from": "billing_methods.payment_customer_id",
