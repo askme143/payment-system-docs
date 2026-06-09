@@ -2137,7 +2137,7 @@
         "회원 인증 후 결제수단 등록 가능 상태인지 확인합니다.",
         "successUrl과 failUrl이 허용된 서비스 도메인인지 검증합니다.",
         "paymentCustomers에서 토스 customerKey를 조회하거나 없으면 새로 생성하고, 토스 빌링 인증용 orderId를 생성합니다.",
-        "billingAuthId, paymentCustomerId, customerKey 스냅샷, orderId, setAsDefault, status=ready, 만료 시각을 저장합니다.",
+        "billingAuthId, paymentCustomerId, customer_key_snapshot, orderId, setAsDefault, status=ready, 만료 시각을 저장합니다.",
         "현재 활성 결제수단이 없으면 setAsDefault=false 요청이어도 새 결제수단을 기본값으로 지정하도록 예약합니다.",
         "프론트가 토스 SDK의 빌링 인증을 시작할 수 있도록 clientKey, customerKey, orderId, successUrl, failUrl을 반환합니다."
       ],
@@ -2193,7 +2193,7 @@
           {
             "name": "customerKey",
             "required": true,
-            "description": "토스 빌링 인증 성공 리다이렉트로 받은 고객 키입니다. billingAuths의 customerKey 스냅샷과 일치해야 합니다."
+            "description": "토스 빌링 인증 성공 리다이렉트로 받은 고객 키입니다. billingAuths.customer_key_snapshot과 일치해야 합니다."
           }
         ],
         "bodyExample": {
@@ -2264,7 +2264,7 @@
       ],
       "logic": [
         "회원 인증 후 billingAuthId가 현재 회원의 ready 상태 인증 시도인지 확인합니다.",
-        "request.customerKey가 billingAuths.customerKey 스냅샷 및 paymentCustomers.customerKey와 일치하는지 검증합니다.",
+        "request.customerKey가 billingAuths.customer_key_snapshot 및 paymentCustomers.customerKey와 일치하는지 검증합니다.",
         "Idempotency-Key 또는 billingAuthId 기준으로 이미 저장된 결제수단이 있으면 기존 결과를 반환합니다.",
         "검증을 통과한 경우에만 토스페이먼츠 빌링키 발급 API POST /v1/billing/authorizations/issue를 호출합니다.",
         "토스 응답의 billingKey는 paymentInstruments에 암호화 저장하고, billingMethods에는 카드사와 마스킹 번호 같은 표시용 정보만 저장합니다.",
@@ -8161,10 +8161,10 @@
             "description": "빌링 인증에 사용할 PG 고객 식별자 문서입니다."
           },
           {
-            "name": "customer_key",
+            "name": "customer_key_snapshot",
             "type": "string",
             "required": true,
-            "description": "리다이렉트 검증을 위해 인증 시점에 사용한 customer_key 스냅샷입니다."
+            "description": "리다이렉트 검증을 위해 인증 시점에 사용한 토스 customerKey 스냅샷입니다."
           },
           {
             "name": "order_id",
