@@ -30,6 +30,7 @@
       scroll-behavior: smooth;
       -webkit-text-size-adjust: 100%;
       text-size-adjust: 100%;
+      overflow-x: clip;
     }
     body {
       width: 100%;
@@ -41,6 +42,7 @@
       line-height: 1.58;
       -webkit-text-size-adjust: 100%;
       text-size-adjust: 100%;
+      overflow-x: clip;
     }
     .skip-link {
       position: absolute;
@@ -351,20 +353,28 @@
       header {
         width: 100%;
       }
-      .layout { grid-template-columns: 1fr; }
+      .layout {
+        grid-template-columns: minmax(0, 1fr);
+      }
+      .layout > nav,
+      .layout > div {
+        min-width: 0;
+        max-width: 100%;
+      }
       nav {
         position: sticky;
         top: 0;
         z-index: 4;
         display: flex;
         gap: 8px;
+        width: 100%;
+        max-width: 100%;
         max-height: none;
-        margin-inline: -12px;
-        padding: 10px 12px;
+        margin-inline: 0;
+        padding: 10px 0;
         overflow-x: auto;
         overflow-y: hidden;
         border-radius: 0;
-        border-inline: 0;
         box-shadow: 0 8px 18px rgba(20, 35, 55, 0.08);
         scrollbar-width: thin;
       }
@@ -413,7 +423,8 @@
       }
       .top-links a {
         min-height: 44px;
-        flex: 1 1 220px;
+        flex: 1 1 100%;
+        min-width: 0;
         justify-content: center;
         text-align: center;
       }
@@ -438,12 +449,48 @@
         word-break: break-word;
       }
       .table-scroll {
-        margin-inline: -2px;
+        max-width: 100%;
+        overflow-x: visible;
+        border: 0;
         -webkit-overflow-scrolling: touch;
       }
-      table { min-width: 560px; font-size: 13px; }
-      table.has-many-columns { min-width: 720px; }
-      th, td { padding: 10px 11px; }
+      table,
+      table.has-many-columns {
+        width: 100%;
+        min-width: 0;
+        border-collapse: separate;
+        border-spacing: 0 8px;
+        font-size: 13px;
+      }
+      thead { display: none; }
+      tbody,
+      tr,
+      td {
+        display: block;
+      }
+      tr {
+        overflow: clip;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: var(--surface);
+      }
+      td {
+        display: grid;
+        grid-template-columns: minmax(82px, 32%) minmax(0, 1fr);
+        gap: 10px;
+        align-items: start;
+        padding: 9px 10px;
+        border-bottom: 1px solid var(--line);
+        overflow-wrap: anywhere;
+      }
+      td:last-child { border-bottom: 0; }
+      td::before {
+        content: attr(data-label);
+        color: var(--muted);
+        font-size: 12px;
+        font-weight: 800;
+        line-height: 1.45;
+      }
       pre {
         font-size: 12px;
         -webkit-overflow-scrolling: touch;
@@ -487,12 +534,14 @@
         margin-bottom: 16px;
       }
       nav {
-        margin-inline: -6px;
-        padding-inline: 8px;
+        padding-inline: 0;
       }
       nav a { max-width: 78vw; }
-      table { min-width: 540px; }
-      table.has-many-columns { min-width: 680px; }
+      td {
+        grid-template-columns: minmax(72px, 30%) minmax(0, 1fr);
+        gap: 8px;
+        padding: 8px 9px;
+      }
       .d2-svg { width: 820px; }
     }
     @media (prefers-reduced-motion: reduce) {
@@ -517,7 +566,7 @@
     <div class="search-panel">
       <input type="search" data-doc-search aria-label="문서 검색" placeholder="API, 상태, 컬렉션, 플로우 검색">
     </div>
-    <p class="top-links"><a href="./sequence-index.html">전체 시퀀스 목록</a><a href="./all-api-doc.html">전체 API 목록</a><a href="./database-doc.html">MongoDB 구조 문서</a></p>
+    <p class="top-links"><a href="./sequence-index.html">전체 시퀀스 목록</a><a href="./all-api-doc.html">전체 API 목록</a><a href="./database-doc.html">MongoDB 구조 문서</a><a href="./risk-register-doc.html">결제 시스템 잠재 위험 및 대응 문서</a></p>
     </div>
   </div>
 </header>
@@ -525,11 +574,11 @@
   <h2><code>GET /plans</code></h2>
   <p>구독 체크아웃이나 플랜 변경 화면에서 사용자가 선택할 수 있는 공개 상품/구독 플랜 목록을 조회하는 API입니다. 판매 중인 구독상품과 활성 플랜만 반환하며, 결제 금액은 이후 체크아웃 또는 플랜 변경 미리보기 API에서 서버가 다시 계산합니다.</p>
   <h3>Header</h3>
-<div class="table-scroll"><table><thead><tr><th>이름</th><th>필수</th><th>설명</th></tr></thead><tbody><tr><td><code>Authorization</code></td><td>아니오</td><td>로그인 사용자의 현재 구독 여부나 변경 가능 여부를 함께 표시해야 할 때 사용합니다.</td></tr></tbody></table></div>
+<div class="table-scroll"><table><thead><tr><th>이름</th><th>필수</th><th>설명</th></tr></thead><tbody><tr><td data-label="이름"><code>Authorization</code></td><td data-label="필수">아니오</td><td data-label="설명">로그인 사용자의 현재 구독 여부나 변경 가능 여부를 함께 표시해야 할 때 사용합니다.</td></tr></tbody></table></div>
   <h3>Cookie</h3>
-<div class="table-scroll"><table><thead><tr><th>이름</th><th>필수</th><th>설명</th></tr></thead><tbody><tr><td><code>session</code></td><td>아니오</td><td>로그인 상태라면 현재 회원의 활성 구독, 변경 가능 플랜, 신규 가입 제한 표시를 보정하는 데 사용합니다.</td></tr></tbody></table></div>
+<div class="table-scroll"><table><thead><tr><th>이름</th><th>필수</th><th>설명</th></tr></thead><tbody><tr><td data-label="이름"><code>session</code></td><td data-label="필수">아니오</td><td data-label="설명">로그인 상태라면 현재 회원의 활성 구독, 변경 가능 플랜, 신규 가입 제한 표시를 보정하는 데 사용합니다.</td></tr></tbody></table></div>
   <h3>Body</h3><pre><code>요청 바디 없음</code></pre>
-  <h3>프론트 입력값</h3><div class="table-scroll"><table><thead><tr><th>값</th><th>출처</th><th>설명</th></tr></thead><tbody><tr><td><code>productCode</code></td><td>query</td><td>특정 상품군의 플랜만 조회할 때 사용합니다. 생략하면 공개 가능한 구독상품 전체를 반환합니다.</td></tr><tr><td><code>billingPeriod</code></td><td>query</td><td>monthly, yearly 같은 결제 주기 필터입니다.</td></tr><tr><td><code>includeUnavailable</code></td><td>query</td><td>true이면 로그인 사용자에게 선택 불가 사유를 표시하기 위해 비활성 후보를 제한적으로 포함합니다. 기본값은 false입니다.</td></tr></tbody></table></div>
+  <h3>프론트 입력값</h3><div class="table-scroll"><table><thead><tr><th>값</th><th>출처</th><th>설명</th></tr></thead><tbody><tr><td data-label="값"><code>productCode</code></td><td data-label="출처">query</td><td data-label="설명">특정 상품군의 플랜만 조회할 때 사용합니다. 생략하면 공개 가능한 구독상품 전체를 반환합니다.</td></tr><tr><td data-label="값"><code>billingPeriod</code></td><td data-label="출처">query</td><td data-label="설명">monthly, yearly 같은 결제 주기 필터입니다.</td></tr><tr><td data-label="값"><code>includeUnavailable</code></td><td data-label="출처">query</td><td data-label="설명">true이면 로그인 사용자에게 선택 불가 사유를 표시하기 위해 비활성 후보를 제한적으로 포함합니다. 기본값은 false입니다.</td></tr></tbody></table></div>
   <h3>Response 200</h3><p>구매 가능한 구독 플랜 목록 조회 성공</p><pre><code>{
   &quot;items&quot;: [
     {
@@ -564,11 +613,11 @@
   <h2><code>GET /plans/{planId}</code></h2>
   <p>선택한 단일 구독 플랜의 가격, 결제 주기, 권한, 판매 가능 상태를 조회하는 API입니다. 플랜 상세 화면, 딥링크, 체크아웃 직전 확인, 플랜 변경 미리보기 전 안내에 사용합니다.</p>
   <h3>Header</h3>
-<div class="table-scroll"><table><thead><tr><th>이름</th><th>필수</th><th>설명</th></tr></thead><tbody><tr><td><code>Authorization</code></td><td>아니오</td><td>로그인 사용자의 현재 구독과 비교한 선택 가능 여부를 함께 표시해야 할 때 사용합니다.</td></tr></tbody></table></div>
+<div class="table-scroll"><table><thead><tr><th>이름</th><th>필수</th><th>설명</th></tr></thead><tbody><tr><td data-label="이름"><code>Authorization</code></td><td data-label="필수">아니오</td><td data-label="설명">로그인 사용자의 현재 구독과 비교한 선택 가능 여부를 함께 표시해야 할 때 사용합니다.</td></tr></tbody></table></div>
   <h3>Cookie</h3>
-<div class="table-scroll"><table><thead><tr><th>이름</th><th>필수</th><th>설명</th></tr></thead><tbody><tr><td><code>session</code></td><td>아니오</td><td>로그인 상태라면 현재 회원의 상품별 구독 상태와 중복 가입 가능 여부를 확인합니다.</td></tr></tbody></table></div>
+<div class="table-scroll"><table><thead><tr><th>이름</th><th>필수</th><th>설명</th></tr></thead><tbody><tr><td data-label="이름"><code>session</code></td><td data-label="필수">아니오</td><td data-label="설명">로그인 상태라면 현재 회원의 상품별 구독 상태와 중복 가입 가능 여부를 확인합니다.</td></tr></tbody></table></div>
   <h3>Body</h3><pre><code>요청 바디 없음</code></pre>
-  <h3>프론트 입력값</h3><div class="table-scroll"><table><thead><tr><th>값</th><th>출처</th><th>설명</th></tr></thead><tbody><tr><td><code>planId</code></td><td>path</td><td>조회할 구독 플랜 ID입니다.</td></tr></tbody></table></div>
+  <h3>프론트 입력값</h3><div class="table-scroll"><table><thead><tr><th>값</th><th>출처</th><th>설명</th></tr></thead><tbody><tr><td data-label="값"><code>planId</code></td><td data-label="출처">path</td><td data-label="설명">조회할 구독 플랜 ID입니다.</td></tr></tbody></table></div>
   <h3>Response 200</h3><p>플랜 상세 조회 성공</p><pre><code>{
   &quot;productId&quot;: &quot;prod_analytics&quot;,
   &quot;productCode&quot;: &quot;analytics&quot;,
@@ -606,10 +655,14 @@
 </section><section id="payments-orders">
   <h2><code>POST /payments/orders</code></h2>
   <p>프론트가 일반결제 결제창을 열기 전에 서버가 구매 가능 여부와 최종 금액을 검증하고, 구매 의도(checkoutId) 아래 새 결제 시도를 생성하는 API입니다.</p>
+  <div class="note">
+  <strong>연관 잠재 위험</strong>
+  <ul><li><a href="./risk-register-doc.html#checkout-multiple-paid-attempts"><code>checkout-multiple-paid-attempts</code></a> 하나의 구매 의도에 여러 paid 시도 발생</li><li><a href="./risk-register-doc.html#idempotency-store-missing"><code>idempotency-store-missing</code></a> 멱등키 저장소 부재</li></ul>
+</div>
   <h3>Header</h3>
-<div class="table-scroll"><table><thead><tr><th>이름</th><th>필수</th><th>설명</th></tr></thead><tbody><tr><td><code>Content-Type</code></td><td>예</td><td>application/json</td></tr><tr><td><code>Authorization</code></td><td>아니오</td><td>세션 쿠키 대신 Bearer 토큰을 쓰는 경우 사용합니다.</td></tr><tr><td><code>Idempotency-Key</code></td><td>아니오</td><td>주문 생성 버튼 중복 클릭으로 같은 주문이 여러 번 생성되지 않도록 사용합니다.</td></tr></tbody></table></div>
+<div class="table-scroll"><table><thead><tr><th>이름</th><th>필수</th><th>설명</th></tr></thead><tbody><tr><td data-label="이름"><code>Content-Type</code></td><td data-label="필수">예</td><td data-label="설명">application/json</td></tr><tr><td data-label="이름"><code>Authorization</code></td><td data-label="필수">아니오</td><td data-label="설명">세션 쿠키 대신 Bearer 토큰을 쓰는 경우 사용합니다.</td></tr><tr><td data-label="이름"><code>Idempotency-Key</code></td><td data-label="필수">아니오</td><td data-label="설명">주문 생성 버튼 중복 클릭으로 같은 주문이 여러 번 생성되지 않도록 사용합니다.</td></tr></tbody></table></div>
   <h3>Cookie</h3>
-<div class="table-scroll"><table><thead><tr><th>이름</th><th>필수</th><th>설명</th></tr></thead><tbody><tr><td><code>session</code></td><td>예</td><td>주문을 생성하는 회원을 식별합니다.</td></tr><tr><td><code>csrf_token</code></td><td>아니오</td><td>쿠키 기반 인증을 쓰는 경우 요청 위조를 방지합니다.</td></tr></tbody></table></div>
+<div class="table-scroll"><table><thead><tr><th>이름</th><th>필수</th><th>설명</th></tr></thead><tbody><tr><td data-label="이름"><code>session</code></td><td data-label="필수">예</td><td data-label="설명">주문을 생성하는 회원을 식별합니다.</td></tr><tr><td data-label="이름"><code>csrf_token</code></td><td data-label="필수">아니오</td><td data-label="설명">쿠키 기반 인증을 쓰는 경우 요청 위조를 방지합니다.</td></tr></tbody></table></div>
   <h3>Body</h3><pre><code>{
   &quot;items&quot;: [
     {
@@ -622,7 +675,7 @@
   &quot;checkoutId&quot;: &quot;chk_123&quot;
 }</code></pre>
   <h3>Body 필드</h3>
-<div class="table-scroll"><table><thead><tr><th>이름</th><th>필수</th><th>설명</th></tr></thead><tbody><tr><td><code>items</code></td><td>예</td><td>구매하려는 상품 목록입니다. 서버는 상품 ID와 수량만 신뢰하고 가격은 서버 데이터로 다시 계산합니다.</td></tr><tr><td><code>successUrl</code></td><td>예</td><td>토스 결제창 인증 성공 후 돌아올 프론트 URL입니다.</td></tr><tr><td><code>failUrl</code></td><td>예</td><td>토스 결제창 인증 실패 후 돌아올 프론트 URL입니다.</td></tr><tr><td><code>checkoutId</code></td><td>아니오</td><td>실패 또는 취소 후 재시도할 때 기존 구매 의도에 새 결제 시도를 추가하기 위해 전달합니다. 첫 시도에서는 생략합니다.</td></tr></tbody></table></div>
+<div class="table-scroll"><table><thead><tr><th>이름</th><th>필수</th><th>설명</th></tr></thead><tbody><tr><td data-label="이름"><code>items</code></td><td data-label="필수">예</td><td data-label="설명">구매하려는 상품 목록입니다. 서버는 상품 ID와 수량만 신뢰하고 가격은 서버 데이터로 다시 계산합니다.</td></tr><tr><td data-label="이름"><code>successUrl</code></td><td data-label="필수">예</td><td data-label="설명">토스 결제창 인증 성공 후 돌아올 프론트 URL입니다.</td></tr><tr><td data-label="이름"><code>failUrl</code></td><td data-label="필수">예</td><td data-label="설명">토스 결제창 인증 실패 후 돌아올 프론트 URL입니다.</td></tr><tr><td data-label="이름"><code>checkoutId</code></td><td data-label="필수">아니오</td><td data-label="설명">실패 또는 취소 후 재시도할 때 기존 구매 의도에 새 결제 시도를 추가하기 위해 전달합니다. 첫 시도에서는 생략합니다.</td></tr></tbody></table></div>
   <h3>Response 201</h3><p>일반결제 결제 시도 생성 성공</p><pre><code>{
   &quot;checkoutId&quot;: &quot;chk_123&quot;,
   &quot;paymentId&quot;: &quot;pay_123&quot;,
@@ -645,10 +698,14 @@
   <h2><code>POST /payments/confirm</code></h2>
   <p>토스 결제창 인증 성공 후 프론트 성공 페이지가 호출하는 일반결제 최종 승인 API입니다.</p>
   <div class="note">토스페이먼츠가 이 API로 직접 POST하지 않습니다. 프론트가 successUrl의 paymentKey, orderId, amount와 보관 중인 paymentId를 조합해 호출합니다.</div>
+  <div class="note">
+  <strong>연관 잠재 위험</strong>
+  <ul><li><a href="./risk-register-doc.html#provider-paid-internal-unpaid"><code>provider-paid-internal-unpaid</code></a> PG 승인 성공 후 내부 미반영</li><li><a href="./risk-register-doc.html#payment-confirm-concurrent-approval"><code>payment-confirm-concurrent-approval</code></a> 일반결제 승인 API 동시 호출</li><li><a href="./risk-register-doc.html#checkout-multiple-paid-attempts"><code>checkout-multiple-paid-attempts</code></a> 하나의 구매 의도에 여러 paid 시도 발생</li><li><a href="./risk-register-doc.html#webhook-out-of-order-or-duplicate"><code>webhook-out-of-order-or-duplicate</code></a> 웹훅 중복 또는 순서 역전</li><li><a href="./risk-register-doc.html#idempotency-store-missing"><code>idempotency-store-missing</code></a> 멱등키 저장소 부재</li></ul>
+</div>
   <h3>Header</h3>
-<div class="table-scroll"><table><thead><tr><th>이름</th><th>필수</th><th>설명</th></tr></thead><tbody><tr><td><code>Content-Type</code></td><td>예</td><td>application/json</td></tr><tr><td><code>Authorization</code></td><td>아니오</td><td>세션 쿠키 대신 Bearer 토큰을 쓰는 경우 사용합니다.</td></tr><tr><td><code>Idempotency-Key</code></td><td>예</td><td>성공 페이지 새로고침이나 네트워크 재시도로 같은 결제가 중복 승인되지 않도록 사용합니다.</td></tr></tbody></table></div>
+<div class="table-scroll"><table><thead><tr><th>이름</th><th>필수</th><th>설명</th></tr></thead><tbody><tr><td data-label="이름"><code>Content-Type</code></td><td data-label="필수">예</td><td data-label="설명">application/json</td></tr><tr><td data-label="이름"><code>Authorization</code></td><td data-label="필수">아니오</td><td data-label="설명">세션 쿠키 대신 Bearer 토큰을 쓰는 경우 사용합니다.</td></tr><tr><td data-label="이름"><code>Idempotency-Key</code></td><td data-label="필수">예</td><td data-label="설명">성공 페이지 새로고침이나 네트워크 재시도로 같은 결제가 중복 승인되지 않도록 사용합니다.</td></tr></tbody></table></div>
   <h3>Cookie</h3>
-<div class="table-scroll"><table><thead><tr><th>이름</th><th>필수</th><th>설명</th></tr></thead><tbody><tr><td><code>session</code></td><td>예</td><td>주문을 생성한 회원과 동일한 회원인지 검증합니다.</td></tr><tr><td><code>csrf_token</code></td><td>아니오</td><td>쿠키 기반 인증을 쓰는 경우 요청 위조를 방지합니다.</td></tr></tbody></table></div>
+<div class="table-scroll"><table><thead><tr><th>이름</th><th>필수</th><th>설명</th></tr></thead><tbody><tr><td data-label="이름"><code>session</code></td><td data-label="필수">예</td><td data-label="설명">주문을 생성한 회원과 동일한 회원인지 검증합니다.</td></tr><tr><td data-label="이름"><code>csrf_token</code></td><td data-label="필수">아니오</td><td data-label="설명">쿠키 기반 인증을 쓰는 경우 요청 위조를 방지합니다.</td></tr></tbody></table></div>
   <h3>Body</h3><pre><code>{
   &quot;paymentId&quot;: &quot;pay_123&quot;,
   &quot;paymentKey&quot;: &quot;paykey_...&quot;,
@@ -656,8 +713,8 @@
   &quot;amount&quot;: 25000
 }</code></pre>
   <h3>Body 필드</h3>
-<div class="table-scroll"><table><thead><tr><th>이름</th><th>필수</th><th>설명</th></tr></thead><tbody><tr><td><code>paymentId</code></td><td>예</td><td>서버가 주문 생성 시 발급한 내부 결제 ID입니다.</td></tr><tr><td><code>paymentKey</code></td><td>예</td><td>토스 성공 리다이렉트로 받은 결제 키입니다.</td></tr><tr><td><code>orderId</code></td><td>예</td><td>토스 성공 리다이렉트로 받은 주문번호입니다. 내부 주문의 orderId와 일치해야 합니다.</td></tr><tr><td><code>amount</code></td><td>예</td><td>토스 성공 리다이렉트로 받은 결제 금액입니다. 내부 주문 금액과 일치해야 합니다.</td></tr></tbody></table></div>
-  <h3>프론트 입력값</h3><div class="table-scroll"><table><thead><tr><th>값</th><th>출처</th><th>설명</th></tr></thead><tbody><tr><td><code>paymentKey</code></td><td>redirectQuery</td><td>토스 결제창 인증 성공 후 successUrl 쿼리로 전달됩니다.</td></tr><tr><td><code>orderId</code></td><td>redirectQuery</td><td>토스 결제창 호출 시 사용한 주문번호가 successUrl 쿼리로 돌아옵니다.</td></tr><tr><td><code>amount</code></td><td>redirectQuery</td><td>토스 결제창 인증 성공 후 successUrl 쿼리로 전달된 결제 금액입니다.</td></tr><tr><td><code>paymentId</code></td><td>routeState</td><td>successUrl 쿼리, sessionStorage, route state 중 하나로 이어받습니다.</td></tr><tr><td><code>Idempotency-Key</code></td><td>generatedByFrontend</td><td>예: payment-confirm:pay_123</td></tr></tbody></table></div>
+<div class="table-scroll"><table><thead><tr><th>이름</th><th>필수</th><th>설명</th></tr></thead><tbody><tr><td data-label="이름"><code>paymentId</code></td><td data-label="필수">예</td><td data-label="설명">서버가 주문 생성 시 발급한 내부 결제 ID입니다.</td></tr><tr><td data-label="이름"><code>paymentKey</code></td><td data-label="필수">예</td><td data-label="설명">토스 성공 리다이렉트로 받은 결제 키입니다.</td></tr><tr><td data-label="이름"><code>orderId</code></td><td data-label="필수">예</td><td data-label="설명">토스 성공 리다이렉트로 받은 주문번호입니다. 내부 주문의 orderId와 일치해야 합니다.</td></tr><tr><td data-label="이름"><code>amount</code></td><td data-label="필수">예</td><td data-label="설명">토스 성공 리다이렉트로 받은 결제 금액입니다. 내부 주문 금액과 일치해야 합니다.</td></tr></tbody></table></div>
+  <h3>프론트 입력값</h3><div class="table-scroll"><table><thead><tr><th>값</th><th>출처</th><th>설명</th></tr></thead><tbody><tr><td data-label="값"><code>paymentKey</code></td><td data-label="출처">redirectQuery</td><td data-label="설명">토스 결제창 인증 성공 후 successUrl 쿼리로 전달됩니다.</td></tr><tr><td data-label="값"><code>orderId</code></td><td data-label="출처">redirectQuery</td><td data-label="설명">토스 결제창 호출 시 사용한 주문번호가 successUrl 쿼리로 돌아옵니다.</td></tr><tr><td data-label="값"><code>amount</code></td><td data-label="출처">redirectQuery</td><td data-label="설명">토스 결제창 인증 성공 후 successUrl 쿼리로 전달된 결제 금액입니다.</td></tr><tr><td data-label="값"><code>paymentId</code></td><td data-label="출처">routeState</td><td data-label="설명">successUrl 쿼리, sessionStorage, route state 중 하나로 이어받습니다.</td></tr><tr><td data-label="값"><code>Idempotency-Key</code></td><td data-label="출처">generatedByFrontend</td><td data-label="설명">예: payment-confirm:pay_123</td></tr></tbody></table></div>
   <h3>Response 200</h3><p>일반결제 승인 성공 또는 같은 요청의 멱등 재시도 성공</p><pre><code>{
   &quot;checkoutId&quot;: &quot;chk_123&quot;,
   &quot;paymentId&quot;: &quot;pay_123&quot;,
@@ -691,9 +748,9 @@
   <h2><code>GET /payments/{paymentId}</code></h2>
   <p>회원이 결제 완료 화면, 실패 화면, 마이페이지에서 내부 결제 상태와 토스 승인 결과 요약을 조회하는 API입니다.</p>
   <h3>Header</h3>
-<div class="table-scroll"><table><thead><tr><th>이름</th><th>필수</th><th>설명</th></tr></thead><tbody><tr><td><code>Authorization</code></td><td>아니오</td><td>세션 쿠키 대신 Bearer 토큰을 쓰는 경우 사용합니다.</td></tr></tbody></table></div>
+<div class="table-scroll"><table><thead><tr><th>이름</th><th>필수</th><th>설명</th></tr></thead><tbody><tr><td data-label="이름"><code>Authorization</code></td><td data-label="필수">아니오</td><td data-label="설명">세션 쿠키 대신 Bearer 토큰을 쓰는 경우 사용합니다.</td></tr></tbody></table></div>
   <h3>Cookie</h3>
-<div class="table-scroll"><table><thead><tr><th>이름</th><th>필수</th><th>설명</th></tr></thead><tbody><tr><td><code>session</code></td><td>예</td><td>결제를 조회하는 회원을 식별합니다.</td></tr></tbody></table></div>
+<div class="table-scroll"><table><thead><tr><th>이름</th><th>필수</th><th>설명</th></tr></thead><tbody><tr><td data-label="이름"><code>session</code></td><td data-label="필수">예</td><td data-label="설명">결제를 조회하는 회원을 식별합니다.</td></tr></tbody></table></div>
   <h3>Body</h3><pre><code>요청 바디 없음</code></pre>
   <h3>Response 200</h3><p>결제 상세 조회 성공</p><pre><code>{
   &quot;checkoutId&quot;: &quot;chk_123&quot;,
@@ -748,16 +805,16 @@
   <h2><code>POST /payments/{paymentId}/auth-result</code></h2>
   <p>토스 결제창에서 사용자 취소 또는 인증 실패가 발생했을 때 프론트 실패 페이지가 호출해 승인 전 실패 결과를 기록하는 API입니다.</p>
   <h3>Header</h3>
-<div class="table-scroll"><table><thead><tr><th>이름</th><th>필수</th><th>설명</th></tr></thead><tbody><tr><td><code>Content-Type</code></td><td>예</td><td>application/json</td></tr><tr><td><code>Authorization</code></td><td>아니오</td><td>세션 쿠키 대신 Bearer 토큰을 쓰는 경우 사용합니다.</td></tr><tr><td><code>Idempotency-Key</code></td><td>아니오</td><td>실패 페이지 새로고침으로 같은 실패 결과가 중복 기록되지 않도록 사용합니다.</td></tr></tbody></table></div>
+<div class="table-scroll"><table><thead><tr><th>이름</th><th>필수</th><th>설명</th></tr></thead><tbody><tr><td data-label="이름"><code>Content-Type</code></td><td data-label="필수">예</td><td data-label="설명">application/json</td></tr><tr><td data-label="이름"><code>Authorization</code></td><td data-label="필수">아니오</td><td data-label="설명">세션 쿠키 대신 Bearer 토큰을 쓰는 경우 사용합니다.</td></tr><tr><td data-label="이름"><code>Idempotency-Key</code></td><td data-label="필수">아니오</td><td data-label="설명">실패 페이지 새로고침으로 같은 실패 결과가 중복 기록되지 않도록 사용합니다.</td></tr></tbody></table></div>
   <h3>Cookie</h3>
-<div class="table-scroll"><table><thead><tr><th>이름</th><th>필수</th><th>설명</th></tr></thead><tbody><tr><td><code>session</code></td><td>예</td><td>결제 시도를 만든 회원과 동일한 회원인지 확인합니다.</td></tr><tr><td><code>csrf_token</code></td><td>아니오</td><td>쿠키 기반 인증을 쓰는 경우 요청 위조를 방지합니다.</td></tr></tbody></table></div>
+<div class="table-scroll"><table><thead><tr><th>이름</th><th>필수</th><th>설명</th></tr></thead><tbody><tr><td data-label="이름"><code>session</code></td><td data-label="필수">예</td><td data-label="설명">결제 시도를 만든 회원과 동일한 회원인지 확인합니다.</td></tr><tr><td data-label="이름"><code>csrf_token</code></td><td data-label="필수">아니오</td><td data-label="설명">쿠키 기반 인증을 쓰는 경우 요청 위조를 방지합니다.</td></tr></tbody></table></div>
   <h3>Body</h3><pre><code>{
   &quot;orderId&quot;: &quot;ord_20260608_abcd&quot;,
   &quot;code&quot;: &quot;PAY_PROCESS_CANCELED&quot;,
   &quot;message&quot;: &quot;사용자가 결제를 취소했습니다.&quot;
 }</code></pre>
   <h3>Body 필드</h3>
-<div class="table-scroll"><table><thead><tr><th>이름</th><th>필수</th><th>설명</th></tr></thead><tbody><tr><td><code>orderId</code></td><td>예</td><td>토스 failUrl로 돌아온 주문번호입니다. 내부 결제 시도의 orderId와 일치해야 합니다.</td></tr><tr><td><code>code</code></td><td>예</td><td>토스 failUrl로 돌아온 에러 코드입니다. PAY_PROCESS_CANCELED이면 사용자 취소로 분류합니다.</td></tr><tr><td><code>message</code></td><td>아니오</td><td>토스 failUrl로 돌아온 사용자 표시 메시지입니다.</td></tr></tbody></table></div>
+<div class="table-scroll"><table><thead><tr><th>이름</th><th>필수</th><th>설명</th></tr></thead><tbody><tr><td data-label="이름"><code>orderId</code></td><td data-label="필수">예</td><td data-label="설명">토스 failUrl로 돌아온 주문번호입니다. 내부 결제 시도의 orderId와 일치해야 합니다.</td></tr><tr><td data-label="이름"><code>code</code></td><td data-label="필수">예</td><td data-label="설명">토스 failUrl로 돌아온 에러 코드입니다. PAY_PROCESS_CANCELED이면 사용자 취소로 분류합니다.</td></tr><tr><td data-label="이름"><code>message</code></td><td data-label="필수">아니오</td><td data-label="설명">토스 failUrl로 돌아온 사용자 표시 메시지입니다.</td></tr></tbody></table></div>
   <h3>Response 200</h3><p>승인 전 실패 결과 기록 성공 또는 이미 기록된 실패의 멱등 응답</p><pre><code>{
   &quot;checkoutId&quot;: &quot;chk_123&quot;,
   &quot;paymentId&quot;: &quot;pay_123&quot;,
@@ -783,10 +840,14 @@
 </section><section id="payments-cancel">
   <h2><code>POST /payments/{paymentId}/cancel</code></h2>
   <p>회원이 승인 완료된 일반결제를 전체 또는 부분 취소하는 API입니다. 서버가 취소 가능 금액과 소유권을 검증한 뒤 토스페이먼츠 결제 취소 API를 호출하고 내부 결제 상태와 취소 이력을 함께 반영합니다.</p>
+  <div class="note">
+  <strong>연관 잠재 위험</strong>
+  <ul><li><a href="./risk-register-doc.html#cancel-refund-duplicate-or-mismatch"><code>cancel-refund-duplicate-or-mismatch</code></a> 취소/환불 중복 또는 외부/내부 불일치</li><li><a href="./risk-register-doc.html#idempotency-store-missing"><code>idempotency-store-missing</code></a> 멱등키 저장소 부재</li></ul>
+</div>
   <h3>Header</h3>
-<div class="table-scroll"><table><thead><tr><th>이름</th><th>필수</th><th>설명</th></tr></thead><tbody><tr><td><code>Content-Type</code></td><td>예</td><td>application/json</td></tr><tr><td><code>Idempotency-Key</code></td><td>예</td><td>취소 버튼 중복 클릭, 네트워크 재시도, 토스 응답 지연 시 같은 취소 요청을 한 번만 처리하기 위한 키입니다.</td></tr></tbody></table></div>
+<div class="table-scroll"><table><thead><tr><th>이름</th><th>필수</th><th>설명</th></tr></thead><tbody><tr><td data-label="이름"><code>Content-Type</code></td><td data-label="필수">예</td><td data-label="설명">application/json</td></tr><tr><td data-label="이름"><code>Idempotency-Key</code></td><td data-label="필수">예</td><td data-label="설명">취소 버튼 중복 클릭, 네트워크 재시도, 토스 응답 지연 시 같은 취소 요청을 한 번만 처리하기 위한 키입니다.</td></tr></tbody></table></div>
   <h3>Cookie</h3>
-<div class="table-scroll"><table><thead><tr><th>이름</th><th>필수</th><th>설명</th></tr></thead><tbody><tr><td><code>SESSION</code></td><td>예</td><td>취소 요청 회원 인증 세션입니다.</td></tr></tbody></table></div>
+<div class="table-scroll"><table><thead><tr><th>이름</th><th>필수</th><th>설명</th></tr></thead><tbody><tr><td data-label="이름"><code>SESSION</code></td><td data-label="필수">예</td><td data-label="설명">취소 요청 회원 인증 세션입니다.</td></tr></tbody></table></div>
   <h3>Body</h3><pre><code>{
   &quot;cancelAmount&quot;: 12000,
   &quot;cancelReason&quot;: &quot;customer_request&quot;,
@@ -794,7 +855,7 @@
   &quot;refundBankAccount&quot;: null
 }</code></pre>
   <h3>Body 필드</h3>
-<div class="table-scroll"><table><thead><tr><th>이름</th><th>필수</th><th>설명</th></tr></thead><tbody><tr><td><code>cancelAmount</code></td><td>아니오</td><td>취소 금액입니다. 생략하면 남은 취소 가능 금액 전체를 취소합니다. 부분 취소 시 1원 이상이며 남은 금액 이하여야 합니다.</td></tr><tr><td><code>cancelReason</code></td><td>예</td><td>취소 사유 코드입니다. customer_request, duplicate_payment, product_unavailable, operator_adjustment 등을 사용합니다.</td></tr><tr><td><code>reasonMessage</code></td><td>아니오</td><td>회원에게 노출하지 않는 내부 참고용 상세 사유입니다.</td></tr><tr><td><code>refundBankAccount</code></td><td>아니오</td><td>가상계좌 등 환불 계좌가 필요한 결제수단에서만 입력합니다. 카드 결제 취소에서는 생략합니다.</td></tr></tbody></table></div>
+<div class="table-scroll"><table><thead><tr><th>이름</th><th>필수</th><th>설명</th></tr></thead><tbody><tr><td data-label="이름"><code>cancelAmount</code></td><td data-label="필수">아니오</td><td data-label="설명">취소 금액입니다. 생략하면 남은 취소 가능 금액 전체를 취소합니다. 부분 취소 시 1원 이상이며 남은 금액 이하여야 합니다.</td></tr><tr><td data-label="이름"><code>cancelReason</code></td><td data-label="필수">예</td><td data-label="설명">취소 사유 코드입니다. customer_request, duplicate_payment, product_unavailable, operator_adjustment 등을 사용합니다.</td></tr><tr><td data-label="이름"><code>reasonMessage</code></td><td data-label="필수">아니오</td><td data-label="설명">회원에게 노출하지 않는 내부 참고용 상세 사유입니다.</td></tr><tr><td data-label="이름"><code>refundBankAccount</code></td><td data-label="필수">아니오</td><td data-label="설명">가상계좌 등 환불 계좌가 필요한 결제수단에서만 입력합니다. 카드 결제 취소에서는 생략합니다.</td></tr></tbody></table></div>
   <h3>Response 200</h3><p>전체 취소, 부분 취소, 또는 같은 멱등 키 재시도에 대한 기존 취소 결과</p><pre><code>{
   &quot;paymentId&quot;: &quot;pay_20260608_0001&quot;,
   &quot;paymentKey&quot;: &quot;tgen_20260608_payment_key&quot;,
@@ -824,17 +885,21 @@
 </section><section id="checkout">
   <h2><code>POST /subscriptions/checkout</code></h2>
   <p>프론트가 선택한 플랜으로 해당 상품의 구독을 시작할 수 있는지 검증하고 토스 빌링 인증에 필요한 값을 생성합니다.</p>
+  <div class="note">
+  <strong>연관 잠재 위험</strong>
+  <ul><li><a href="./risk-register-doc.html#duplicate-active-subscription"><code>duplicate-active-subscription</code></a> 상품별 활성 구독 중복 생성</li></ul>
+</div>
   <h3>Header</h3>
-<div class="table-scroll"><table><thead><tr><th>이름</th><th>필수</th><th>설명</th></tr></thead><tbody><tr><td><code>Content-Type</code></td><td>예</td><td>application/json</td></tr><tr><td><code>Authorization</code></td><td>아니오</td><td>세션 쿠키 대신 Bearer 토큰을 쓰는 경우 사용합니다.</td></tr><tr><td><code>Idempotency-Key</code></td><td>아니오</td><td>중복 체크아웃 생성을 방지합니다.</td></tr></tbody></table></div>
+<div class="table-scroll"><table><thead><tr><th>이름</th><th>필수</th><th>설명</th></tr></thead><tbody><tr><td data-label="이름"><code>Content-Type</code></td><td data-label="필수">예</td><td data-label="설명">application/json</td></tr><tr><td data-label="이름"><code>Authorization</code></td><td data-label="필수">아니오</td><td data-label="설명">세션 쿠키 대신 Bearer 토큰을 쓰는 경우 사용합니다.</td></tr><tr><td data-label="이름"><code>Idempotency-Key</code></td><td data-label="필수">아니오</td><td data-label="설명">중복 체크아웃 생성을 방지합니다.</td></tr></tbody></table></div>
   <h3>Cookie</h3>
-<div class="table-scroll"><table><thead><tr><th>이름</th><th>필수</th><th>설명</th></tr></thead><tbody><tr><td><code>session</code></td><td>예</td><td>로그인 회원 식별용 세션 쿠키입니다.</td></tr><tr><td><code>csrf_token</code></td><td>아니오</td><td>쿠키 기반 인증을 쓰는 경우 CSRF 방어에 사용합니다.</td></tr></tbody></table></div>
+<div class="table-scroll"><table><thead><tr><th>이름</th><th>필수</th><th>설명</th></tr></thead><tbody><tr><td data-label="이름"><code>session</code></td><td data-label="필수">예</td><td data-label="설명">로그인 회원 식별용 세션 쿠키입니다.</td></tr><tr><td data-label="이름"><code>csrf_token</code></td><td data-label="필수">아니오</td><td data-label="설명">쿠키 기반 인증을 쓰는 경우 CSRF 방어에 사용합니다.</td></tr></tbody></table></div>
   <h3>Body</h3><pre><code>{
   &quot;planId&quot;: &quot;plan_analytics_monthly&quot;,
   &quot;successUrl&quot;: &quot;https://example.com/billing/success&quot;,
   &quot;failUrl&quot;: &quot;https://example.com/billing/fail&quot;
 }</code></pre>
   <h3>Body 필드</h3>
-<div class="table-scroll"><table><thead><tr><th>이름</th><th>필수</th><th>설명</th></tr></thead><tbody><tr><td><code>planId</code></td><td>예</td><td>회원이 구독하려는 플랜 ID입니다.</td></tr><tr><td><code>successUrl</code></td><td>예</td><td>토스 빌링 인증 성공 후 돌아올 프론트 URL입니다.</td></tr><tr><td><code>failUrl</code></td><td>예</td><td>토스 빌링 인증 실패 후 돌아올 프론트 URL입니다.</td></tr></tbody></table></div>
+<div class="table-scroll"><table><thead><tr><th>이름</th><th>필수</th><th>설명</th></tr></thead><tbody><tr><td data-label="이름"><code>planId</code></td><td data-label="필수">예</td><td data-label="설명">회원이 구독하려는 플랜 ID입니다.</td></tr><tr><td data-label="이름"><code>successUrl</code></td><td data-label="필수">예</td><td data-label="설명">토스 빌링 인증 성공 후 돌아올 프론트 URL입니다.</td></tr><tr><td data-label="이름"><code>failUrl</code></td><td data-label="필수">예</td><td data-label="설명">토스 빌링 인증 실패 후 돌아올 프론트 URL입니다.</td></tr></tbody></table></div>
   <h3>Response 201</h3><p>구독 체크아웃 생성 성공</p><pre><code>{
   &quot;subscriptionId&quot;: &quot;sub_123&quot;,
   &quot;orderId&quot;: &quot;ord_20260608_abc&quot;,
@@ -854,18 +919,22 @@
   <h2><code>POST /subscriptions/confirm</code></h2>
   <p>토스 빌링 인증 성공 후 프론트 성공 페이지가 호출하는 API입니다.</p>
   <div class="note">토스페이먼츠가 이 API로 직접 리다이렉트하지 않습니다. 프론트가 URL의 authKey, customerKey와 보관 중인 subscriptionId를 조합해 호출합니다.</div>
+  <div class="note">
+  <strong>연관 잠재 위험</strong>
+  <ul><li><a href="./risk-register-doc.html#provider-paid-internal-unpaid"><code>provider-paid-internal-unpaid</code></a> PG 승인 성공 후 내부 미반영</li><li><a href="./risk-register-doc.html#duplicate-active-subscription"><code>duplicate-active-subscription</code></a> 상품별 활성 구독 중복 생성</li><li><a href="./risk-register-doc.html#webhook-out-of-order-or-duplicate"><code>webhook-out-of-order-or-duplicate</code></a> 웹훅 중복 또는 순서 역전</li><li><a href="./risk-register-doc.html#idempotency-store-missing"><code>idempotency-store-missing</code></a> 멱등키 저장소 부재</li></ul>
+</div>
   <h3>Header</h3>
-<div class="table-scroll"><table><thead><tr><th>이름</th><th>필수</th><th>설명</th></tr></thead><tbody><tr><td><code>Content-Type</code></td><td>예</td><td>application/json</td></tr><tr><td><code>Authorization</code></td><td>아니오</td><td>세션 쿠키 대신 Bearer 토큰을 쓰는 경우 사용합니다.</td></tr><tr><td><code>Idempotency-Key</code></td><td>예</td><td>프론트 성공 페이지 재진입이나 새로고침으로 중복 결제되지 않도록 사용합니다.</td></tr></tbody></table></div>
+<div class="table-scroll"><table><thead><tr><th>이름</th><th>필수</th><th>설명</th></tr></thead><tbody><tr><td data-label="이름"><code>Content-Type</code></td><td data-label="필수">예</td><td data-label="설명">application/json</td></tr><tr><td data-label="이름"><code>Authorization</code></td><td data-label="필수">아니오</td><td data-label="설명">세션 쿠키 대신 Bearer 토큰을 쓰는 경우 사용합니다.</td></tr><tr><td data-label="이름"><code>Idempotency-Key</code></td><td data-label="필수">예</td><td data-label="설명">프론트 성공 페이지 재진입이나 새로고침으로 중복 결제되지 않도록 사용합니다.</td></tr></tbody></table></div>
   <h3>Cookie</h3>
-<div class="table-scroll"><table><thead><tr><th>이름</th><th>필수</th><th>설명</th></tr></thead><tbody><tr><td><code>session</code></td><td>예</td><td>체크아웃을 만든 회원과 동일한 회원인지 검증합니다.</td></tr><tr><td><code>csrf_token</code></td><td>아니오</td><td>쿠키 기반 인증을 쓰는 경우 요청 위조를 방지합니다.</td></tr></tbody></table></div>
+<div class="table-scroll"><table><thead><tr><th>이름</th><th>필수</th><th>설명</th></tr></thead><tbody><tr><td data-label="이름"><code>session</code></td><td data-label="필수">예</td><td data-label="설명">체크아웃을 만든 회원과 동일한 회원인지 검증합니다.</td></tr><tr><td data-label="이름"><code>csrf_token</code></td><td data-label="필수">아니오</td><td data-label="설명">쿠키 기반 인증을 쓰는 경우 요청 위조를 방지합니다.</td></tr></tbody></table></div>
   <h3>Body</h3><pre><code>{
   &quot;subscriptionId&quot;: &quot;sub_123&quot;,
   &quot;customerKey&quot;: &quot;cus_7b57c0f1b4&quot;,
   &quot;authKey&quot;: &quot;auth_...&quot;
 }</code></pre>
   <h3>Body 필드</h3>
-<div class="table-scroll"><table><thead><tr><th>이름</th><th>필수</th><th>설명</th></tr></thead><tbody><tr><td><code>subscriptionId</code></td><td>예</td><td>확정할 구독 ID입니다.</td></tr><tr><td><code>customerKey</code></td><td>예</td><td>토스 성공 리다이렉트로 받은 customerKey입니다.</td></tr><tr><td><code>authKey</code></td><td>예</td><td>토스 성공 리다이렉트로 받은 빌링 인증 키입니다.</td></tr></tbody></table></div>
-  <h3>프론트 입력값</h3><div class="table-scroll"><table><thead><tr><th>값</th><th>출처</th><th>설명</th></tr></thead><tbody><tr><td><code>authKey</code></td><td>redirectQuery</td><td>빌링키 발급에 필요한 인증 키입니다.</td></tr><tr><td><code>customerKey</code></td><td>redirectQuery</td><td>체크아웃 생성 시 서버가 만든 구매자 키와 일치해야 합니다.</td></tr><tr><td><code>subscriptionId</code></td><td>routeState</td><td>successUrl 쿼리, sessionStorage, route state 중 하나로 이어받습니다.</td></tr><tr><td><code>Idempotency-Key</code></td><td>generatedByFrontend</td><td>예: subscription-confirm:sub_123</td></tr></tbody></table></div>
+<div class="table-scroll"><table><thead><tr><th>이름</th><th>필수</th><th>설명</th></tr></thead><tbody><tr><td data-label="이름"><code>subscriptionId</code></td><td data-label="필수">예</td><td data-label="설명">확정할 구독 ID입니다.</td></tr><tr><td data-label="이름"><code>customerKey</code></td><td data-label="필수">예</td><td data-label="설명">토스 성공 리다이렉트로 받은 customerKey입니다.</td></tr><tr><td data-label="이름"><code>authKey</code></td><td data-label="필수">예</td><td data-label="설명">토스 성공 리다이렉트로 받은 빌링 인증 키입니다.</td></tr></tbody></table></div>
+  <h3>프론트 입력값</h3><div class="table-scroll"><table><thead><tr><th>값</th><th>출처</th><th>설명</th></tr></thead><tbody><tr><td data-label="값"><code>authKey</code></td><td data-label="출처">redirectQuery</td><td data-label="설명">빌링키 발급에 필요한 인증 키입니다.</td></tr><tr><td data-label="값"><code>customerKey</code></td><td data-label="출처">redirectQuery</td><td data-label="설명">체크아웃 생성 시 서버가 만든 구매자 키와 일치해야 합니다.</td></tr><tr><td data-label="값"><code>subscriptionId</code></td><td data-label="출처">routeState</td><td data-label="설명">successUrl 쿼리, sessionStorage, route state 중 하나로 이어받습니다.</td></tr><tr><td data-label="값"><code>Idempotency-Key</code></td><td data-label="출처">generatedByFrontend</td><td data-label="설명">예: subscription-confirm:sub_123</td></tr></tbody></table></div>
   <h3>Response 200</h3><p>구독 확정 성공 또는 같은 요청의 멱등 재시도 성공</p><pre><code>{
   &quot;subscriptionId&quot;: &quot;sub_123&quot;,
   &quot;status&quot;: &quot;active&quot;,
@@ -882,9 +951,9 @@
   <h2><code>GET /subscriptions/me</code></h2>
   <p>현재 로그인한 회원의 상품별 구독 목록과 공통 기본 결제수단 표시 정보를 반환합니다.</p>
   <h3>Header</h3>
-<div class="table-scroll"><table><thead><tr><th>이름</th><th>필수</th><th>설명</th></tr></thead><tbody><tr><td><code>Authorization</code></td><td>아니오</td><td>세션 쿠키 대신 Bearer 토큰을 쓰는 경우 사용합니다.</td></tr></tbody></table></div>
+<div class="table-scroll"><table><thead><tr><th>이름</th><th>필수</th><th>설명</th></tr></thead><tbody><tr><td data-label="이름"><code>Authorization</code></td><td data-label="필수">아니오</td><td data-label="설명">세션 쿠키 대신 Bearer 토큰을 쓰는 경우 사용합니다.</td></tr></tbody></table></div>
   <h3>Cookie</h3>
-<div class="table-scroll"><table><thead><tr><th>이름</th><th>필수</th><th>설명</th></tr></thead><tbody><tr><td><code>session</code></td><td>예</td><td>조회 대상 회원을 식별합니다.</td></tr></tbody></table></div>
+<div class="table-scroll"><table><thead><tr><th>이름</th><th>필수</th><th>설명</th></tr></thead><tbody><tr><td data-label="이름"><code>session</code></td><td data-label="필수">예</td><td data-label="설명">조회 대상 회원을 식별합니다.</td></tr></tbody></table></div>
   <h3>Body</h3><pre><code>요청 바디 없음</code></pre>
   <h3>Response 200</h3><p>구독 조회 성공</p><pre><code>{
   &quot;subscriptions&quot;: [
@@ -921,16 +990,20 @@
 </section><section id="cancel">
   <h2><code>POST /subscriptions/{subscriptionId}/cancel</code></h2>
   <p>회원이 현재 이용 기간 종료 시점에 구독을 해지하도록 예약하는 API입니다. 요청 즉시 서비스 이용 권한을 끊거나 토스 결제 취소를 호출하지 않습니다.</p>
+  <div class="note">
+  <strong>연관 잠재 위험</strong>
+  <ul><li><a href="./risk-register-doc.html#cancel-scheduled-billing-race"><code>cancel-scheduled-billing-race</code></a> 해지 예약과 정기 과금 경합</li></ul>
+</div>
   <h3>Header</h3>
-<div class="table-scroll"><table><thead><tr><th>이름</th><th>필수</th><th>설명</th></tr></thead><tbody><tr><td><code>Content-Type</code></td><td>예</td><td>application/json</td></tr><tr><td><code>Authorization</code></td><td>아니오</td><td>세션 쿠키 대신 Bearer 토큰을 쓰는 경우 사용합니다.</td></tr><tr><td><code>Idempotency-Key</code></td><td>아니오</td><td>해지 버튼 중복 클릭이나 재시도 시 같은 해지 예약 결과를 반환하는 데 사용합니다.</td></tr></tbody></table></div>
+<div class="table-scroll"><table><thead><tr><th>이름</th><th>필수</th><th>설명</th></tr></thead><tbody><tr><td data-label="이름"><code>Content-Type</code></td><td data-label="필수">예</td><td data-label="설명">application/json</td></tr><tr><td data-label="이름"><code>Authorization</code></td><td data-label="필수">아니오</td><td data-label="설명">세션 쿠키 대신 Bearer 토큰을 쓰는 경우 사용합니다.</td></tr><tr><td data-label="이름"><code>Idempotency-Key</code></td><td data-label="필수">아니오</td><td data-label="설명">해지 버튼 중복 클릭이나 재시도 시 같은 해지 예약 결과를 반환하는 데 사용합니다.</td></tr></tbody></table></div>
   <h3>Cookie</h3>
-<div class="table-scroll"><table><thead><tr><th>이름</th><th>필수</th><th>설명</th></tr></thead><tbody><tr><td><code>session</code></td><td>예</td><td>해지 대상 구독의 소유 회원을 식별합니다.</td></tr><tr><td><code>csrf_token</code></td><td>아니오</td><td>쿠키 기반 인증을 쓰는 경우 요청 위조를 방지합니다.</td></tr></tbody></table></div>
+<div class="table-scroll"><table><thead><tr><th>이름</th><th>필수</th><th>설명</th></tr></thead><tbody><tr><td data-label="이름"><code>session</code></td><td data-label="필수">예</td><td data-label="설명">해지 대상 구독의 소유 회원을 식별합니다.</td></tr><tr><td data-label="이름"><code>csrf_token</code></td><td data-label="필수">아니오</td><td data-label="설명">쿠키 기반 인증을 쓰는 경우 요청 위조를 방지합니다.</td></tr></tbody></table></div>
   <h3>Body</h3><pre><code>{
   &quot;cancelReason&quot;: &quot;too_expensive&quot;,
   &quot;feedback&quot;: &quot;다음 달에는 사용하지 않을 예정입니다.&quot;
 }</code></pre>
   <h3>Body 필드</h3>
-<div class="table-scroll"><table><thead><tr><th>이름</th><th>필수</th><th>설명</th></tr></thead><tbody><tr><td><code>cancelReason</code></td><td>아니오</td><td>회원이 선택하거나 입력한 해지 사유입니다. 분석과 CS 참고용으로만 사용합니다.</td></tr><tr><td><code>feedback</code></td><td>아니오</td><td>자유 입력 피드백입니다. 민감 정보가 저장되지 않도록 필터링합니다.</td></tr></tbody></table></div>
+<div class="table-scroll"><table><thead><tr><th>이름</th><th>필수</th><th>설명</th></tr></thead><tbody><tr><td data-label="이름"><code>cancelReason</code></td><td data-label="필수">아니오</td><td data-label="설명">회원이 선택하거나 입력한 해지 사유입니다. 분석과 CS 참고용으로만 사용합니다.</td></tr><tr><td data-label="이름"><code>feedback</code></td><td data-label="필수">아니오</td><td data-label="설명">자유 입력 피드백입니다. 민감 정보가 저장되지 않도록 필터링합니다.</td></tr></tbody></table></div>
   <h3>Response 200</h3><p>기간 종료 시 해지 예약 성공 또는 이미 예약된 해지의 멱등 응답</p><pre><code>{
   &quot;subscriptionId&quot;: &quot;sub_123&quot;,
   &quot;status&quot;: &quot;cancel_scheduled&quot;,
@@ -947,15 +1020,19 @@
 </section><section id="resume">
   <h2><code>POST /subscriptions/{subscriptionId}/resume</code></h2>
   <p>해지 예약 철회 API입니다. 기간 종료 전의 cancel_scheduled 구독을 다시 active로 되돌리고 다음 정기 결제일을 복구합니다.</p>
+  <div class="note">
+  <strong>연관 잠재 위험</strong>
+  <ul><li><a href="./risk-register-doc.html#cancel-scheduled-billing-race"><code>cancel-scheduled-billing-race</code></a> 해지 예약과 정기 과금 경합</li></ul>
+</div>
   <h3>Header</h3>
-<div class="table-scroll"><table><thead><tr><th>이름</th><th>필수</th><th>설명</th></tr></thead><tbody><tr><td><code>Content-Type</code></td><td>예</td><td>application/json</td></tr><tr><td><code>Authorization</code></td><td>아니오</td><td>세션 쿠키 대신 Bearer 토큰을 쓰는 경우 사용합니다.</td></tr><tr><td><code>Idempotency-Key</code></td><td>아니오</td><td>재개 버튼 중복 클릭이나 네트워크 재시도 시 같은 재개 결과를 반환하는 데 사용합니다.</td></tr></tbody></table></div>
+<div class="table-scroll"><table><thead><tr><th>이름</th><th>필수</th><th>설명</th></tr></thead><tbody><tr><td data-label="이름"><code>Content-Type</code></td><td data-label="필수">예</td><td data-label="설명">application/json</td></tr><tr><td data-label="이름"><code>Authorization</code></td><td data-label="필수">아니오</td><td data-label="설명">세션 쿠키 대신 Bearer 토큰을 쓰는 경우 사용합니다.</td></tr><tr><td data-label="이름"><code>Idempotency-Key</code></td><td data-label="필수">아니오</td><td data-label="설명">재개 버튼 중복 클릭이나 네트워크 재시도 시 같은 재개 결과를 반환하는 데 사용합니다.</td></tr></tbody></table></div>
   <h3>Cookie</h3>
-<div class="table-scroll"><table><thead><tr><th>이름</th><th>필수</th><th>설명</th></tr></thead><tbody><tr><td><code>session</code></td><td>예</td><td>재개 대상 구독의 소유 회원을 식별합니다.</td></tr><tr><td><code>csrf_token</code></td><td>아니오</td><td>쿠키 기반 인증을 쓰는 경우 요청 위조를 방지합니다.</td></tr></tbody></table></div>
+<div class="table-scroll"><table><thead><tr><th>이름</th><th>필수</th><th>설명</th></tr></thead><tbody><tr><td data-label="이름"><code>session</code></td><td data-label="필수">예</td><td data-label="설명">재개 대상 구독의 소유 회원을 식별합니다.</td></tr><tr><td data-label="이름"><code>csrf_token</code></td><td data-label="필수">아니오</td><td data-label="설명">쿠키 기반 인증을 쓰는 경우 요청 위조를 방지합니다.</td></tr></tbody></table></div>
   <h3>Body</h3><pre><code>{
   &quot;resumeReason&quot;: &quot;changed_mind&quot;
 }</code></pre>
   <h3>Body 필드</h3>
-<div class="table-scroll"><table><thead><tr><th>이름</th><th>필수</th><th>설명</th></tr></thead><tbody><tr><td><code>resumeReason</code></td><td>아니오</td><td>재개 사유입니다. 분석과 CS 참고용으로만 사용합니다.</td></tr></tbody></table></div>
+<div class="table-scroll"><table><thead><tr><th>이름</th><th>필수</th><th>설명</th></tr></thead><tbody><tr><td data-label="이름"><code>resumeReason</code></td><td data-label="필수">아니오</td><td data-label="설명">재개 사유입니다. 분석과 CS 참고용으로만 사용합니다.</td></tr></tbody></table></div>
   <h3>Response 200</h3><p>해지 예약 철회 성공 또는 이미 active 상태인 구독의 멱등 응답</p><pre><code>{
   &quot;subscriptionId&quot;: &quot;sub_123&quot;,
   &quot;status&quot;: &quot;active&quot;,
@@ -972,14 +1049,14 @@
   <h2><code>POST /subscriptions/{subscriptionId}/change-preview</code></h2>
   <p>플랜 변경 실행 전 유저에게 보여줄 안내 정보를 계산하는 API입니다. 서버가 업그레이드와 다운그레이드를 판정하며, 업그레이드는 즉시 변경하고 다운그레이드는 다음 결제일에 반영되도록 보장합니다. 이 응답의 confirmationToken을 유저 확인 후 PATCH /subscriptions/{subscriptionId}에 전달해야 실제 변경이 진행됩니다.</p>
   <h3>Header</h3>
-<div class="table-scroll"><table><thead><tr><th>이름</th><th>필수</th><th>설명</th></tr></thead><tbody><tr><td><code>Content-Type</code></td><td>예</td><td>application/json</td></tr><tr><td><code>Authorization</code></td><td>아니오</td><td>세션 쿠키 대신 Bearer 토큰을 쓰는 경우 사용합니다.</td></tr><tr><td><code>Idempotency-Key</code></td><td>아니오</td><td>같은 미리보기 요청을 짧은 시간 안에 반복할 때 동일한 confirmationToken과 계산 결과를 재사용하는 데 사용합니다.</td></tr></tbody></table></div>
+<div class="table-scroll"><table><thead><tr><th>이름</th><th>필수</th><th>설명</th></tr></thead><tbody><tr><td data-label="이름"><code>Content-Type</code></td><td data-label="필수">예</td><td data-label="설명">application/json</td></tr><tr><td data-label="이름"><code>Authorization</code></td><td data-label="필수">아니오</td><td data-label="설명">세션 쿠키 대신 Bearer 토큰을 쓰는 경우 사용합니다.</td></tr><tr><td data-label="이름"><code>Idempotency-Key</code></td><td data-label="필수">아니오</td><td data-label="설명">같은 미리보기 요청을 짧은 시간 안에 반복할 때 동일한 confirmationToken과 계산 결과를 재사용하는 데 사용합니다.</td></tr></tbody></table></div>
   <h3>Cookie</h3>
-<div class="table-scroll"><table><thead><tr><th>이름</th><th>필수</th><th>설명</th></tr></thead><tbody><tr><td><code>session</code></td><td>예</td><td>변경 대상 구독의 소유 회원을 식별합니다.</td></tr><tr><td><code>csrf_token</code></td><td>아니오</td><td>쿠키 기반 인증을 쓰는 경우 요청 위조를 방지합니다.</td></tr></tbody></table></div>
+<div class="table-scroll"><table><thead><tr><th>이름</th><th>필수</th><th>설명</th></tr></thead><tbody><tr><td data-label="이름"><code>session</code></td><td data-label="필수">예</td><td data-label="설명">변경 대상 구독의 소유 회원을 식별합니다.</td></tr><tr><td data-label="이름"><code>csrf_token</code></td><td data-label="필수">아니오</td><td data-label="설명">쿠키 기반 인증을 쓰는 경우 요청 위조를 방지합니다.</td></tr></tbody></table></div>
   <h3>Body</h3><pre><code>{
   &quot;targetPlanId&quot;: &quot;plan_analytics_pro_monthly&quot;
 }</code></pre>
   <h3>Body 필드</h3>
-<div class="table-scroll"><table><thead><tr><th>이름</th><th>필수</th><th>설명</th></tr></thead><tbody><tr><td><code>targetPlanId</code></td><td>예</td><td>변경하려는 목표 플랜 ID입니다. 목표 플랜은 현재 구독과 같은 productCode에 속해야 합니다.</td></tr></tbody></table></div>
+<div class="table-scroll"><table><thead><tr><th>이름</th><th>필수</th><th>설명</th></tr></thead><tbody><tr><td data-label="이름"><code>targetPlanId</code></td><td data-label="필수">예</td><td data-label="설명">변경하려는 목표 플랜 ID입니다. 목표 플랜은 현재 구독과 같은 productCode에 속해야 합니다.</td></tr></tbody></table></div>
   <h3>Response 200</h3><p>업그레이드 미리보기 생성 성공. 유저에게 즉시 결제 금액과 다음 결제일 안내를 확인받아야 합니다.</p><pre><code>{
   &quot;subscriptionId&quot;: &quot;sub_analytics&quot;,
   &quot;productCode&quot;: &quot;ANALYTICS&quot;,
@@ -1017,16 +1094,20 @@
 </section><section id="change">
   <h2><code>PATCH /subscriptions/{subscriptionId}</code></h2>
   <p>유저가 플랜 변경 미리보기의 안내를 확인한 뒤 confirmationToken으로 최종 실행하는 API입니다. 서버는 토큰에 저장된 serverDecision을 재검증해 업그레이드는 즉시 변경하고 다운그레이드는 다음 결제일에 반영되도록 보장합니다.</p>
+  <div class="note">
+  <strong>연관 잠재 위험</strong>
+  <ul><li><a href="./risk-register-doc.html#provider-paid-internal-unpaid"><code>provider-paid-internal-unpaid</code></a> PG 승인 성공 후 내부 미반영</li><li><a href="./risk-register-doc.html#duplicate-active-subscription"><code>duplicate-active-subscription</code></a> 상품별 활성 구독 중복 생성</li><li><a href="./risk-register-doc.html#plan-change-double-apply"><code>plan-change-double-apply</code></a> 플랜 변경 중복 실행</li><li><a href="./risk-register-doc.html#idempotency-store-missing"><code>idempotency-store-missing</code></a> 멱등키 저장소 부재</li></ul>
+</div>
   <h3>Header</h3>
-<div class="table-scroll"><table><thead><tr><th>이름</th><th>필수</th><th>설명</th></tr></thead><tbody><tr><td><code>Content-Type</code></td><td>예</td><td>application/json</td></tr><tr><td><code>Authorization</code></td><td>아니오</td><td>세션 쿠키 대신 Bearer 토큰을 쓰는 경우 사용합니다.</td></tr><tr><td><code>Idempotency-Key</code></td><td>예</td><td>유저 확인 후 최종 실행 요청이 중복되어도 즉시 결제가 중복 승인되지 않도록 사용합니다.</td></tr></tbody></table></div>
+<div class="table-scroll"><table><thead><tr><th>이름</th><th>필수</th><th>설명</th></tr></thead><tbody><tr><td data-label="이름"><code>Content-Type</code></td><td data-label="필수">예</td><td data-label="설명">application/json</td></tr><tr><td data-label="이름"><code>Authorization</code></td><td data-label="필수">아니오</td><td data-label="설명">세션 쿠키 대신 Bearer 토큰을 쓰는 경우 사용합니다.</td></tr><tr><td data-label="이름"><code>Idempotency-Key</code></td><td data-label="필수">예</td><td data-label="설명">유저 확인 후 최종 실행 요청이 중복되어도 즉시 결제가 중복 승인되지 않도록 사용합니다.</td></tr></tbody></table></div>
   <h3>Cookie</h3>
-<div class="table-scroll"><table><thead><tr><th>이름</th><th>필수</th><th>설명</th></tr></thead><tbody><tr><td><code>session</code></td><td>예</td><td>변경 대상 구독의 소유 회원을 식별합니다.</td></tr><tr><td><code>csrf_token</code></td><td>아니오</td><td>쿠키 기반 인증을 쓰는 경우 요청 위조를 방지합니다.</td></tr></tbody></table></div>
+<div class="table-scroll"><table><thead><tr><th>이름</th><th>필수</th><th>설명</th></tr></thead><tbody><tr><td data-label="이름"><code>session</code></td><td data-label="필수">예</td><td data-label="설명">변경 대상 구독의 소유 회원을 식별합니다.</td></tr><tr><td data-label="이름"><code>csrf_token</code></td><td data-label="필수">아니오</td><td data-label="설명">쿠키 기반 인증을 쓰는 경우 요청 위조를 방지합니다.</td></tr></tbody></table></div>
   <h3>Body</h3><pre><code>{
   &quot;confirmationToken&quot;: &quot;pct_20260608_upgrade_abc&quot;,
   &quot;confirmed&quot;: true
 }</code></pre>
   <h3>Body 필드</h3>
-<div class="table-scroll"><table><thead><tr><th>이름</th><th>필수</th><th>설명</th></tr></thead><tbody><tr><td><code>confirmationToken</code></td><td>예</td><td>change-preview 응답으로 받은 확인 토큰입니다. 유저가 안내를 확인한 뒤에만 전송합니다.</td></tr><tr><td><code>confirmed</code></td><td>예</td><td>true여야 합니다. 프론트는 유저가 즉시 결제 금액 또는 다음 결제일 변경 안내를 확인한 뒤 true로 보냅니다.</td></tr></tbody></table></div>
+<div class="table-scroll"><table><thead><tr><th>이름</th><th>필수</th><th>설명</th></tr></thead><tbody><tr><td data-label="이름"><code>confirmationToken</code></td><td data-label="필수">예</td><td data-label="설명">change-preview 응답으로 받은 확인 토큰입니다. 유저가 안내를 확인한 뒤에만 전송합니다.</td></tr><tr><td data-label="이름"><code>confirmed</code></td><td data-label="필수">예</td><td data-label="설명">true여야 합니다. 프론트는 유저가 즉시 결제 금액 또는 다음 결제일 변경 안내를 확인한 뒤 true로 보냅니다.</td></tr></tbody></table></div>
   <h3>Response 200</h3><p>업그레이드 즉시 변경 성공 또는 같은 멱등 키로 처리된 기존 성공 결과</p><pre><code>{
   &quot;subscriptionId&quot;: &quot;sub_analytics&quot;,
   &quot;productCode&quot;: &quot;ANALYTICS&quot;,
@@ -1071,16 +1152,16 @@
   <h2><code>POST /billing/auth</code></h2>
   <p>회원이 새 결제수단을 등록하기 전에 서버가 토스 빌링 인증에 필요한 customerKey, orderId, successUrl, failUrl을 생성하는 API입니다. 이 단계에서는 빌링키를 저장하지 않고 인증 시도만 ready 상태로 기록합니다.</p>
   <h3>Header</h3>
-<div class="table-scroll"><table><thead><tr><th>이름</th><th>필수</th><th>설명</th></tr></thead><tbody><tr><td><code>Content-Type</code></td><td>예</td><td>application/json</td></tr><tr><td><code>Authorization</code></td><td>아니오</td><td>세션 쿠키 대신 Bearer 토큰을 쓰는 경우 사용합니다.</td></tr><tr><td><code>Idempotency-Key</code></td><td>아니오</td><td>인증 시작 버튼 중복 클릭으로 같은 빌링 인증 요청이 여러 번 생성되지 않도록 사용합니다.</td></tr></tbody></table></div>
+<div class="table-scroll"><table><thead><tr><th>이름</th><th>필수</th><th>설명</th></tr></thead><tbody><tr><td data-label="이름"><code>Content-Type</code></td><td data-label="필수">예</td><td data-label="설명">application/json</td></tr><tr><td data-label="이름"><code>Authorization</code></td><td data-label="필수">아니오</td><td data-label="설명">세션 쿠키 대신 Bearer 토큰을 쓰는 경우 사용합니다.</td></tr><tr><td data-label="이름"><code>Idempotency-Key</code></td><td data-label="필수">아니오</td><td data-label="설명">인증 시작 버튼 중복 클릭으로 같은 빌링 인증 요청이 여러 번 생성되지 않도록 사용합니다.</td></tr></tbody></table></div>
   <h3>Cookie</h3>
-<div class="table-scroll"><table><thead><tr><th>이름</th><th>필수</th><th>설명</th></tr></thead><tbody><tr><td><code>session</code></td><td>예</td><td>결제수단을 관리하는 회원을 식별합니다.</td></tr><tr><td><code>csrf_token</code></td><td>아니오</td><td>쿠키 기반 인증을 쓰는 경우 요청 위조를 방지합니다.</td></tr></tbody></table></div>
+<div class="table-scroll"><table><thead><tr><th>이름</th><th>필수</th><th>설명</th></tr></thead><tbody><tr><td data-label="이름"><code>session</code></td><td data-label="필수">예</td><td data-label="설명">결제수단을 관리하는 회원을 식별합니다.</td></tr><tr><td data-label="이름"><code>csrf_token</code></td><td data-label="필수">아니오</td><td data-label="설명">쿠키 기반 인증을 쓰는 경우 요청 위조를 방지합니다.</td></tr></tbody></table></div>
   <h3>Body</h3><pre><code>{
   &quot;successUrl&quot;: &quot;https://example.com/account/billing-methods/success&quot;,
   &quot;failUrl&quot;: &quot;https://example.com/account/billing-methods/fail&quot;,
   &quot;setAsDefault&quot;: true
 }</code></pre>
   <h3>Body 필드</h3>
-<div class="table-scroll"><table><thead><tr><th>이름</th><th>필수</th><th>설명</th></tr></thead><tbody><tr><td><code>successUrl</code></td><td>예</td><td>토스 빌링 인증 성공 후 돌아올 프론트 URL입니다.</td></tr><tr><td><code>failUrl</code></td><td>예</td><td>토스 빌링 인증 실패 또는 사용자 취소 후 돌아올 프론트 URL입니다.</td></tr><tr><td><code>setAsDefault</code></td><td>아니오</td><td>새 결제수단 저장 후 기본 결제수단으로 지정할지 여부입니다. 첫 결제수단은 이 값과 무관하게 기본값이 됩니다.</td></tr></tbody></table></div>
+<div class="table-scroll"><table><thead><tr><th>이름</th><th>필수</th><th>설명</th></tr></thead><tbody><tr><td data-label="이름"><code>successUrl</code></td><td data-label="필수">예</td><td data-label="설명">토스 빌링 인증 성공 후 돌아올 프론트 URL입니다.</td></tr><tr><td data-label="이름"><code>failUrl</code></td><td data-label="필수">예</td><td data-label="설명">토스 빌링 인증 실패 또는 사용자 취소 후 돌아올 프론트 URL입니다.</td></tr><tr><td data-label="이름"><code>setAsDefault</code></td><td data-label="필수">아니오</td><td data-label="설명">새 결제수단 저장 후 기본 결제수단으로 지정할지 여부입니다. 첫 결제수단은 이 값과 무관하게 기본값이 됩니다.</td></tr></tbody></table></div>
   <h3>Response 201</h3><p>빌링 인증 시작 데이터 생성 성공</p><pre><code>{
   &quot;billingAuthId&quot;: &quot;bauth_123&quot;,
   &quot;customerKey&quot;: &quot;cus_7b57c0f1b4&quot;,
@@ -1099,18 +1180,22 @@
   <h2><code>POST /billing/issue</code></h2>
   <p>토스 빌링 인증 성공 후 프론트 성공 페이지가 호출하며, authKey와 customerKey로 토스 빌링키를 발급받아 회원 결제수단으로 저장하는 API입니다.</p>
   <div class="note">토스페이먼츠가 이 API로 직접 POST하지 않습니다. 프론트가 successUrl의 authKey, customerKey와 보관 중인 billingAuthId를 조합해 호출합니다.</div>
+  <div class="note">
+  <strong>연관 잠재 위험</strong>
+  <ul><li><a href="./risk-register-doc.html#billing-method-default-race"><code>billing-method-default-race</code></a> 기본 결제수단 변경과 과금 경합</li></ul>
+</div>
   <h3>Header</h3>
-<div class="table-scroll"><table><thead><tr><th>이름</th><th>필수</th><th>설명</th></tr></thead><tbody><tr><td><code>Content-Type</code></td><td>예</td><td>application/json</td></tr><tr><td><code>Authorization</code></td><td>아니오</td><td>세션 쿠키 대신 Bearer 토큰을 쓰는 경우 사용합니다.</td></tr><tr><td><code>Idempotency-Key</code></td><td>예</td><td>성공 페이지 새로고침이나 네트워크 재시도로 같은 인증이 중복 저장되지 않도록 사용합니다.</td></tr></tbody></table></div>
+<div class="table-scroll"><table><thead><tr><th>이름</th><th>필수</th><th>설명</th></tr></thead><tbody><tr><td data-label="이름"><code>Content-Type</code></td><td data-label="필수">예</td><td data-label="설명">application/json</td></tr><tr><td data-label="이름"><code>Authorization</code></td><td data-label="필수">아니오</td><td data-label="설명">세션 쿠키 대신 Bearer 토큰을 쓰는 경우 사용합니다.</td></tr><tr><td data-label="이름"><code>Idempotency-Key</code></td><td data-label="필수">예</td><td data-label="설명">성공 페이지 새로고침이나 네트워크 재시도로 같은 인증이 중복 저장되지 않도록 사용합니다.</td></tr></tbody></table></div>
   <h3>Cookie</h3>
-<div class="table-scroll"><table><thead><tr><th>이름</th><th>필수</th><th>설명</th></tr></thead><tbody><tr><td><code>session</code></td><td>예</td><td>결제수단을 관리하는 회원을 식별합니다.</td></tr><tr><td><code>csrf_token</code></td><td>아니오</td><td>쿠키 기반 인증을 쓰는 경우 요청 위조를 방지합니다.</td></tr></tbody></table></div>
+<div class="table-scroll"><table><thead><tr><th>이름</th><th>필수</th><th>설명</th></tr></thead><tbody><tr><td data-label="이름"><code>session</code></td><td data-label="필수">예</td><td data-label="설명">결제수단을 관리하는 회원을 식별합니다.</td></tr><tr><td data-label="이름"><code>csrf_token</code></td><td data-label="필수">아니오</td><td data-label="설명">쿠키 기반 인증을 쓰는 경우 요청 위조를 방지합니다.</td></tr></tbody></table></div>
   <h3>Body</h3><pre><code>{
   &quot;billingAuthId&quot;: &quot;bauth_123&quot;,
   &quot;authKey&quot;: &quot;auth_...&quot;,
   &quot;customerKey&quot;: &quot;cus_7b57c0f1b4&quot;
 }</code></pre>
   <h3>Body 필드</h3>
-<div class="table-scroll"><table><thead><tr><th>이름</th><th>필수</th><th>설명</th></tr></thead><tbody><tr><td><code>billingAuthId</code></td><td>예</td><td>POST /billing/auth 응답으로 받은 내부 빌링 인증 ID입니다.</td></tr><tr><td><code>authKey</code></td><td>예</td><td>토스 빌링 인증 성공 리다이렉트로 받은 인증 키입니다.</td></tr><tr><td><code>customerKey</code></td><td>예</td><td>토스 빌링 인증 성공 리다이렉트로 받은 고객 키입니다. billingAuths의 customerKey 스냅샷과 일치해야 합니다.</td></tr></tbody></table></div>
-  <h3>프론트 입력값</h3><div class="table-scroll"><table><thead><tr><th>값</th><th>출처</th><th>설명</th></tr></thead><tbody><tr><td><code>authKey</code></td><td>redirectQuery</td><td>토스 빌링 인증 성공 후 successUrl 쿼리로 전달됩니다.</td></tr><tr><td><code>customerKey</code></td><td>redirectQuery</td><td>토스 빌링 인증에 사용한 고객 키가 successUrl 쿼리로 돌아옵니다.</td></tr><tr><td><code>billingAuthId</code></td><td>routeState</td><td>successUrl 쿼리, sessionStorage, route state 중 하나로 이어받습니다.</td></tr><tr><td><code>Idempotency-Key</code></td><td>generatedByFrontend</td><td>예: billing-issue:bauth_123</td></tr></tbody></table></div>
+<div class="table-scroll"><table><thead><tr><th>이름</th><th>필수</th><th>설명</th></tr></thead><tbody><tr><td data-label="이름"><code>billingAuthId</code></td><td data-label="필수">예</td><td data-label="설명">POST /billing/auth 응답으로 받은 내부 빌링 인증 ID입니다.</td></tr><tr><td data-label="이름"><code>authKey</code></td><td data-label="필수">예</td><td data-label="설명">토스 빌링 인증 성공 리다이렉트로 받은 인증 키입니다.</td></tr><tr><td data-label="이름"><code>customerKey</code></td><td data-label="필수">예</td><td data-label="설명">토스 빌링 인증 성공 리다이렉트로 받은 고객 키입니다. billingAuths의 customerKey 스냅샷과 일치해야 합니다.</td></tr></tbody></table></div>
+  <h3>프론트 입력값</h3><div class="table-scroll"><table><thead><tr><th>값</th><th>출처</th><th>설명</th></tr></thead><tbody><tr><td data-label="값"><code>authKey</code></td><td data-label="출처">redirectQuery</td><td data-label="설명">토스 빌링 인증 성공 후 successUrl 쿼리로 전달됩니다.</td></tr><tr><td data-label="값"><code>customerKey</code></td><td data-label="출처">redirectQuery</td><td data-label="설명">토스 빌링 인증에 사용한 고객 키가 successUrl 쿼리로 돌아옵니다.</td></tr><tr><td data-label="값"><code>billingAuthId</code></td><td data-label="출처">routeState</td><td data-label="설명">successUrl 쿼리, sessionStorage, route state 중 하나로 이어받습니다.</td></tr><tr><td data-label="값"><code>Idempotency-Key</code></td><td data-label="출처">generatedByFrontend</td><td data-label="설명">예: billing-issue:bauth_123</td></tr></tbody></table></div>
   <h3>Response 201</h3><p>빌링키 발급 및 결제수단 저장 성공 또는 같은 요청의 멱등 재시도 성공</p><pre><code>{
   &quot;billingMethodId&quot;: &quot;bm_123&quot;,
   &quot;status&quot;: &quot;active&quot;,
@@ -1138,9 +1223,9 @@
   <h2><code>GET /billing/methods</code></h2>
   <p>회원이 등록한 활성 결제수단 목록과 모든 상품 구독에 공통 적용되는 기본 결제수단, 삭제 가능 여부를 조회하는 API입니다.</p>
   <h3>Header</h3>
-<div class="table-scroll"><table><thead><tr><th>이름</th><th>필수</th><th>설명</th></tr></thead><tbody><tr><td><code>Authorization</code></td><td>아니오</td><td>세션 쿠키 대신 Bearer 토큰을 쓰는 경우 사용합니다.</td></tr></tbody></table></div>
+<div class="table-scroll"><table><thead><tr><th>이름</th><th>필수</th><th>설명</th></tr></thead><tbody><tr><td data-label="이름"><code>Authorization</code></td><td data-label="필수">아니오</td><td data-label="설명">세션 쿠키 대신 Bearer 토큰을 쓰는 경우 사용합니다.</td></tr></tbody></table></div>
   <h3>Cookie</h3>
-<div class="table-scroll"><table><thead><tr><th>이름</th><th>필수</th><th>설명</th></tr></thead><tbody><tr><td><code>session</code></td><td>예</td><td>결제수단 목록을 조회하는 회원을 식별합니다.</td></tr></tbody></table></div>
+<div class="table-scroll"><table><thead><tr><th>이름</th><th>필수</th><th>설명</th></tr></thead><tbody><tr><td data-label="이름"><code>session</code></td><td data-label="필수">예</td><td data-label="설명">결제수단 목록을 조회하는 회원을 식별합니다.</td></tr></tbody></table></div>
   <h3>Body</h3><pre><code>요청 바디 없음</code></pre>
   <h3>Response 200</h3><p>결제수단 목록 조회 성공</p><pre><code>{
   &quot;defaultBillingMethodId&quot;: &quot;bm_123&quot;,
@@ -1179,10 +1264,14 @@
 </section><section id="billing-method-default">
   <h2><code>PATCH /billing/methods/{billingMethodId}/default</code></h2>
   <p>활성 결제수단 중 하나를 회원의 공통 기본 결제수단으로 지정하는 API입니다. 다음 정기결제 배치는 이 결제수단이 참조하는 결제수단 토큰의 billingKey를 사용합니다.</p>
+  <div class="note">
+  <strong>연관 잠재 위험</strong>
+  <ul><li><a href="./risk-register-doc.html#billing-method-default-race"><code>billing-method-default-race</code></a> 기본 결제수단 변경과 과금 경합</li></ul>
+</div>
   <h3>Header</h3>
-<div class="table-scroll"><table><thead><tr><th>이름</th><th>필수</th><th>설명</th></tr></thead><tbody><tr><td><code>Content-Type</code></td><td>아니오</td><td>요청 바디가 없으면 생략할 수 있습니다.</td></tr><tr><td><code>Authorization</code></td><td>아니오</td><td>세션 쿠키 대신 Bearer 토큰을 쓰는 경우 사용합니다.</td></tr><tr><td><code>Idempotency-Key</code></td><td>아니오</td><td>기본값 지정 버튼 중복 클릭을 같은 요청으로 처리할 때 사용합니다.</td></tr></tbody></table></div>
+<div class="table-scroll"><table><thead><tr><th>이름</th><th>필수</th><th>설명</th></tr></thead><tbody><tr><td data-label="이름"><code>Content-Type</code></td><td data-label="필수">아니오</td><td data-label="설명">요청 바디가 없으면 생략할 수 있습니다.</td></tr><tr><td data-label="이름"><code>Authorization</code></td><td data-label="필수">아니오</td><td data-label="설명">세션 쿠키 대신 Bearer 토큰을 쓰는 경우 사용합니다.</td></tr><tr><td data-label="이름"><code>Idempotency-Key</code></td><td data-label="필수">아니오</td><td data-label="설명">기본값 지정 버튼 중복 클릭을 같은 요청으로 처리할 때 사용합니다.</td></tr></tbody></table></div>
   <h3>Cookie</h3>
-<div class="table-scroll"><table><thead><tr><th>이름</th><th>필수</th><th>설명</th></tr></thead><tbody><tr><td><code>session</code></td><td>예</td><td>결제수단을 관리하는 회원을 식별합니다.</td></tr><tr><td><code>csrf_token</code></td><td>아니오</td><td>쿠키 기반 인증을 쓰는 경우 요청 위조를 방지합니다.</td></tr></tbody></table></div>
+<div class="table-scroll"><table><thead><tr><th>이름</th><th>필수</th><th>설명</th></tr></thead><tbody><tr><td data-label="이름"><code>session</code></td><td data-label="필수">예</td><td data-label="설명">결제수단을 관리하는 회원을 식별합니다.</td></tr><tr><td data-label="이름"><code>csrf_token</code></td><td data-label="필수">아니오</td><td data-label="설명">쿠키 기반 인증을 쓰는 경우 요청 위조를 방지합니다.</td></tr></tbody></table></div>
   <h3>Body</h3><pre><code>요청 바디 없음</code></pre>
   <h3>Response 200</h3><p>기본 결제수단 지정 성공 또는 이미 기본값인 결제수단의 멱등 응답</p><pre><code>{
   &quot;billingMethodId&quot;: &quot;bm_456&quot;,
@@ -1198,10 +1287,14 @@
 </section><section id="billing-method-delete">
   <h2><code>DELETE /billing/methods/{billingMethodId}</code></h2>
   <p>회원이 사용하지 않는 결제수단을 삭제 요청하면 서버가 연결된 결제수단 토큰을 비활성화하고 기본 목록에서 제외하는 API입니다. 활성 구독이 1개 이상 있는 회원은 삭제 후 공통 결제수단이 0개가 되는 요청을 거부합니다.</p>
+  <div class="note">
+  <strong>연관 잠재 위험</strong>
+  <ul><li><a href="./risk-register-doc.html#billing-method-default-race"><code>billing-method-default-race</code></a> 기본 결제수단 변경과 과금 경합</li></ul>
+</div>
   <h3>Header</h3>
-<div class="table-scroll"><table><thead><tr><th>이름</th><th>필수</th><th>설명</th></tr></thead><tbody><tr><td><code>Authorization</code></td><td>아니오</td><td>세션 쿠키 대신 Bearer 토큰을 쓰는 경우 사용합니다.</td></tr><tr><td><code>Idempotency-Key</code></td><td>아니오</td><td>삭제 버튼 중복 클릭을 같은 삭제 요청으로 처리할 때 사용합니다.</td></tr></tbody></table></div>
+<div class="table-scroll"><table><thead><tr><th>이름</th><th>필수</th><th>설명</th></tr></thead><tbody><tr><td data-label="이름"><code>Authorization</code></td><td data-label="필수">아니오</td><td data-label="설명">세션 쿠키 대신 Bearer 토큰을 쓰는 경우 사용합니다.</td></tr><tr><td data-label="이름"><code>Idempotency-Key</code></td><td data-label="필수">아니오</td><td data-label="설명">삭제 버튼 중복 클릭을 같은 삭제 요청으로 처리할 때 사용합니다.</td></tr></tbody></table></div>
   <h3>Cookie</h3>
-<div class="table-scroll"><table><thead><tr><th>이름</th><th>필수</th><th>설명</th></tr></thead><tbody><tr><td><code>session</code></td><td>예</td><td>삭제 요청 회원을 식별합니다.</td></tr><tr><td><code>csrf_token</code></td><td>아니오</td><td>쿠키 기반 인증을 쓰는 경우 요청 위조를 방지합니다.</td></tr></tbody></table></div>
+<div class="table-scroll"><table><thead><tr><th>이름</th><th>필수</th><th>설명</th></tr></thead><tbody><tr><td data-label="이름"><code>session</code></td><td data-label="필수">예</td><td data-label="설명">삭제 요청 회원을 식별합니다.</td></tr><tr><td data-label="이름"><code>csrf_token</code></td><td data-label="필수">아니오</td><td data-label="설명">쿠키 기반 인증을 쓰는 경우 요청 위조를 방지합니다.</td></tr></tbody></table></div>
   <h3>Body</h3><pre><code>요청 바디 없음</code></pre>
   <h3>Response 200</h3><p>결제수단 비활성화 성공 또는 이미 삭제된 결제수단의 멱등 응답</p><pre><code>{
   &quot;billingMethodId&quot;: &quot;bm_456&quot;,
@@ -1224,11 +1317,11 @@
   <h2><code>GET /invoices</code></h2>
   <p>회원이 마이페이지 청구 내역에서 구독 회차별 인보이스 목록을 최신 청구일 순으로 조회하는 API입니다. 목록은 요약 정보를 반환하고, 영수증 URL과 실패 사유의 상세 판단은 GET /invoices/{invoiceId}에서 확인합니다.</p>
   <h3>Header</h3>
-<div class="table-scroll"><table><thead><tr><th>이름</th><th>필수</th><th>설명</th></tr></thead><tbody><tr><td><code>Authorization</code></td><td>아니오</td><td>세션 쿠키 대신 Bearer 토큰을 쓰는 경우 사용합니다.</td></tr></tbody></table></div>
+<div class="table-scroll"><table><thead><tr><th>이름</th><th>필수</th><th>설명</th></tr></thead><tbody><tr><td data-label="이름"><code>Authorization</code></td><td data-label="필수">아니오</td><td data-label="설명">세션 쿠키 대신 Bearer 토큰을 쓰는 경우 사용합니다.</td></tr></tbody></table></div>
   <h3>Cookie</h3>
-<div class="table-scroll"><table><thead><tr><th>이름</th><th>필수</th><th>설명</th></tr></thead><tbody><tr><td><code>session</code></td><td>예</td><td>청구 내역을 조회하는 회원을 식별합니다.</td></tr></tbody></table></div>
+<div class="table-scroll"><table><thead><tr><th>이름</th><th>필수</th><th>설명</th></tr></thead><tbody><tr><td data-label="이름"><code>session</code></td><td data-label="필수">예</td><td data-label="설명">청구 내역을 조회하는 회원을 식별합니다.</td></tr></tbody></table></div>
   <h3>Body</h3><pre><code>요청 바디 없음</code></pre>
-  <h3>프론트 입력값</h3><div class="table-scroll"><table><thead><tr><th>값</th><th>출처</th><th>설명</th></tr></thead><tbody><tr><td><code>status</code></td><td>generatedByFrontend</td><td>paid, failed, pending, scheduled, canceled 중 하나로 청구 상태를 필터링합니다.</td></tr><tr><td><code>subscriptionId</code></td><td>routeState</td><td>특정 구독의 청구 내역만 조회할 때 사용합니다.</td></tr><tr><td><code>from</code></td><td>generatedByFrontend</td><td>청구일 기준 조회 시작일입니다. YYYY-MM-DD 형식을 사용합니다.</td></tr><tr><td><code>to</code></td><td>generatedByFrontend</td><td>청구일 기준 조회 종료일입니다. YYYY-MM-DD 형식을 사용합니다.</td></tr><tr><td><code>cursor</code></td><td>serverResponse</td><td>다음 페이지를 조회하기 위한 커서입니다.</td></tr><tr><td><code>limit</code></td><td>generatedByFrontend</td><td>한 번에 반환할 항목 수입니다. 기본값은 20, 최대값은 50입니다.</td></tr></tbody></table></div>
+  <h3>프론트 입력값</h3><div class="table-scroll"><table><thead><tr><th>값</th><th>출처</th><th>설명</th></tr></thead><tbody><tr><td data-label="값"><code>status</code></td><td data-label="출처">generatedByFrontend</td><td data-label="설명">paid, failed, pending, scheduled, canceled 중 하나로 청구 상태를 필터링합니다.</td></tr><tr><td data-label="값"><code>subscriptionId</code></td><td data-label="출처">routeState</td><td data-label="설명">특정 구독의 청구 내역만 조회할 때 사용합니다.</td></tr><tr><td data-label="값"><code>from</code></td><td data-label="출처">generatedByFrontend</td><td data-label="설명">청구일 기준 조회 시작일입니다. YYYY-MM-DD 형식을 사용합니다.</td></tr><tr><td data-label="값"><code>to</code></td><td data-label="출처">generatedByFrontend</td><td data-label="설명">청구일 기준 조회 종료일입니다. YYYY-MM-DD 형식을 사용합니다.</td></tr><tr><td data-label="값"><code>cursor</code></td><td data-label="출처">serverResponse</td><td data-label="설명">다음 페이지를 조회하기 위한 커서입니다.</td></tr><tr><td data-label="값"><code>limit</code></td><td data-label="출처">generatedByFrontend</td><td data-label="설명">한 번에 반환할 항목 수입니다. 기본값은 20, 최대값은 50입니다.</td></tr></tbody></table></div>
   <h3>Response 200</h3><p>인보이스 목록 조회 성공</p><pre><code>{
   &quot;items&quot;: [
     {
@@ -1275,9 +1368,9 @@
   <h2><code>GET /invoices/{invoiceId}</code></h2>
   <p>회원이 단일 인보이스의 청구 금액, 결제 상태, 실패 사유, 재시도 예정일, 결제수단 수정 링크, 영수증 링크를 조회하는 API입니다.</p>
   <h3>Header</h3>
-<div class="table-scroll"><table><thead><tr><th>이름</th><th>필수</th><th>설명</th></tr></thead><tbody><tr><td><code>Authorization</code></td><td>아니오</td><td>세션 쿠키 대신 Bearer 토큰을 쓰는 경우 사용합니다.</td></tr></tbody></table></div>
+<div class="table-scroll"><table><thead><tr><th>이름</th><th>필수</th><th>설명</th></tr></thead><tbody><tr><td data-label="이름"><code>Authorization</code></td><td data-label="필수">아니오</td><td data-label="설명">세션 쿠키 대신 Bearer 토큰을 쓰는 경우 사용합니다.</td></tr></tbody></table></div>
   <h3>Cookie</h3>
-<div class="table-scroll"><table><thead><tr><th>이름</th><th>필수</th><th>설명</th></tr></thead><tbody><tr><td><code>session</code></td><td>예</td><td>인보이스를 조회하는 회원을 식별합니다.</td></tr></tbody></table></div>
+<div class="table-scroll"><table><thead><tr><th>이름</th><th>필수</th><th>설명</th></tr></thead><tbody><tr><td data-label="이름"><code>session</code></td><td data-label="필수">예</td><td data-label="설명">인보이스를 조회하는 회원을 식별합니다.</td></tr></tbody></table></div>
   <h3>Body</h3><pre><code>요청 바디 없음</code></pre>
   <h3>Response 200</h3><p>인보이스 상세 조회 성공</p><pre><code>{
   &quot;invoiceId&quot;: &quot;inv_123&quot;,
@@ -1310,8 +1403,12 @@
 </section><section id="webhook">
   <h2><code>POST /webhooks/toss-payments</code></h2>
   <p>토스페이먼츠가 결제 상태 변경 이벤트를 보내는 엔드포인트입니다.</p>
+  <div class="note">
+  <strong>연관 잠재 위험</strong>
+  <ul><li><a href="./risk-register-doc.html#provider-paid-internal-unpaid"><code>provider-paid-internal-unpaid</code></a> PG 승인 성공 후 내부 미반영</li><li><a href="./risk-register-doc.html#checkout-multiple-paid-attempts"><code>checkout-multiple-paid-attempts</code></a> 하나의 구매 의도에 여러 paid 시도 발생</li><li><a href="./risk-register-doc.html#webhook-out-of-order-or-duplicate"><code>webhook-out-of-order-or-duplicate</code></a> 웹훅 중복 또는 순서 역전</li><li><a href="./risk-register-doc.html#plan-change-double-apply"><code>plan-change-double-apply</code></a> 플랜 변경 중복 실행</li><li><a href="./risk-register-doc.html#webhook-auth-weak-contract"><code>webhook-auth-weak-contract</code></a> 웹훅 인증 계약 약화</li></ul>
+</div>
   <h3>Header</h3>
-<div class="table-scroll"><table><thead><tr><th>이름</th><th>필수</th><th>설명</th></tr></thead><tbody><tr><td><code>Content-Type</code></td><td>예</td><td>application/json</td></tr><tr><td><code>Toss-Signature</code></td><td>아니오</td><td>웹훅 출처 검증용 서명 헤더입니다. 실제 이름은 토스 설정에 맞춥니다.</td></tr></tbody></table></div>
+<div class="table-scroll"><table><thead><tr><th>이름</th><th>필수</th><th>설명</th></tr></thead><tbody><tr><td data-label="이름"><code>Content-Type</code></td><td data-label="필수">예</td><td data-label="설명">application/json</td></tr><tr><td data-label="이름"><code>Toss-Signature</code></td><td data-label="필수">아니오</td><td data-label="설명">웹훅 출처 검증용 서명 헤더입니다. 실제 이름은 토스 설정에 맞춥니다.</td></tr></tbody></table></div>
   <h3>Cookie</h3>
 <div class="table-scroll"><table><thead><tr><th>이름</th><th>필수</th><th>설명</th></tr></thead><tbody></tbody></table></div>
   <h3>Body</h3><pre><code>{
@@ -1331,8 +1428,12 @@
 </section><section id="billing-run">
   <h2><code>POST /internal/subscription-billing/run</code></h2>
   <p>스케줄러나 운영자가 정기 과금 배치를 실행할 때 호출하는 내부 API입니다. 정기 결제 7일 전 사전 알림과 결제일 자동결제를 처리하며, cancel_scheduled 구독과 nextBillingDate가 null인 구독은 제외합니다.</p>
+  <div class="note">
+  <strong>연관 잠재 위험</strong>
+  <ul><li><a href="./risk-register-doc.html#provider-paid-internal-unpaid"><code>provider-paid-internal-unpaid</code></a> PG 승인 성공 후 내부 미반영</li><li><a href="./risk-register-doc.html#recurring-billing-duplicate-run"><code>recurring-billing-duplicate-run</code></a> 정기결제 배치 중복 실행</li><li><a href="./risk-register-doc.html#webhook-out-of-order-or-duplicate"><code>webhook-out-of-order-or-duplicate</code></a> 웹훅 중복 또는 순서 역전</li><li><a href="./risk-register-doc.html#cancel-scheduled-billing-race"><code>cancel-scheduled-billing-race</code></a> 해지 예약과 정기 과금 경합</li><li><a href="./risk-register-doc.html#billing-method-default-race"><code>billing-method-default-race</code></a> 기본 결제수단 변경과 과금 경합</li></ul>
+</div>
   <h3>Header</h3>
-<div class="table-scroll"><table><thead><tr><th>이름</th><th>필수</th><th>설명</th></tr></thead><tbody><tr><td><code>Content-Type</code></td><td>예</td><td>application/json</td></tr><tr><td><code>Internal-Job-Token</code></td><td>예</td><td>스케줄러 또는 내부 운영 도구 호출을 인증하는 토큰입니다.</td></tr><tr><td><code>Idempotency-Key</code></td><td>아니오</td><td>동일 날짜 배치가 중복 실행될 때 이미 처리한 invoice 또는 subscription을 재처리하지 않도록 사용합니다.</td></tr></tbody></table></div>
+<div class="table-scroll"><table><thead><tr><th>이름</th><th>필수</th><th>설명</th></tr></thead><tbody><tr><td data-label="이름"><code>Content-Type</code></td><td data-label="필수">예</td><td data-label="설명">application/json</td></tr><tr><td data-label="이름"><code>Internal-Job-Token</code></td><td data-label="필수">예</td><td data-label="설명">스케줄러 또는 내부 운영 도구 호출을 인증하는 토큰입니다.</td></tr><tr><td data-label="이름"><code>Idempotency-Key</code></td><td data-label="필수">아니오</td><td data-label="설명">동일 날짜 배치가 중복 실행될 때 이미 처리한 invoice 또는 subscription을 재처리하지 않도록 사용합니다.</td></tr></tbody></table></div>
   <h3>Cookie</h3>
 <div class="table-scroll"><table><thead><tr><th>이름</th><th>필수</th><th>설명</th></tr></thead><tbody></tbody></table></div>
   <h3>Body</h3><pre><code>{
@@ -1342,7 +1443,7 @@
   &quot;dryRun&quot;: false
 }</code></pre>
   <h3>Body 필드</h3>
-<div class="table-scroll"><table><thead><tr><th>이름</th><th>필수</th><th>설명</th></tr></thead><tbody><tr><td><code>jobType</code></td><td>아니오</td><td>billing이면 결제일 도래 구독을 결제하고, reminder이면 결제 7일 전 사전 알림만 발송합니다. 생략 시 billing입니다.</td></tr><tr><td><code>billingDate</code></td><td>아니오</td><td>결제 또는 사전 알림 대상 기준일입니다. 생략하면 서버의 오늘 날짜를 사용합니다.</td></tr><tr><td><code>limit</code></td><td>아니오</td><td>한 번에 처리할 구독 수입니다. 장시간 배치를 피하기 위한 운영 옵션입니다.</td></tr><tr><td><code>dryRun</code></td><td>아니오</td><td>true이면 결제 승인 없이 대상 선정 결과만 반환합니다.</td></tr></tbody></table></div>
+<div class="table-scroll"><table><thead><tr><th>이름</th><th>필수</th><th>설명</th></tr></thead><tbody><tr><td data-label="이름"><code>jobType</code></td><td data-label="필수">아니오</td><td data-label="설명">billing이면 결제일 도래 구독을 결제하고, reminder이면 결제 7일 전 사전 알림만 발송합니다. 생략 시 billing입니다.</td></tr><tr><td data-label="이름"><code>billingDate</code></td><td data-label="필수">아니오</td><td data-label="설명">결제 또는 사전 알림 대상 기준일입니다. 생략하면 서버의 오늘 날짜를 사용합니다.</td></tr><tr><td data-label="이름"><code>limit</code></td><td data-label="필수">아니오</td><td data-label="설명">한 번에 처리할 구독 수입니다. 장시간 배치를 피하기 위한 운영 옵션입니다.</td></tr><tr><td data-label="이름"><code>dryRun</code></td><td data-label="필수">아니오</td><td data-label="설명">true이면 결제 승인 없이 대상 선정 결과만 반환합니다.</td></tr></tbody></table></div>
   <h3>Response 200</h3><p>정기 과금 배치 실행 결과</p><pre><code>{
   &quot;billingDate&quot;: &quot;2026-07-08&quot;,
   &quot;processed&quot;: 95,
@@ -1361,8 +1462,12 @@
 </section><section id="billing-retry">
   <h2><code>POST /internal/subscription-billing/{invoiceId}/retry</code></h2>
   <p>실패한 정기 결제 인보이스를 내부 배치 또는 운영자 도구에서 다시 결제하는 API입니다. 재시도 성공 시 영수증 링크를 포함한 성공 알림을, 실패 시 다음 재시도 일자나 결제수단 수정 링크 또는 해지 처리 알림을 발송합니다.</p>
+  <div class="note">
+  <strong>연관 잠재 위험</strong>
+  <ul><li><a href="./risk-register-doc.html#subscription-retry-duplicate-charge"><code>subscription-retry-duplicate-charge</code></a> 실패 인보이스 재시도 중복 과금</li><li><a href="./risk-register-doc.html#idempotency-store-missing"><code>idempotency-store-missing</code></a> 멱등키 저장소 부재</li></ul>
+</div>
   <h3>Header</h3>
-<div class="table-scroll"><table><thead><tr><th>이름</th><th>필수</th><th>설명</th></tr></thead><tbody><tr><td><code>Content-Type</code></td><td>예</td><td>application/json</td></tr><tr><td><code>Internal-Job-Token</code></td><td>예</td><td>스케줄러 또는 내부 운영 도구 호출을 인증하는 토큰입니다.</td></tr><tr><td><code>Idempotency-Key</code></td><td>예</td><td>같은 인보이스 재시도 요청이 중복 승인되지 않도록 사용합니다.</td></tr></tbody></table></div>
+<div class="table-scroll"><table><thead><tr><th>이름</th><th>필수</th><th>설명</th></tr></thead><tbody><tr><td data-label="이름"><code>Content-Type</code></td><td data-label="필수">예</td><td data-label="설명">application/json</td></tr><tr><td data-label="이름"><code>Internal-Job-Token</code></td><td data-label="필수">예</td><td data-label="설명">스케줄러 또는 내부 운영 도구 호출을 인증하는 토큰입니다.</td></tr><tr><td data-label="이름"><code>Idempotency-Key</code></td><td data-label="필수">예</td><td data-label="설명">같은 인보이스 재시도 요청이 중복 승인되지 않도록 사용합니다.</td></tr></tbody></table></div>
   <h3>Cookie</h3>
 <div class="table-scroll"><table><thead><tr><th>이름</th><th>필수</th><th>설명</th></tr></thead><tbody></tbody></table></div>
   <h3>Body</h3><pre><code>{
@@ -1371,7 +1476,7 @@
   &quot;dryRun&quot;: false
 }</code></pre>
   <h3>Body 필드</h3>
-<div class="table-scroll"><table><thead><tr><th>이름</th><th>필수</th><th>설명</th></tr></thead><tbody><tr><td><code>force</code></td><td>아니오</td><td>운영자 수동 재시도에서 nextRetryAt 이전에도 실행할지 여부입니다. 기본값은 false입니다.</td></tr><tr><td><code>reason</code></td><td>아니오</td><td>수동 재시도 사유입니다. 감사 로그와 운영 이력에 저장합니다.</td></tr><tr><td><code>dryRun</code></td><td>아니오</td><td>true이면 토스 승인과 이메일 발송 없이 재시도 가능 여부만 반환합니다.</td></tr></tbody></table></div>
+<div class="table-scroll"><table><thead><tr><th>이름</th><th>필수</th><th>설명</th></tr></thead><tbody><tr><td data-label="이름"><code>force</code></td><td data-label="필수">아니오</td><td data-label="설명">운영자 수동 재시도에서 nextRetryAt 이전에도 실행할지 여부입니다. 기본값은 false입니다.</td></tr><tr><td data-label="이름"><code>reason</code></td><td data-label="필수">아니오</td><td data-label="설명">수동 재시도 사유입니다. 감사 로그와 운영 이력에 저장합니다.</td></tr><tr><td data-label="이름"><code>dryRun</code></td><td data-label="필수">아니오</td><td data-label="설명">true이면 토스 승인과 이메일 발송 없이 재시도 가능 여부만 반환합니다.</td></tr></tbody></table></div>
   <h3>Response 200</h3><p>재시도 성공 또는 실패 상태 반영 완료</p><pre><code>{
   &quot;invoiceId&quot;: &quot;inv_123&quot;,
   &quot;subscriptionId&quot;: &quot;sub_123&quot;,
@@ -1398,11 +1503,11 @@
   <h2><code>GET /admin/payments</code></h2>
   <p>CS와 운영자가 결제 취소, 장애 보정, 고객 문의 대응 전에 일반결제 목록을 검색하는 관리자 API입니다. 결제 상태, 회원, 주문번호, paymentKey, 결제일 조건으로 조회하고 취소 가능 금액과 상세/취소 진입 정보를 반환합니다.</p>
   <h3>Header</h3>
-<div class="table-scroll"><table><thead><tr><th>이름</th><th>필수</th><th>설명</th></tr></thead><tbody><tr><td><code>Authorization</code></td><td>아니오</td><td>관리자 콘솔이 Bearer 토큰 기반 인증을 쓰는 경우 사용합니다.</td></tr></tbody></table></div>
+<div class="table-scroll"><table><thead><tr><th>이름</th><th>필수</th><th>설명</th></tr></thead><tbody><tr><td data-label="이름"><code>Authorization</code></td><td data-label="필수">아니오</td><td data-label="설명">관리자 콘솔이 Bearer 토큰 기반 인증을 쓰는 경우 사용합니다.</td></tr></tbody></table></div>
   <h3>Cookie</h3>
-<div class="table-scroll"><table><thead><tr><th>이름</th><th>필수</th><th>설명</th></tr></thead><tbody><tr><td><code>ADMIN_SESSION</code></td><td>예</td><td>관리자 콘솔 인증 세션입니다.</td></tr></tbody></table></div>
+<div class="table-scroll"><table><thead><tr><th>이름</th><th>필수</th><th>설명</th></tr></thead><tbody><tr><td data-label="이름"><code>ADMIN_SESSION</code></td><td data-label="필수">예</td><td data-label="설명">관리자 콘솔 인증 세션입니다.</td></tr></tbody></table></div>
   <h3>Body</h3><pre><code>요청 바디 없음</code></pre>
-  <h3>프론트 입력값</h3><div class="table-scroll"><table><thead><tr><th>값</th><th>출처</th><th>설명</th></tr></thead><tbody><tr><td><code>status</code></td><td>query</td><td>ready, paid, partial_canceled, canceled, failed, expired 중 하나 이상으로 필터링합니다.</td></tr><tr><td><code>userId</code></td><td>query</td><td>특정 회원의 결제만 조회합니다.</td></tr><tr><td><code>orderId</code></td><td>query</td><td>내부 주문번호로 검색합니다. 정확 일치를 기본으로 합니다.</td></tr><tr><td><code>paymentKey</code></td><td>query</td><td>토스 paymentKey로 결제 건을 찾습니다.</td></tr><tr><td><code>from, to</code></td><td>query</td><td>결제 생성일 또는 승인일 범위입니다. 기본 정렬 기준과 함께 사용합니다.</td></tr><tr><td><code>cursor, limit</code></td><td>query</td><td>커서 기반 페이지네이션 값입니다. limit 기본값은 50, 최대값은 100입니다.</td></tr></tbody></table></div>
+  <h3>프론트 입력값</h3><div class="table-scroll"><table><thead><tr><th>값</th><th>출처</th><th>설명</th></tr></thead><tbody><tr><td data-label="값"><code>status</code></td><td data-label="출처">query</td><td data-label="설명">ready, paid, partial_canceled, canceled, failed, expired 중 하나 이상으로 필터링합니다.</td></tr><tr><td data-label="값"><code>userId</code></td><td data-label="출처">query</td><td data-label="설명">특정 회원의 결제만 조회합니다.</td></tr><tr><td data-label="값"><code>orderId</code></td><td data-label="출처">query</td><td data-label="설명">내부 주문번호로 검색합니다. 정확 일치를 기본으로 합니다.</td></tr><tr><td data-label="값"><code>paymentKey</code></td><td data-label="출처">query</td><td data-label="설명">토스 paymentKey로 결제 건을 찾습니다.</td></tr><tr><td data-label="값"><code>from, to</code></td><td data-label="출처">query</td><td data-label="설명">결제 생성일 또는 승인일 범위입니다. 기본 정렬 기준과 함께 사용합니다.</td></tr><tr><td data-label="값"><code>cursor, limit</code></td><td data-label="출처">query</td><td data-label="설명">커서 기반 페이지네이션 값입니다. limit 기본값은 50, 최대값은 100입니다.</td></tr></tbody></table></div>
   <h3>Response 200</h3><p>관리자 결제 목록 조회 성공</p><pre><code>{
   &quot;items&quot;: [
     {
@@ -1437,11 +1542,11 @@
   <h2><code>GET /admin/subscriptions</code></h2>
   <p>운영자가 구독 수동 보정, 결제 실패 대응, CS 문의 처리 전에 구독 목록과 현재 상태를 검색하는 관리자 API입니다. 구독 상태, 회원, 상품, 다음 결제일, 결제 실패 여부로 필터링하고 보정 진입에 필요한 요약 정보를 반환합니다.</p>
   <h3>Header</h3>
-<div class="table-scroll"><table><thead><tr><th>이름</th><th>필수</th><th>설명</th></tr></thead><tbody><tr><td><code>Authorization</code></td><td>아니오</td><td>관리자 콘솔이 Bearer 토큰 기반 인증을 쓰는 경우 사용합니다.</td></tr></tbody></table></div>
+<div class="table-scroll"><table><thead><tr><th>이름</th><th>필수</th><th>설명</th></tr></thead><tbody><tr><td data-label="이름"><code>Authorization</code></td><td data-label="필수">아니오</td><td data-label="설명">관리자 콘솔이 Bearer 토큰 기반 인증을 쓰는 경우 사용합니다.</td></tr></tbody></table></div>
   <h3>Cookie</h3>
-<div class="table-scroll"><table><thead><tr><th>이름</th><th>필수</th><th>설명</th></tr></thead><tbody><tr><td><code>ADMIN_SESSION</code></td><td>예</td><td>관리자 콘솔 인증 세션입니다.</td></tr></tbody></table></div>
+<div class="table-scroll"><table><thead><tr><th>이름</th><th>필수</th><th>설명</th></tr></thead><tbody><tr><td data-label="이름"><code>ADMIN_SESSION</code></td><td data-label="필수">예</td><td data-label="설명">관리자 콘솔 인증 세션입니다.</td></tr></tbody></table></div>
   <h3>Body</h3><pre><code>요청 바디 없음</code></pre>
-  <h3>프론트 입력값</h3><div class="table-scroll"><table><thead><tr><th>값</th><th>출처</th><th>설명</th></tr></thead><tbody><tr><td><code>status</code></td><td>query</td><td>active, cancel_scheduled, past_due, grace_period, suspended, canceled 중 하나 이상으로 필터링합니다.</td></tr><tr><td><code>userId</code></td><td>query</td><td>특정 회원의 구독만 조회합니다.</td></tr><tr><td><code>productCode</code></td><td>query</td><td>특정 상품 구독만 조회합니다.</td></tr><tr><td><code>paymentFailure</code></td><td>query</td><td>true이면 결제 실패 플래그나 재시도 대기 상태가 있는 구독만 조회합니다.</td></tr><tr><td><code>nextBillingFrom, nextBillingTo</code></td><td>query</td><td>다음 결제일 범위로 조회합니다.</td></tr><tr><td><code>cursor, limit</code></td><td>query</td><td>커서 기반 페이지네이션 값입니다. limit 기본값은 50, 최대값은 100입니다.</td></tr></tbody></table></div>
+  <h3>프론트 입력값</h3><div class="table-scroll"><table><thead><tr><th>값</th><th>출처</th><th>설명</th></tr></thead><tbody><tr><td data-label="값"><code>status</code></td><td data-label="출처">query</td><td data-label="설명">active, cancel_scheduled, past_due, grace_period, suspended, canceled 중 하나 이상으로 필터링합니다.</td></tr><tr><td data-label="값"><code>userId</code></td><td data-label="출처">query</td><td data-label="설명">특정 회원의 구독만 조회합니다.</td></tr><tr><td data-label="값"><code>productCode</code></td><td data-label="출처">query</td><td data-label="설명">특정 상품 구독만 조회합니다.</td></tr><tr><td data-label="값"><code>paymentFailure</code></td><td data-label="출처">query</td><td data-label="설명">true이면 결제 실패 플래그나 재시도 대기 상태가 있는 구독만 조회합니다.</td></tr><tr><td data-label="값"><code>nextBillingFrom, nextBillingTo</code></td><td data-label="출처">query</td><td data-label="설명">다음 결제일 범위로 조회합니다.</td></tr><tr><td data-label="값"><code>cursor, limit</code></td><td data-label="출처">query</td><td data-label="설명">커서 기반 페이지네이션 값입니다. limit 기본값은 50, 최대값은 100입니다.</td></tr></tbody></table></div>
   <h3>Response 200</h3><p>관리자 구독 목록 조회 성공</p><pre><code>{
   &quot;items&quot;: [
     {
@@ -1479,10 +1584,14 @@
 </section><section id="admin-payment-cancel">
   <h2><code>POST /admin/payments/{paymentId}/cancel</code></h2>
   <p>관리자가 CS 요청, 중복 결제, 장애 보정 사유로 일반결제를 전체 또는 부분 취소하는 API입니다. 회원 소유권 대신 관리자 권한과 감사 로그를 검증하고, 처리 결과는 회원용 결제 조회와 같은 취소 이력에 반영합니다.</p>
+  <div class="note">
+  <strong>연관 잠재 위험</strong>
+  <ul><li><a href="./risk-register-doc.html#cancel-refund-duplicate-or-mismatch"><code>cancel-refund-duplicate-or-mismatch</code></a> 취소/환불 중복 또는 외부/내부 불일치</li></ul>
+</div>
   <h3>Header</h3>
-<div class="table-scroll"><table><thead><tr><th>이름</th><th>필수</th><th>설명</th></tr></thead><tbody><tr><td><code>Content-Type</code></td><td>예</td><td>application/json</td></tr><tr><td><code>Idempotency-Key</code></td><td>예</td><td>운영자 도구 재시도와 중복 클릭을 같은 취소 건으로 묶기 위한 키입니다.</td></tr></tbody></table></div>
+<div class="table-scroll"><table><thead><tr><th>이름</th><th>필수</th><th>설명</th></tr></thead><tbody><tr><td data-label="이름"><code>Content-Type</code></td><td data-label="필수">예</td><td data-label="설명">application/json</td></tr><tr><td data-label="이름"><code>Idempotency-Key</code></td><td data-label="필수">예</td><td data-label="설명">운영자 도구 재시도와 중복 클릭을 같은 취소 건으로 묶기 위한 키입니다.</td></tr></tbody></table></div>
   <h3>Cookie</h3>
-<div class="table-scroll"><table><thead><tr><th>이름</th><th>필수</th><th>설명</th></tr></thead><tbody><tr><td><code>ADMIN_SESSION</code></td><td>예</td><td>관리자 콘솔 인증 세션입니다.</td></tr></tbody></table></div>
+<div class="table-scroll"><table><thead><tr><th>이름</th><th>필수</th><th>설명</th></tr></thead><tbody><tr><td data-label="이름"><code>ADMIN_SESSION</code></td><td data-label="필수">예</td><td data-label="설명">관리자 콘솔 인증 세션입니다.</td></tr></tbody></table></div>
   <h3>Body</h3><pre><code>{
   &quot;cancelAmount&quot;: 50000,
   &quot;cancelReason&quot;: &quot;duplicate_payment&quot;,
@@ -1490,7 +1599,7 @@
   &quot;notifyCustomer&quot;: true
 }</code></pre>
   <h3>Body 필드</h3>
-<div class="table-scroll"><table><thead><tr><th>이름</th><th>필수</th><th>설명</th></tr></thead><tbody><tr><td><code>cancelAmount</code></td><td>아니오</td><td>관리자가 취소할 금액입니다. 생략하면 남은 취소 가능 금액 전체를 취소합니다.</td></tr><tr><td><code>cancelReason</code></td><td>예</td><td>운영 취소 사유 코드입니다. duplicate_payment, customer_request, service_incident, operator_adjustment 등을 사용합니다.</td></tr><tr><td><code>reasonMessage</code></td><td>예</td><td>감사 로그와 CS 이력에 남길 상세 사유입니다.</td></tr><tr><td><code>notifyCustomer</code></td><td>아니오</td><td>취소 완료 알림 발송 여부입니다. 기본값은 true입니다.</td></tr></tbody></table></div>
+<div class="table-scroll"><table><thead><tr><th>이름</th><th>필수</th><th>설명</th></tr></thead><tbody><tr><td data-label="이름"><code>cancelAmount</code></td><td data-label="필수">아니오</td><td data-label="설명">관리자가 취소할 금액입니다. 생략하면 남은 취소 가능 금액 전체를 취소합니다.</td></tr><tr><td data-label="이름"><code>cancelReason</code></td><td data-label="필수">예</td><td data-label="설명">운영 취소 사유 코드입니다. duplicate_payment, customer_request, service_incident, operator_adjustment 등을 사용합니다.</td></tr><tr><td data-label="이름"><code>reasonMessage</code></td><td data-label="필수">예</td><td data-label="설명">감사 로그와 CS 이력에 남길 상세 사유입니다.</td></tr><tr><td data-label="이름"><code>notifyCustomer</code></td><td data-label="필수">아니오</td><td data-label="설명">취소 완료 알림 발송 여부입니다. 기본값은 true입니다.</td></tr></tbody></table></div>
   <h3>Response 200</h3><p>운영자 취소 성공 또는 같은 멱등 키 재시도에 대한 기존 결과</p><pre><code>{
   &quot;paymentId&quot;: &quot;pay_20260608_0001&quot;,
   &quot;status&quot;: &quot;canceled&quot;,
@@ -1514,10 +1623,14 @@
 </section><section id="admin-subscription-adjust">
   <h2><code>POST /admin/subscriptions/{subscriptionId}/adjust</code></h2>
   <p>관리자가 토스 결제 성공 누락, 웹훅 처리 실패, CS 예외, 재시도 최종 실패 후 별도 결제, 마이그레이션 오류 복구 상황에서 구독 상태와 다음 결제일을 감사 가능하게 보정하는 API입니다. 외부 결제 사실을 근거로 하는 보정과 내부 운영 정책 보정을 adjustmentType으로 분리합니다.</p>
+  <div class="note">
+  <strong>연관 잠재 위험</strong>
+  <ul><li><a href="./risk-register-doc.html#provider-paid-internal-unpaid"><code>provider-paid-internal-unpaid</code></a> PG 승인 성공 후 내부 미반영</li><li><a href="./risk-register-doc.html#idempotency-store-missing"><code>idempotency-store-missing</code></a> 멱등키 저장소 부재</li></ul>
+</div>
   <h3>Header</h3>
-<div class="table-scroll"><table><thead><tr><th>이름</th><th>필수</th><th>설명</th></tr></thead><tbody><tr><td><code>Content-Type</code></td><td>예</td><td>application/json</td></tr><tr><td><code>Idempotency-Key</code></td><td>예</td><td>운영자 도구 재시도와 중복 클릭을 같은 보정 건으로 묶기 위한 키입니다.</td></tr></tbody></table></div>
+<div class="table-scroll"><table><thead><tr><th>이름</th><th>필수</th><th>설명</th></tr></thead><tbody><tr><td data-label="이름"><code>Content-Type</code></td><td data-label="필수">예</td><td data-label="설명">application/json</td></tr><tr><td data-label="이름"><code>Idempotency-Key</code></td><td data-label="필수">예</td><td data-label="설명">운영자 도구 재시도와 중복 클릭을 같은 보정 건으로 묶기 위한 키입니다.</td></tr></tbody></table></div>
   <h3>Cookie</h3>
-<div class="table-scroll"><table><thead><tr><th>이름</th><th>필수</th><th>설명</th></tr></thead><tbody><tr><td><code>ADMIN_SESSION</code></td><td>예</td><td>관리자 콘솔 인증 세션입니다.</td></tr></tbody></table></div>
+<div class="table-scroll"><table><thead><tr><th>이름</th><th>필수</th><th>설명</th></tr></thead><tbody><tr><td data-label="이름"><code>ADMIN_SESSION</code></td><td data-label="필수">예</td><td data-label="설명">관리자 콘솔 인증 세션입니다.</td></tr></tbody></table></div>
   <h3>Body</h3><pre><code>{
   &quot;adjustmentType&quot;: &quot;postpone_next_billing&quot;,
   &quot;postponeBy&quot;: {
@@ -1528,7 +1641,7 @@
   &quot;notifyCustomer&quot;: true
 }</code></pre>
   <h3>Body 필드</h3>
-<div class="table-scroll"><table><thead><tr><th>이름</th><th>필수</th><th>설명</th></tr></thead><tbody><tr><td><code>adjustmentType</code></td><td>예</td><td>보정 유형입니다. provider_payment_sync, postpone_next_billing, set_next_billing_date, clear_payment_failure, status_override 중 하나를 사용합니다.</td></tr><tr><td><code>paymentKey</code></td><td>아니오</td><td>provider_payment_sync에서 토스 결제 상태를 조회할 때 사용하는 결제 키입니다. invoiceId만으로 결제 키를 찾을 수 없으면 필수입니다.</td></tr><tr><td><code>invoiceId</code></td><td>아니오</td><td>보정할 내부 인보이스 ID입니다. 결제 성공 누락, 재시도 실패 후 별도 결제 반영, 실패 상태 해제 시 연결 근거로 사용합니다.</td></tr><tr><td><code>postponeBy.days</code></td><td>아니오</td><td>postpone_next_billing에서 현재 nextBillingAt 기준으로 더할 일수입니다. 양수만 허용하며 서비스 정책에 따라 최대 연기 일수를 제한합니다.</td></tr><tr><td><code>nextBillingAt</code></td><td>아니오</td><td>set_next_billing_date에서 다음 결제일을 특정 일시로 덮어쓸 때 사용합니다. 마이그레이션 복구나 운영 실수 정정처럼 절대 날짜가 근거인 경우에만 사용합니다.</td></tr><tr><td><code>targetStatus</code></td><td>아니오</td><td>status_override 또는 clear_payment_failure에서 목표 구독 상태를 지정합니다. 예: active, canceled, suspended.</td></tr><tr><td><code>reasonCode</code></td><td>예</td><td>운영 보정 사유 코드입니다. payment_sync_mismatch, webhook_recovery, service_incident_compensation, cs_exception, migration_fix, retry_recovered 등을 사용합니다.</td></tr><tr><td><code>reasonMessage</code></td><td>예</td><td>감사 로그와 CS 이력에 남길 상세 사유입니다. 외부 티켓, 장애 번호, 결제 증빙을 식별할 수 있어야 합니다.</td></tr><tr><td><code>notifyCustomer</code></td><td>아니오</td><td>보정 완료 알림 발송 여부입니다. 기본값은 false이며, 다음 결제일이나 이용 가능 상태가 바뀌면 true를 권장합니다.</td></tr></tbody></table></div>
+<div class="table-scroll"><table><thead><tr><th>이름</th><th>필수</th><th>설명</th></tr></thead><tbody><tr><td data-label="이름"><code>adjustmentType</code></td><td data-label="필수">예</td><td data-label="설명">보정 유형입니다. provider_payment_sync, postpone_next_billing, set_next_billing_date, clear_payment_failure, status_override 중 하나를 사용합니다.</td></tr><tr><td data-label="이름"><code>paymentKey</code></td><td data-label="필수">아니오</td><td data-label="설명">provider_payment_sync에서 토스 결제 상태를 조회할 때 사용하는 결제 키입니다. invoiceId만으로 결제 키를 찾을 수 없으면 필수입니다.</td></tr><tr><td data-label="이름"><code>invoiceId</code></td><td data-label="필수">아니오</td><td data-label="설명">보정할 내부 인보이스 ID입니다. 결제 성공 누락, 재시도 실패 후 별도 결제 반영, 실패 상태 해제 시 연결 근거로 사용합니다.</td></tr><tr><td data-label="이름"><code>postponeBy.days</code></td><td data-label="필수">아니오</td><td data-label="설명">postpone_next_billing에서 현재 nextBillingAt 기준으로 더할 일수입니다. 양수만 허용하며 서비스 정책에 따라 최대 연기 일수를 제한합니다.</td></tr><tr><td data-label="이름"><code>nextBillingAt</code></td><td data-label="필수">아니오</td><td data-label="설명">set_next_billing_date에서 다음 결제일을 특정 일시로 덮어쓸 때 사용합니다. 마이그레이션 복구나 운영 실수 정정처럼 절대 날짜가 근거인 경우에만 사용합니다.</td></tr><tr><td data-label="이름"><code>targetStatus</code></td><td data-label="필수">아니오</td><td data-label="설명">status_override 또는 clear_payment_failure에서 목표 구독 상태를 지정합니다. 예: active, canceled, suspended.</td></tr><tr><td data-label="이름"><code>reasonCode</code></td><td data-label="필수">예</td><td data-label="설명">운영 보정 사유 코드입니다. payment_sync_mismatch, webhook_recovery, service_incident_compensation, cs_exception, migration_fix, retry_recovered 등을 사용합니다.</td></tr><tr><td data-label="이름"><code>reasonMessage</code></td><td data-label="필수">예</td><td data-label="설명">감사 로그와 CS 이력에 남길 상세 사유입니다. 외부 티켓, 장애 번호, 결제 증빙을 식별할 수 있어야 합니다.</td></tr><tr><td data-label="이름"><code>notifyCustomer</code></td><td data-label="필수">아니오</td><td data-label="설명">보정 완료 알림 발송 여부입니다. 기본값은 false이며, 다음 결제일이나 이용 가능 상태가 바뀌면 true를 권장합니다.</td></tr></tbody></table></div>
   <h3>Response 200</h3><p>구독 보정 성공 또는 같은 멱등 키 재시도에 대한 기존 결과</p><pre><code>{
   &quot;subscriptionId&quot;: &quot;sub_123&quot;,
   &quot;adjustmentType&quot;: &quot;postpone_next_billing&quot;,
@@ -1551,9 +1664,9 @@
   <h2><code>POST /admin/products</code></h2>
   <p>관리자가 공통 Product 아래에서 구독상품과 일반상품을 분리해 생성하는 API입니다. Product는 이름, 코드, 노출 상태 같은 공통 속성만 보관하고, 구독상품은 subscriptionPlans로, 일반상품은 oneTimeSkus로 판매 조건을 따로 관리합니다.</p>
   <h3>Header</h3>
-<div class="table-scroll"><table><thead><tr><th>이름</th><th>필수</th><th>설명</th></tr></thead><tbody><tr><td><code>Content-Type</code></td><td>예</td><td>application/json</td></tr></tbody></table></div>
+<div class="table-scroll"><table><thead><tr><th>이름</th><th>필수</th><th>설명</th></tr></thead><tbody><tr><td data-label="이름"><code>Content-Type</code></td><td data-label="필수">예</td><td data-label="설명">application/json</td></tr></tbody></table></div>
   <h3>Cookie</h3>
-<div class="table-scroll"><table><thead><tr><th>이름</th><th>필수</th><th>설명</th></tr></thead><tbody><tr><td><code>ADMIN_SESSION</code></td><td>예</td><td>관리자 콘솔 인증 세션입니다.</td></tr></tbody></table></div>
+<div class="table-scroll"><table><thead><tr><th>이름</th><th>필수</th><th>설명</th></tr></thead><tbody><tr><td data-label="이름"><code>ADMIN_SESSION</code></td><td data-label="필수">예</td><td data-label="설명">관리자 콘솔 인증 세션입니다.</td></tr></tbody></table></div>
   <h3>Body</h3><pre><code>{
   &quot;productCode&quot;: &quot;ANALYTICS&quot;,
   &quot;productType&quot;: &quot;subscription&quot;,
@@ -1563,7 +1676,7 @@
   &quot;status&quot;: &quot;draft&quot;
 }</code></pre>
   <h3>Body 필드</h3>
-<div class="table-scroll"><table><thead><tr><th>이름</th><th>필수</th><th>설명</th></tr></thead><tbody><tr><td><code>productCode</code></td><td>예</td><td>상품을 결제, 구독, 권한 정책에서 식별하는 고유 코드입니다.</td></tr><tr><td><code>productType</code></td><td>예</td><td>subscription 또는 one_time입니다. 생성 후 결제 타입 혼선을 막기 위해 변경하지 않습니다.</td></tr><tr><td><code>name</code></td><td>예</td><td>관리자와 고객 화면에 표시할 상품명입니다.</td></tr><tr><td><code>status</code></td><td>아니오</td><td>draft, active, suspended, archived 중 하나입니다. 기본값은 draft입니다.</td></tr></tbody></table></div>
+<div class="table-scroll"><table><thead><tr><th>이름</th><th>필수</th><th>설명</th></tr></thead><tbody><tr><td data-label="이름"><code>productCode</code></td><td data-label="필수">예</td><td data-label="설명">상품을 결제, 구독, 권한 정책에서 식별하는 고유 코드입니다.</td></tr><tr><td data-label="이름"><code>productType</code></td><td data-label="필수">예</td><td data-label="설명">subscription 또는 one_time입니다. 생성 후 결제 타입 혼선을 막기 위해 변경하지 않습니다.</td></tr><tr><td data-label="이름"><code>name</code></td><td data-label="필수">예</td><td data-label="설명">관리자와 고객 화면에 표시할 상품명입니다.</td></tr><tr><td data-label="이름"><code>status</code></td><td data-label="필수">아니오</td><td data-label="설명">draft, active, suspended, archived 중 하나입니다. 기본값은 draft입니다.</td></tr></tbody></table></div>
   <h3>Response 201</h3><p>상품 생성 성공</p><pre><code>{
   &quot;productId&quot;: &quot;prod_analytics&quot;,
   &quot;productCode&quot;: &quot;ANALYTICS&quot;,
@@ -1580,9 +1693,9 @@
   <h2><code>POST /admin/products/{productId}/subscription-plans</code></h2>
   <p>구독상품 Product에 월간, 연간, Basic, Pro 같은 구독 플랜을 추가하는 API입니다. 플랜 가격은 신규 구독과 다음 정기 결제 계산에 쓰이며, 기존 활성 구독의 과거 결제 스냅샷을 덮어쓰지 않습니다.</p>
   <h3>Header</h3>
-<div class="table-scroll"><table><thead><tr><th>이름</th><th>필수</th><th>설명</th></tr></thead><tbody><tr><td><code>Content-Type</code></td><td>예</td><td>application/json</td></tr></tbody></table></div>
+<div class="table-scroll"><table><thead><tr><th>이름</th><th>필수</th><th>설명</th></tr></thead><tbody><tr><td data-label="이름"><code>Content-Type</code></td><td data-label="필수">예</td><td data-label="설명">application/json</td></tr></tbody></table></div>
   <h3>Cookie</h3>
-<div class="table-scroll"><table><thead><tr><th>이름</th><th>필수</th><th>설명</th></tr></thead><tbody><tr><td><code>ADMIN_SESSION</code></td><td>예</td><td>관리자 콘솔 인증 세션입니다.</td></tr></tbody></table></div>
+<div class="table-scroll"><table><thead><tr><th>이름</th><th>필수</th><th>설명</th></tr></thead><tbody><tr><td data-label="이름"><code>ADMIN_SESSION</code></td><td data-label="필수">예</td><td data-label="설명">관리자 콘솔 인증 세션입니다.</td></tr></tbody></table></div>
   <h3>Body</h3><pre><code>{
   &quot;planCode&quot;: &quot;ANALYTICS_BASIC_MONTHLY&quot;,
   &quot;planName&quot;: &quot;Analytics Basic 월간&quot;,
@@ -1596,7 +1709,7 @@
   }
 }</code></pre>
   <h3>Body 필드</h3>
-<div class="table-scroll"><table><thead><tr><th>이름</th><th>필수</th><th>설명</th></tr></thead><tbody><tr><td><code>planCode</code></td><td>예</td><td>같은 상품 안에서 플랜을 식별하는 코드입니다.</td></tr><tr><td><code>billingPeriod</code></td><td>예</td><td>monthly 또는 yearly처럼 정기 결제 주기를 나타냅니다.</td></tr><tr><td><code>amount</code></td><td>예</td><td>신규 구독과 다음 정기 결제에 적용할 플랜 금액입니다.</td></tr><tr><td><code>entitlements</code></td><td>아니오</td><td>플랜별 권한, 사용량 한도, 기능 제한 정책입니다.</td></tr></tbody></table></div>
+<div class="table-scroll"><table><thead><tr><th>이름</th><th>필수</th><th>설명</th></tr></thead><tbody><tr><td data-label="이름"><code>planCode</code></td><td data-label="필수">예</td><td data-label="설명">같은 상품 안에서 플랜을 식별하는 코드입니다.</td></tr><tr><td data-label="이름"><code>billingPeriod</code></td><td data-label="필수">예</td><td data-label="설명">monthly 또는 yearly처럼 정기 결제 주기를 나타냅니다.</td></tr><tr><td data-label="이름"><code>amount</code></td><td data-label="필수">예</td><td data-label="설명">신규 구독과 다음 정기 결제에 적용할 플랜 금액입니다.</td></tr><tr><td data-label="이름"><code>entitlements</code></td><td data-label="필수">아니오</td><td data-label="설명">플랜별 권한, 사용량 한도, 기능 제한 정책입니다.</td></tr></tbody></table></div>
   <h3>Response 201</h3><p>구독 플랜 생성 성공</p><pre><code>{
   &quot;productId&quot;: &quot;prod_analytics&quot;,
   &quot;productType&quot;: &quot;subscription&quot;,
@@ -1614,9 +1727,9 @@
   <h2><code>PATCH /admin/products/{productId}/subscription-plans/{planId}</code></h2>
   <p>구독상품 Product에 속한 플랜의 표시 정보, 판매 상태, 가격 정책, 권한 정책을 수정하는 API입니다. 이미 생성된 구독과 청구 내역의 금액 스냅샷은 변경하지 않고, 신규 가입 또는 다음 정기결제부터 적용할 정책만 갱신합니다.</p>
   <h3>Header</h3>
-<div class="table-scroll"><table><thead><tr><th>이름</th><th>필수</th><th>설명</th></tr></thead><tbody><tr><td><code>Content-Type</code></td><td>예</td><td>application/json</td></tr></tbody></table></div>
+<div class="table-scroll"><table><thead><tr><th>이름</th><th>필수</th><th>설명</th></tr></thead><tbody><tr><td data-label="이름"><code>Content-Type</code></td><td data-label="필수">예</td><td data-label="설명">application/json</td></tr></tbody></table></div>
   <h3>Cookie</h3>
-<div class="table-scroll"><table><thead><tr><th>이름</th><th>필수</th><th>설명</th></tr></thead><tbody><tr><td><code>ADMIN_SESSION</code></td><td>예</td><td>관리자 콘솔 인증 세션입니다.</td></tr></tbody></table></div>
+<div class="table-scroll"><table><thead><tr><th>이름</th><th>필수</th><th>설명</th></tr></thead><tbody><tr><td data-label="이름"><code>ADMIN_SESSION</code></td><td data-label="필수">예</td><td data-label="설명">관리자 콘솔 인증 세션입니다.</td></tr></tbody></table></div>
   <h3>Body</h3><pre><code>{
   &quot;planName&quot;: &quot;Analytics Basic 월간&quot;,
   &quot;amount&quot;: 12900,
@@ -1630,7 +1743,7 @@
   &quot;changeReason&quot;: &quot;좌석 한도와 신규 가입 가격 조정&quot;
 }</code></pre>
   <h3>Body 필드</h3>
-<div class="table-scroll"><table><thead><tr><th>이름</th><th>필수</th><th>설명</th></tr></thead><tbody><tr><td><code>planName</code></td><td>아니오</td><td>관리자와 고객 화면에 표시할 플랜명입니다.</td></tr><tr><td><code>amount</code></td><td>아니오</td><td>신규 구독 또는 다음 주기 변경에 적용할 금액입니다. 기존 결제, 이미 생성된 invoice, 진행 중인 승인 금액은 변경하지 않습니다.</td></tr><tr><td><code>status</code></td><td>아니오</td><td>active, hidden, suspended 중 하나입니다. suspended 플랜은 신규 가입과 플랜 변경 후보에서 제외합니다.</td></tr><tr><td><code>entitlements</code></td><td>아니오</td><td>플랜별 권한, 사용량 한도, 기능 제한 정책입니다.</td></tr><tr><td><code>changeReason</code></td><td>예</td><td>감사 로그와 운영 추적에 남길 변경 사유입니다.</td></tr></tbody></table></div>
+<div class="table-scroll"><table><thead><tr><th>이름</th><th>필수</th><th>설명</th></tr></thead><tbody><tr><td data-label="이름"><code>planName</code></td><td data-label="필수">아니오</td><td data-label="설명">관리자와 고객 화면에 표시할 플랜명입니다.</td></tr><tr><td data-label="이름"><code>amount</code></td><td data-label="필수">아니오</td><td data-label="설명">신규 구독 또는 다음 주기 변경에 적용할 금액입니다. 기존 결제, 이미 생성된 invoice, 진행 중인 승인 금액은 변경하지 않습니다.</td></tr><tr><td data-label="이름"><code>status</code></td><td data-label="필수">아니오</td><td data-label="설명">active, hidden, suspended 중 하나입니다. suspended 플랜은 신규 가입과 플랜 변경 후보에서 제외합니다.</td></tr><tr><td data-label="이름"><code>entitlements</code></td><td data-label="필수">아니오</td><td data-label="설명">플랜별 권한, 사용량 한도, 기능 제한 정책입니다.</td></tr><tr><td data-label="이름"><code>changeReason</code></td><td data-label="필수">예</td><td data-label="설명">감사 로그와 운영 추적에 남길 변경 사유입니다.</td></tr></tbody></table></div>
   <h3>Response 200</h3><p>구독 플랜 수정 성공</p><pre><code>{
   &quot;productId&quot;: &quot;prod_analytics&quot;,
   &quot;productType&quot;: &quot;subscription&quot;,
@@ -1641,7 +1754,7 @@
   &quot;version&quot;: 2,
   &quot;effectiveFor&quot;: &quot;new_subscriptions_and_next_cycles&quot;
 }</code></pre><h3>Response 400</h3><p>변경 가능한 필드가 없거나 금액, 상태, 권한 정책이 유효하지 않은 요청</p><h3>Response 403</h3><p>상품 관리 권한이 없는 관리자 계정</p><h3>Response 404</h3><p>존재하지 않는 상품 또는 구독 플랜</p><h3>Response 409</h3><p>일반상품의 SKU를 구독 플랜 API로 수정하려 했거나 비활성화할 수 없는 기본 플랜</p>
-  <h3>실패 규칙</h3><div class="table-scroll"><table class="has-many-columns"><thead><tr><th>코드</th><th>HTTP</th><th>재시도</th><th>설명</th><th>결과 상태</th></tr></thead><tbody><tr><td><code>PRODUCT_TYPE_MISMATCH</code></td><td>409</td><td>아니오</td><td>one_time 상품에 구독 플랜 수정 API를 호출한 경우입니다.</td><td>-</td></tr><tr><td><code>PLAN_IN_USE_PRICE_SNAPSHOT_LOCKED</code></td><td>409</td><td>아니오</td><td>이미 생성된 invoice 또는 결제 시도의 금액 스냅샷을 직접 변경하려 한 경우입니다.</td><td>-</td></tr></tbody></table></div>
+  <h3>실패 규칙</h3><div class="table-scroll"><table class="has-many-columns"><thead><tr><th>코드</th><th>HTTP</th><th>재시도</th><th>설명</th><th>결과 상태</th></tr></thead><tbody><tr><td data-label="코드"><code>PRODUCT_TYPE_MISMATCH</code></td><td data-label="HTTP">409</td><td data-label="재시도">아니오</td><td data-label="설명">one_time 상품에 구독 플랜 수정 API를 호출한 경우입니다.</td><td data-label="결과 상태">-</td></tr><tr><td data-label="코드"><code>PLAN_IN_USE_PRICE_SNAPSHOT_LOCKED</code></td><td data-label="HTTP">409</td><td data-label="재시도">아니오</td><td data-label="설명">이미 생성된 invoice 또는 결제 시도의 금액 스냅샷을 직접 변경하려 한 경우입니다.</td><td data-label="결과 상태">-</td></tr></tbody></table></div>
   <h3>처리 로직</h3>
   <ol><li>관리자 인증과 product_manage 권한을 확인합니다.</li><li>productId와 planId가 존재하고 product.productType == subscription인지 검증합니다.</li><li>amount, currency, status, entitlements를 검증하고 변경 가능한 필드만 반영합니다.</li><li>가격이나 권한 정책이 바뀌면 기존 invoice와 payment는 그대로 두고 신규 가입 또는 다음 정기결제 계산에서 참조할 planVersion을 갱신합니다.</li><li>suspended 또는 hidden 상태의 플랜은 공개 플랜 목록, 신규 구독 체크아웃, 플랜 변경 후보에서 제외합니다.</li><li>관리자 ID, 요청 IP, 변경 전후 값, changeReason을 감사 로그에 저장합니다.</li></ol>
   <div class="note">가격 변경은 과거 청구 금액을 덮어쓰지 않습니다. 운영 화면에서는 적용 범위를 신규 가입, 다음 주기, 신규 planVersion 중 하나로 명확히 표시해야 합니다.</div><div class="note">구독 플랜 변경 플로우는 현재 구독과 같은 productCode의 활성 플랜만 선택할 수 있습니다.</div>
@@ -1649,9 +1762,9 @@
   <h2><code>POST /admin/products/{productId}/one-time-skus</code></h2>
   <p>일반상품 Product에 단건 구매용 SKU를 추가하는 API입니다. SKU는 주문 생성 시점에 가격 스냅샷으로 고정되며, 이후 가격 수정은 이미 생성된 주문이나 결제 시도 금액을 바꾸지 않습니다.</p>
   <h3>Header</h3>
-<div class="table-scroll"><table><thead><tr><th>이름</th><th>필수</th><th>설명</th></tr></thead><tbody><tr><td><code>Content-Type</code></td><td>예</td><td>application/json</td></tr></tbody></table></div>
+<div class="table-scroll"><table><thead><tr><th>이름</th><th>필수</th><th>설명</th></tr></thead><tbody><tr><td data-label="이름"><code>Content-Type</code></td><td data-label="필수">예</td><td data-label="설명">application/json</td></tr></tbody></table></div>
   <h3>Cookie</h3>
-<div class="table-scroll"><table><thead><tr><th>이름</th><th>필수</th><th>설명</th></tr></thead><tbody><tr><td><code>ADMIN_SESSION</code></td><td>예</td><td>관리자 콘솔 인증 세션입니다.</td></tr></tbody></table></div>
+<div class="table-scroll"><table><thead><tr><th>이름</th><th>필수</th><th>설명</th></tr></thead><tbody><tr><td data-label="이름"><code>ADMIN_SESSION</code></td><td data-label="필수">예</td><td data-label="설명">관리자 콘솔 인증 세션입니다.</td></tr></tbody></table></div>
   <h3>Body</h3><pre><code>{
   &quot;skuCode&quot;: &quot;REPORT_PACK_100&quot;,
   &quot;skuName&quot;: &quot;리포트 100건 패키지&quot;,
@@ -1667,7 +1780,7 @@
   }
 }</code></pre>
   <h3>Body 필드</h3>
-<div class="table-scroll"><table><thead><tr><th>이름</th><th>필수</th><th>설명</th></tr></thead><tbody><tr><td><code>skuCode</code></td><td>예</td><td>같은 일반상품 안에서 단건 구매 옵션을 식별하는 코드입니다.</td></tr><tr><td><code>amount</code></td><td>예</td><td>주문 생성 시 가격 스냅샷으로 복사할 판매 금액입니다.</td></tr><tr><td><code>stockPolicy</code></td><td>아니오</td><td>무제한, 제한 수량, 외부 재고 연동 같은 재고 정책입니다.</td></tr><tr><td><code>purchaseLimit</code></td><td>아니오</td><td>회원별 또는 주문별 구매 제한 정책입니다.</td></tr></tbody></table></div>
+<div class="table-scroll"><table><thead><tr><th>이름</th><th>필수</th><th>설명</th></tr></thead><tbody><tr><td data-label="이름"><code>skuCode</code></td><td data-label="필수">예</td><td data-label="설명">같은 일반상품 안에서 단건 구매 옵션을 식별하는 코드입니다.</td></tr><tr><td data-label="이름"><code>amount</code></td><td data-label="필수">예</td><td data-label="설명">주문 생성 시 가격 스냅샷으로 복사할 판매 금액입니다.</td></tr><tr><td data-label="이름"><code>stockPolicy</code></td><td data-label="필수">아니오</td><td data-label="설명">무제한, 제한 수량, 외부 재고 연동 같은 재고 정책입니다.</td></tr><tr><td data-label="이름"><code>purchaseLimit</code></td><td data-label="필수">아니오</td><td data-label="설명">회원별 또는 주문별 구매 제한 정책입니다.</td></tr></tbody></table></div>
   <h3>Response 201</h3><p>일반상품 SKU 생성 성공</p><pre><code>{
   &quot;productId&quot;: &quot;prod_reports&quot;,
   &quot;productType&quot;: &quot;one_time&quot;,
@@ -1684,9 +1797,9 @@
   <h2><code>PATCH /admin/products/{productId}/one-time-skus/{skuId}</code></h2>
   <p>일반상품 Product에 속한 SKU의 표시 정보, 판매 가격, 재고 정책, 구매 제한, 판매 상태를 수정하는 API입니다. 주문 생성 시 저장된 가격 스냅샷과 결제 승인 중인 amount는 변경하지 않고, 이후 새 주문 계산에만 반영합니다.</p>
   <h3>Header</h3>
-<div class="table-scroll"><table><thead><tr><th>이름</th><th>필수</th><th>설명</th></tr></thead><tbody><tr><td><code>Content-Type</code></td><td>예</td><td>application/json</td></tr></tbody></table></div>
+<div class="table-scroll"><table><thead><tr><th>이름</th><th>필수</th><th>설명</th></tr></thead><tbody><tr><td data-label="이름"><code>Content-Type</code></td><td data-label="필수">예</td><td data-label="설명">application/json</td></tr></tbody></table></div>
   <h3>Cookie</h3>
-<div class="table-scroll"><table><thead><tr><th>이름</th><th>필수</th><th>설명</th></tr></thead><tbody><tr><td><code>ADMIN_SESSION</code></td><td>예</td><td>관리자 콘솔 인증 세션입니다.</td></tr></tbody></table></div>
+<div class="table-scroll"><table><thead><tr><th>이름</th><th>필수</th><th>설명</th></tr></thead><tbody><tr><td data-label="이름"><code>ADMIN_SESSION</code></td><td data-label="필수">예</td><td data-label="설명">관리자 콘솔 인증 세션입니다.</td></tr></tbody></table></div>
   <h3>Body</h3><pre><code>{
   &quot;skuName&quot;: &quot;리포트 100건 패키지&quot;,
   &quot;amount&quot;: 55000,
@@ -1702,7 +1815,7 @@
   &quot;changeReason&quot;: &quot;프로모션 종료 후 가격과 구매 제한 조정&quot;
 }</code></pre>
   <h3>Body 필드</h3>
-<div class="table-scroll"><table><thead><tr><th>이름</th><th>필수</th><th>설명</th></tr></thead><tbody><tr><td><code>skuName</code></td><td>아니오</td><td>관리자와 고객 화면에 표시할 SKU명입니다.</td></tr><tr><td><code>amount</code></td><td>아니오</td><td>새 주문 생성 시 서버가 가격 스냅샷으로 복사할 판매 금액입니다.</td></tr><tr><td><code>status</code></td><td>아니오</td><td>active, hidden, suspended 중 하나입니다. suspended SKU는 신규 주문 생성에서 선택할 수 없습니다.</td></tr><tr><td><code>stockPolicy</code></td><td>아니오</td><td>무제한, 제한 수량, 외부 재고 연동 같은 재고 정책입니다.</td></tr><tr><td><code>purchaseLimit</code></td><td>아니오</td><td>회원별 또는 주문별 구매 제한 정책입니다.</td></tr><tr><td><code>changeReason</code></td><td>예</td><td>감사 로그와 운영 추적에 남길 변경 사유입니다.</td></tr></tbody></table></div>
+<div class="table-scroll"><table><thead><tr><th>이름</th><th>필수</th><th>설명</th></tr></thead><tbody><tr><td data-label="이름"><code>skuName</code></td><td data-label="필수">아니오</td><td data-label="설명">관리자와 고객 화면에 표시할 SKU명입니다.</td></tr><tr><td data-label="이름"><code>amount</code></td><td data-label="필수">아니오</td><td data-label="설명">새 주문 생성 시 서버가 가격 스냅샷으로 복사할 판매 금액입니다.</td></tr><tr><td data-label="이름"><code>status</code></td><td data-label="필수">아니오</td><td data-label="설명">active, hidden, suspended 중 하나입니다. suspended SKU는 신규 주문 생성에서 선택할 수 없습니다.</td></tr><tr><td data-label="이름"><code>stockPolicy</code></td><td data-label="필수">아니오</td><td data-label="설명">무제한, 제한 수량, 외부 재고 연동 같은 재고 정책입니다.</td></tr><tr><td data-label="이름"><code>purchaseLimit</code></td><td data-label="필수">아니오</td><td data-label="설명">회원별 또는 주문별 구매 제한 정책입니다.</td></tr><tr><td data-label="이름"><code>changeReason</code></td><td data-label="필수">예</td><td data-label="설명">감사 로그와 운영 추적에 남길 변경 사유입니다.</td></tr></tbody></table></div>
   <h3>Response 200</h3><p>일반상품 SKU 수정 성공</p><pre><code>{
   &quot;productId&quot;: &quot;prod_reports&quot;,
   &quot;productType&quot;: &quot;one_time&quot;,
@@ -1716,7 +1829,7 @@
   },
   &quot;effectiveFor&quot;: &quot;new_orders&quot;
 }</code></pre><h3>Response 400</h3><p>변경 가능한 필드가 없거나 금액, 재고 정책, 구매 제한 정책이 유효하지 않은 요청</p><h3>Response 403</h3><p>상품 관리 권한이 없는 관리자 계정</p><h3>Response 404</h3><p>존재하지 않는 상품 또는 SKU</p><h3>Response 409</h3><p>구독상품의 플랜을 SKU API로 수정하려 했거나 진행 중인 결제 금액을 직접 변경하려 한 요청</p>
-  <h3>실패 규칙</h3><div class="table-scroll"><table class="has-many-columns"><thead><tr><th>코드</th><th>HTTP</th><th>재시도</th><th>설명</th><th>결과 상태</th></tr></thead><tbody><tr><td><code>PRODUCT_TYPE_MISMATCH</code></td><td>409</td><td>아니오</td><td>subscription 상품에 일반상품 SKU 수정 API를 호출한 경우입니다.</td><td>-</td></tr><tr><td><code>PAYMENT_AMOUNT_SNAPSHOT_LOCKED</code></td><td>409</td><td>아니오</td><td>이미 생성된 결제 시도 금액을 SKU 수정으로 바꾸려 한 경우입니다.</td><td>-</td></tr><tr><td><code>STOCK_POLICY_CONFLICT</code></td><td>409</td><td>아니오</td><td>새 재고 정책이 이미 판매되었거나 예약된 수량보다 작은 재고를 만들 때 발생합니다.</td><td>-</td></tr></tbody></table></div>
+  <h3>실패 규칙</h3><div class="table-scroll"><table class="has-many-columns"><thead><tr><th>코드</th><th>HTTP</th><th>재시도</th><th>설명</th><th>결과 상태</th></tr></thead><tbody><tr><td data-label="코드"><code>PRODUCT_TYPE_MISMATCH</code></td><td data-label="HTTP">409</td><td data-label="재시도">아니오</td><td data-label="설명">subscription 상품에 일반상품 SKU 수정 API를 호출한 경우입니다.</td><td data-label="결과 상태">-</td></tr><tr><td data-label="코드"><code>PAYMENT_AMOUNT_SNAPSHOT_LOCKED</code></td><td data-label="HTTP">409</td><td data-label="재시도">아니오</td><td data-label="설명">이미 생성된 결제 시도 금액을 SKU 수정으로 바꾸려 한 경우입니다.</td><td data-label="결과 상태">-</td></tr><tr><td data-label="코드"><code>STOCK_POLICY_CONFLICT</code></td><td data-label="HTTP">409</td><td data-label="재시도">아니오</td><td data-label="설명">새 재고 정책이 이미 판매되었거나 예약된 수량보다 작은 재고를 만들 때 발생합니다.</td><td data-label="결과 상태">-</td></tr></tbody></table></div>
   <h3>처리 로직</h3>
   <ol><li>관리자 인증과 product_manage 권한을 확인합니다.</li><li>productId와 skuId가 존재하고 product.productType == one_time인지 검증합니다.</li><li>amount, currency, status, stockPolicy, purchaseLimit를 검증하고 변경 가능한 필드만 반영합니다.</li><li>SKU 가격 변경은 이후 새 주문 생성의 서버 재계산에만 적용하고, 이미 생성된 order, checkout, payment의 amount는 변경하지 않습니다.</li><li>suspended 또는 hidden 상태의 SKU는 일반결제 주문 생성 후보에서 제외합니다.</li><li>재고 정책 변경 시 이미 결제 완료된 주문 수량과 예약 수량을 기준으로 음수 재고가 발생하지 않는지 확인합니다.</li><li>관리자 ID, 요청 IP, 변경 전후 값, changeReason을 감사 로그에 저장합니다.</li></ol>
   <div class="note">일반상품 SKU는 주문 생성 시점에 가격 스냅샷으로 고정합니다. 따라서 가격 수정 후에도 기존 결제 시도의 Toss 승인 amount와 내부 payment amount는 동일해야 합니다.</div><div class="note">판매 중지된 SKU라도 기존 결제 내역, 환불, 영수증 조회를 위해 SKU 기록은 보존합니다.</div>
@@ -1724,16 +1837,16 @@
   <h2><code>PATCH /admin/products/{productId}/status</code></h2>
   <p>공통 Product의 판매 상태를 draft, active, suspended, archived로 전환하는 API입니다. Product 상태는 구독 플랜과 일반 SKU의 노출 가능 여부를 감싸는 상위 상태이며, 결제 완료 이력과 기존 구독 데이터는 삭제하지 않습니다.</p>
   <h3>Header</h3>
-<div class="table-scroll"><table><thead><tr><th>이름</th><th>필수</th><th>설명</th></tr></thead><tbody><tr><td><code>Content-Type</code></td><td>예</td><td>application/json</td></tr></tbody></table></div>
+<div class="table-scroll"><table><thead><tr><th>이름</th><th>필수</th><th>설명</th></tr></thead><tbody><tr><td data-label="이름"><code>Content-Type</code></td><td data-label="필수">예</td><td data-label="설명">application/json</td></tr></tbody></table></div>
   <h3>Cookie</h3>
-<div class="table-scroll"><table><thead><tr><th>이름</th><th>필수</th><th>설명</th></tr></thead><tbody><tr><td><code>ADMIN_SESSION</code></td><td>예</td><td>관리자 콘솔 인증 세션입니다.</td></tr></tbody></table></div>
+<div class="table-scroll"><table><thead><tr><th>이름</th><th>필수</th><th>설명</th></tr></thead><tbody><tr><td data-label="이름"><code>ADMIN_SESSION</code></td><td data-label="필수">예</td><td data-label="설명">관리자 콘솔 인증 세션입니다.</td></tr></tbody></table></div>
   <h3>Body</h3><pre><code>{
   &quot;status&quot;: &quot;active&quot;,
   &quot;reason&quot;: &quot;필수 구독 플랜 검수 완료 후 판매 시작&quot;,
   &quot;effectiveAt&quot;: &quot;2026-06-08T10:00:00+09:00&quot;
 }</code></pre>
   <h3>Body 필드</h3>
-<div class="table-scroll"><table><thead><tr><th>이름</th><th>필수</th><th>설명</th></tr></thead><tbody><tr><td><code>status</code></td><td>예</td><td>draft, active, suspended, archived 중 하나입니다.</td></tr><tr><td><code>reason</code></td><td>예</td><td>상태 전환 사유입니다. 판매 중지와 아카이브는 고객 영향이 있으므로 반드시 남깁니다.</td></tr><tr><td><code>effectiveAt</code></td><td>아니오</td><td>상태 전환 적용 시각입니다. 생략하면 즉시 적용합니다.</td></tr></tbody></table></div>
+<div class="table-scroll"><table><thead><tr><th>이름</th><th>필수</th><th>설명</th></tr></thead><tbody><tr><td data-label="이름"><code>status</code></td><td data-label="필수">예</td><td data-label="설명">draft, active, suspended, archived 중 하나입니다.</td></tr><tr><td data-label="이름"><code>reason</code></td><td data-label="필수">예</td><td data-label="설명">상태 전환 사유입니다. 판매 중지와 아카이브는 고객 영향이 있으므로 반드시 남깁니다.</td></tr><tr><td data-label="이름"><code>effectiveAt</code></td><td data-label="필수">아니오</td><td data-label="설명">상태 전환 적용 시각입니다. 생략하면 즉시 적용합니다.</td></tr></tbody></table></div>
   <h3>Response 200</h3><p>상품 상태 전환 성공</p><pre><code>{
   &quot;productId&quot;: &quot;prod_analytics&quot;,
   &quot;productCode&quot;: &quot;ANALYTICS&quot;,
@@ -1742,7 +1855,7 @@
   &quot;status&quot;: &quot;active&quot;,
   &quot;effectiveAt&quot;: &quot;2026-06-08T10:00:00+09:00&quot;
 }</code></pre><h3>Response 400</h3><p>상태 값, 전환 사유, 적용 시각이 유효하지 않은 요청</p><h3>Response 403</h3><p>상품 관리 권한이 없는 관리자 계정</p><h3>Response 404</h3><p>존재하지 않는 상품</p><h3>Response 409</h3><p>필수 플랜 또는 SKU가 없거나 현재 상태에서 허용되지 않는 전환</p>
-  <h3>실패 규칙</h3><div class="table-scroll"><table class="has-many-columns"><thead><tr><th>코드</th><th>HTTP</th><th>재시도</th><th>설명</th><th>결과 상태</th></tr></thead><tbody><tr><td><code>INVALID_STATUS_TRANSITION</code></td><td>409</td><td>아니오</td><td>archived 상품을 active로 되돌리는 등 허용되지 않는 상태 전환입니다.</td><td>-</td></tr><tr><td><code>MISSING_ACTIVE_SELLING_UNIT</code></td><td>409</td><td>아니오</td><td>구독상품에 활성 플랜이 없거나 일반상품에 활성 SKU가 없어 active로 전환할 수 없는 경우입니다.</td><td>-</td></tr></tbody></table></div>
+  <h3>실패 규칙</h3><div class="table-scroll"><table class="has-many-columns"><thead><tr><th>코드</th><th>HTTP</th><th>재시도</th><th>설명</th><th>결과 상태</th></tr></thead><tbody><tr><td data-label="코드"><code>INVALID_STATUS_TRANSITION</code></td><td data-label="HTTP">409</td><td data-label="재시도">아니오</td><td data-label="설명">archived 상품을 active로 되돌리는 등 허용되지 않는 상태 전환입니다.</td><td data-label="결과 상태">-</td></tr><tr><td data-label="코드"><code>MISSING_ACTIVE_SELLING_UNIT</code></td><td data-label="HTTP">409</td><td data-label="재시도">아니오</td><td data-label="설명">구독상품에 활성 플랜이 없거나 일반상품에 활성 SKU가 없어 active로 전환할 수 없는 경우입니다.</td><td data-label="결과 상태">-</td></tr></tbody></table></div>
   <h3>처리 로직</h3>
   <ol><li>관리자 인증과 product_manage 권한을 확인합니다.</li><li>productId가 존재하는지 확인하고 현재 status에서 목표 status로 전환 가능한지 검증합니다.</li><li>active 전환 시 subscription 상품은 active 플랜이 1개 이상, one_time 상품은 active SKU가 1개 이상 있는지 확인합니다.</li><li>suspended 전환 시 신규 구독 체크아웃과 일반결제 주문 생성을 차단하지만 기존 활성 구독의 다음 결제 정책은 별도 운영 정책에 따릅니다.</li><li>archived 전환은 신규 판매와 공개 목록 노출을 차단하고, 기존 결제 내역, 환불, 인보이스 조회를 위해 Product 기록은 보존합니다.</li><li>상태 변경 이벤트를 저장하고 공개 상품 목록, 플랜 목록, 주문 생성 캐시를 무효화합니다.</li><li>관리자 ID, 요청 IP, previousStatus, status, reason을 감사 로그에 저장합니다.</li></ol>
   <div class="note">Product 상태는 상위 판매 가능 상태이고, 실제 결제 금액과 권한은 subscriptionPlans 또는 oneTimeSkus가 보유합니다.</div><div class="note">suspended와 archived는 신규 판매를 막지만 기존 결제 내역과 환불 플로우가 참조할 수 있도록 Product와 하위 판매 단위 기록을 보존합니다.</div><div class="note">구독상품 판매 중지는 신규 가입을 차단하는 의미이며, 기존 활성 구독의 유지, 해지, 다음 결제 차단 여부는 별도 운영 정책으로 결정합니다.</div>

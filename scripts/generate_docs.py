@@ -2,6 +2,7 @@
 import argparse
 import html
 import json
+import re
 import shutil
 import subprocess
 from pathlib import Path
@@ -136,6 +137,7 @@ def validate_data(data):
     actor_ids = {actor["id"] for actor in data["actors"]}
     category_ids = {category["id"] for category in data["apiCategories"]}
     api_ids = {api["id"] for api in data["apis"]}
+    risk_ids = {risk["id"] for risk in data.get("risks", [])}
     sequence_group_ids = {group["id"] for group in data.get("sequenceGroups", [])}
 
     for api in data["apis"]:
@@ -145,8 +147,14 @@ def validate_data(data):
     for api_id in data["apiDetails"]:
         if api_id not in api_ids:
             raise ValueError(f"apiDetails references missing API {api_id}")
+        for risk_id in data["apiDetails"][api_id].get("riskIds", []):
+            if risk_id not in risk_ids:
+                raise ValueError(f"apiDetails {api_id} references missing risk {risk_id}")
 
     for sequence in data["sequences"]:
+        for risk_id in sequence.get("riskIds", []):
+            if risk_id not in risk_ids:
+                raise ValueError(f"Sequence {sequence['id']} references missing risk {risk_id}")
         if sequence_group_ids:
             if "groupId" not in sequence:
                 raise ValueError(f"Sequence {sequence['id']} is missing groupId")
@@ -175,6 +183,9 @@ def validate_data(data):
     if data.get("database"):
         collection_ids = {collection["id"] for collection in data["database"]["collections"]}
         for collection in data["database"]["collections"]:
+            for risk_id in collection.get("riskIds", []):
+                if risk_id not in risk_ids:
+                    raise ValueError(f"Collection {collection['id']} references missing risk {risk_id}")
             for api_id in collection.get("relatedApis", []):
                 if api_id not in api_ids:
                     raise ValueError(f"Collection {collection['id']} references missing API {api_id}")
@@ -187,6 +198,19 @@ def validate_data(data):
         for model in data["database"].get("stateModels", []):
             if model["collection"] not in collection_ids:
                 raise ValueError(f"State model {model['id']} references missing collection {model['collection']}")
+
+    sequence_ids = {sequence["id"] for sequence in data["sequences"]}
+    collection_ids = {collection["id"] for collection in data.get("database", {}).get("collections", [])}
+    for risk in data.get("risks", []):
+        for api_id in risk.get("relatedApis", []):
+            if api_id not in api_ids:
+                raise ValueError(f"Risk {risk['id']} references missing API {api_id}")
+        for sequence_id in risk.get("relatedSequences", []):
+            if sequence_id not in sequence_ids:
+                raise ValueError(f"Risk {risk['id']} references missing sequence {sequence_id}")
+        for collection_id in risk.get("relatedCollections", []):
+            if collection_id not in collection_ids:
+                raise ValueError(f"Risk {risk['id']} references missing collection {collection_id}")
 
 
 def page(title, body, extra_head=""):
@@ -222,6 +246,7 @@ def page(title, body, extra_head=""):
       scroll-behavior: smooth;
       -webkit-text-size-adjust: 100%;
       text-size-adjust: 100%;
+      overflow-x: clip;
     }}
     body {{
       width: 100%;
@@ -233,6 +258,7 @@ def page(title, body, extra_head=""):
       line-height: 1.58;
       -webkit-text-size-adjust: 100%;
       text-size-adjust: 100%;
+      overflow-x: clip;
     }}
     .skip-link {{
       position: absolute;
@@ -543,20 +569,28 @@ def page(title, body, extra_head=""):
       header {{
         width: 100%;
       }}
-      .layout {{ grid-template-columns: 1fr; }}
+      .layout {{
+        grid-template-columns: minmax(0, 1fr);
+      }}
+      .layout > nav,
+      .layout > div {{
+        min-width: 0;
+        max-width: 100%;
+      }}
       nav {{
         position: sticky;
         top: 0;
         z-index: 4;
         display: flex;
         gap: 8px;
+        width: 100%;
+        max-width: 100%;
         max-height: none;
-        margin-inline: -12px;
-        padding: 10px 12px;
+        margin-inline: 0;
+        padding: 10px 0;
         overflow-x: auto;
         overflow-y: hidden;
         border-radius: 0;
-        border-inline: 0;
         box-shadow: 0 8px 18px rgba(20, 35, 55, 0.08);
         scrollbar-width: thin;
       }}
@@ -605,7 +639,8 @@ def page(title, body, extra_head=""):
       }}
       .top-links a {{
         min-height: 44px;
-        flex: 1 1 220px;
+        flex: 1 1 100%;
+        min-width: 0;
         justify-content: center;
         text-align: center;
       }}
@@ -630,12 +665,48 @@ def page(title, body, extra_head=""):
         word-break: break-word;
       }}
       .table-scroll {{
-        margin-inline: -2px;
+        max-width: 100%;
+        overflow-x: visible;
+        border: 0;
         -webkit-overflow-scrolling: touch;
       }}
-      table {{ min-width: 560px; font-size: 13px; }}
-      table.has-many-columns {{ min-width: 720px; }}
-      th, td {{ padding: 10px 11px; }}
+      table,
+      table.has-many-columns {{
+        width: 100%;
+        min-width: 0;
+        border-collapse: separate;
+        border-spacing: 0 8px;
+        font-size: 13px;
+      }}
+      thead {{ display: none; }}
+      tbody,
+      tr,
+      td {{
+        display: block;
+      }}
+      tr {{
+        overflow: clip;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: var(--surface);
+      }}
+      td {{
+        display: grid;
+        grid-template-columns: minmax(82px, 32%) minmax(0, 1fr);
+        gap: 10px;
+        align-items: start;
+        padding: 9px 10px;
+        border-bottom: 1px solid var(--line);
+        overflow-wrap: anywhere;
+      }}
+      td:last-child {{ border-bottom: 0; }}
+      td::before {{
+        content: attr(data-label);
+        color: var(--muted);
+        font-size: 12px;
+        font-weight: 800;
+        line-height: 1.45;
+      }}
       pre {{
         font-size: 12px;
         -webkit-overflow-scrolling: touch;
@@ -679,12 +750,14 @@ def page(title, body, extra_head=""):
         margin-bottom: 16px;
       }}
       nav {{
-        margin-inline: -6px;
-        padding-inline: 8px;
+        padding-inline: 0;
       }}
       nav a {{ max-width: 78vw; }}
-      table {{ min-width: 540px; }}
-      table.has-many-columns {{ min-width: 680px; }}
+      td {{
+        grid-template-columns: minmax(72px, 30%) minmax(0, 1fr);
+        gap: 8px;
+        padding: 8px 9px;
+      }}
       .d2-svg {{ width: 820px; }}
     }}
     @media (prefers-reduced-motion: reduce) {{
@@ -748,7 +821,20 @@ def nav(items):
 
 def table(html_table, columns=3):
     class_name = " class=\"has-many-columns\"" if columns >= 4 else ""
-    return f"<div class=\"table-scroll\">{html_table.replace('<table>', f'<table{class_name}>', 1)}</div>"
+    headers = [re.sub(r"<[^>]+>", "", header).strip() for header in re.findall(r"<th[^>]*>(.*?)</th>", html_table, flags=re.S)]
+
+    def label_cells(row_match):
+        cells = re.findall(r"<td>(.*?)</td>", row_match.group(1), flags=re.S)
+        if not cells or len(cells) > len(headers):
+            return row_match.group(0)
+        labelled_cells = "".join(
+            f"<td data-label=\"{e(headers[index])}\">{cell}</td>"
+            for index, cell in enumerate(cells)
+        )
+        return f"<tr>{labelled_cells}</tr>"
+
+    labelled_table = re.sub(r"<tr>((?:<td>.*?</td>)+)</tr>", label_cells, html_table, flags=re.S)
+    return f"<div class=\"table-scroll\">{labelled_table.replace('<table>', f'<table{class_name}>', 1)}</div>"
 
 
 def api_maps(data):
@@ -758,10 +844,40 @@ def api_maps(data):
 
 
 def database_links(data):
+    links = []
     page_ref = data["site"]["pages"].get("database")
+    if page_ref:
+        links.append((page_ref["title"], f"./{page_ref['file']}"))
+    risk_ref = data["site"]["pages"].get("risks")
+    if risk_ref and data.get("risks"):
+        links.append((risk_ref["title"], f"./{risk_ref['file']}"))
+    return links
+
+
+def risk_map(data):
+    return {risk["id"]: risk for risk in data.get("risks", [])}
+
+
+def risk_links(data, risk_ids):
+    if not risk_ids:
+        return ""
+    risks = risk_map(data)
+    page_ref = data["site"]["pages"].get("risks")
     if not page_ref:
-        return []
-    return [(page_ref["title"], f"./{page_ref['file']}")]
+        return ""
+    links = []
+    for risk_id in risk_ids:
+        risk = risks.get(risk_id)
+        if risk:
+            links.append(
+                f"<li><a href=\"./{e(page_ref['file'])}#{e(risk_id)}\"><code>{e(risk_id)}</code></a> {e(risk['title'])}</li>"
+            )
+    if not links:
+        return ""
+    return f"""<div class="note">
+  <strong>연관 잠재 위험</strong>
+  <ul>{''.join(links)}</ul>
+</div>"""
 
 
 def render_sequence_index(data):
@@ -923,6 +1039,9 @@ def render_api_details(data):
         ]
         if detail.get("redirectNote"):
             section_parts.append(f"  <div class=\"note\">{e(detail['redirectNote'])}</div>")
+        risk_block = risk_links(data, detail.get("riskIds", []))
+        if risk_block:
+            section_parts.append(f"  {risk_block}")
         section_parts.extend([
             f"  {render_fields('Header', request.get('headers', []))}",
             f"  {render_fields('Cookie', request.get('cookies', []))}",
@@ -1027,6 +1146,7 @@ def render_database_doc(data):
             for api_id in collection.get("relatedApis", []) if api_id in apis
         )
         api_block = f"<h3>관련 API</h3><ul>{related_apis}</ul>" if related_apis else ""
+        risk_block = risk_links(data, collection.get("riskIds", []))
         fields_table = table(f"""<table>
     <thead><tr><th>필드</th><th>타입</th><th>필수</th><th>설명</th><th>상세</th></tr></thead>
     <tbody>{''.join(field_rows)}</tbody>
@@ -1034,6 +1154,7 @@ def render_database_doc(data):
         sections.append(f"""<section id="{e(collection['id'])}">
   <h2>{e(collection['title'])} <code>{e(collection['name'])}</code></h2>
   <p>{e(collection['description'])}</p>
+  {risk_block}
   <h3>필드</h3>
   {fields_table}
   {indexes}
@@ -1090,6 +1211,65 @@ def render_database_doc(data):
 
     body += f"<main class=\"wrap layout\" id=\"content\">{nav(nav_items)}<div>{''.join(sections)}</div></main>"
     return page(pages["database"]["title"], body)
+
+
+def render_risk_doc(data):
+    page_ref = data["site"]["pages"]["risks"]
+    apis, _ = api_maps(data)
+    sequences = {sequence["id"]: sequence for sequence in data["sequences"]}
+    collections = {
+        collection["id"]: collection
+        for collection in data.get("database", {}).get("collections", [])
+    }
+    nav_items = [(risk["id"], risk["title"]) for risk in data.get("risks", [])]
+    sections = []
+    for risk in data.get("risks", []):
+        api_links = "".join(
+            f"<li><a href=\"./api-detail-doc.html#{e(apis[api_id]['detailAnchor'])}\"><code>{e(fmt_api(apis[api_id]))}</code></a></li>"
+            for api_id in risk.get("relatedApis", []) if api_id in apis and apis[api_id].get("detailAnchor")
+        )
+        sequence_links = "".join(
+            f"<li><a href=\"./{e(sequences[sequence_id]['file'])}\">{e(sequences[sequence_id]['title'])}</a></li>"
+            for sequence_id in risk.get("relatedSequences", []) if sequence_id in sequences
+        )
+        collection_links = "".join(
+            f"<li><a href=\"./{e(data['site']['pages']['database']['file'])}#{e(collection_id)}\"><code>{e(collections[collection_id]['name'])}</code></a></li>"
+            for collection_id in risk.get("relatedCollections", []) if collection_id in collections and data["site"]["pages"].get("database")
+        )
+        handling = "".join(f"<li>{e(item)}</li>" for item in risk["handling"])
+        prevention = "".join(f"<li>{e(item)}</li>" for item in risk["prevention"])
+        detection = f"<h3>탐지</h3><p>{e(risk['detection'])}</p>" if risk.get("detection") else ""
+        related = "".join(
+            part for part in [
+                f"<h3>관련 API</h3><ul>{api_links}</ul>" if api_links else "",
+                f"<h3>관련 플로우</h3><ul>{sequence_links}</ul>" if sequence_links else "",
+                f"<h3>관련 DB 컬렉션</h3><ul>{collection_links}</ul>" if collection_links else "",
+            ]
+        )
+        sections.append(f"""<section id="{e(risk['id'])}">
+  <h2>{e(risk['title'])}</h2>
+  <p><span class="status status-{e(risk['severity'])}">{e(risk['severity'])}</span> <code>{e(risk['category'])}</code></p>
+  <p>{e(risk['summary'])}</p>
+  <h3>발생 조건</h3>
+  <p>{e(risk['trigger'])}</p>
+  <h3>영향</h3>
+  <p>{e(risk['impact'])}</p>
+  {detection}
+  <h3>처리 방안</h3>
+  <ul>{handling}</ul>
+  <h3>예방 장치</h3>
+  <ul>{prevention}</ul>
+  {related}
+</section>""")
+
+    body = header(
+        page_ref["title"],
+        "Potential Risk Register",
+        "결제 플로우에서 실패, 재시도, 순서 역전, 동시 요청이 치명적인 결과로 이어질 수 있는 지점과 처리 방안을 정리합니다.",
+        [("전체 시퀀스 목록", "./sequence-index.html"), ("전체 API 목록", "./all-api-doc.html"), ("API 상세 설명", "./api-detail-doc.html")] + database_links(data)
+    )
+    body += f"<main class=\"wrap layout\" id=\"content\">{nav(nav_items)}<div>{''.join(sections)}</div></main>"
+    return page(page_ref["title"], body)
 
 
 def actor_theme(actor):
@@ -1280,6 +1460,7 @@ def render_sequence_page(data, sequence, rendered_d2_ids=None):
   <h2>상태 요약</h2>
   {table(f"<table><thead><tr><th>시점</th><th>구독 상태</th><th>결제 상태</th><th>설명</th></tr></thead><tbody>{''.join(state_summary)}</tbody></table>", columns=4)}
 </section>"""
+    risk_section = risk_links(data, sequence.get("riskIds", []))
 
     body = header(
         sequence["title"],
@@ -1292,6 +1473,7 @@ def render_sequence_page(data, sequence, rendered_d2_ids=None):
     <h2>사용 API</h2>
     <div class="grid">{api_links}</div>
   </section>
+  {risk_section}
   {''.join(diagrams)}
   {state_section}
 </main>"""
@@ -1343,6 +1525,8 @@ def generate_docs(data_path, out_dir, render_d2=False, rendered_d2_ids=None):
     }
     if data.get("database") and pages.get("database"):
         rendered[pages["database"]["file"]] = render_database_doc(data)
+    if data.get("risks") and pages.get("risks"):
+        rendered[pages["risks"]["file"]] = render_risk_doc(data)
     for sequence in data["sequences"]:
         if sequence["status"] == "available":
             rendered[sequence["file"]] = render_sequence_page(data, sequence, rendered_ids)

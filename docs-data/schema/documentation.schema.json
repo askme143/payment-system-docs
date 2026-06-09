@@ -61,6 +61,13 @@
         "$ref": "#/$defs/sequencePage"
       }
     },
+    "risks": {
+      "type": "array",
+      "description": "Potential payment risks and the handling strategy for each risk.",
+      "items": {
+        "$ref": "#/$defs/risk"
+      }
+    },
     "policies": {
       "$ref": "#/$defs/policies"
     },
@@ -95,6 +102,9 @@
               "$ref": "#/$defs/pageRef"
             },
             "database": {
+              "$ref": "#/$defs/pageRef"
+            },
+            "risks": {
               "$ref": "#/$defs/pageRef"
             }
           }
@@ -256,6 +266,9 @@
           "items": {
             "type": "string"
           }
+        },
+        "riskIds": {
+          "$ref": "#/$defs/riskIds"
         }
       }
     },
@@ -422,6 +435,9 @@
             "$ref": "#/$defs/id"
           },
           "uniqueItems": true
+        },
+        "riskIds": {
+          "$ref": "#/$defs/riskIds"
         }
       }
     },
@@ -680,6 +696,84 @@
           "items": {
             "$ref": "#/$defs/diagram"
           }
+        },
+        "riskIds": {
+          "$ref": "#/$defs/riskIds"
+        }
+      }
+    },
+    "riskIds": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/id"
+      },
+      "uniqueItems": true
+    },
+    "risk": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "title", "severity", "category", "summary", "trigger", "impact", "handling", "prevention"],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/id"
+        },
+        "title": {
+          "type": "string"
+        },
+        "severity": {
+          "type": "string",
+          "enum": ["critical", "high", "medium", "low"]
+        },
+        "category": {
+          "type": "string",
+          "enum": ["failure", "retry", "ordering", "concurrency", "data-integrity", "security", "operations"]
+        },
+        "summary": {
+          "type": "string"
+        },
+        "trigger": {
+          "type": "string"
+        },
+        "impact": {
+          "type": "string"
+        },
+        "detection": {
+          "type": "string"
+        },
+        "handling": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string"
+          }
+        },
+        "prevention": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string"
+          }
+        },
+        "relatedApis": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/id"
+          },
+          "uniqueItems": true
+        },
+        "relatedSequences": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/id"
+          },
+          "uniqueItems": true
+        },
+        "relatedCollections": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/id"
+          },
+          "uniqueItems": true
         }
       }
     },

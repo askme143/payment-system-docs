@@ -30,6 +30,7 @@
       scroll-behavior: smooth;
       -webkit-text-size-adjust: 100%;
       text-size-adjust: 100%;
+      overflow-x: clip;
     }
     body {
       width: 100%;
@@ -41,6 +42,7 @@
       line-height: 1.58;
       -webkit-text-size-adjust: 100%;
       text-size-adjust: 100%;
+      overflow-x: clip;
     }
     .skip-link {
       position: absolute;
@@ -351,20 +353,28 @@
       header {
         width: 100%;
       }
-      .layout { grid-template-columns: 1fr; }
+      .layout {
+        grid-template-columns: minmax(0, 1fr);
+      }
+      .layout > nav,
+      .layout > div {
+        min-width: 0;
+        max-width: 100%;
+      }
       nav {
         position: sticky;
         top: 0;
         z-index: 4;
         display: flex;
         gap: 8px;
+        width: 100%;
+        max-width: 100%;
         max-height: none;
-        margin-inline: -12px;
-        padding: 10px 12px;
+        margin-inline: 0;
+        padding: 10px 0;
         overflow-x: auto;
         overflow-y: hidden;
         border-radius: 0;
-        border-inline: 0;
         box-shadow: 0 8px 18px rgba(20, 35, 55, 0.08);
         scrollbar-width: thin;
       }
@@ -413,7 +423,8 @@
       }
       .top-links a {
         min-height: 44px;
-        flex: 1 1 220px;
+        flex: 1 1 100%;
+        min-width: 0;
         justify-content: center;
         text-align: center;
       }
@@ -438,12 +449,48 @@
         word-break: break-word;
       }
       .table-scroll {
-        margin-inline: -2px;
+        max-width: 100%;
+        overflow-x: visible;
+        border: 0;
         -webkit-overflow-scrolling: touch;
       }
-      table { min-width: 560px; font-size: 13px; }
-      table.has-many-columns { min-width: 720px; }
-      th, td { padding: 10px 11px; }
+      table,
+      table.has-many-columns {
+        width: 100%;
+        min-width: 0;
+        border-collapse: separate;
+        border-spacing: 0 8px;
+        font-size: 13px;
+      }
+      thead { display: none; }
+      tbody,
+      tr,
+      td {
+        display: block;
+      }
+      tr {
+        overflow: clip;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: var(--surface);
+      }
+      td {
+        display: grid;
+        grid-template-columns: minmax(82px, 32%) minmax(0, 1fr);
+        gap: 10px;
+        align-items: start;
+        padding: 9px 10px;
+        border-bottom: 1px solid var(--line);
+        overflow-wrap: anywhere;
+      }
+      td:last-child { border-bottom: 0; }
+      td::before {
+        content: attr(data-label);
+        color: var(--muted);
+        font-size: 12px;
+        font-weight: 800;
+        line-height: 1.45;
+      }
       pre {
         font-size: 12px;
         -webkit-overflow-scrolling: touch;
@@ -487,12 +534,14 @@
         margin-bottom: 16px;
       }
       nav {
-        margin-inline: -6px;
-        padding-inline: 8px;
+        padding-inline: 0;
       }
       nav a { max-width: 78vw; }
-      table { min-width: 540px; }
-      table.has-many-columns { min-width: 680px; }
+      td {
+        grid-template-columns: minmax(72px, 30%) minmax(0, 1fr);
+        gap: 8px;
+        padding: 8px 9px;
+      }
       .d2-svg { width: 820px; }
     }
     @media (prefers-reduced-motion: reduce) {
@@ -517,7 +566,7 @@
     <div class="search-panel">
       <input type="search" data-doc-search aria-label="문서 검색" placeholder="API, 상태, 컬렉션, 플로우 검색">
     </div>
-    <p class="top-links"><a href="./all-api-doc.html">전체 API 목록</a><a href="./api-detail-doc.html">API 상세 설명</a><a href="./database-doc.html">MongoDB 구조 문서</a></p>
+    <p class="top-links"><a href="./all-api-doc.html">전체 API 목록</a><a href="./api-detail-doc.html">API 상세 설명</a><a href="./database-doc.html">MongoDB 구조 문서</a><a href="./risk-register-doc.html">결제 시스템 잠재 위험 및 대응 문서</a></p>
     </div>
   </div>
 </header>

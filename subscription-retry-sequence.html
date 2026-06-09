@@ -30,6 +30,7 @@
       scroll-behavior: smooth;
       -webkit-text-size-adjust: 100%;
       text-size-adjust: 100%;
+      overflow-x: clip;
     }
     body {
       width: 100%;
@@ -41,6 +42,7 @@
       line-height: 1.58;
       -webkit-text-size-adjust: 100%;
       text-size-adjust: 100%;
+      overflow-x: clip;
     }
     .skip-link {
       position: absolute;
@@ -351,20 +353,28 @@
       header {
         width: 100%;
       }
-      .layout { grid-template-columns: 1fr; }
+      .layout {
+        grid-template-columns: minmax(0, 1fr);
+      }
+      .layout > nav,
+      .layout > div {
+        min-width: 0;
+        max-width: 100%;
+      }
       nav {
         position: sticky;
         top: 0;
         z-index: 4;
         display: flex;
         gap: 8px;
+        width: 100%;
+        max-width: 100%;
         max-height: none;
-        margin-inline: -12px;
-        padding: 10px 12px;
+        margin-inline: 0;
+        padding: 10px 0;
         overflow-x: auto;
         overflow-y: hidden;
         border-radius: 0;
-        border-inline: 0;
         box-shadow: 0 8px 18px rgba(20, 35, 55, 0.08);
         scrollbar-width: thin;
       }
@@ -413,7 +423,8 @@
       }
       .top-links a {
         min-height: 44px;
-        flex: 1 1 220px;
+        flex: 1 1 100%;
+        min-width: 0;
         justify-content: center;
         text-align: center;
       }
@@ -438,12 +449,48 @@
         word-break: break-word;
       }
       .table-scroll {
-        margin-inline: -2px;
+        max-width: 100%;
+        overflow-x: visible;
+        border: 0;
         -webkit-overflow-scrolling: touch;
       }
-      table { min-width: 560px; font-size: 13px; }
-      table.has-many-columns { min-width: 720px; }
-      th, td { padding: 10px 11px; }
+      table,
+      table.has-many-columns {
+        width: 100%;
+        min-width: 0;
+        border-collapse: separate;
+        border-spacing: 0 8px;
+        font-size: 13px;
+      }
+      thead { display: none; }
+      tbody,
+      tr,
+      td {
+        display: block;
+      }
+      tr {
+        overflow: clip;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: var(--surface);
+      }
+      td {
+        display: grid;
+        grid-template-columns: minmax(82px, 32%) minmax(0, 1fr);
+        gap: 10px;
+        align-items: start;
+        padding: 9px 10px;
+        border-bottom: 1px solid var(--line);
+        overflow-wrap: anywhere;
+      }
+      td:last-child { border-bottom: 0; }
+      td::before {
+        content: attr(data-label);
+        color: var(--muted);
+        font-size: 12px;
+        font-weight: 800;
+        line-height: 1.45;
+      }
       pre {
         font-size: 12px;
         -webkit-overflow-scrolling: touch;
@@ -487,12 +534,14 @@
         margin-bottom: 16px;
       }
       nav {
-        margin-inline: -6px;
-        padding-inline: 8px;
+        padding-inline: 0;
       }
       nav a { max-width: 78vw; }
-      table { min-width: 540px; }
-      table.has-many-columns { min-width: 680px; }
+      td {
+        grid-template-columns: minmax(72px, 30%) minmax(0, 1fr);
+        gap: 8px;
+        padding: 8px 9px;
+      }
       .d2-svg { width: 820px; }
     }
     @media (prefers-reduced-motion: reduce) {
@@ -517,7 +566,7 @@
     <div class="search-panel">
       <input type="search" data-doc-search aria-label="문서 검색" placeholder="API, 상태, 컬렉션, 플로우 검색">
     </div>
-    <p class="top-links"><a href="./sequence-index.html">전체 시퀀스 목록</a><a href="./all-api-doc.html">전체 API 목록</a><a href="./api-detail-doc.html">API 상세 설명</a><a href="./database-doc.html">MongoDB 구조 문서</a></p>
+    <p class="top-links"><a href="./sequence-index.html">전체 시퀀스 목록</a><a href="./all-api-doc.html">전체 API 목록</a><a href="./api-detail-doc.html">API 상세 설명</a><a href="./database-doc.html">MongoDB 구조 문서</a><a href="./risk-register-doc.html">결제 시스템 잠재 위험 및 대응 문서</a></p>
     </div>
   </div>
 </header>
@@ -526,6 +575,10 @@
     <h2>사용 API</h2>
     <div class="grid"><div class="box"><a href="./all-api-doc.html#internal-billing-retry"><code>POST /internal/subscription-billing/{invoiceId}/retry</code></a><p>실패한 구독 결제를 수동 또는 배치로 재시도합니다.</p></div><div class="box"><a href="./all-api-doc.html#invoices-detail"><code>GET /invoices/{invoiceId}</code></a><p>단일 인보이스의 금액, 결제 시도, 실패 사유, 영수증 정보를 조회합니다.</p></div><div class="box"><a href="./all-api-doc.html#webhooks-toss-payments"><code>POST /webhooks/toss-payments</code></a><p>토스페이먼츠 결제 이벤트를 수신하고 내부 결제/구독 상태를 보정합니다.</p></div></div>
   </section>
+  <div class="note">
+  <strong>연관 잠재 위험</strong>
+  <ul><li><a href="./risk-register-doc.html#subscription-retry-duplicate-charge"><code>subscription-retry-duplicate-charge</code></a> 실패 인보이스 재시도 중복 과금</li><li><a href="./risk-register-doc.html#idempotency-store-missing"><code>idempotency-store-missing</code></a> 멱등키 저장소 부재</li></ul>
+</div>
   <section id="subscription-recurring-payment-fail">
   <h2>정기 결제 실패 처리</h2>
   <p>정기 과금 배치에서 토스 자동결제 승인이 실패했을 때 내부 상태를 실패로 저장하고 재시도 일정을 예약하는 흐름입니다.</p>
@@ -737,7 +790,7 @@ receiptUrl / retryAt / billingMethodUpdateUrl / canceled
 </section>
   <section id="states">
   <h2>상태 요약</h2>
-  <div class="table-scroll"><table class="has-many-columns"><thead><tr><th>시점</th><th>구독 상태</th><th>결제 상태</th><th>설명</th></tr></thead><tbody><tr><td>자동결제 실패 직후</td><td><code>past_due</code></td><td><code>failed</code></td><td>실패 인보이스와 결제 시도가 저장되고 재시도 가능 여부를 판단합니다.</td></tr><tr><td>재시도 예약 후</td><td><code>grace_period</code></td><td><code>retry_scheduled</code></td><td>서비스 이용은 정책상 유예할 수 있고 다음 재시도 시각이 예약됩니다.</td></tr><tr><td>실패 웹훅 보정 후</td><td><code>grace_period</code></td><td><code>failed</code></td><td>토스 이벤트가 늦게 도착해도 내부 실패 상태를 멱등하게 유지합니다.</td></tr><tr><td>재시도 시작 전</td><td><code>grace_period</code></td><td><code>failed</code></td><td>실패 회차가 재시도 가능 상태이며 중복 실행을 막기 위해 잠깁니다.</td></tr><tr><td>재시도 성공 후</td><td><code>active</code></td><td><code>paid</code></td><td>유예 상태가 해제되고 다음 정기 결제일이 정상 갱신됩니다.</td></tr><tr><td>최종 실패 후</td><td><code>suspended</code></td><td><code>final_failed</code></td><td>서비스 이용을 제한하고 회원에게 결제수단 변경 또는 재개를 안내합니다.</td></tr></tbody></table></div>
+  <div class="table-scroll"><table class="has-many-columns"><thead><tr><th>시점</th><th>구독 상태</th><th>결제 상태</th><th>설명</th></tr></thead><tbody><tr><td data-label="시점">자동결제 실패 직후</td><td data-label="구독 상태"><code>past_due</code></td><td data-label="결제 상태"><code>failed</code></td><td data-label="설명">실패 인보이스와 결제 시도가 저장되고 재시도 가능 여부를 판단합니다.</td></tr><tr><td data-label="시점">재시도 예약 후</td><td data-label="구독 상태"><code>grace_period</code></td><td data-label="결제 상태"><code>retry_scheduled</code></td><td data-label="설명">서비스 이용은 정책상 유예할 수 있고 다음 재시도 시각이 예약됩니다.</td></tr><tr><td data-label="시점">실패 웹훅 보정 후</td><td data-label="구독 상태"><code>grace_period</code></td><td data-label="결제 상태"><code>failed</code></td><td data-label="설명">토스 이벤트가 늦게 도착해도 내부 실패 상태를 멱등하게 유지합니다.</td></tr><tr><td data-label="시점">재시도 시작 전</td><td data-label="구독 상태"><code>grace_period</code></td><td data-label="결제 상태"><code>failed</code></td><td data-label="설명">실패 회차가 재시도 가능 상태이며 중복 실행을 막기 위해 잠깁니다.</td></tr><tr><td data-label="시점">재시도 성공 후</td><td data-label="구독 상태"><code>active</code></td><td data-label="결제 상태"><code>paid</code></td><td data-label="설명">유예 상태가 해제되고 다음 정기 결제일이 정상 갱신됩니다.</td></tr><tr><td data-label="시점">최종 실패 후</td><td data-label="구독 상태"><code>suspended</code></td><td data-label="결제 상태"><code>final_failed</code></td><td data-label="설명">서비스 이용을 제한하고 회원에게 결제수단 변경 또는 재개를 안내합니다.</td></tr></tbody></table></div>
 </section>
 </main>
 <script>

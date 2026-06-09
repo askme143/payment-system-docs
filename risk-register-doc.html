@@ -1,0 +1,771 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>결제 시스템 잠재 위험 및 대응 문서</title>
+  <style>
+    :root {
+      --bg: #f5f7fb;
+      --surface: #ffffff;
+      --surface-2: #fbfcfe;
+      --ink: #17202a;
+      --muted: #526174;
+      --line: #d8e0ea;
+      --accent: #1c7c66;
+      --blue: #2457a6;
+      --blue-soft: #e8f3ff;
+      --danger: #b42318;
+      --soft: #e5f4ef;
+      --warning: #9a5b00;
+      --warning-soft: #fff5dd;
+      --shadow: 0 12px 28px rgba(20, 35, 55, 0.07);
+      --code-bg: #111827;
+      --code-ink: #e5e7eb;
+      --focus: #8b5cf6;
+    }
+    * { box-sizing: border-box; }
+    html {
+      max-width: 100%;
+      scroll-behavior: smooth;
+      -webkit-text-size-adjust: 100%;
+      text-size-adjust: 100%;
+      overflow-x: clip;
+    }
+    body {
+      width: 100%;
+      max-width: 100%;
+      margin: 0;
+      color: var(--ink);
+      background: var(--bg);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      line-height: 1.58;
+      -webkit-text-size-adjust: 100%;
+      text-size-adjust: 100%;
+      overflow-x: clip;
+    }
+    .skip-link {
+      position: absolute;
+      left: 16px;
+      top: 12px;
+      z-index: 10;
+      transform: translateY(-140%);
+      padding: 10px 12px;
+      color: #ffffff;
+      background: var(--ink);
+      border-radius: 6px;
+      transition: transform 160ms ease;
+    }
+    .skip-link:focus { transform: translateY(0); }
+    header {
+      background:
+        linear-gradient(135deg, rgba(232, 243, 255, 0.9), rgba(229, 244, 239, 0.76)),
+        var(--surface);
+      border-bottom: 1px solid var(--line);
+    }
+    .wrap {
+      width: min(1180px, calc(100% - 36px));
+      margin: 0 auto;
+    }
+    .hero { padding: 46px 0 30px; }
+    .eyebrow {
+      margin: 0 0 10px;
+      color: var(--accent);
+      font-size: 14px;
+      font-weight: 800;
+    }
+    h1 {
+      margin: 0;
+      font-size: clamp(30px, 5vw, 48px);
+      line-height: 1.14;
+      letter-spacing: 0;
+    }
+    .lead {
+      max-width: 900px;
+      margin: 16px 0 0;
+      color: var(--muted);
+      font-size: 18px;
+    }
+    .search-panel {
+      max-width: 760px;
+      margin-top: 22px;
+    }
+    .search-panel input {
+      width: 100%;
+      min-height: 48px;
+      padding: 0 16px;
+      color: var(--ink);
+      background: rgba(255, 255, 255, 0.92);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      box-shadow: var(--shadow);
+      font: inherit;
+    }
+    .search-panel input::placeholder { color: #718096; }
+    main { padding: 28px 0 54px; }
+    .layout {
+      display: grid;
+      grid-template-columns: 260px 1fr;
+      gap: 24px;
+    }
+    nav {
+      position: sticky;
+      top: 18px;
+      align-self: start;
+      max-height: calc(100vh - 36px);
+      padding: 14px;
+      overflow-y: auto;
+      overscroll-behavior: contain;
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      box-shadow: var(--shadow);
+    }
+    nav a {
+      display: block;
+      padding: 8px 10px;
+      color: var(--muted);
+      text-decoration: none;
+      border-radius: 6px;
+      font-size: 14px;
+      font-weight: 700;
+      line-height: 1.35;
+      overflow-wrap: anywhere;
+      word-break: break-word;
+      cursor: pointer;
+      transition: color 160ms ease, background-color 160ms ease;
+    }
+    nav a:hover { color: var(--ink); background: var(--soft); }
+    a:focus-visible,
+    button:focus-visible,
+    input:focus-visible,
+    summary:focus-visible {
+      outline: 3px solid var(--focus);
+      outline: 3px solid color-mix(in srgb, var(--focus), transparent 45%);
+      outline-offset: 2px;
+    }
+    section {
+      margin-bottom: 24px;
+      padding: 24px;
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      box-shadow: var(--shadow);
+      scroll-margin-top: 18px;
+    }
+    h2 { margin: 0 0 16px; font-size: 24px; letter-spacing: 0; }
+    h3 { margin: 22px 0 8px; font-size: 18px; letter-spacing: 0; }
+    h4 { margin: 14px 0 8px; font-size: 16px; letter-spacing: 0; }
+    p { margin: 0 0 14px; }
+    a { color: var(--blue); font-weight: 800; text-decoration: none; text-underline-offset: 3px; }
+    a:hover { text-decoration: underline; }
+    code { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 0.95em; }
+    pre {
+      margin: 10px 0 0;
+      padding: 14px;
+      overflow-x: auto;
+      color: var(--code-ink);
+      background: var(--code-bg);
+      border-radius: 8px;
+      font-size: 13px;
+      line-height: 1.5;
+    }
+    .table-scroll {
+      width: 100%;
+      overflow-x: auto;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+    }
+    table { width: 100%; min-width: 680px; border-collapse: collapse; font-size: 14px; }
+    th, td { padding: 11px 12px; text-align: left; vertical-align: top; border-bottom: 1px solid var(--line); }
+    th { color: var(--muted); background: var(--surface-2); font-weight: 800; }
+    tr:last-child td { border-bottom: 0; }
+    .top-links { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 16px; }
+    .top-links a {
+      display: inline-flex;
+      align-items: center;
+      min-height: 38px;
+      padding: 7px 12px;
+      color: var(--ink);
+      background: rgba(255, 255, 255, 0.82);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      cursor: pointer;
+      transition: border-color 160ms ease, background-color 160ms ease;
+    }
+    .top-links a:hover {
+      background: #ffffff;
+      border-color: color-mix(in srgb, var(--blue), var(--line) 55%);
+      text-decoration: none;
+    }
+    .grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+    .sequence-group { margin-top: 20px; }
+    .sequence-group:first-of-type { margin-top: 0; }
+    .sequence-group > p { color: var(--muted); }
+    .card, .box {
+      padding: 16px;
+      background: var(--surface-2);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+    }
+    .card {
+      transition: border-color 160ms ease, box-shadow 160ms ease, background-color 160ms ease;
+    }
+    .card:has(a):hover {
+      background: #ffffff;
+      border-color: color-mix(in srgb, var(--blue), var(--line) 56%);
+      box-shadow: 0 10px 22px rgba(20, 35, 55, 0.08);
+    }
+    .status {
+      display: inline-flex;
+      align-items: center;
+      min-height: 24px;
+      padding: 2px 8px;
+      border-radius: 999px;
+      color: var(--accent);
+      background: var(--soft);
+      font-size: 12px;
+      font-weight: 900;
+    }
+    .status-planned {
+      color: var(--warning);
+      background: var(--warning-soft);
+    }
+    .note {
+      margin-top: 14px;
+      padding: 13px 15px;
+      color: #7a4a00;
+      background: var(--warning-soft);
+      border: 1px solid #eed39a;
+      border-radius: 8px;
+    }
+    .diagram { overflow-x: auto; padding-bottom: 4px; }
+    .d2-diagram {
+      overflow-x: auto;
+      padding: 0;
+      background: #ffffff;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+    }
+    .d2-toolbar {
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+      padding: 10px 12px;
+      border-bottom: 1px solid var(--line);
+      background: var(--surface-2);
+    }
+    .d2-toolbar a {
+      font-size: 13px;
+    }
+    .d2-source {
+      margin: 0;
+      border-radius: 0 0 8px 8px;
+    }
+    .d2-svg {
+      display: block;
+      max-width: 100%;
+      height: auto;
+      margin: 0 auto;
+      background: #ffffff;
+    }
+    .d2-details {
+      border-top: 1px solid var(--line);
+      background: var(--surface-2);
+    }
+    .d2-details summary {
+      cursor: pointer;
+      padding: 10px 12px;
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 800;
+    }
+    @media (min-width: 901px) {
+      .wrap {
+        width: min(1440px, calc(100% - 64px));
+      }
+      .hero {
+        padding: 34px 0 26px;
+      }
+      .hero .wrap {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) minmax(300px, 360px);
+        gap: 16px 36px;
+        align-items: end;
+      }
+      .hero .eyebrow,
+      .hero h1,
+      .hero .lead {
+        grid-column: 1;
+      }
+      .hero .search-panel,
+      .hero .top-links {
+        grid-column: 2;
+      }
+      .search-panel {
+        max-width: none;
+        margin-top: 0;
+      }
+      .top-links {
+        flex-direction: column;
+        margin-top: 0;
+      }
+      .top-links a {
+        justify-content: center;
+        min-height: 40px;
+      }
+      .layout {
+        grid-template-columns: 300px minmax(0, 1fr);
+        gap: 28px;
+      }
+      .layout > div {
+        min-width: 0;
+      }
+      nav {
+        padding: 16px;
+      }
+      nav a {
+        padding: 9px 10px;
+      }
+      section {
+        padding: 28px;
+      }
+      section > p,
+      section > ol,
+      section > ul {
+        max-width: 96ch;
+      }
+      table {
+        font-size: 13.5px;
+      }
+      th, td {
+        padding: 10px 11px;
+      }
+      .card,
+      .box {
+        padding: 18px;
+      }
+      .grid {
+        gap: 16px;
+      }
+    }
+    @media (max-width: 900px) {
+      header {
+        width: 100%;
+      }
+      .layout {
+        grid-template-columns: minmax(0, 1fr);
+      }
+      .layout > nav,
+      .layout > div {
+        min-width: 0;
+        max-width: 100%;
+      }
+      nav {
+        position: sticky;
+        top: 0;
+        z-index: 4;
+        display: flex;
+        gap: 8px;
+        width: 100%;
+        max-width: 100%;
+        max-height: none;
+        margin-inline: 0;
+        padding: 10px 0;
+        overflow-x: auto;
+        overflow-y: hidden;
+        border-radius: 0;
+        box-shadow: 0 8px 18px rgba(20, 35, 55, 0.08);
+        scrollbar-width: thin;
+      }
+      nav a {
+        flex: 0 0 auto;
+        min-height: 44px;
+        max-width: min(72vw, 280px);
+        display: inline-flex;
+        align-items: center;
+        padding: 8px 12px;
+        background: var(--surface-2);
+        border: 1px solid var(--line);
+        white-space: normal;
+      }
+      .grid { grid-template-columns: 1fr; }
+      .wrap {
+        width: calc(100% - 16px);
+        max-width: 1180px;
+      }
+      .hero {
+        width: 100%;
+        padding: 34px 0 24px;
+      }
+      h1 { font-size: clamp(27px, 7.4vw, 34px); }
+      h2 { font-size: 22px; }
+      h3 { font-size: 17px; }
+      h4 { font-size: 16px; }
+      p,
+      li {
+        font-size: 16px;
+        overflow-wrap: anywhere;
+      }
+      .lead {
+        font-size: 16px;
+        line-height: 1.56;
+      }
+      .search-panel {
+        width: 100%;
+        max-width: none;
+        margin-top: 18px;
+      }
+      .search-panel input { min-height: 46px; }
+      .top-links {
+        width: 100%;
+        gap: 8px;
+      }
+      .top-links a {
+        min-height: 44px;
+        flex: 1 1 100%;
+        min-width: 0;
+        justify-content: center;
+        text-align: center;
+      }
+      main { padding: 18px 0 38px; }
+      section {
+        max-width: 100%;
+        padding: 18px;
+      }
+      section,
+      .card,
+      .box,
+      .d2-diagram,
+      .table-scroll {
+        border-radius: 8px;
+      }
+      .card,
+      .box { padding: 14px; }
+      .card ul,
+      .box ul { padding-left: 20px; }
+      code {
+        overflow-wrap: anywhere;
+        word-break: break-word;
+      }
+      .table-scroll {
+        max-width: 100%;
+        overflow-x: visible;
+        border: 0;
+        -webkit-overflow-scrolling: touch;
+      }
+      table,
+      table.has-many-columns {
+        width: 100%;
+        min-width: 0;
+        border-collapse: separate;
+        border-spacing: 0 8px;
+        font-size: 13px;
+      }
+      thead { display: none; }
+      tbody,
+      tr,
+      td {
+        display: block;
+      }
+      tr {
+        overflow: clip;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: var(--surface);
+      }
+      td {
+        display: grid;
+        grid-template-columns: minmax(82px, 32%) minmax(0, 1fr);
+        gap: 10px;
+        align-items: start;
+        padding: 9px 10px;
+        border-bottom: 1px solid var(--line);
+        overflow-wrap: anywhere;
+      }
+      td:last-child { border-bottom: 0; }
+      td::before {
+        content: attr(data-label);
+        color: var(--muted);
+        font-size: 12px;
+        font-weight: 800;
+        line-height: 1.45;
+      }
+      pre {
+        font-size: 12px;
+        -webkit-overflow-scrolling: touch;
+      }
+      .diagram {
+        margin-inline: -2px;
+        -webkit-overflow-scrolling: touch;
+      }
+      .d2-toolbar {
+        position: sticky;
+        left: 0;
+        justify-content: flex-start;
+      }
+      .d2-toolbar a,
+      .d2-details summary {
+        min-height: 44px;
+        display: inline-flex;
+        align-items: center;
+      }
+      .d2-svg {
+        width: 900px;
+        max-width: none;
+      }
+      .d2-source { min-width: 760px; }
+    }
+    @media (max-width: 520px) {
+      body { line-height: 1.54; }
+      .wrap { width: calc(100% - 12px); }
+      .hero {
+        width: 100%;
+        padding: 28px 0 20px;
+      }
+      .eyebrow { font-size: 13px; }
+      h1 { font-size: clamp(25px, 8vw, 31px); }
+      h2 { font-size: 20px; }
+      h3 { font-size: 16px; }
+      p,
+      li { font-size: 15px; }
+      section {
+        padding: 16px;
+        margin-bottom: 16px;
+      }
+      nav {
+        padding-inline: 0;
+      }
+      nav a { max-width: 78vw; }
+      td {
+        grid-template-columns: minmax(72px, 30%) minmax(0, 1fr);
+        gap: 8px;
+        padding: 8px 9px;
+      }
+      .d2-svg { width: 820px; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      html { scroll-behavior: auto; }
+      *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+      }
+    }
+  </style>
+  
+</head>
+<body>
+<a class="skip-link" href="#content">본문으로 건너뛰기</a>
+<header>
+  <div class="hero">
+    <div class="wrap">
+    <p class="eyebrow">Potential Risk Register</p>
+    <h1>결제 시스템 잠재 위험 및 대응 문서</h1>
+    <p class="lead">결제 플로우에서 실패, 재시도, 순서 역전, 동시 요청이 치명적인 결과로 이어질 수 있는 지점과 처리 방안을 정리합니다.</p>
+    <div class="search-panel">
+      <input type="search" data-doc-search aria-label="문서 검색" placeholder="API, 상태, 컬렉션, 플로우 검색">
+    </div>
+    <p class="top-links"><a href="./sequence-index.html">전체 시퀀스 목록</a><a href="./all-api-doc.html">전체 API 목록</a><a href="./api-detail-doc.html">API 상세 설명</a><a href="./database-doc.html">MongoDB 구조 문서</a><a href="./risk-register-doc.html">결제 시스템 잠재 위험 및 대응 문서</a></p>
+    </div>
+  </div>
+</header>
+<main class="wrap layout" id="content"><nav aria-label="문서 목차"><a href="#provider-paid-internal-unpaid">PG 승인 성공 후 내부 미반영</a><a href="#payment-confirm-concurrent-approval">일반결제 승인 API 동시 호출</a><a href="#checkout-multiple-paid-attempts">하나의 구매 의도에 여러 paid 시도 발생</a><a href="#recurring-billing-duplicate-run">정기결제 배치 중복 실행</a><a href="#subscription-retry-duplicate-charge">실패 인보이스 재시도 중복 과금</a><a href="#cancel-refund-duplicate-or-mismatch">취소/환불 중복 또는 외부/내부 불일치</a><a href="#duplicate-active-subscription">상품별 활성 구독 중복 생성</a><a href="#webhook-out-of-order-or-duplicate">웹훅 중복 또는 순서 역전</a><a href="#cancel-scheduled-billing-race">해지 예약과 정기 과금 경합</a><a href="#billing-method-default-race">기본 결제수단 변경과 과금 경합</a><a href="#plan-change-double-apply">플랜 변경 중복 실행</a><a href="#idempotency-store-missing">멱등키 저장소 부재</a><a href="#webhook-auth-weak-contract">웹훅 인증 계약 약화</a></nav><div><section id="provider-paid-internal-unpaid">
+  <h2>PG 승인 성공 후 내부 미반영</h2>
+  <p><span class="status status-critical">critical</span> <code>failure</code></p>
+  <p>토스 승인 또는 자동결제는 성공했지만 내부 payment, invoice, subscription 상태 저장이 실패하는 위험입니다.</p>
+  <h3>발생 조건</h3>
+  <p>PG 승인 응답을 받은 직후 DB 저장, 트랜잭션 커밋, 네트워크 응답 반환, 웹훅 처리 중 하나가 실패할 때 발생합니다.</p>
+  <h3>영향</h3>
+  <p>회원은 돈을 냈지만 서비스 권한이나 영수증을 받지 못하고, 재시도 화면에서 중복 결제를 유도받을 수 있습니다.</p>
+  <h3>탐지</h3><p>provider DONE 상태와 내부 paid 상태가 불일치하는 paymentKey/orderId를 주기적으로 대조합니다.</p>
+  <h3>처리 방안</h3>
+  <ul><li>paymentKey 또는 invoiceId 기준으로 토스 결제 조회를 수행합니다.</li><li>외부 결제 사실이 DONE이면 내부 payment와 invoice를 paid로 보정하고 구독 상태와 권한을 함께 갱신합니다.</li><li>보정은 관리자 보정 API로만 수행하고 operatorAuditId, 이전/이후 상태, 근거 paymentKey를 남깁니다.</li><li>이미 사용자가 재시도 결제를 완료한 경우 중복 결제 여부를 판정해 한 건은 취소/환불 플로우로 넘깁니다.</li></ul>
+  <h3>예방 장치</h3>
+  <ul><li>PG 호출 전후의 상태를 payment 단위로 잠그고 승인 성공 반영을 단일 트랜잭션 경계로 묶습니다.</li><li>payment_key sparse unique index와 order_id unique index를 둡니다.</li><li>승인 응답과 웹훅은 같은 paymentKey 기준으로 멱등 처리합니다.</li><li>결제 성공 후 내부 저장 실패를 복구하는 provider_payment_sync 운영 경로를 유지합니다.</li></ul>
+  <h3>관련 API</h3><ul><li><a href="./api-detail-doc.html#payments-confirm"><code>POST /payments/confirm</code></a></li><li><a href="./api-detail-doc.html#confirm"><code>POST /subscriptions/confirm</code></a></li><li><a href="./api-detail-doc.html#billing-run"><code>POST /internal/subscription-billing/run</code></a></li><li><a href="./api-detail-doc.html#change"><code>PATCH /subscriptions/{subscriptionId}</code></a></li><li><a href="./api-detail-doc.html#webhook"><code>POST /webhooks/toss-payments</code></a></li><li><a href="./api-detail-doc.html#admin-subscription-adjust"><code>POST /admin/subscriptions/{subscriptionId}/adjust</code></a></li></ul><h3>관련 플로우</h3><ul><li><a href="./one-time-payment-sequence.html">일반결제 플로우</a></li><li><a href="./subscription-api-doc.html">신규 회원 최초 구독 성공 플로우</a></li><li><a href="./recurring-billing-sequence.html">정기 결제 실행 플로우</a></li><li><a href="./subscription-change-sequence.html">구독 플랜 변경 플로우</a></li><li><a href="./admin-subscription-adjustment-sequence.html">운영자 구독 수동 보정</a></li></ul><h3>관련 DB 컬렉션</h3><ul><li><a href="./database-doc.html#payments"><code>payments</code></a></li><li><a href="./database-doc.html#invoices"><code>invoices</code></a></li><li><a href="./database-doc.html#subscriptions"><code>subscriptions</code></a></li><li><a href="./database-doc.html#webhook-events"><code>webhook_events</code></a></li></ul>
+</section><section id="payment-confirm-concurrent-approval">
+  <h2>일반결제 승인 API 동시 호출</h2>
+  <p><span class="status status-critical">critical</span> <code>concurrency</code></p>
+  <p>성공 페이지 새로고침, 더블 클릭, 모바일 재전송으로 같은 paymentId 승인 요청이 동시에 들어오는 위험입니다.</p>
+  <h3>발생 조건</h3>
+  <p>두 요청이 모두 payment.status=ready를 읽고 동시에 PG 승인 API 호출까지 진행할 때 발생합니다.</p>
+  <h3>영향</h3>
+  <p>중복 승인, 서로 다른 paymentKey 충돌, 내부 paid 상태 경합, 사용자 중복 과금이 발생할 수 있습니다.</p>
+  <h3>탐지</h3><p>같은 paymentId/orderId에 대해 짧은 시간 안에 confirm 요청 또는 PG 승인 호출이 2회 이상 기록되는지 모니터링합니다.</p>
+  <h3>처리 방안</h3>
+  <ul><li>이미 paid인 paymentId는 기존 승인 결과를 200 OK로 반환합니다.</li><li>같은 paymentId에 다른 paymentKey가 들어오면 409 Conflict로 차단하고 운영 로그를 남깁니다.</li><li>PG에서 실제 중복 승인된 경우 paymentKey별 상태를 조회해 후속 취소/환불 대상으로 분리합니다.</li></ul>
+  <h3>예방 장치</h3>
+  <ul><li>paymentId 기준 조건부 업데이트로 ready -&gt; confirming 선점에 성공한 요청만 PG를 호출합니다.</li><li>Idempotency-Key와 request hash를 저장해 같은 키의 재시도만 같은 결과를 반환합니다.</li><li>payments.order_id unique와 payments.payment_key unique를 함께 둡니다.</li></ul>
+  <h3>관련 API</h3><ul><li><a href="./api-detail-doc.html#payments-confirm"><code>POST /payments/confirm</code></a></li></ul><h3>관련 플로우</h3><ul><li><a href="./one-time-payment-sequence.html">일반결제 플로우</a></li><li><a href="./one-time-payment-failure-sequence.html">일반결제 실패 및 재시도 플로우</a></li></ul><h3>관련 DB 컬렉션</h3><ul><li><a href="./database-doc.html#payments"><code>payments</code></a></li></ul>
+</section><section id="checkout-multiple-paid-attempts">
+  <h2>하나의 구매 의도에 여러 paid 시도 발생</h2>
+  <p><span class="status status-critical">critical</span> <code>data-integrity</code></p>
+  <p>같은 checkoutId 아래 이전 시도와 새 재시도가 모두 paid로 확정되는 위험입니다.</p>
+  <h3>발생 조건</h3>
+  <p>이전 시도의 승인 응답 또는 웹훅이 늦게 도착하고, 사용자는 새 paymentId/orderId로 재시도해 성공했을 때 발생합니다.</p>
+  <h3>영향</h3>
+  <p>같은 상품 구매 의도에서 중복 결제가 완료되고, 주문/이용권/재고가 중복 반영될 수 있습니다.</p>
+  <h3>탐지</h3><p>checkoutId별 paid payment 수가 2개 이상인 케이스를 집계합니다.</p>
+  <h3>처리 방안</h3>
+  <ul><li>먼저 확정된 paid 시도를 최종 구매로 유지합니다.</li><li>늦게 paid가 된 추가 시도는 운영 취소 후보로 표시하고 자동 취소 가능 정책이면 취소 플로우를 실행합니다.</li><li>사용자 화면에는 최종 구매 1건과 추가 결제 환불 진행 상태를 분리해 표시합니다.</li></ul>
+  <h3>예방 장치</h3>
+  <ul><li>payments에 checkout_id 기준 paid partial unique index를 둡니다.</li><li>checkout 상태를 ready -&gt; paid로 조건부 전이하고 전이 성공 요청만 주문 완료 이벤트를 발행합니다.</li><li>실패 후 재시도는 새 paymentId/orderId를 쓰되 checkout 단위 성공 불변식을 항상 재검증합니다.</li></ul>
+  <h3>관련 API</h3><ul><li><a href="./api-detail-doc.html#payments-orders"><code>POST /payments/orders</code></a></li><li><a href="./api-detail-doc.html#payments-confirm"><code>POST /payments/confirm</code></a></li><li><a href="./api-detail-doc.html#webhook"><code>POST /webhooks/toss-payments</code></a></li></ul><h3>관련 플로우</h3><ul><li><a href="./one-time-payment-sequence.html">일반결제 플로우</a></li><li><a href="./one-time-payment-failure-sequence.html">일반결제 실패 및 재시도 플로우</a></li></ul><h3>관련 DB 컬렉션</h3><ul><li><a href="./database-doc.html#checkouts"><code>checkouts</code></a></li><li><a href="./database-doc.html#payments"><code>payments</code></a></li></ul>
+</section><section id="recurring-billing-duplicate-run">
+  <h2>정기결제 배치 중복 실행</h2>
+  <p><span class="status status-critical">critical</span> <code>concurrency</code></p>
+  <p>cron, queue worker, 운영자 수동 실행이 같은 구독 회차를 동시에 과금하는 위험입니다.</p>
+  <h3>발생 조건</h3>
+  <p>동일 billingDate에 둘 이상의 배치가 같은 active 구독을 선점 없이 조회할 때 발생합니다.</p>
+  <h3>영향</h3>
+  <p>같은 구독 회차에 인보이스와 결제가 중복 생성되고 자동결제가 중복 승인될 수 있습니다.</p>
+  <h3>탐지</h3><p>동일 subscriptionId와 billing period에 pending/paid invoice가 2개 이상 생기는지 감시합니다.</p>
+  <h3>처리 방안</h3>
+  <ul><li>중복 인보이스 중 PG 승인 전 pending 건은 voided로 닫습니다.</li><li>이미 PG 승인이 된 중복 payment는 정책에 따라 취소/환불하고 감사 로그를 남깁니다.</li><li>배치 실행 로그에서 중복 실행 원인과 worker 정보를 추적합니다.</li></ul>
+  <h3>예방 장치</h3>
+  <ul><li>billing job 실행 락을 획득한 작업만 대상 조회를 수행합니다.</li><li>subscription 또는 invoice 단위 claim 필드와 lease timeout을 둡니다.</li><li>invoices에 subscription_id + billing_period unique index를 둡니다.</li><li>자동결제 요청에 회차 단위 idempotencyKey를 사용합니다.</li></ul>
+  <h3>관련 API</h3><ul><li><a href="./api-detail-doc.html#billing-run"><code>POST /internal/subscription-billing/run</code></a></li></ul><h3>관련 플로우</h3><ul><li><a href="./recurring-billing-sequence.html">정기 결제 실행 플로우</a></li></ul><h3>관련 DB 컬렉션</h3><ul><li><a href="./database-doc.html#subscriptions"><code>subscriptions</code></a></li><li><a href="./database-doc.html#invoices"><code>invoices</code></a></li><li><a href="./database-doc.html#payments"><code>payments</code></a></li></ul>
+</section><section id="subscription-retry-duplicate-charge">
+  <h2>실패 인보이스 재시도 중복 과금</h2>
+  <p><span class="status status-critical">critical</span> <code>retry</code></p>
+  <p>예약 재시도와 운영자 수동 재시도가 같은 invoiceId를 동시에 승인하는 위험입니다.</p>
+  <h3>발생 조건</h3>
+  <p>invoice.status=failed와 nextRetryAt 조건을 두 요청이 동시에 통과할 때 발생합니다.</p>
+  <h3>영향</h3>
+  <p>실패 회차 하나에 여러 자동결제 승인과 여러 성공 알림이 발생할 수 있습니다.</p>
+  <h3>탐지</h3><p>같은 invoiceId에 성공 payment가 2개 이상 연결되는지, 같은 retry attempt가 중복 기록되는지 감시합니다.</p>
+  <h3>처리 방안</h3>
+  <ul><li>먼저 성공한 결제만 invoice paid로 인정합니다.</li><li>나머지 성공 결제는 중복 결제로 표시하고 취소/환불 플로우로 넘깁니다.</li><li>실패 응답이 뒤늦게 도착한 경우 이미 paid인 invoice 상태를 덮어쓰지 않습니다.</li></ul>
+  <h3>예방 장치</h3>
+  <ul><li>invoiceId 기준 failed -&gt; retrying 조건부 전이에 성공한 요청만 PG를 호출합니다.</li><li>internal-billing-retry의 Idempotency-Key를 필수로 유지하고 request hash를 저장합니다.</li><li>invoice별 active retry attempt unique 제약을 둡니다.</li></ul>
+  <h3>관련 API</h3><ul><li><a href="./api-detail-doc.html#billing-retry"><code>POST /internal/subscription-billing/{invoiceId}/retry</code></a></li></ul><h3>관련 플로우</h3><ul><li><a href="./subscription-retry-sequence.html">정기 결제 실패 및 재시도 플로우</a></li></ul><h3>관련 DB 컬렉션</h3><ul><li><a href="./database-doc.html#invoices"><code>invoices</code></a></li><li><a href="./database-doc.html#payments"><code>payments</code></a></li><li><a href="./database-doc.html#subscriptions"><code>subscriptions</code></a></li></ul>
+</section><section id="cancel-refund-duplicate-or-mismatch">
+  <h2>취소/환불 중복 또는 외부/내부 불일치</h2>
+  <p><span class="status status-critical">critical</span> <code>retry</code></p>
+  <p>회원/관리자 취소 요청이 중복되거나 토스 취소 성공 후 내부 이력 저장이 실패하는 위험입니다.</p>
+  <h3>발생 조건</h3>
+  <p>같은 paymentId에 취소 요청이 동시에 들어오거나, 토스 취소 API 성공 후 내부 cancelHistory 저장이 실패할 때 발생합니다.</p>
+  <h3>영향</h3>
+  <p>중복 환불, 취소 가능 금액 초과, 내부 결제 상태와 실제 환불 상태 불일치가 발생할 수 있습니다.</p>
+  <h3>탐지</h3><p>토스 cancelableAmount와 내부 cancelableAmount를 대조하고, 같은 paymentId의 pending cancel이 장시간 남는지 감시합니다.</p>
+  <h3>처리 방안</h3>
+  <ul><li>paymentKey 기준으로 토스 취소 이력을 재조회해 내부 cancelHistory를 재동기화합니다.</li><li>중복 취소 성공이 확인되면 주문/권한/CS 상태를 실제 환불 금액 기준으로 보정합니다.</li><li>토스 취소 실패 건은 cancel_pending을 failed로 전환하고 재시도 가능 여부를 표시합니다.</li></ul>
+  <h3>예방 장치</h3>
+  <ul><li>payment_cancels 컬렉션에 payment_id + idempotency_key unique index를 둡니다.</li><li>payment 단위 lock 또는 조건부 업데이트로 cancelableAmount 검증과 pending 생성이 원자적으로 처리되게 합니다.</li><li>회원 취소와 관리자 취소는 같은 내부 취소 서비스를 공유합니다.</li></ul>
+  <h3>관련 API</h3><ul><li><a href="./api-detail-doc.html#payments-cancel"><code>POST /payments/{paymentId}/cancel</code></a></li><li><a href="./api-detail-doc.html#admin-payment-cancel"><code>POST /admin/payments/{paymentId}/cancel</code></a></li></ul><h3>관련 플로우</h3><ul><li><a href="./payment-cancel-refund-sequence.html">결제 취소/환불 플로우</a></li></ul><h3>관련 DB 컬렉션</h3><ul><li><a href="./database-doc.html#payments"><code>payments</code></a></li></ul>
+</section><section id="duplicate-active-subscription">
+  <h2>상품별 활성 구독 중복 생성</h2>
+  <p><span class="status status-high">high</span> <code>data-integrity</code></p>
+  <p>같은 회원이 같은 productCode에 대해 둘 이상의 활성 구독을 갖는 위험입니다.</p>
+  <h3>발생 조건</h3>
+  <p>구독 체크아웃 또는 확정 요청이 동시에 들어와 애플리케이션 검증만으로 중복을 막으려 할 때 발생합니다.</p>
+  <h3>영향</h3>
+  <p>권한, 청구, 해지, 플랜 변경이 어느 구독에 적용되는지 모호해지고 정기결제가 중복될 수 있습니다.</p>
+  <h3>탐지</h3><p>userId + productCode 기준 active/past_due/cancel_scheduled 구독 수가 2개 이상인지 점검합니다.</p>
+  <h3>처리 방안</h3>
+  <ul><li>중복 구독을 운영 보정 대상으로 분리하고 실제 결제/권한 사용 이력을 기준으로 유지할 구독을 하나 선택합니다.</li><li>불필요한 중복 구독은 canceled 또는 migrated 상태로 닫고 관련 인보이스를 정리합니다.</li></ul>
+  <h3>예방 장치</h3>
+  <ul><li>subscriptions에 user_id + product_code partial unique index를 둡니다.</li><li>구독 확정 전에도 같은 productCode의 활성/대기 구독을 조건부로 선점합니다.</li><li>플랜 변경은 신규 구독 생성이 아니라 기존 구독 변경 플로우로만 유도합니다.</li></ul>
+  <h3>관련 API</h3><ul><li><a href="./api-detail-doc.html#checkout"><code>POST /subscriptions/checkout</code></a></li><li><a href="./api-detail-doc.html#confirm"><code>POST /subscriptions/confirm</code></a></li><li><a href="./api-detail-doc.html#change"><code>PATCH /subscriptions/{subscriptionId}</code></a></li></ul><h3>관련 플로우</h3><ul><li><a href="./subscription-api-doc.html">신규 회원 최초 구독 성공 플로우</a></li><li><a href="./subscription-change-sequence.html">구독 플랜 변경 플로우</a></li></ul><h3>관련 DB 컬렉션</h3><ul><li><a href="./database-doc.html#subscriptions"><code>subscriptions</code></a></li></ul>
+</section><section id="webhook-out-of-order-or-duplicate">
+  <h2>웹훅 중복 또는 순서 역전</h2>
+  <p><span class="status status-high">high</span> <code>ordering</code></p>
+  <p>PG 웹훅이 승인 응답보다 먼저 오거나, 실패/성공 이벤트가 중복 또는 역순으로 도착하는 위험입니다.</p>
+  <h3>발생 조건</h3>
+  <p>PG 재전송, 네트워크 지연, 서버 재시도, 승인 API 응답 처리 지연 때문에 발생합니다.</p>
+  <h3>영향</h3>
+  <p>이미 paid인 결제가 failed로 덮이거나, 동일 이벤트가 중복 처리되어 알림/권한/상태 보정이 반복될 수 있습니다.</p>
+  <h3>탐지</h3><p>webhook_events에서 같은 provider/event_id 재수신, 같은 paymentKey의 상태 역전 시도를 기록합니다.</p>
+  <h3>처리 방안</h3>
+  <ul><li>중복 이벤트는 상태 변경 없이 200 OK로 응답합니다.</li><li>내부 상태보다 오래된 이벤트는 ignored로 저장하고 최신 상태를 유지합니다.</li><li>외부 상태가 내부보다 최신이면 결제, 인보이스, 구독 상태를 멱등하게 보정합니다.</li></ul>
+  <h3>예방 장치</h3>
+  <ul><li>webhook_events(provider, event_id) unique index를 유지합니다.</li><li>paymentKey + provider status timestamp 기준으로 상태 전이를 단방향으로 검증합니다.</li><li>웹훅 서명 또는 시크릿 검증을 필수로 둡니다.</li></ul>
+  <h3>관련 API</h3><ul><li><a href="./api-detail-doc.html#webhook"><code>POST /webhooks/toss-payments</code></a></li><li><a href="./api-detail-doc.html#payments-confirm"><code>POST /payments/confirm</code></a></li><li><a href="./api-detail-doc.html#confirm"><code>POST /subscriptions/confirm</code></a></li><li><a href="./api-detail-doc.html#billing-run"><code>POST /internal/subscription-billing/run</code></a></li></ul><h3>관련 플로우</h3><ul><li><a href="./one-time-payment-sequence.html">일반결제 플로우</a></li><li><a href="./subscription-api-doc.html">신규 회원 최초 구독 성공 플로우</a></li><li><a href="./recurring-billing-sequence.html">정기 결제 실행 플로우</a></li></ul><h3>관련 DB 컬렉션</h3><ul><li><a href="./database-doc.html#webhook-events"><code>webhook_events</code></a></li><li><a href="./database-doc.html#payments"><code>payments</code></a></li><li><a href="./database-doc.html#invoices"><code>invoices</code></a></li><li><a href="./database-doc.html#subscriptions"><code>subscriptions</code></a></li></ul>
+</section><section id="cancel-scheduled-billing-race">
+  <h2>해지 예약과 정기 과금 경합</h2>
+  <p><span class="status status-high">high</span> <code>concurrency</code></p>
+  <p>사용자의 해지 예약 처리와 정기 과금 배치가 같은 구독을 동시에 처리하는 위험입니다.</p>
+  <h3>발생 조건</h3>
+  <p>해지 API가 status=cancel_scheduled, nextBillingDate=null을 저장하기 전 배치가 active 구독으로 조회할 때 발생합니다.</p>
+  <h3>영향</h3>
+  <p>해지 예약 직후 다음 회차가 과금되거나, 재개/만료/과금 상태가 서로 덮일 수 있습니다.</p>
+  <h3>탐지</h3><p>cancel_scheduled 전환 시각 이후 생성된 정기결제 invoice가 있는지 점검합니다.</p>
+  <h3>처리 방안</h3>
+  <ul><li>해지 예약 이후 생성된 과금 건은 정책에 따라 취소/환불하고 invoice를 voided로 정리합니다.</li><li>구독 상태는 사용자 의도와 실제 결제 상태를 기준으로 운영 보정 API로 조정합니다.</li></ul>
+  <h3>예방 장치</h3>
+  <ul><li>구독 상태 변경과 nextBillingDate 제거를 같은 트랜잭션 경계에서 처리합니다.</li><li>정기 과금 배치는 active + nextBillingDate 조건을 선점 시점에 다시 확인합니다.</li><li>subscriptions에 version 또는 processing lease를 둬 상태 전이 충돌을 감지합니다.</li></ul>
+  <h3>관련 API</h3><ul><li><a href="./api-detail-doc.html#cancel"><code>POST /subscriptions/{subscriptionId}/cancel</code></a></li><li><a href="./api-detail-doc.html#resume"><code>POST /subscriptions/{subscriptionId}/resume</code></a></li><li><a href="./api-detail-doc.html#billing-run"><code>POST /internal/subscription-billing/run</code></a></li></ul><h3>관련 플로우</h3><ul><li><a href="./subscription-cancel-sequence.html">구독 해지 플로우</a></li><li><a href="./subscription-resume-sequence.html">구독 재개 플로우</a></li><li><a href="./recurring-billing-sequence.html">정기 결제 실행 플로우</a></li></ul><h3>관련 DB 컬렉션</h3><ul><li><a href="./database-doc.html#subscriptions"><code>subscriptions</code></a></li><li><a href="./database-doc.html#invoices"><code>invoices</code></a></li></ul>
+</section><section id="billing-method-default-race">
+  <h2>기본 결제수단 변경과 과금 경합</h2>
+  <p><span class="status status-medium">medium</span> <code>concurrency</code></p>
+  <p>기본 결제수단 변경, 삭제, 정기결제가 동시에 발생해 의도하지 않은 billingKey가 사용되는 위험입니다.</p>
+  <h3>발생 조건</h3>
+  <p>기존 기본 결제수단 해제와 새 기본 결제수단 지정이 원자적이지 않거나, 과금 배치가 변경 중간 상태를 읽을 때 발생합니다.</p>
+  <h3>영향</h3>
+  <p>삭제된 결제수단으로 과금하거나, 회원이 방금 지정한 결제수단이 아닌 이전 결제수단으로 결제될 수 있습니다.</p>
+  <h3>탐지</h3><p>한 회원에게 active default 결제수단이 0개 또는 2개 이상인 상태를 점검합니다.</p>
+  <h3>처리 방안</h3>
+  <ul><li>과금 시점에 사용한 billingMethodId 스냅샷을 payment에 남기고 사용자 문의 시 근거로 사용합니다.</li><li>삭제된 결제수단으로 승인된 결제는 정책에 따라 유지 또는 취소하고 다음 결제수단 상태를 보정합니다.</li></ul>
+  <h3>예방 장치</h3>
+  <ul><li>billing_methods에 user_id 기준 active default partial unique index를 둡니다.</li><li>기본값 변경은 기존 default 해제와 새 default 지정을 트랜잭션으로 처리합니다.</li><li>정기결제 payment 초안에는 결제 시도 생성 시점의 billingMethodId를 스냅샷으로 저장합니다.</li></ul>
+  <h3>관련 API</h3><ul><li><a href="./api-detail-doc.html#billing-method-default"><code>PATCH /billing/methods/{billingMethodId}/default</code></a></li><li><a href="./api-detail-doc.html#billing-method-delete"><code>DELETE /billing/methods/{billingMethodId}</code></a></li><li><a href="./api-detail-doc.html#billing-issue"><code>POST /billing/issue</code></a></li><li><a href="./api-detail-doc.html#billing-run"><code>POST /internal/subscription-billing/run</code></a></li></ul><h3>관련 플로우</h3><ul><li><a href="./billing-method-sequence.html">결제수단 관리 플로우</a></li><li><a href="./recurring-billing-sequence.html">정기 결제 실행 플로우</a></li></ul><h3>관련 DB 컬렉션</h3><ul><li><a href="./database-doc.html#billing-methods"><code>billing_methods</code></a></li><li><a href="./database-doc.html#payment-instruments"><code>payment_instruments</code></a></li><li><a href="./database-doc.html#payments"><code>payments</code></a></li></ul>
+</section><section id="plan-change-double-apply">
+  <h2>플랜 변경 중복 실행</h2>
+  <p><span class="status status-high">high</span> <code>concurrency</code></p>
+  <p>업그레이드 차액 결제 또는 다운그레이드 예약이 같은 confirmationToken으로 중복 실행되는 위험입니다.</p>
+  <h3>발생 조건</h3>
+  <p>플랜 변경 최종 실행 요청이 동시에 들어오거나, 웹훅이 늦게 도착해 plan_change 인보이스를 다시 반영할 때 발생합니다.</p>
+  <h3>영향</h3>
+  <p>차액이 중복 결제되거나 pendingPlanId/effectiveAt이 꼬이고 권한 변경 알림이 중복될 수 있습니다.</p>
+  <h3>탐지</h3><p>같은 subscriptionId와 confirmationToken 또는 plan_change invoice가 2개 이상 생성되는지 감시합니다.</p>
+  <h3>처리 방안</h3>
+  <ul><li>첫 성공 결과만 유효하게 유지하고 이후 같은 멱등 키 요청은 기존 결과를 반환합니다.</li><li>중복 차액 결제가 확인되면 추가 결제 건을 취소/환불 대상으로 넘깁니다.</li><li>pendingPlanId가 충돌하면 최신 유저 확인 토큰 기준으로 상태를 재계산합니다.</li></ul>
+  <h3>예방 장치</h3>
+  <ul><li>confirmationToken 또는 plan_change invoice idempotency key에 unique 제약을 둡니다.</li><li>구독 변경 작업과 plan_change 인보이스 생성은 subscription 단위 lock 안에서 수행합니다.</li><li>웹훅은 이미 paid 처리된 plan_change 인보이스를 상태 변경 없이 200 OK로 처리합니다.</li></ul>
+  <h3>관련 API</h3><ul><li><a href="./api-detail-doc.html#change"><code>PATCH /subscriptions/{subscriptionId}</code></a></li><li><a href="./api-detail-doc.html#webhook"><code>POST /webhooks/toss-payments</code></a></li></ul><h3>관련 플로우</h3><ul><li><a href="./subscription-change-sequence.html">구독 플랜 변경 플로우</a></li></ul><h3>관련 DB 컬렉션</h3><ul><li><a href="./database-doc.html#subscriptions"><code>subscriptions</code></a></li><li><a href="./database-doc.html#invoices"><code>invoices</code></a></li><li><a href="./database-doc.html#payments"><code>payments</code></a></li></ul>
+</section><section id="idempotency-store-missing">
+  <h2>멱등키 저장소 부재</h2>
+  <p><span class="status status-high">high</span> <code>data-integrity</code></p>
+  <p>API 계약은 Idempotency-Key에 의존하지만 키, 요청 해시, 응답 스냅샷을 저장하는 공통 모델이 없을 때의 위험입니다.</p>
+  <h3>발생 조건</h3>
+  <p>동일 키 재시도와 동일 키 다른 payload 요청을 구분하지 못하거나, 서버 재시작 후 멱등 처리 상태를 잃을 때 발생합니다.</p>
+  <h3>영향</h3>
+  <p>중복 PG 호출, 409로 막아야 할 요청의 성공 처리, 재시도 응답 불일치가 발생할 수 있습니다.</p>
+  <h3>탐지</h3><p>같은 Idempotency-Key로 서로 다른 request hash가 들어온 로그를 집계합니다.</p>
+  <h3>처리 방안</h3>
+  <ul><li>충돌 요청은 409로 반환하고 기존 요청의 처리 상태를 기준으로 사용자에게 안내합니다.</li><li>저장소 도입 전까지는 각 도메인 리소스의 unique key와 상태 전이 조건으로 보완합니다.</li></ul>
+  <h3>예방 장치</h3>
+  <ul><li>idempotency_keys 컬렉션에 scope + key unique index를 둡니다.</li><li>request hash, response snapshot, processing status, expiresAt을 저장합니다.</li><li>외부 PG 호출 전에 processing 레코드를 선점하고 완료 후 결과를 저장합니다.</li></ul>
+  <h3>관련 API</h3><ul><li><a href="./api-detail-doc.html#payments-orders"><code>POST /payments/orders</code></a></li><li><a href="./api-detail-doc.html#payments-confirm"><code>POST /payments/confirm</code></a></li><li><a href="./api-detail-doc.html#confirm"><code>POST /subscriptions/confirm</code></a></li><li><a href="./api-detail-doc.html#change"><code>PATCH /subscriptions/{subscriptionId}</code></a></li><li><a href="./api-detail-doc.html#payments-cancel"><code>POST /payments/{paymentId}/cancel</code></a></li><li><a href="./api-detail-doc.html#billing-retry"><code>POST /internal/subscription-billing/{invoiceId}/retry</code></a></li><li><a href="./api-detail-doc.html#admin-subscription-adjust"><code>POST /admin/subscriptions/{subscriptionId}/adjust</code></a></li></ul><h3>관련 플로우</h3><ul><li><a href="./one-time-payment-sequence.html">일반결제 플로우</a></li><li><a href="./subscription-api-doc.html">신규 회원 최초 구독 성공 플로우</a></li><li><a href="./subscription-retry-sequence.html">정기 결제 실패 및 재시도 플로우</a></li><li><a href="./payment-cancel-refund-sequence.html">결제 취소/환불 플로우</a></li><li><a href="./admin-subscription-adjustment-sequence.html">운영자 구독 수동 보정</a></li></ul><h3>관련 DB 컬렉션</h3><ul><li><a href="./database-doc.html#payments"><code>payments</code></a></li><li><a href="./database-doc.html#invoices"><code>invoices</code></a></li><li><a href="./database-doc.html#subscriptions"><code>subscriptions</code></a></li></ul>
+</section><section id="webhook-auth-weak-contract">
+  <h2>웹훅 인증 계약 약화</h2>
+  <p><span class="status status-medium">medium</span> <code>security</code></p>
+  <p>웹훅 처리 로직은 서명 또는 시크릿 검증을 요구하지만 요청 헤더 계약이 optional로 해석될 수 있는 위험입니다.</p>
+  <h3>발생 조건</h3>
+  <p>구현자가 Toss-Signature 또는 대체 시크릿 검증을 필수로 두지 않고 웹훅 body만 신뢰할 때 발생합니다.</p>
+  <h3>영향</h3>
+  <p>위조 이벤트로 내부 결제/구독 상태가 조작될 수 있습니다.</p>
+  <h3>탐지</h3><p>서명 검증 실패율과 서명 없는 웹훅 수신 건수를 모니터링합니다.</p>
+  <h3>처리 방안</h3>
+  <ul><li>서명 없는 요청 또는 검증 실패 요청은 401/403으로 거부하고 payload를 처리하지 않습니다.</li><li>의심 이벤트가 처리된 경우 paymentKey 기준으로 PG 상태를 재조회해 내부 상태를 복구합니다.</li></ul>
+  <h3>예방 장치</h3>
+  <ul><li>실제 토스 설정에 맞춘 서명 헤더 또는 웹훅 시크릿을 필수 계약으로 명시합니다.</li><li>사용자 쿠키나 세션이 아니라 provider 인증 수단만 웹훅 인증에 사용합니다.</li><li>검증 전 payload는 상태 변경 로직에 넘기지 않습니다.</li></ul>
+  <h3>관련 API</h3><ul><li><a href="./api-detail-doc.html#webhook"><code>POST /webhooks/toss-payments</code></a></li></ul><h3>관련 플로우</h3><ul><li><a href="./one-time-payment-failure-sequence.html">일반결제 실패 및 재시도 플로우</a></li><li><a href="./failure-sequence-doc.html">신규 회원 최초 구독 실패 플로우</a></li></ul><h3>관련 DB 컬렉션</h3><ul><li><a href="./database-doc.html#webhook-events"><code>webhook_events</code></a></li></ul>
+</section></div></main>
+<script>
+(() => {
+  const input = document.querySelector("[data-doc-search]");
+  if (!input) return;
+  const targets = Array.from(document.querySelectorAll("main section, article.card, article.box"));
+  input.addEventListener("input", () => {
+    const query = input.value.trim().toLowerCase();
+    for (const target of targets) {
+      const text = target.textContent.toLowerCase();
+      target.hidden = Boolean(query) && !text.includes(query);
+    }
+  });
+})();
+</script>
+</body>
+</html>

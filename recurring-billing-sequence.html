@@ -30,6 +30,7 @@
       scroll-behavior: smooth;
       -webkit-text-size-adjust: 100%;
       text-size-adjust: 100%;
+      overflow-x: clip;
     }
     body {
       width: 100%;
@@ -41,6 +42,7 @@
       line-height: 1.58;
       -webkit-text-size-adjust: 100%;
       text-size-adjust: 100%;
+      overflow-x: clip;
     }
     .skip-link {
       position: absolute;
@@ -351,20 +353,28 @@
       header {
         width: 100%;
       }
-      .layout { grid-template-columns: 1fr; }
+      .layout {
+        grid-template-columns: minmax(0, 1fr);
+      }
+      .layout > nav,
+      .layout > div {
+        min-width: 0;
+        max-width: 100%;
+      }
       nav {
         position: sticky;
         top: 0;
         z-index: 4;
         display: flex;
         gap: 8px;
+        width: 100%;
+        max-width: 100%;
         max-height: none;
-        margin-inline: -12px;
-        padding: 10px 12px;
+        margin-inline: 0;
+        padding: 10px 0;
         overflow-x: auto;
         overflow-y: hidden;
         border-radius: 0;
-        border-inline: 0;
         box-shadow: 0 8px 18px rgba(20, 35, 55, 0.08);
         scrollbar-width: thin;
       }
@@ -413,7 +423,8 @@
       }
       .top-links a {
         min-height: 44px;
-        flex: 1 1 220px;
+        flex: 1 1 100%;
+        min-width: 0;
         justify-content: center;
         text-align: center;
       }
@@ -438,12 +449,48 @@
         word-break: break-word;
       }
       .table-scroll {
-        margin-inline: -2px;
+        max-width: 100%;
+        overflow-x: visible;
+        border: 0;
         -webkit-overflow-scrolling: touch;
       }
-      table { min-width: 560px; font-size: 13px; }
-      table.has-many-columns { min-width: 720px; }
-      th, td { padding: 10px 11px; }
+      table,
+      table.has-many-columns {
+        width: 100%;
+        min-width: 0;
+        border-collapse: separate;
+        border-spacing: 0 8px;
+        font-size: 13px;
+      }
+      thead { display: none; }
+      tbody,
+      tr,
+      td {
+        display: block;
+      }
+      tr {
+        overflow: clip;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: var(--surface);
+      }
+      td {
+        display: grid;
+        grid-template-columns: minmax(82px, 32%) minmax(0, 1fr);
+        gap: 10px;
+        align-items: start;
+        padding: 9px 10px;
+        border-bottom: 1px solid var(--line);
+        overflow-wrap: anywhere;
+      }
+      td:last-child { border-bottom: 0; }
+      td::before {
+        content: attr(data-label);
+        color: var(--muted);
+        font-size: 12px;
+        font-weight: 800;
+        line-height: 1.45;
+      }
       pre {
         font-size: 12px;
         -webkit-overflow-scrolling: touch;
@@ -487,12 +534,14 @@
         margin-bottom: 16px;
       }
       nav {
-        margin-inline: -6px;
-        padding-inline: 8px;
+        padding-inline: 0;
       }
       nav a { max-width: 78vw; }
-      table { min-width: 540px; }
-      table.has-many-columns { min-width: 680px; }
+      td {
+        grid-template-columns: minmax(72px, 30%) minmax(0, 1fr);
+        gap: 8px;
+        padding: 8px 9px;
+      }
       .d2-svg { width: 820px; }
     }
     @media (prefers-reduced-motion: reduce) {
@@ -517,7 +566,7 @@
     <div class="search-panel">
       <input type="search" data-doc-search aria-label="문서 검색" placeholder="API, 상태, 컬렉션, 플로우 검색">
     </div>
-    <p class="top-links"><a href="./sequence-index.html">전체 시퀀스 목록</a><a href="./all-api-doc.html">전체 API 목록</a><a href="./api-detail-doc.html">API 상세 설명</a><a href="./database-doc.html">MongoDB 구조 문서</a></p>
+    <p class="top-links"><a href="./sequence-index.html">전체 시퀀스 목록</a><a href="./all-api-doc.html">전체 API 목록</a><a href="./api-detail-doc.html">API 상세 설명</a><a href="./database-doc.html">MongoDB 구조 문서</a><a href="./risk-register-doc.html">결제 시스템 잠재 위험 및 대응 문서</a></p>
     </div>
   </div>
 </header>
@@ -526,6 +575,10 @@
     <h2>사용 API</h2>
     <div class="grid"><div class="box"><a href="./all-api-doc.html#internal-billing-run"><code>POST /internal/subscription-billing/run</code></a><p>다음 결제일이 도래한 구독을 찾아 정기 자동결제를 실행합니다.</p></div><div class="box"><a href="./all-api-doc.html#webhooks-toss-payments"><code>POST /webhooks/toss-payments</code></a><p>토스페이먼츠 결제 이벤트를 수신하고 내부 결제/구독 상태를 보정합니다.</p></div></div>
   </section>
+  <div class="note">
+  <strong>연관 잠재 위험</strong>
+  <ul><li><a href="./risk-register-doc.html#provider-paid-internal-unpaid"><code>provider-paid-internal-unpaid</code></a> PG 승인 성공 후 내부 미반영</li><li><a href="./risk-register-doc.html#recurring-billing-duplicate-run"><code>recurring-billing-duplicate-run</code></a> 정기결제 배치 중복 실행</li><li><a href="./risk-register-doc.html#cancel-scheduled-billing-race"><code>cancel-scheduled-billing-race</code></a> 해지 예약과 정기 과금 경합</li><li><a href="./risk-register-doc.html#billing-method-default-race"><code>billing-method-default-race</code></a> 기본 결제수단 변경과 과금 경합</li><li><a href="./risk-register-doc.html#webhook-out-of-order-or-duplicate"><code>webhook-out-of-order-or-duplicate</code></a> 웹훅 중복 또는 순서 역전</li></ul>
+</div>
   <section id="subscription-billing-reminder">
   <h2>정기 결제 7일 전 사전 알림</h2>
   <p>다음 결제일 7일 전에 결제 예정일과 결제 금액을 회원에게 이메일로 안내합니다.</p>
@@ -709,7 +762,7 @@ processed, paid, failed, skipped
 </section>
   <section id="states">
   <h2>상태 요약</h2>
-  <div class="table-scroll"><table class="has-many-columns"><thead><tr><th>시점</th><th>구독 상태</th><th>결제 상태</th><th>설명</th></tr></thead><tbody><tr><td>사전 알림 대상 선정</td><td><code>active</code></td><td><code>scheduled</code></td><td>다음 결제일 7일 전인 활성 구독을 대상으로 알림 데이터를 구성합니다.</td></tr><tr><td>이메일 발송 후</td><td><code>active</code></td><td><code>scheduled</code></td><td>결제일과 결제 금액이 포함된 사전 알림 발송 이력을 저장합니다.</td></tr><tr><td>배치 대상 선정 후</td><td><code>active</code></td><td><code>pending</code></td><td>다음 결제일이 도래한 구독이 잠기고 청구 회차가 생성됩니다.</td></tr><tr><td>자동결제 성공 후</td><td><code>active</code></td><td><code>paid</code></td><td>인보이스와 결제 레코드가 성공 처리되고 다음 결제일이 예약됩니다.</td></tr><tr><td>웹훅 보정 후</td><td><code>active</code></td><td><code>paid</code></td><td>토스 이벤트와 내부 상태가 일치하도록 멱등 보정됩니다.</td></tr></tbody></table></div>
+  <div class="table-scroll"><table class="has-many-columns"><thead><tr><th>시점</th><th>구독 상태</th><th>결제 상태</th><th>설명</th></tr></thead><tbody><tr><td data-label="시점">사전 알림 대상 선정</td><td data-label="구독 상태"><code>active</code></td><td data-label="결제 상태"><code>scheduled</code></td><td data-label="설명">다음 결제일 7일 전인 활성 구독을 대상으로 알림 데이터를 구성합니다.</td></tr><tr><td data-label="시점">이메일 발송 후</td><td data-label="구독 상태"><code>active</code></td><td data-label="결제 상태"><code>scheduled</code></td><td data-label="설명">결제일과 결제 금액이 포함된 사전 알림 발송 이력을 저장합니다.</td></tr><tr><td data-label="시점">배치 대상 선정 후</td><td data-label="구독 상태"><code>active</code></td><td data-label="결제 상태"><code>pending</code></td><td data-label="설명">다음 결제일이 도래한 구독이 잠기고 청구 회차가 생성됩니다.</td></tr><tr><td data-label="시점">자동결제 성공 후</td><td data-label="구독 상태"><code>active</code></td><td data-label="결제 상태"><code>paid</code></td><td data-label="설명">인보이스와 결제 레코드가 성공 처리되고 다음 결제일이 예약됩니다.</td></tr><tr><td data-label="시점">웹훅 보정 후</td><td data-label="구독 상태"><code>active</code></td><td data-label="결제 상태"><code>paid</code></td><td data-label="설명">토스 이벤트와 내부 상태가 일치하도록 멱등 보정됩니다.</td></tr></tbody></table></div>
 </section>
 </main>
 <script>
