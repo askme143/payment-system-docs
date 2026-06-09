@@ -278,6 +278,75 @@
       font-size: 13px;
       font-weight: 800;
     }
+    @media (min-width: 901px) {
+      .wrap {
+        width: min(1440px, calc(100% - 64px));
+      }
+      .hero {
+        padding: 34px 0 26px;
+      }
+      .hero .wrap {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) minmax(300px, 360px);
+        gap: 16px 36px;
+        align-items: end;
+      }
+      .hero .eyebrow,
+      .hero h1,
+      .hero .lead {
+        grid-column: 1;
+      }
+      .hero .search-panel,
+      .hero .top-links {
+        grid-column: 2;
+      }
+      .search-panel {
+        max-width: none;
+        margin-top: 0;
+      }
+      .top-links {
+        flex-direction: column;
+        margin-top: 0;
+      }
+      .top-links a {
+        justify-content: center;
+        min-height: 40px;
+      }
+      .layout {
+        grid-template-columns: 300px minmax(0, 1fr);
+        gap: 28px;
+      }
+      .layout > div {
+        min-width: 0;
+      }
+      nav {
+        padding: 16px;
+      }
+      nav a {
+        padding: 9px 10px;
+      }
+      section {
+        padding: 28px;
+      }
+      section > p,
+      section > ol,
+      section > ul {
+        max-width: 96ch;
+      }
+      table {
+        font-size: 13.5px;
+      }
+      th, td {
+        padding: 10px 11px;
+      }
+      .card,
+      .box {
+        padding: 18px;
+      }
+      .grid {
+        gap: 16px;
+      }
+    }
     @media (max-width: 900px) {
       header {
         width: 100%;
