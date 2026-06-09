@@ -102,6 +102,10 @@
       font: inherit;
     }
     .search-panel input::placeholder { color: #718096; }
+    .search-panel input:focus {
+      border-color: color-mix(in srgb, var(--accent), var(--line) 35%);
+      box-shadow: 0 0 0 4px color-mix(in srgb, var(--accent), transparent 86%), var(--shadow);
+    }
     main { padding: 28px 0 54px; }
     .layout {
       display: grid;
@@ -136,6 +140,10 @@
       transition: color 160ms ease, background-color 160ms ease;
     }
     nav a:hover { color: var(--ink); background: var(--soft); }
+    nav a[aria-current="true"] {
+      color: var(--accent);
+      background: var(--soft);
+    }
     a:focus-visible,
     button:focus-visible,
     input:focus-visible,
@@ -197,6 +205,10 @@
       background: #ffffff;
       border-color: color-mix(in srgb, var(--blue), var(--line) 55%);
       text-decoration: none;
+    }
+    .top-links a:active,
+    nav a:active {
+      transform: translateY(1px);
     }
     .grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
     .sequence-group { margin-top: 20px; }
@@ -289,9 +301,9 @@
       }
       .hero .wrap {
         display: grid;
-        grid-template-columns: minmax(0, 1fr) minmax(300px, 360px);
+        grid-template-columns: minmax(0, 1fr) minmax(330px, 420px);
         gap: 16px 36px;
-        align-items: end;
+        align-items: center;
       }
       .hero .eyebrow,
       .hero h1,
@@ -307,12 +319,16 @@
         margin-top: 0;
       }
       .top-links {
-        flex-direction: column;
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
         margin-top: 0;
+        gap: 8px;
       }
       .top-links a {
         justify-content: center;
-        min-height: 40px;
+        min-height: 38px;
+        padding-inline: 10px;
+        text-align: center;
       }
       .layout {
         grid-template-columns: 300px minmax(0, 1fr);
@@ -349,7 +365,60 @@
         gap: 16px;
       }
     }
-    @media (max-width: 900px) {
+    @media (max-width: 900px) and (hover: hover) and (pointer: fine) {
+      .wrap {
+        width: min(100% - 24px, 1180px);
+      }
+      .hero {
+        padding: 28px 0 22px;
+      }
+      h1 { font-size: clamp(30px, 5.8vw, 40px); }
+      .lead {
+        max-width: 78ch;
+        font-size: 16px;
+      }
+      .search-panel {
+        max-width: 640px;
+        margin-top: 18px;
+      }
+      .top-links {
+        gap: 8px;
+      }
+      .top-links a {
+        min-height: 36px;
+        padding: 6px 10px;
+        font-size: 14px;
+      }
+      main { padding: 20px 0 42px; }
+      .layout {
+        grid-template-columns: minmax(170px, 210px) minmax(0, 1fr);
+        gap: 16px;
+      }
+      .layout > div {
+        min-width: 0;
+      }
+      nav {
+        top: 12px;
+        max-height: calc(100vh - 24px);
+        padding: 10px;
+      }
+      nav a {
+        padding: 7px 8px;
+        font-size: 13px;
+      }
+      section {
+        padding: 20px;
+      }
+      h2 { font-size: 22px; }
+      h3 { font-size: 17px; }
+      table {
+        font-size: 13px;
+      }
+      th, td {
+        padding: 9px 10px;
+      }
+    }
+    @media (max-width: 520px), (max-width: 900px) and (hover: none) and (pointer: coarse) {
       header {
         width: 100%;
       }
@@ -796,15 +865,32 @@ receiptUrl / retryAt / billingMethodUpdateUrl / canceled
 <script>
 (() => {
   const input = document.querySelector("[data-doc-search]");
-  if (!input) return;
   const targets = Array.from(document.querySelectorAll("main section, article.card, article.box"));
-  input.addEventListener("input", () => {
-    const query = input.value.trim().toLowerCase();
-    for (const target of targets) {
-      const text = target.textContent.toLowerCase();
-      target.hidden = Boolean(query) && !text.includes(query);
-    }
-  });
+  const navLinks = Array.from(document.querySelectorAll("nav a[href^='#']"));
+
+  if (input) {
+    input.addEventListener("input", () => {
+      const query = input.value.trim().toLowerCase();
+      for (const target of targets) {
+        const text = target.textContent.toLowerCase();
+        target.hidden = Boolean(query) && !text.includes(query);
+      }
+    });
+  }
+
+  if ("IntersectionObserver" in window && navLinks.length) {
+    const linksById = new Map(navLinks.map((link) => [decodeURIComponent(link.hash.slice(1)), link]));
+    const observer = new IntersectionObserver((entries) => {
+      const visible = entries
+        .filter((entry) => entry.isIntersecting && !entry.target.hidden)
+        .sort((a, b) => b.intersectionRatio - a.intersectionRatio)[0];
+      if (!visible) return;
+      for (const link of navLinks) link.removeAttribute("aria-current");
+      const active = linksById.get(visible.target.id);
+      if (active) active.setAttribute("aria-current", "true");
+    }, { rootMargin: "-18% 0px -68% 0px", threshold: [0.01, 0.18, 0.36] });
+    for (const section of document.querySelectorAll("main section[id]")) observer.observe(section);
+  }
 })();
 </script>
 </body>
