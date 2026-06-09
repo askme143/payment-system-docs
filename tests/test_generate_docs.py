@@ -360,6 +360,8 @@ class GenerateDocsTest(unittest.TestCase):
             self.assertIn('<div class="hero">', detail)
             self.assertIn('<div class="wrap">', detail)
             self.assertNotIn('<div class="wrap hero">', detail)
+            self.assertIn("-webkit-text-size-adjust: 100%;", detail)
+            self.assertIn("overflow-x: hidden;", detail)
             self.assertIn("@media (max-width: 520px)", detail)
             self.assertIn("overflow-x: auto;", detail)
             self.assertIn(".d2-svg", sequence)

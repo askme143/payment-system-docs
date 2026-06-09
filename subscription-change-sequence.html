@@ -25,13 +25,24 @@
       --focus: #8b5cf6;
     }
     * { box-sizing: border-box; }
-    html { scroll-behavior: smooth; }
+    html {
+      max-width: 100%;
+      overflow-x: hidden;
+      scroll-behavior: smooth;
+      -webkit-text-size-adjust: 100%;
+      text-size-adjust: 100%;
+    }
     body {
+      width: 100%;
+      max-width: 100%;
       margin: 0;
+      overflow-x: hidden;
       color: var(--ink);
       background: var(--bg);
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
       line-height: 1.58;
+      -webkit-text-size-adjust: 100%;
+      text-size-adjust: 100%;
     }
     .skip-link {
       position: absolute;
@@ -311,8 +322,19 @@
         width: 100%;
         padding: 34px 0 24px;
       }
-      h1 { font-size: clamp(28px, 8vw, 38px); }
-      .lead { font-size: 16px; }
+      h1 { font-size: clamp(27px, 7.4vw, 34px); }
+      h2 { font-size: 22px; }
+      h3 { font-size: 17px; }
+      h4 { font-size: 16px; }
+      p,
+      li {
+        font-size: 16px;
+        overflow-wrap: anywhere;
+      }
+      .lead {
+        font-size: 16px;
+        line-height: 1.56;
+      }
       .search-panel {
         width: 100%;
         max-width: none;
@@ -330,7 +352,11 @@
         text-align: center;
       }
       main { padding: 18px 0 38px; }
-      section { padding: 18px; }
+      section {
+        max-width: 100%;
+        padding: 18px;
+        overflow: hidden;
+      }
       section,
       .card,
       .box,
@@ -386,9 +412,11 @@
         padding: 28px 0 20px;
       }
       .eyebrow { font-size: 13px; }
-      h1 { font-size: clamp(26px, 9vw, 34px); }
-      h2 { font-size: 21px; }
-      h3 { font-size: 17px; }
+      h1 { font-size: clamp(25px, 8vw, 31px); }
+      h2 { font-size: 20px; }
+      h3 { font-size: 16px; }
+      p,
+      li { font-size: 15px; }
       section {
         padding: 16px;
         margin-bottom: 16px;
