@@ -581,7 +581,7 @@ def page(title, body, extra_head=""):
         gap: 16px;
       }}
     }}
-    @media (max-width: 900px) and (hover: hover) and (pointer: fine) {{
+    @media (min-width: 481px) and (max-width: 900px) {{
       .wrap {{
         width: min(100% - 24px, 1180px);
       }}
@@ -634,7 +634,7 @@ def page(title, body, extra_head=""):
         padding: 9px 10px;
       }}
     }}
-    @media (max-width: 520px), (max-width: 900px) and (hover: none) and (pointer: coarse) {{
+    @media (max-width: 480px) {{
       header {{
         width: 100%;
       }}
@@ -801,7 +801,7 @@ def page(title, body, extra_head=""):
       }}
       .d2-source {{ min-width: 760px; }}
     }}
-    @media (max-width: 520px) {{
+    @media (max-width: 480px) {{
       body {{ line-height: 1.54; }}
       .wrap {{ width: calc(100% - 12px); }}
       .hero {{
