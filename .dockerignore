@@ -1,0 +1,11 @@
+*
+!*.html
+!diagrams/
+!diagrams/**
+!docs-data/
+!docs-data/**
+!docker/
+!docker/**
+!Dockerfile
+!.dockerignore
+
