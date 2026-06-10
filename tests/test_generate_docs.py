@@ -284,6 +284,24 @@ class GenerateDocsTest(unittest.TestCase):
         self.assertNotIn("프론트 성공 페이지가 호출", serialized)
         self.assertNotIn("프론트 실패 페이지가 호출", serialized)
 
+    def test_public_visibility_keeps_backend_service_auth_boundary(self):
+        data = json.loads(Path("docs-data/documentation.json").read_text(encoding="utf-8"))
+        public_api_ids = {api["id"] for api in data["apis"] if api.get("visibility") == "public"}
+
+        self.assertEqual({"plans-list", "plans-detail"}, public_api_ids)
+
+        for api_id in public_api_ids:
+            detail = data["apiDetails"][api_id]
+            headers = {header["name"]: header for header in detail["request"]["headers"]}
+            notes = " ".join(detail.get("notes", []))
+
+            self.assertTrue(headers["Authorization"]["required"], api_id)
+            self.assertIn("내부 서비스 토큰", headers["Authorization"]["description"])
+            self.assertFalse(headers["X-Request-User-Id"]["required"], api_id)
+            self.assertEqual([], detail["request"].get("cookies", []))
+            self.assertIn("최종 사용자 인증", notes)
+            self.assertIn("백엔드 서버", notes)
+
     def test_webhook_invoice_reconciliation_access_is_mapped(self):
         data = json.loads(Path("docs-data/documentation.json").read_text(encoding="utf-8"))
         webhook_detail = data["apiDetails"]["webhooks-toss-payments"]
@@ -817,6 +835,29 @@ class GenerateDocsTest(unittest.TestCase):
         self.assertTrue(entitlements["required"])
         self.assertIn("entitlements:", source)
         self.assertNotRegex(source, r"entitlements: .* \| None = None")
+
+    def test_selling_unit_status_docs_match_database_contract(self):
+        data = json.loads(Path("docs-data/documentation.json").read_text(encoding="utf-8"))
+        expected_statuses = ["draft", "active", "paused", "archived"]
+
+        subscription_plans = self._collection_by_id(data, "subscription-plans")
+        one_time_skus = self._collection_by_id(data, "one-time-skus")
+        plan_status = next(field for field in subscription_plans["fields"] if field["name"] == "status")
+        sku_status = next(field for field in one_time_skus["fields"] if field["name"] == "status")
+
+        self.assertEqual(plan_status["enum"], expected_statuses)
+        self.assertEqual(sku_status["enum"], expected_statuses)
+
+        selling_unit_docs = json.dumps(
+            {
+                "plan_update": data["apiDetails"]["admin-subscription-plans-update"],
+                "sku_update": data["apiDetails"]["admin-one-time-skus-update"],
+            },
+            ensure_ascii=False,
+        )
+        self.assertNotIn("hidden", selling_unit_docs)
+        self.assertIn("draft, active, paused, archived", selling_unit_docs)
+        self.assertIn("paused 또는 archived", selling_unit_docs)
 
     def test_one_time_sku_keeps_api_dto_and_internal_storage_contract_distinct(self):
         data = json.loads(Path("docs-data/documentation.json").read_text(encoding="utf-8"))

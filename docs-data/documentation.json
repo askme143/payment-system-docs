@@ -539,7 +539,7 @@
         "체크아웃 생성이나 플랜 변경 미리보기에서는 이 응답의 금액을 신뢰하지 않고 서버 저장 값을 다시 조회해 계산합니다."
       ],
       "notes": [
-        "비로그인 사용자도 가격표와 상품 선택 화면을 볼 수 있도록 공개 API로 둡니다.",
+        "비로그인 사용자도 가격표와 상품 선택 화면을 볼 수 있도록 공개 API로 둡니다. 여기서 public은 최종 사용자 인증이 선택이라는 뜻이며, 결제 시스템 호출 자체는 백엔드 서버의 내부 서비스 Authorization을 필수로 요구합니다.",
         "관리자 초안, 판매 중지, 아카이브 상태의 상품/플랜은 관리자 API에서만 조회합니다.",
         "할인, 쿠폰, 세금, 일할 계산 금액은 목록 API가 아니라 체크아웃 또는 변경 미리보기 API에서 확정합니다."
       ]
@@ -627,6 +627,7 @@
       ],
       "notes": [
         "상세 API는 화면 안내용이며 결제 금액 확정 API가 아닙니다.",
+        "public은 최종 사용자 인증이 선택이라는 뜻입니다. 프론트는 자기 서버/BFF에 요청하고, 백엔드 서버가 내부 서비스 Authorization으로 결제 시스템 API를 호출합니다.",
         "판매 중지된 기존 플랜을 이용 중인 회원의 과거 가격이나 권한 조회는 구독 상세 API에서 다루고, 공개 플랜 상세에서는 신규 선택 가능한 정보만 반환합니다.",
         "unavailableReason은 화면 안내용 코드이며 서버의 체크아웃/변경 검증을 대체하지 않습니다."
       ]
@@ -3662,7 +3663,7 @@
           {
             "name": "status",
             "required": false,
-            "description": "active, hidden, paused 중 하나입니다. paused 플랜은 신규 가입과 플랜 변경 후보에서 제외합니다."
+            "description": "draft, active, paused, archived 중 하나입니다. paused 플랜은 신규 가입과 플랜 변경 후보에서 제외하고, archived 플랜은 판매 종료 후 기존 구독과 청구 내역 참조를 위해 보존합니다."
           },
           {
             "name": "entitlements",
@@ -3713,7 +3714,7 @@
         "productId와 planId가 존재하고 product.productType == subscription인지 검증합니다.",
         "amount, currency, status, entitlements를 검증하고 변경 가능한 필드만 반영합니다.",
         "가격이나 권한 정책이 바뀌면 기존 invoice와 payment는 그대로 두고 신규 가입 또는 다음 정기결제 계산에서 참조할 planVersion을 갱신합니다.",
-        "paused 또는 hidden 상태의 플랜은 공개 플랜 목록, 신규 구독 체크아웃, 플랜 변경 후보에서 제외합니다.",
+        "paused 또는 archived 상태의 플랜은 공개 플랜 목록, 신규 구독 체크아웃, 플랜 변경 후보에서 제외합니다.",
         "관리자 ID, 요청 IP, 변경 전후 값, changeReason을 감사 로그에 저장합니다."
       ],
       "failureRules": [
@@ -3904,7 +3905,7 @@
           {
             "name": "status",
             "required": false,
-            "description": "active, hidden, paused 중 하나입니다. paused SKU는 신규 주문 생성에서 선택할 수 없습니다."
+            "description": "draft, active, paused, archived 중 하나입니다. paused SKU는 신규 주문 생성에서 선택할 수 없고, archived SKU는 판매 종료 후 기존 결제 내역과 환불 조회 참조를 위해 보존합니다."
           },
           {
             "name": "stockPolicy",
@@ -3971,7 +3972,7 @@
         "productId와 skuId가 존재하고 product.productType == one_time인지 검증합니다.",
         "amount, currency, status, stockPolicy, totalStock, purchaseLimit를 검증하고 변경 가능한 필드만 반영합니다. API의 stockPolicy.type은 내부 one_time_skus.stock_policy 문자열로 저장합니다.",
         "SKU 가격 변경은 이후 새 주문 생성의 서버 재계산에만 적용하고, 이미 생성된 order, checkout, payment의 amount는 변경하지 않습니다.",
-        "paused 또는 hidden 상태의 SKU는 일반결제 주문 생성 후보에서 제외합니다.",
+        "paused 또는 archived 상태의 SKU는 일반결제 주문 생성 후보에서 제외합니다.",
         "재고 정책 변경 시 reservedStock + soldStock을 기준으로 음수 재고가 발생하지 않는지 확인합니다.",
         "관리자 ID, 요청 IP, 변경 전후 값, changeReason을 감사 로그에 저장합니다."
       ],

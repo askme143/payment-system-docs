@@ -79,6 +79,7 @@ Use one root JSON document with these top-level keys:
 8. `database.collections` defines MongoDB collections, fields, indexes, and related APIs.
 9. `database.apiAccess` maps APIs to MongoDB read/write collections.
 10. HTML pages should be generated from JSON. Agents should not edit generated HTML for API contract changes.
+11. `apis[].visibility` describes the final user access level shown in the catalog. It does not replace backend-server-to-payment-system transport authentication. For example, `public` means the end user may be anonymous, while `apiDetails.request.headers.Authorization` can still be required as the backend server/BFF internal service token.
 
 ## ID Rules
 
@@ -115,7 +116,7 @@ Use the same API id everywhere:
   "categoryId": "subscriptions",
   "method": "POST",
   "path": "/subscriptions/confirm",
-  "role": "프론트 성공 페이지가 호출하며, 빌링키 발급과 첫 결제로 구독을 활성화합니다.",
+  "role": "프론트 성공 페이지 요청을 받은 백엔드 서버가 호출하며, 빌링키 발급과 첫 결제로 구독을 활성화합니다.",
   "visibility": "authenticated",
   "detailStatus": "available",
   "detailAnchor": "confirm"
