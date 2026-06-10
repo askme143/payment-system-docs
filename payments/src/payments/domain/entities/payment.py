@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Any, Literal
 
 from payments.domain.entities.ids import generate_uuid_id
@@ -10,7 +10,9 @@ class Payment:
     id: str
     order_id: str
     amount: int
-    status: Literal["ready", "paid", "failed", "expired", "canceled", "partial_canceled"]
+    status: Literal[
+        "ready", "paid", "failed", "expired", "canceled", "partial_canceled"
+    ]
     created_at: datetime
     subscription_id: str | None = None
     billing_cycle_key: str | None = None
@@ -33,7 +35,9 @@ class Payment:
         return generate_uuid_id("pay")
 
     @classmethod
-    def generate_billing_cycle_key(cls, subscription_id: str, billing_date: datetime) -> str | None:
-        if billing_date.tzinfo == timezone.utc:
+    def generate_billing_cycle_key(
+        cls, subscription_id: str, billing_date: datetime
+    ) -> str | None:
+        if billing_date.tzinfo == UTC:
             return f"{subscription_id}:{billing_date.isoformat()}"
         return None

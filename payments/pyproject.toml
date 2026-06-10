@@ -1,7 +1,63 @@
 [project]
 name = "payments"
 version = "0.1.0"
-description = "Add your description here"
+description = "Payment system FastAPI service"
 readme = "README.md"
 requires-python = ">=3.14"
-dependencies = []
+dependencies = [
+    "fastapi[standard]>=0.115.0",
+    "motor>=3.6.0",
+    "pydantic>=2.8.0",
+    "pymongo>=4.9.0",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[dependency-groups]
+dev = [
+    "httpx2>=2.2.0",
+    "pytest>=8.3.0",
+    "pytest-asyncio>=0.24.0",
+    "pyright>=1.1.409",
+    "ruff>=0.8.0",
+]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+pythonpath = ["src"]
+testpaths = ["tests"]
+
+[tool.fastapi]
+entrypoint = "main:app"
+
+[tool.ruff]
+line-length = 88
+src = ["src", "tests"]
+target-version = "py314"
+
+[tool.ruff.lint]
+select = [
+    "B",
+    "BLE",
+    "C4",
+    "DTZ",
+    "E",
+    "F",
+    "I",
+    "PIE",
+    "PT",
+    "RET",
+    "RUF",
+    "SIM",
+    "T20",
+    "UP",
+]
+ignore = [
+    "B008",
+]
+
+[tool.ruff.format]
+indent-style = "space"
+quote-style = "double"

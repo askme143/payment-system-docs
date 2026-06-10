@@ -716,9 +716,9 @@ class GenerateDocsTest(unittest.TestCase):
         transitions = {(transition["from"], transition["to"]) for transition in state_model["transitions"]}
         self.assertIn(("ready", "expired"), transitions)
 
-        payment_source = Path("payments/src/payments/domain/entities/payment.py").read_text(encoding="utf-8")
-        self.assertIn('Literal["ready", "paid", "failed", "expired", "canceled", "partial_canceled"]', payment_source)
-        self.assertIn("expires_at: datetime | None = None", payment_source)
+        payment_entity_fields = self._entity_fields("payment.py")
+        self.assertIn("expired", payment_entity_fields["status"]["annotation"])
+        self.assertTrue(payment_entity_fields["expires_at"]["optional"])
 
         contract_text = json.dumps(
             {

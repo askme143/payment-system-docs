@@ -1,0 +1,14 @@
+{
+  "include": ["payments/src", "payments/tests"],
+  "exclude": ["**/__pycache__", "payments/.venv"],
+  "pythonVersion": "3.14",
+  "venvPath": "payments",
+  "venv": ".venv",
+  "typeCheckingMode": "standard",
+  "executionEnvironments": [
+    {
+      "root": "payments",
+      "extraPaths": ["payments/src"]
+    }
+  ]
+}

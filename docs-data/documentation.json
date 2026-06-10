@@ -898,7 +898,7 @@
           {
             "name": "items",
             "required": true,
-            "description": "구매하려는 상품 목록입니다. 서버는 상품 ID와 수량만 신뢰하고 가격은 서버 데이터로 다시 계산합니다."
+            "description": "구매하려는 one-time SKU 목록입니다. 서버는 skuId와 수량만 신뢰하고 가격은 서버 데이터로 다시 계산합니다."
           },
           {
             "name": "successUrl",
@@ -919,7 +919,7 @@
         "bodyExample": {
           "items": [
             {
-              "productId": "prod_report_pack",
+              "skuId": "sku_report_pack_100",
               "quantity": 1
             }
           ],
@@ -950,7 +950,7 @@
         },
         {
           "status": 400,
-          "description": "상품 ID, 수량, successUrl, failUrl 형식이 잘못된 요청"
+          "description": "skuId, 수량, successUrl, failUrl 형식이 잘못된 요청"
         },
         {
           "status": 409,
@@ -959,7 +959,7 @@
       ],
       "logic": [
         "백엔드 서버가 인증해 전달한 X-Request-User-Id를 기준으로 주문 생성 권한을 확인합니다.",
-        "items의 상품 ID와 수량 형식을 검증합니다. 클라이언트가 보낸 가격이나 할인 금액은 신뢰하지 않습니다.",
+        "items의 skuId와 수량 형식을 검증합니다. 클라이언트가 보낸 가격이나 할인 금액은 신뢰하지 않습니다.",
         "상품 판매 상태, 구매 가능 정책, limited SKU의 availableStock(totalStock - reservedStock - soldStock)을 확인합니다.",
         "limited SKU는 원자적 조건 업데이트로 reservedStock을 주문 수량만큼 증가시키며, 재고가 부족하면 주문을 생성하지 않습니다.",
         "서버의 상품/할인/세금 정책으로 최종 amount와 orderName을 계산합니다.",
