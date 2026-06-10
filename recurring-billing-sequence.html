@@ -188,6 +188,36 @@
     th, td { padding: 11px 12px; text-align: left; vertical-align: top; border-bottom: 1px solid var(--line); }
     th { color: var(--muted); background: var(--surface-2); font-weight: 800; }
     tr:last-child td { border-bottom: 0; }
+    .nested-schema-row > td {
+      padding: 0;
+      background: var(--surface-2);
+    }
+    .nested-schema {
+      padding: 12px;
+      border-top: 1px solid var(--line);
+    }
+    .nested-schema-title {
+      margin: 0 0 8px;
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 900;
+    }
+    .nested-schema-table {
+      min-width: 560px;
+      font-size: 13px;
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      overflow: clip;
+    }
+    .nested-schema-table th,
+    .nested-schema-table td {
+      padding: 8px 10px;
+      border-bottom: 1px solid var(--line);
+    }
+    .nested-schema-table tr:last-child td {
+      border-bottom: 0;
+    }
     .top-links { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 16px; }
     .top-links a {
       display: inline-flex;
@@ -759,7 +789,7 @@ cron, queue worker, 운영자 수동 실행 모두 동일 진입점 사용
     style.italic: false
   }
   server.note_2: &quot;결제 대상 구독 조회 및 잠금\nstatus=active AND nextBillingDate&lt;=today\n한 회원의 여러 상품 구독이 같은 날 도래해도 subscription 또는 invoice 단위로 각각 잠금&quot;
-  server.note_3: &quot;청구 회차 인보이스 생성\ninvoice.status = pending\nproductCode, plan amount, billingPeriod, orderId, idempotencyKey 확정&quot;
+  server.note_3: &quot;청구 회차 인보이스 생성\ninvoice.status = issued\nproductCode, plan amount, billingPeriod, orderId, idempotencyKey 확정&quot;
   server.note_4: &quot;기본 결제수단 토큰 복호화\nbillingMethod.active\n회원의 기본 결제수단이 없거나 비활성이면 해당 구독 결제 시도 없이 실패 처리&quot;
   server -&gt; toss: |md
 자동결제 승인 요청
@@ -785,7 +815,7 @@ paymentKey, status=DONE, approvedAt
     style.font-size: 18
     style.italic: false
   }
-  server.note_7: &quot;승인 성공 처리\ninvoice paid, payment paid\n구독은 active 유지, nextBillingDate를 다음 주기로 갱신&quot;
+  server.note_7: &quot;승인 성공 처리\ninvoice.status=paid, payment.status=paid\n구독은 active 유지, nextBillingDate를 다음 주기로 갱신&quot;
   server.note_8: &quot;영수증 링크와 결제 결과 구성\nreceiptUrl, paymentKey, approvedAt\n토스 영수증 링크 또는 내부 영수증 상세 링크를 결제 성공 알림에 포함&quot;
   server -&gt; email: |md
 결제 성공 이메일 발송 요청

@@ -188,6 +188,36 @@
     th, td { padding: 11px 12px; text-align: left; vertical-align: top; border-bottom: 1px solid var(--line); }
     th { color: var(--muted); background: var(--surface-2); font-weight: 800; }
     tr:last-child td { border-bottom: 0; }
+    .nested-schema-row > td {
+      padding: 0;
+      background: var(--surface-2);
+    }
+    .nested-schema {
+      padding: 12px;
+      border-top: 1px solid var(--line);
+    }
+    .nested-schema-title {
+      margin: 0 0 8px;
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 900;
+    }
+    .nested-schema-table {
+      min-width: 560px;
+      font-size: 13px;
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      overflow: clip;
+    }
+    .nested-schema-table th,
+    .nested-schema-table td {
+      padding: 8px 10px;
+      border-bottom: 1px solid var(--line);
+    }
+    .nested-schema-table tr:last-child td {
+      border-bottom: 0;
+    }
     .top-links { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 16px; }
     .top-links a {
       display: inline-flex;
@@ -937,7 +967,7 @@ CARD_DECLINED / EXCEED_MAX_AMOUNT / INSUFFICIENT_FUNDS
     style.font-size: 18
     style.italic: false
   }
-  server.note_5: &quot;구독 활성화하지 않음\nsubscription.status = payment_failed\ninvoice failed, payment failed 저장&quot;
+  server.note_5: &quot;구독 활성화하지 않음\nsubscription.status = payment_failed\ninvoice.status=issued 유지, payment.status=failed 저장&quot;
   server -&gt; client: |md
 결제 실패 응답
 

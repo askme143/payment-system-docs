@@ -43,7 +43,7 @@ CARD_DECLINED / EXCEED_MAX_AMOUNT / INSUFFICIENT_FUNDS
     style.font-size: 18
     style.italic: false
   }
-  server.note_5: "구독 활성화하지 않음\nsubscription.status = payment_failed\ninvoice failed, payment failed 저장"
+  server.note_5: "구독 활성화하지 않음\nsubscription.status = payment_failed\ninvoice.status=issued 유지, payment.status=failed 저장"
   server -> client: |md
 결제 실패 응답
 

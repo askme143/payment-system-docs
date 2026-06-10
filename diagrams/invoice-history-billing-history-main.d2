@@ -60,5 +60,5 @@ status, receiptUrl, failure, retry, actions
     style.italic: false
   }
   server.note_7: "영수증 링크 노출\nstatus == paid && receiptUrl\n프론트는 결제일, 금액, 결제수단 요약과 영수증 링크를 표시"
-  server.note_8: "실패 사유와 재시도 안내 노출\nstatus == failed\nfailure.message, retry.nextRetryAt, billingMethodUpdateUrl 표시"
+  server.note_8: "실패 사유와 재시도 안내 노출\npaymentStatus == failed\nfailure.message, retry.scheduledAt, billingMethodUpdateUrl 표시"
 }

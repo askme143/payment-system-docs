@@ -30,7 +30,7 @@ diagram: {
     style.font-size: 18
     style.italic: false
   }
-  server.note_2: "재시도 대상 검증 및 잠금\ninvoice.status=failed AND nextRetryAt<=now\n이미 paid, canceled, final_failed인 회차는 건너뜀"
+  server.note_2: "재시도 대상 검증 및 잠금\ninvoice.status=issued AND latestPayment.status=failed AND latestPayment.retry_scheduled_at<=now\n이미 paid, voided, refunded인 인보이스나 종료된 구독은 건너뜀"
   server -> toss: |md
 자동결제 재승인 요청
 
@@ -55,8 +55,8 @@ DONE 또는 실패 코드
     style.font-size: 18
     style.italic: false
   }
-  server.note_5: "재시도 성공\ninvoice paid, subscription active\nnextBillingDate를 정상 주기로 갱신하고 영수증 링크를 생성"
-  server.note_6: "재시도 실패 또는 한도 초과\ninvoice final_failed\nmaxAttempts 도달 시 구독을 past_due로 유지하거나 canceled로 전환"
+  server.note_5: "재시도 성공\ninvoice.status=paid, subscription.status=active\nnextBillingDate를 정상 주기로 갱신하고 영수증 링크를 생성"
+  server.note_6: "재시도 실패 또는 한도 초과\npayment.status=failed, invoice.status=issued 유지\nmaxAttempts 도달 시 구독을 past_due로 유지하거나 canceled로 전환"
   server -> email: |md
 재시도 결과 이메일 발송 요청
 

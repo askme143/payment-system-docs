@@ -99,7 +99,7 @@ paymentKey, status=DONE
     style.font-size: 18
     style.italic: false
   }
-  server.note_11: "승인 성공 후 플랜 즉시 반영\nproductCode 유지, planId=targetPlanId, invoice paid\n권한, 사용량 한도, 다음 결제 예정 금액을 새 플랜 기준으로 갱신"
+  server.note_11: "승인 성공 후 플랜 즉시 반영\nproductCode 유지, planId=targetPlanId, invoice.status=paid\n권한, 사용량 한도, 다음 결제 예정 금액을 새 플랜 기준으로 갱신"
   server -> client: |md
 결제 성공 이메일 발송
 

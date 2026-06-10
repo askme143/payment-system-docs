@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 from datetime import datetime, timezone
-from typing import Literal
+from typing import Any, Literal
 
 from payments.domain.entities.ids import generate_uuid_id
 
@@ -10,14 +10,23 @@ class Payment:
     id: str
     order_id: str
     amount: int
-    status: Literal["ready", "paid", "failed", "canceled", "partial_canceled"]
+    status: Literal["ready", "paid", "failed", "expired", "canceled", "partial_canceled"]
     created_at: datetime
     subscription_id: str | None = None
     billing_cycle_key: str | None = None
     checkout_id: str | None = None
     payment_customer_id: str | None = None
     payment_key: str | None = None
+    approved_at: datetime | None = None
+    receipt_url: str | None = None
+    method: str | None = None
+    method_detail: dict[str, Any] | None = None
+    failure: dict[str, Any] | None = None
+    provider_response_summary: dict[str, Any] | None = None
     cancelable_amount: int | None = None
+    cancel_history: list[dict[str, Any]] | None = None
+    expires_at: datetime | None = None
+    retry_scheduled_at: datetime | None = None
 
     @classmethod
     def generate_id(cls) -> str:

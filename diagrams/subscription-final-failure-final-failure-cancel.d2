@@ -27,8 +27,8 @@ maxAttempts 도달 또는 재시도 불가 실패 코드
     style.font-size: 18
     style.italic: false
   }
-  server.note_2: "최종 실패 조건 검증\ninvoice.status=failed AND attemptCount >= maxAttempts\n이미 paid 또는 canceled이면 상태 변경 없이 종료"
-  server.note_3: "최종 실패와 구독 종료 저장\ninvoice=final_failed, subscription=canceled\nstatus=canceled, cancelReason=payment_final_failed, canceledAt=now"
+  server.note_2: "최종 실패 조건 검증\ninvoice.status=issued AND latestPayment.status=failed AND retryPolicy.exhausted\n이미 paid, voided, refunded인 인보이스는 상태 변경 없이 종료"
+  server.note_3: "최종 실패와 구독 종료 저장\ninvoice.status=issued 유지, subscription.status=canceled\ncancelReason=payment_retry_exhausted, canceledAt=now"
   server.note_4: "다음 과금 대상에서 제외\nnextBillingDate=null\n정기 과금 배치가 종료된 구독을 다시 청구하지 않도록 정리"
   server -> email: |md
 구독 종료 안내 메일 발송 요청

@@ -188,6 +188,36 @@
     th, td { padding: 11px 12px; text-align: left; vertical-align: top; border-bottom: 1px solid var(--line); }
     th { color: var(--muted); background: var(--surface-2); font-weight: 800; }
     tr:last-child td { border-bottom: 0; }
+    .nested-schema-row > td {
+      padding: 0;
+      background: var(--surface-2);
+    }
+    .nested-schema {
+      padding: 12px;
+      border-top: 1px solid var(--line);
+    }
+    .nested-schema-title {
+      margin: 0 0 8px;
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 900;
+    }
+    .nested-schema-table {
+      min-width: 560px;
+      font-size: 13px;
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      overflow: clip;
+    }
+    .nested-schema-table th,
+    .nested-schema-table td {
+      padding: 8px 10px;
+      border-bottom: 1px solid var(--line);
+    }
+    .nested-schema-table tr:last-child td {
+      border-bottom: 0;
+    }
     .top-links { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 16px; }
     .top-links a {
       display: inline-flex;
@@ -650,7 +680,7 @@
   
   <section id="final-failure-cancel">
   <h2>최종 실패 후 즉시 구독 종료</h2>
-  <p>마지막 자동 재시도까지 실패하면 인보이스를 final_failed로 확정하고 구독을 canceled로 종료한 뒤 재구독 안내 메일을 발송합니다.</p>
+  <p>마지막 자동 재시도까지 실패하면 인보이스는 issued 상태로 남기고 구독을 canceled로 종료한 뒤 재구독 안내 메일을 발송합니다.</p>
   <div class="diagram"><div class="d2-diagram">
   <div class="d2-toolbar"><a href="diagrams/subscription-final-failure-final-failure-cancel.d2">D2 원본</a></div>
   <img class="d2-svg" src="diagrams/subscription-final-failure-final-failure-cancel.svg" alt="최종 실패 후 즉시 구독 종료">
@@ -685,8 +715,8 @@ maxAttempts 도달 또는 재시도 불가 실패 코드
     style.font-size: 18
     style.italic: false
   }
-  server.note_2: &quot;최종 실패 조건 검증\ninvoice.status=failed AND attemptCount &gt;= maxAttempts\n이미 paid 또는 canceled이면 상태 변경 없이 종료&quot;
-  server.note_3: &quot;최종 실패와 구독 종료 저장\ninvoice=final_failed, subscription=canceled\nstatus=canceled, cancelReason=payment_final_failed, canceledAt=now&quot;
+  server.note_2: &quot;최종 실패 조건 검증\ninvoice.status=issued AND latestPayment.status=failed AND retryPolicy.exhausted\n이미 paid, voided, refunded인 인보이스는 상태 변경 없이 종료&quot;
+  server.note_3: &quot;최종 실패와 구독 종료 저장\ninvoice.status=issued 유지, subscription.status=canceled\ncancelReason=payment_retry_exhausted, canceledAt=now&quot;
   server.note_4: &quot;다음 과금 대상에서 제외\nnextBillingDate=null\n정기 과금 배치가 종료된 구독을 다시 청구하지 않도록 정리&quot;
   server -&gt; email: |md
 구독 종료 안내 메일 발송 요청
@@ -731,7 +761,7 @@ invoiceId, failureReason, canceledAt, resubscribeUrl 포함
 </section>
   <section id="states">
   <h2>상태 요약</h2>
-  <div class="table-scroll"><table class="has-many-columns"><thead><tr><th>시점</th><th>구독 상태</th><th>결제 상태</th><th>설명</th></tr></thead><tbody><tr><td data-label="시점">최종 실패 전</td><td data-label="구독 상태"><code>past_due</code></td><td data-label="결제 상태"><code>final_failed</code></td><td data-label="설명">마지막 재시도가 실패했고 구독 종료 조건을 검증합니다.</td></tr><tr><td data-label="시점">구독 종료 후</td><td data-label="구독 상태"><code>canceled</code></td><td data-label="결제 상태"><code>final_failed</code></td><td data-label="설명">구독은 즉시 종료되고 다음 과금일은 제거됩니다.</td></tr><tr><td data-label="시점">재이용</td><td data-label="구독 상태"><code>new subscription required</code></td><td data-label="결제 상태"><code>-</code></td><td data-label="설명">다시 이용하려면 기존 구독 복구가 아니라 새 구독을 시작합니다.</td></tr></tbody></table></div>
+  <div class="table-scroll"><table class="has-many-columns"><thead><tr><th>시점</th><th>구독 상태</th><th>결제 상태</th><th>설명</th></tr></thead><tbody><tr><td data-label="시점">최종 실패 전</td><td data-label="구독 상태"><code>past_due</code></td><td data-label="결제 상태"><code>failed</code></td><td data-label="설명">마지막 재시도가 실패했고 구독 종료 조건을 검증합니다.</td></tr><tr><td data-label="시점">구독 종료 후</td><td data-label="구독 상태"><code>canceled</code></td><td data-label="결제 상태"><code>failed</code></td><td data-label="설명">구독은 즉시 종료되고 다음 과금일은 제거됩니다.</td></tr><tr><td data-label="시점">재이용</td><td data-label="구독 상태"><code>new subscription required</code></td><td data-label="결제 상태"><code>-</code></td><td data-label="설명">다시 이용하려면 기존 구독 복구가 아니라 새 구독을 시작합니다.</td></tr></tbody></table></div>
 </section>
 </main>
 <script>

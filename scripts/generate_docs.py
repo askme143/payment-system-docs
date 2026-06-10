@@ -412,6 +412,36 @@ def page(title, body, extra_head=""):
     th, td {{ padding: 11px 12px; text-align: left; vertical-align: top; border-bottom: 1px solid var(--line); }}
     th {{ color: var(--muted); background: var(--surface-2); font-weight: 800; }}
     tr:last-child td {{ border-bottom: 0; }}
+    .nested-schema-row > td {{
+      padding: 0;
+      background: var(--surface-2);
+    }}
+    .nested-schema {{
+      padding: 12px;
+      border-top: 1px solid var(--line);
+    }}
+    .nested-schema-title {{
+      margin: 0 0 8px;
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 900;
+    }}
+    .nested-schema-table {{
+      min-width: 560px;
+      font-size: 13px;
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      overflow: clip;
+    }}
+    .nested-schema-table th,
+    .nested-schema-table td {{
+      padding: 8px 10px;
+      border-bottom: 1px solid var(--line);
+    }}
+    .nested-schema-table tr:last-child td {{
+      border-bottom: 0;
+    }}
     .top-links {{ display: flex; flex-wrap: wrap; gap: 10px; margin-top: 16px; }}
     .top-links a {{
       display: inline-flex;
@@ -934,6 +964,71 @@ def table(html_table, columns=3):
     return f"<div class=\"table-scroll\">{labelled_table.replace('<table>', f'<table{class_name}>', 1)}</div>"
 
 
+def format_db_subfield(field):
+    parts = [field["name"]]
+    if field.get("required"):
+        parts.append("required")
+    if field.get("enum"):
+        parts.append("enum: " + "|".join(field["enum"]))
+    return f"{parts[0]} ({', '.join(parts[1:])})" if len(parts) > 1 else parts[0]
+
+
+def format_db_field_details(field):
+    details = []
+    if field.get("ref"):
+        details.append(f"ref: {field['ref']}")
+    if field.get("enum"):
+        details.append("enum: " + ", ".join(field["enum"]))
+    if "example" in field:
+        details.append("example: " + json.dumps(field["example"], ensure_ascii=False))
+    if field.get("properties"):
+        details.append("nested schema: properties")
+    item_properties = field.get("items", {}).get("properties", [])
+    if item_properties:
+        details.append("nested schema: items.properties")
+    return "; ".join(details) or "-"
+
+
+def db_nested_schema(field):
+    if field.get("properties"):
+        return "properties", field["properties"]
+    item_properties = field.get("items", {}).get("properties", [])
+    if item_properties:
+        return "items.properties", item_properties
+    return None, []
+
+
+def render_db_nested_schema(field):
+    schema_kind, properties = db_nested_schema(field)
+    if not properties:
+        return ""
+    rows = []
+    for prop in properties:
+        enum_value = ", ".join(prop.get("enum", [])) or "-"
+        rows.append(
+            "<tr>"
+            f"<td class=\"nested-schema-cell\"><code>{e(prop['name'])}</code></td>"
+            f"<td class=\"nested-schema-cell\"><code>{e(prop.get('type', '-'))}</code></td>"
+            f"<td class=\"nested-schema-cell\">{'예' if prop.get('required') else '아니오'}</td>"
+            f"<td class=\"nested-schema-cell\">{e(enum_value)}</td>"
+            f"<td class=\"nested-schema-cell\">{e(prop.get('description', '-'))}</td>"
+            "</tr>"
+        )
+    return (
+        "<tr class=\"nested-schema-row\">"
+        "<td colspan=\"5\">"
+        "<div class=\"nested-schema\">"
+        f"<p class=\"nested-schema-title\"><code>{e(field['name'])}</code> {e(schema_kind)}</p>"
+        "<table class=\"nested-schema-table\">"
+        "<thead><tr><th>하위 필드</th><th>타입</th><th>필수</th><th>Enum</th><th>설명</th></tr></thead>"
+        f"<tbody>{''.join(rows)}</tbody>"
+        "</table>"
+        "</div>"
+        "</td>"
+        "</tr>"
+    )
+
+
 def api_maps(data):
     apis = {api["id"]: api for api in data["apis"]}
     categories = {category["id"]: category for category in data["apiCategories"]}
@@ -1205,22 +1300,19 @@ def render_database_doc(data):
     for collection in database["collections"]:
         field_rows = []
         for field in collection["fields"]:
-            details = []
-            if field.get("ref"):
-                details.append(f"ref: {field['ref']}")
-            if field.get("enum"):
-                details.append("enum: " + ", ".join(field["enum"]))
-            if "example" in field:
-                details.append("example: " + json.dumps(field["example"], ensure_ascii=False))
+            details = format_db_field_details(field)
             field_rows.append(
                 "<tr>"
                 f"<td><code>{e(field['name'])}</code></td>"
                 f"<td><code>{e(field['type'])}</code></td>"
                 f"<td>{'예' if field['required'] else '아니오'}</td>"
                 f"<td>{e(field['description'])}</td>"
-                f"<td>{e('; '.join(details) or '-')}</td>"
+                f"<td>{e(details)}</td>"
                 "</tr>"
             )
+            nested_schema = render_db_nested_schema(field)
+            if nested_schema:
+                field_rows.append(nested_schema)
         index_rows = []
         for index in collection.get("indexes", []):
             partial_filter = "-"

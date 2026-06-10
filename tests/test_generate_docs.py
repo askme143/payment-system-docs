@@ -32,6 +32,14 @@ class GenerateDocsTest(unittest.TestCase):
         self.assertIn("partialFilterExpression", index_properties)
         self.assertIn("expireAfterSeconds", index_properties)
 
+    def test_schema_allows_nested_mongodb_field_contracts(self):
+        schema = json.loads(Path("docs-data/schema/documentation.schema.json").read_text(encoding="utf-8"))
+        field_properties = schema["$defs"]["dbField"]["properties"]
+
+        self.assertIn("properties", field_properties)
+        self.assertIn("items", field_properties)
+        self.assertEqual(field_properties["properties"]["items"]["$ref"], "#/$defs/dbField")
+
     def test_payment_safety_indexes_are_documented(self):
         data = json.loads(Path("docs-data/documentation.json").read_text(encoding="utf-8"))
         payments = self._collection_by_id(data, "payments")
@@ -311,6 +319,7 @@ class GenerateDocsTest(unittest.TestCase):
             "operation_lock.py",
             "operator_audit.py",
             "payment.py",
+            "payment_cancel_request.py",
             "payment_customer.py",
             "payment_instrument.py",
             "product.py",
@@ -342,6 +351,7 @@ class GenerateDocsTest(unittest.TestCase):
             "idempotency-keys": "idempotency_key.py",
             "operation-locks": "operation_lock.py",
             "operator-audits": "operator_audit.py",
+            "payment-cancel-requests": "payment_cancel_request.py",
         }
 
         for collection_id, filename in entity_by_collection.items():
@@ -377,7 +387,16 @@ class GenerateDocsTest(unittest.TestCase):
             "checkout_id",
             "payment_customer_id",
             "payment_key",
+            "approved_at",
+            "receipt_url",
+            "method",
+            "method_detail",
+            "failure",
+            "provider_response_summary",
             "cancelable_amount",
+            "cancel_history",
+            "expires_at",
+            "retry_scheduled_at",
         ]
         for field_name in optional_fields:
             self.assertRegex(source, rf"{field_name}: .* \\| None = None")
@@ -385,6 +404,186 @@ class GenerateDocsTest(unittest.TestCase):
         required_fields = ["order_id", "amount", "status", "created_at"]
         for field_name in required_fields:
             self.assertRegex(source, rf"{field_name}: (?!.*None = None)")
+
+    def test_payment_result_snapshot_contract_is_documented(self):
+        data = json.loads(Path("docs-data/documentation.json").read_text(encoding="utf-8"))
+        payments = self._collection_by_id(data, "payments")
+        fields = {field["name"]: field for field in payments["fields"]}
+
+        for field_name in [
+            "approved_at",
+            "receipt_url",
+            "method",
+            "method_detail",
+            "failure",
+            "provider_response_summary",
+            "cancel_history",
+        ]:
+            self.assertIn(field_name, fields)
+
+        self.assertIn("paidAmount", fields["amount"]["description"])
+        self.assertIn("methodDetail", fields["method_detail"]["description"])
+        self.assertIn("카드 결제일 때만", fields["method_detail"]["description"])
+        self.assertIn("민감 정보", fields["provider_response_summary"]["description"])
+        self.assertIn("진행 중/실패한 취소 요청", fields["cancel_history"]["description"])
+        self.assertEqual(
+            [field["name"] for field in fields["failure"]["properties"]],
+            ["phase", "reason", "providerCode", "message", "retryable"]
+        )
+        failure_properties = {field["name"]: field for field in fields["failure"]["properties"]}
+        self.assertEqual(failure_properties["phase"]["enum"], ["before_confirm", "confirm", "cancel", "webhook", "sync"])
+        self.assertEqual(
+            failure_properties["reason"]["enum"],
+            [
+                "user_canceled",
+                "auth_failed",
+                "provider_rejected",
+                "provider_error",
+                "validation_failed",
+                "auth_result_not_reported",
+                "expired",
+            ]
+        )
+        provider_properties = {field["name"]: field for field in fields["provider_response_summary"]["properties"]}
+        self.assertEqual(provider_properties["provider"]["enum"], ["tosspayments"])
+        self.assertIn("providerStatus", provider_properties)
+        cancel_item_properties = {field["name"]: field for field in fields["cancel_history"]["items"]["properties"]}
+        self.assertEqual(cancel_item_properties["requestedBy"]["enum"], ["user", "admin", "system"])
+        self.assertTrue(cancel_item_properties["cancelId"]["required"])
+
+        payment_source = Path("payments/src/payments/domain/entities/payment.py").read_text(encoding="utf-8")
+        self.assertIn("method_detail: dict[str, Any] | None = None", payment_source)
+        self.assertIn("cancel_history: list[dict[str, Any]] | None = None", payment_source)
+
+        contract_text = json.dumps(
+            {
+                "confirm": data["apiDetails"]["payments-confirm"],
+                "detail": data["apiDetails"]["payments-detail"],
+                "cancel": data["apiDetails"]["payments-cancel"],
+                "adminCancel": data["apiDetails"]["admin-payment-cancel"],
+            },
+            ensure_ascii=False,
+        )
+        self.assertIn("methodDetail", contract_text)
+        self.assertIn("payment.amount에서 매핑", contract_text)
+        self.assertNotIn("마스킹된 카드 정보", contract_text)
+
+    def test_database_doc_renders_nested_payment_snapshot_contracts(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            out_dir = Path(tmp)
+
+            generate_docs("docs-data/documentation.json", out_dir)
+
+            database = (out_dir / "database-doc.html").read_text(encoding="utf-8")
+            self.assertIn("nested-schema-row", database)
+            self.assertIn("<code>failure</code> properties", database)
+            self.assertIn("<code>provider_response_summary</code> properties", database)
+            self.assertIn("<code>cancel_history</code> items.properties", database)
+            self.assertIn("<th>하위 필드</th><th>타입</th><th>필수</th><th>Enum</th><th>설명</th>", database)
+            self.assertIn("<td class=\"nested-schema-cell\"><code>phase</code></td>", database)
+            self.assertIn("before_confirm, confirm, cancel, webhook, sync", database)
+            self.assertIn("<td class=\"nested-schema-cell\"><code>requestedBy</code></td>", database)
+            self.assertIn("user, admin, system", database)
+            self.assertIn("nested schema: properties", database)
+            self.assertIn("nested schema: items.properties", database)
+
+    def test_payment_cancel_request_contract_is_separate_from_payment_status(self):
+        data = json.loads(Path("docs-data/documentation.json").read_text(encoding="utf-8"))
+        payments = self._collection_by_id(data, "payments")
+        cancel_requests = self._collection_by_id(data, "payment-cancel-requests")
+        payment_status = next(field for field in payments["fields"] if field["name"] == "status")
+        cancel_status = next(field for field in cancel_requests["fields"] if field["name"] == "status")
+
+        self.assertNotIn("cancel_pending", payment_status["enum"])
+        self.assertEqual(cancel_status["enum"], ["pending", "succeeded", "failed"])
+
+        cancel_fields = {field["name"]: field for field in cancel_requests["fields"]}
+        for field_name in [
+            "payment_id",
+            "idempotency_key_hash",
+            "cancel_amount",
+            "cancel_reason",
+            "requested_by",
+            "provider_cancel_id",
+            "failure",
+        ]:
+            self.assertIn(field_name, cancel_fields)
+
+        unique = self._index_by_name(cancel_requests, "uniq_payment_cancel_requests_idempotency")
+        self.assertEqual(unique["fields"], ["payment_id", "idempotency_key_hash"])
+        self.assertTrue(unique["unique"])
+
+        pending = self._index_by_name(cancel_requests, "idx_payment_cancel_requests_pending_created_at")
+        self.assertEqual(pending["fields"], ["status", "created_at"])
+        self.assertEqual(pending["partialFilterExpression"], {"status": "pending"})
+
+        relationships = {(item["from"], item["to"]) for item in data["database"]["relationships"]}
+        self.assertIn(("payment_cancel_requests.payment_id", "payments._id"), relationships)
+        self.assertIn(("payment_cancel_requests.operator_audit_id", "operator_audits._id"), relationships)
+
+        dependencies = {item["apiId"]: item for item in data["database"]["apiAccess"]}
+        self.assertIn("payment-cancel-requests", dependencies["payments-cancel"]["reads"])
+        self.assertIn("payment-cancel-requests", dependencies["payments-cancel"]["writes"])
+        self.assertIn("payment-cancel-requests", dependencies["admin-payment-cancel"]["reads"])
+        self.assertIn("payment-cancel-requests", dependencies["admin-payment-cancel"]["writes"])
+
+        source = Path("payments/src/payments/domain/entities/payment_cancel_request.py").read_text(encoding="utf-8")
+        self.assertIn('Literal["pending", "succeeded", "failed"]', source)
+        self.assertIn('Literal["user", "admin", "system"]', source)
+        self.assertIn('generate_uuid_id("pcancel")', source)
+
+        contract_text = json.dumps(
+            {
+                "cancel": data["apiDetails"]["payments-cancel"],
+                "adminCancel": data["apiDetails"]["admin-payment-cancel"],
+                "risk": next(risk for risk in data["risks"] if risk["id"] == "cancel-refund-duplicate-or-mismatch"),
+            },
+            ensure_ascii=False,
+        )
+        self.assertIn("payment_cancel_requests", contract_text)
+        self.assertIn("status=pending", contract_text)
+        self.assertNotIn("cancel_pending", contract_text)
+
+    def test_payment_expiration_contract_is_documented(self):
+        data = json.loads(Path("docs-data/documentation.json").read_text(encoding="utf-8"))
+        payments = self._collection_by_id(data, "payments")
+        payment_fields = {field["name"]: field for field in payments["fields"]}
+        payment_status = payment_fields["status"]
+
+        self.assertIn("expired", payment_status["enum"])
+        self.assertIn("expires_at", payment_fields)
+        self.assertIn("30분", payment_fields["expires_at"]["description"])
+
+        ready_expiration_index = self._index_by_name(payments, "idx_payments_ready_expires_at")
+        self.assertEqual(ready_expiration_index["fields"], ["status", "expires_at"])
+        self.assertEqual(
+            ready_expiration_index["partialFilterExpression"],
+            {"status": "ready", "expires_at": {"$type": "date"}}
+        )
+
+        state_model = next(model for model in data["database"]["stateModels"] if model["id"] == "payment-status")
+        self.assertIn("expired", state_model["states"])
+        transitions = {(transition["from"], transition["to"]) for transition in state_model["transitions"]}
+        self.assertIn(("ready", "expired"), transitions)
+
+        payment_source = Path("payments/src/payments/domain/entities/payment.py").read_text(encoding="utf-8")
+        self.assertIn('Literal["ready", "paid", "failed", "expired", "canceled", "partial_canceled"]', payment_source)
+        self.assertIn("expires_at: datetime | None = None", payment_source)
+
+        contract_text = json.dumps(
+            {
+                "orders": data["apiDetails"]["payments-orders"],
+                "confirm": data["apiDetails"]["payments-confirm"],
+                "detail": data["apiDetails"]["payments-detail"],
+                "authResult": data["apiDetails"]["payments-auth-result"],
+            },
+            ensure_ascii=False,
+        )
+        self.assertIn("PAYMENT_ATTEMPT_TTL은 30분", contract_text)
+        self.assertIn("expiresAt=createdAt+30분", contract_text)
+        self.assertIn("expiresAt <= now", contract_text)
+        self.assertIn("토스 승인 API를 호출하지 않고", contract_text)
+        self.assertIn("failure.reason=auth_result_not_reported", contract_text)
 
     def test_billing_auth_entity_persists_default_choice_and_expiration(self):
         data = json.loads(Path("docs-data/documentation.json").read_text(encoding="utf-8"))
@@ -413,6 +612,77 @@ class GenerateDocsTest(unittest.TestCase):
         self.assertNotIn("order_id:", source)
 
         self.assertIn("datetime", source)
+
+    def test_invoice_status_contract_stays_simple(self):
+        data = json.loads(Path("docs-data/documentation.json").read_text(encoding="utf-8"))
+        invoices = self._collection_by_id(data, "invoices")
+        invoice_status = next(field for field in invoices["fields"] if field["name"] == "status")
+
+        self.assertEqual(invoice_status["enum"], ["issued", "paid", "voided", "refunded"])
+
+        invoice_source = Path("payments/src/payments/domain/entities/invoice.py").read_text(encoding="utf-8")
+        self.assertIn('Literal["issued", "paid", "voided", "refunded"]', invoice_source)
+
+        invoice_contract_text = json.dumps(
+            {
+                "list": data["apiDetails"]["invoices-list"],
+                "detail": data["apiDetails"]["invoices-detail"],
+                "retry": data["apiDetails"]["internal-billing-retry"],
+                "subscriptionRetry": next(sequence for sequence in data["sequences"] if sequence["id"] == "subscription-retry"),
+                "finalFailure": next(sequence for sequence in data["sequences"] if sequence["id"] == "subscription-final-failure"),
+                "risk": next(risk for risk in data["risks"] if risk["id"] == "subscription-retry-duplicate-charge"),
+            },
+            ensure_ascii=False,
+        )
+
+        self.assertNotIn("invoice.status=failed", invoice_contract_text)
+        self.assertNotIn("invoice.status = pending", invoice_contract_text)
+        self.assertNotIn("invoice failed", invoice_contract_text)
+        self.assertNotIn("invoice=final_failed", invoice_contract_text)
+        self.assertNotIn("final_failed", invoice_contract_text)
+        self.assertNotIn("retrying", invoice_contract_text)
+        self.assertNotIn("attemptCount", invoice_contract_text)
+        self.assertNotIn("nextRetryAt", invoice_contract_text)
+        self.assertIn("invoice.status=issued", invoice_contract_text)
+        self.assertIn("paymentStatus", invoice_contract_text)
+        self.assertIn("retry.scheduledAt", invoice_contract_text)
+
+    def test_subscription_retry_schedule_lives_on_failed_payment(self):
+        data = json.loads(Path("docs-data/documentation.json").read_text(encoding="utf-8"))
+        payments = self._collection_by_id(data, "payments")
+        invoices = self._collection_by_id(data, "invoices")
+        payment_fields = {field["name"]: field for field in payments["fields"]}
+        invoice_fields = {field["name"]: field for field in invoices["fields"]}
+
+        self.assertIn("retry_scheduled_at", payment_fields)
+        self.assertIn("최신 failed payment.retry_scheduled_at", payment_fields["retry_scheduled_at"]["description"])
+        self.assertNotIn("retry_scheduled_at", invoice_fields)
+
+        retry_index = self._index_by_name(payments, "idx_payments_failed_retry_scheduled_at")
+        self.assertEqual(retry_index["fields"], ["status", "retry_scheduled_at"])
+        self.assertEqual(
+            retry_index["partialFilterExpression"],
+            {"status": "failed", "retry_scheduled_at": {"$type": "date"}}
+        )
+
+        payment_source = Path("payments/src/payments/domain/entities/payment.py").read_text(encoding="utf-8")
+        self.assertIn("retry_scheduled_at: datetime | None = None", payment_source)
+
+        retry_contract_text = json.dumps(
+            {
+                "detail": data["apiDetails"]["invoices-detail"],
+                "billingRun": data["apiDetails"]["internal-billing-run"],
+                "billingRetry": data["apiDetails"]["internal-billing-retry"],
+                "subscriptionRetry": next(sequence for sequence in data["sequences"] if sequence["id"] == "subscription-retry"),
+                "risk": next(risk for risk in data["risks"] if risk["id"] == "subscription-retry-duplicate-charge"),
+            },
+            ensure_ascii=False,
+        )
+
+        self.assertIn("payment.retry_scheduled_at", retry_contract_text)
+        self.assertIn("latestPayment.retry_scheduled_at", retry_contract_text)
+        self.assertIn("retry.scheduledAt", retry_contract_text)
+        self.assertNotIn("invoice.retry_scheduled_at", retry_contract_text)
 
     def test_public_checkout_id_maps_to_mongodb_id_without_duplicate_field(self):
         data = json.loads(Path("docs-data/documentation.json").read_text(encoding="utf-8"))
@@ -1393,14 +1663,14 @@ class GenerateDocsTest(unittest.TestCase):
             self.assertIn("href=\"./subscription-final-failure-sequence.html\"", sequence_index)
             self.assertIn("구독 결제 최종 실패 후 구독 종료 플로우", sequence)
             self.assertIn("최종 실패 후 즉시 구독 종료", sequence)
-            self.assertIn("subscription=canceled", sequence)
+            self.assertIn("subscription.status=canceled", sequence)
             self.assertIn("nextBillingDate=null", sequence)
             self.assertIn("다시 이용하려면 새 구독을 시작", sequence)
             self.assertNotIn("graceEndsAt", sequence)
             self.assertNotIn("serviceAccess=limited", sequence)
             self.assertNotIn("복구 조건", sequence)
             self.assertIn("template=subscription_canceled_payment_failed", diagram)
-            self.assertIn("status=canceled, cancelReason=payment_final_failed", diagram)
+            self.assertIn("cancelReason=payment_retry_exhausted", diagram)
 
 
 if __name__ == "__main__":

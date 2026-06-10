@@ -469,6 +469,27 @@
         },
         "example": {
           "$ref": "#/$defs/jsonValue"
+        },
+        "properties": {
+          "type": "array",
+          "description": "Nested field contract for object fields.",
+          "items": {
+            "$ref": "#/$defs/dbField"
+          }
+        },
+        "items": {
+          "type": "object",
+          "description": "Nested item contract for array<object> fields.",
+          "additionalProperties": false,
+          "required": ["properties"],
+          "properties": {
+            "properties": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/dbField"
+              }
+            }
+          }
         }
       }
     },
