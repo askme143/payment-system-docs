@@ -21,6 +21,15 @@ async def ensure_mongo_indexes(database: AsyncIOMotorDatabase) -> None:
         [("product_id", ASCENDING), ("status", ASCENDING)],
         name="idx_subscription_plans_product_status",
     )
+    await database.one_time_skus.create_index(
+        [("product_id", ASCENDING), ("sku_code", ASCENDING)],
+        unique=True,
+        name="uniq_one_time_skus_product_sku_code",
+    )
+    await database.one_time_skus.create_index(
+        [("product_id", ASCENDING), ("status", ASCENDING), ("stock_policy", ASCENDING)],
+        name="idx_one_time_skus_product_status_stock_policy",
+    )
     await database.checkouts.create_index(
         [("user_id", ASCENDING), ("created_at", DESCENDING)],
         name="idx_checkouts_user_created_at",

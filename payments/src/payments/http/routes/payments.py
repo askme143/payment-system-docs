@@ -34,7 +34,7 @@ def create_router(dependencies: HttpDependencies) -> APIRouter:
             items=body.to_application_items(),
             success_url=str(body.success_url),
             fail_url=str(body.fail_url),
-            payment_repository=dependencies.payment_repository,
+            one_time_payment_uow_factory=dependencies.one_time_payment_uow_factory,
             clock=dependencies.clock,
             idempotency_key=idempotency_key,
             checkout_id=body.checkout_id,
@@ -49,7 +49,7 @@ def create_router(dependencies: HttpDependencies) -> APIRouter:
         detail = await get_payment_detail(
             requester=ctx,
             payment_id=paymentId,
-            payment_repository=dependencies.payment_repository,
+            payments=dependencies.payment_attempts,
         )
         return payment_detail_response(detail)
 

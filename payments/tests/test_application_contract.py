@@ -42,7 +42,7 @@ class TestApplicationContract:
     def test_payment_order_signature_names_dependencies_explicitly(self) -> None:
         signature = inspect.signature(application.create_payment_order)
 
-        assert "payment_repository" in signature.parameters
+        assert "one_time_payment_uow_factory" in signature.parameters
         assert "clock" in signature.parameters
         assert "idempotency_key" in signature.parameters
 

@@ -5,7 +5,16 @@ from pathlib import Path
 
 from fastapi.routing import APIRoute
 
-from conftest import FakeCatalogRepository, FakePaymentRepository, FixedClock
+from conftest import (
+    FakeCatalogRepository,
+    FakeCheckoutRepository,
+    FakeIdempotencyKeyRepository,
+    FakeOneTimePaymentUnitOfWorkFactory,
+    FakeOneTimeSkuRepository,
+    FakePaymentAttemptRepository,
+    FakePaymentStores,
+    FixedClock,
+)
 from payments.http.composition import create_app
 from payments.http.dependencies import HttpDependencies
 
@@ -25,10 +34,21 @@ def test_first_slice_routes_match_documentation() -> None:
         for api in data["apis"]
         if api["id"] in IMPLEMENTED_API_IDS
     }
+    checkouts = FakeCheckoutRepository()
+    payment_attempts = FakePaymentAttemptRepository(checkouts)
+    payment_stores = FakePaymentStores(
+        idempotency_keys=FakeIdempotencyKeyRepository(),
+        checkouts=checkouts,
+        payments=payment_attempts,
+        one_time_skus=FakeOneTimeSkuRepository(),
+    )
     app = create_app(
         HttpDependencies(
             catalog_repository=FakeCatalogRepository(),
-            payment_repository=FakePaymentRepository(),
+            one_time_payment_uow_factory=FakeOneTimePaymentUnitOfWorkFactory(
+                payment_stores
+            ),
+            payment_attempts=payment_attempts,
             clock=FixedClock(),
             internal_service_token="secret",
         )

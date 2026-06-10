@@ -6,7 +6,11 @@ import pytest
 from fastapi.testclient import TestClient
 from motor.motor_asyncio import AsyncIOMotorDatabase
 
-from payments.adapters.mongo import MongoCatalogRepository, MongoPaymentRepository
+from payments.adapters.mongo import (
+    MongoCatalogRepository,
+    MongoOneTimePaymentUnitOfWorkFactory,
+    MongoPaymentAttemptRepository,
+)
 from payments.adapters.time import SystemClock
 from payments.http.composition import build_http_dependencies, create_app
 from payments.http.config import PaymentHttpConfig, payment_config_from_env
@@ -17,6 +21,7 @@ TestMongoDocument = dict[str, object]
 class FakeDatabase:
     products = object()
     subscription_plans = object()
+    one_time_skus = object()
     checkouts = object()
     payments = object()
     idempotency_keys = object()
@@ -55,7 +60,11 @@ class TestHttpComposition:
         )
 
         assert isinstance(dependencies.catalog_repository, MongoCatalogRepository)
-        assert isinstance(dependencies.payment_repository, MongoPaymentRepository)
+        assert isinstance(
+            dependencies.one_time_payment_uow_factory,
+            MongoOneTimePaymentUnitOfWorkFactory,
+        )
+        assert isinstance(dependencies.payment_attempts, MongoPaymentAttemptRepository)
         assert isinstance(dependencies.clock, SystemClock)
         assert dependencies.internal_service_token == "secret"
 

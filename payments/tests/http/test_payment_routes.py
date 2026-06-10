@@ -33,7 +33,7 @@ def test_create_payment_order_returns_ready_payment(client, auth_headers) -> Non
     assert body["checkoutId"].startswith("chk_")
     assert body["paymentId"].startswith("pay_")
     assert body["orderId"].startswith("order_")
-    assert body["amount"] == 2000
+    assert body["amount"] == 50000
     assert body["status"] == "ready"
 
 

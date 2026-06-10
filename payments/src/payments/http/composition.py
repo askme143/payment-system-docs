@@ -4,7 +4,8 @@ from fastapi import FastAPI
 from motor.motor_asyncio import AsyncIOMotorClient, AsyncIOMotorDatabase
 
 from payments.adapters.mongo.catalog import MongoCatalogRepository
-from payments.adapters.mongo.payments import MongoPaymentRepository
+from payments.adapters.mongo.payment_attempts import MongoPaymentAttemptRepository
+from payments.adapters.mongo.unit_of_work import MongoOneTimePaymentUnitOfWorkFactory
 from payments.adapters.time import SystemClock
 from payments.http.config import PaymentHttpConfig
 from payments.http.dependencies import HttpDependencies
@@ -21,10 +22,10 @@ def build_http_dependencies(
             database.products,
             database.subscription_plans,
         ),
-        payment_repository=MongoPaymentRepository(
+        one_time_payment_uow_factory=MongoOneTimePaymentUnitOfWorkFactory(database),
+        payment_attempts=MongoPaymentAttemptRepository(
             checkouts=database.checkouts,
             payments=database.payments,
-            idempotency_keys=database.idempotency_keys,
         ),
         clock=SystemClock(),
         internal_service_token=config.internal_service_token,

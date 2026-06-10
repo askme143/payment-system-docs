@@ -7,13 +7,19 @@ from fastapi import Header
 
 from payments.application.context import RequestContext
 from payments.application.errors import AuthenticationError, AuthorizationError
-from payments.application.ports import CatalogRepository, Clock, PaymentRepository
+from payments.application.ports import (
+    CatalogRepository,
+    Clock,
+    OneTimePaymentUnitOfWorkFactory,
+    PaymentAttemptRepository,
+)
 
 
 @dataclass(frozen=True, slots=True)
 class HttpDependencies:
     catalog_repository: CatalogRepository
-    payment_repository: PaymentRepository
+    one_time_payment_uow_factory: OneTimePaymentUnitOfWorkFactory
+    payment_attempts: PaymentAttemptRepository
     clock: Clock
     internal_service_token: str
 
