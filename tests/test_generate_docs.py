@@ -55,7 +55,7 @@ class GenerateDocsTest(unittest.TestCase):
         self.assertTrue(paid_billing_cycle["unique"])
         self.assertEqual(
             paid_billing_cycle["partialFilterExpression"],
-            {"subscription_id": {"$type": "objectId"}, "billing_cycle_key": {"$type": "string"}, "status": "paid"}
+            {"subscription_id": {"$type": "string"}, "billing_cycle_key": {"$type": "string"}, "status": "paid"}
         )
 
     def test_subscription_and_billing_safety_indexes_are_documented(self):
@@ -82,7 +82,7 @@ class GenerateDocsTest(unittest.TestCase):
         self.assertEqual(
             billing_cycle["partialFilterExpression"],
             {
-                "subscription_id": {"$type": "objectId"},
+                "subscription_id": {"$type": "string"},
                 "billing_cycle_key": {"$type": "string"},
                 "status": {"$in": ["issued", "paid"]}
             }
@@ -189,11 +189,281 @@ class GenerateDocsTest(unittest.TestCase):
                     access_by_api[api_id]["reads"] + access_by_api[api_id]["writes"]
                 )
 
+    def test_every_documented_api_has_database_access_mapping(self):
+        data = json.loads(Path("docs-data/documentation.json").read_text(encoding="utf-8"))
+        api_detail_ids = set(data["apiDetails"])
+        api_access_ids = {item["apiId"] for item in data["database"]["apiAccess"]}
+        collection_ids = {collection["id"] for collection in data["database"]["collections"]}
+
+        self.assertEqual(api_detail_ids, api_access_ids)
+
+        for access in data["database"]["apiAccess"]:
+            self.assertIsInstance(access["reads"], list)
+            self.assertIsInstance(access["writes"], list)
+            for collection_id in access["reads"] + access["writes"]:
+                self.assertIn(collection_id, collection_ids, access["apiId"])
+
         relationships = {(item["from"], item["to"]) for item in data["database"]["relationships"]}
         self.assertIn(("operator_audits.idempotency_key_id", "idempotency_keys._id"), relationships)
-        self.assertIn(("operator_audits.operator_id", "users._id"), relationships)
+        self.assertNotIn(("operator_audits.operator_id", "users._id"), relationships)
         self.assertIn(("invoices.subscription_id", "subscriptions._id"), relationships)
         self.assertNotIn(("subscriptions.billing_method_id", "billing_methods._id"), relationships)
+
+    def test_payment_docs_do_not_own_user_collection(self):
+        data = json.loads(Path("docs-data/documentation.json").read_text(encoding="utf-8"))
+        collection_ids = {collection["id"] for collection in data["database"]["collections"]}
+
+        self.assertNotIn("users", collection_ids)
+
+        for collection in data["database"]["collections"]:
+            for field in collection["fields"]:
+                self.assertNotEqual(field.get("ref"), "users._id")
+                if field["name"] in {"user_id", "operator_id"}:
+                    self.assertEqual(field["type"], "ExternalUserId")
+                    self.assertIn("외부", field["description"])
+
+        for relationship in data["database"]["relationships"]:
+            self.assertNotEqual(relationship["to"], "users._id")
+
+        for access in data["database"]["apiAccess"]:
+            self.assertNotIn("users", access["reads"])
+            self.assertNotIn("users", access["writes"])
+
+    def test_product_status_uses_paused_not_suspended(self):
+        data = json.loads(Path("docs-data/documentation.json").read_text(encoding="utf-8"))
+        products = self._collection_by_id(data, "products")
+        product_status = next(field for field in products["fields"] if field["name"] == "status")
+
+        self.assertEqual(product_status["enum"], ["draft", "active", "paused", "archived"])
+
+        product_source = Path("payments/src/payments/domain/entities/product.py").read_text(encoding="utf-8")
+        self.assertIn('Literal["draft", "active", "paused", "archived"]', product_source)
+        self.assertNotIn("suspended", product_source)
+
+        product_api_text = json.dumps(
+            {
+                "admin-products-create": data["apiDetails"]["admin-products-create"],
+                "admin-products-status": data["apiDetails"]["admin-products-status"],
+            },
+            ensure_ascii=False,
+        )
+        self.assertIn("paused", product_api_text)
+        self.assertNotIn("suspended", product_api_text)
+
+        product_sequence_text = json.dumps(
+            next(sequence for sequence in data["sequences"] if sequence["id"] == "admin-product-management"),
+            ensure_ascii=False,
+        )
+        self.assertIn("paused", product_sequence_text)
+        self.assertNotIn("suspended", product_sequence_text)
+
+    def test_subscription_status_contract_has_no_pending_billing_auth_or_suspended(self):
+        data = json.loads(Path("docs-data/documentation.json").read_text(encoding="utf-8"))
+        subscriptions = self._collection_by_id(data, "subscriptions")
+        subscription_status = next(field for field in subscriptions["fields"] if field["name"] == "status")
+
+        allowed_statuses = ["pending", "active", "past_due", "cancel_scheduled", "canceled"]
+        self.assertEqual(subscription_status["enum"], allowed_statuses)
+
+        subscription_source = Path("payments/src/payments/domain/entities/subscription.py").read_text(encoding="utf-8")
+        self.assertIn('Literal["pending", "active", "past_due", "cancel_scheduled", "canceled"]', subscription_source)
+        self.assertNotIn("pending_billing_auth", subscription_source)
+        self.assertNotIn("suspended", subscription_source)
+
+        serialized_data = json.dumps(data, ensure_ascii=False)
+        self.assertNotIn("pending_billing_auth", serialized_data)
+
+        scoped_api_details = {
+            api_id: detail
+            for api_id, detail in data["apiDetails"].items()
+            if api_id.startswith("admin-") or api_id.startswith("subscriptions-change")
+        }
+        scoped_api_text = json.dumps(scoped_api_details, ensure_ascii=False)
+        self.assertNotIn("suspended", scoped_api_text)
+
+    def test_mongodb_ids_are_application_uuid_strings(self):
+        data = json.loads(Path("docs-data/documentation.json").read_text(encoding="utf-8"))
+        serialized_database = json.dumps(data["database"], ensure_ascii=False)
+
+        self.assertNotIn("ObjectId", serialized_database)
+        self.assertNotIn("objectId", serialized_database)
+
+        for collection in data["database"]["collections"]:
+            id_field = next(field for field in collection["fields"] if field["name"] == "_id")
+            self.assertEqual(id_field["type"], "UuidString")
+            self.assertIn("UUID", id_field["description"])
+            self.assertIn("애플리케이션", id_field["description"])
+            self.assertIn("_id", id_field["description"])
+
+            for field in collection["fields"]:
+                if field.get("ref", "").endswith("._id"):
+                    self.assertEqual(field["type"], "UuidString")
+
+    def test_python_entity_id_fields_are_mongodb_ids_with_generators(self):
+        entity_dir = Path("payments/src/payments/domain/entities")
+        entity_files = [
+            "billing_auth.py",
+            "billing_method.py",
+            "checkout.py",
+            "idempotency_key.py",
+            "invoice.py",
+            "one_time_sku.py",
+            "operation_lock.py",
+            "operator_audit.py",
+            "payment.py",
+            "payment_customer.py",
+            "payment_instrument.py",
+            "product.py",
+            "subscription.py",
+            "subscription_plan.py",
+            "webhook_event.py",
+        ]
+
+        for filename in entity_files:
+            entity_path = entity_dir / filename
+            self.assertTrue(entity_path.exists(), filename)
+            source = entity_path.read_text(encoding="utf-8")
+            self.assertIn("id: str", source, filename)
+            self.assertIn("def generate_id", source, filename)
+            self.assertIn("generate_uuid_id", source, filename)
+
+        id_helper = (entity_dir / "ids.py").read_text(encoding="utf-8")
+        self.assertIn("uuid.uuid7().hex", id_helper)
+        self.assertIn("generate_uuid_id", id_helper)
+
+    def test_documented_mongodb_collections_have_python_entities(self):
+        data = json.loads(Path("docs-data/documentation.json").read_text(encoding="utf-8"))
+        entity_dir = Path("payments/src/payments/domain/entities")
+        entity_by_collection = {
+            "invoices": "invoice.py",
+            "billing-methods": "billing_method.py",
+            "payment-instruments": "payment_instrument.py",
+            "webhook-events": "webhook_event.py",
+            "idempotency-keys": "idempotency_key.py",
+            "operation-locks": "operation_lock.py",
+            "operator-audits": "operator_audit.py",
+        }
+
+        for collection_id, filename in entity_by_collection.items():
+            collection = self._collection_by_id(data, collection_id)
+            entity_path = entity_dir / filename
+            self.assertTrue(entity_path.exists(), filename)
+            source = entity_path.read_text(encoding="utf-8")
+
+            self.assertIn("id: str", source, filename)
+            self.assertIn("def generate_id", source, filename)
+            self.assertIn("generate_uuid_id", source, filename)
+
+            for field in collection["fields"]:
+                field_name = "id" if field["name"] == "_id" else field["name"]
+                self.assertIn(f"{field_name}:", source, f"{filename} missing {field_name}")
+                for enum_value in field.get("enum", []):
+                    self.assertIn(f'"{enum_value}"', source, f"{filename} missing enum {enum_value}")
+
+    def test_payment_entity_matches_documented_payment_collection(self):
+        data = json.loads(Path("docs-data/documentation.json").read_text(encoding="utf-8"))
+        payments = self._collection_by_id(data, "payments")
+        source = Path("payments/src/payments/domain/entities/payment.py").read_text(encoding="utf-8")
+
+        for field in payments["fields"]:
+            field_name = "id" if field["name"] == "_id" else field["name"]
+            self.assertIn(f"{field_name}:", source)
+            for enum_value in field.get("enum", []):
+                self.assertIn(f'"{enum_value}"', source)
+
+        optional_fields = [
+            "subscription_id",
+            "billing_cycle_key",
+            "checkout_id",
+            "payment_customer_id",
+            "payment_key",
+            "cancelable_amount",
+        ]
+        for field_name in optional_fields:
+            self.assertRegex(source, rf"{field_name}: .* \\| None = None")
+
+        required_fields = ["order_id", "amount", "status", "created_at"]
+        for field_name in required_fields:
+            self.assertRegex(source, rf"{field_name}: (?!.*None = None)")
+
+    def test_billing_auth_entity_persists_default_choice_and_expiration(self):
+        data = json.loads(Path("docs-data/documentation.json").read_text(encoding="utf-8"))
+        billing_auths = self._collection_by_id(data, "billing-auths")
+        source = Path("payments/src/payments/domain/entities/billing_auth.py").read_text(encoding="utf-8")
+
+        documented_fields = {field["name"] for field in billing_auths["fields"]}
+        self.assertIn("set_as_default", documented_fields)
+        self.assertIn("expires_at", documented_fields)
+        self.assertNotIn("billing_auth_id", documented_fields)
+        self.assertNotIn("order_id", documented_fields)
+
+        expected_fields = [
+            "id",
+            "user_id",
+            "payment_customer_id",
+            "customer_key_snapshot",
+            "set_as_default",
+            "status",
+            "expires_at",
+        ]
+        for field_name in expected_fields:
+            self.assertIn(f"{field_name}:", source)
+
+        self.assertNotIn("billing_auth_id:", source)
+        self.assertNotIn("order_id:", source)
+
+        self.assertIn("datetime", source)
+
+    def test_public_checkout_id_maps_to_mongodb_id_without_duplicate_field(self):
+        data = json.loads(Path("docs-data/documentation.json").read_text(encoding="utf-8"))
+        checkouts = self._collection_by_id(data, "checkouts")
+        fields = {field["name"]: field for field in checkouts["fields"]}
+
+        self.assertIn("_id", fields)
+        self.assertIn("checkoutId", fields["_id"]["description"])
+        self.assertNotIn("checkout_id", fields)
+
+        payments = self._collection_by_id(data, "payments")
+        payment_checkout = next(field for field in payments["fields"] if field["name"] == "checkout_id")
+        self.assertEqual(payment_checkout["ref"], "checkouts._id")
+
+    def test_subscription_plan_entity_includes_required_entitlements(self):
+        data = json.loads(Path("docs-data/documentation.json").read_text(encoding="utf-8"))
+        subscription_plans = self._collection_by_id(data, "subscription-plans")
+        source = Path("payments/src/payments/domain/entities/subscription_plan.py").read_text(encoding="utf-8")
+
+        entitlements = next(field for field in subscription_plans["fields"] if field["name"] == "entitlements")
+        self.assertTrue(entitlements["required"])
+        self.assertIn("entitlements:", source)
+        self.assertNotRegex(source, r"entitlements: .* \| None = None")
+
+    def test_one_time_sku_keeps_api_dto_and_internal_storage_contract_distinct(self):
+        data = json.loads(Path("docs-data/documentation.json").read_text(encoding="utf-8"))
+        one_time_skus = self._collection_by_id(data, "one-time-skus")
+        source = Path("payments/src/payments/domain/entities/one_time_sku.py").read_text(encoding="utf-8")
+
+        fields = {field["name"]: field for field in one_time_skus["fields"]}
+        self.assertIn("_id", fields)
+        self.assertIn("stock_policy", fields)
+        self.assertEqual(fields["stock_policy"]["type"], "string")
+        self.assertEqual(fields["stock_policy"]["enum"], ["unlimited", "limited"])
+        self.assertFalse(fields["purchase_limit"]["required"])
+
+        self.assertIn("id: str", source)
+        self.assertIn('stock_policy: Literal["unlimited", "limited"]', source)
+        self.assertIn("purchase_limit: dict | None = None", source)
+
+        api_text = json.dumps(
+            {
+                "create": data["apiDetails"]["admin-one-time-skus-create"],
+                "update": data["apiDetails"]["admin-one-time-skus-update"],
+            },
+            ensure_ascii=False,
+        )
+        self.assertIn("skuId", api_text)
+        self.assertIn("stockPolicy.type", api_text)
+        self.assertIn("OneTimeSku.id", api_text)
+        self.assertIn("stock_policy", api_text)
 
     def test_documentation_includes_core_mongodb_collections(self):
         data = json.loads(Path("docs-data/documentation.json").read_text(encoding="utf-8"))
@@ -201,7 +471,6 @@ class GenerateDocsTest(unittest.TestCase):
 
         self.assertTrue(
             {
-                "users",
                 "payment-customers",
                 "payment-instruments",
                 "products",
@@ -213,15 +482,12 @@ class GenerateDocsTest(unittest.TestCase):
         )
 
         collections = {collection["id"]: collection for collection in data["database"]["collections"]}
-        user_fields = {field["name"] for field in collections["users"]["fields"]}
         payment_customer_fields = {field["name"] for field in collections["payment-customers"]["fields"]}
         payment_customer_indexes = {tuple(index["fields"]) for index in collections["payment-customers"]["indexes"]}
         billing_method_fields = {field["name"] for field in collections["billing-methods"]["fields"]}
         payment_instrument_fields = {field["name"] for field in collections["payment-instruments"]["fields"]}
         payment_instrument_indexes = {tuple(index["fields"]) for index in collections["payment-instruments"]["indexes"]}
 
-        self.assertNotIn("customer_key", user_fields)
-        self.assertNotIn("default_billing_method_id", user_fields)
         self.assertIn("customer_key", payment_customer_fields)
         self.assertIn(("provider", "customer_key"), payment_customer_indexes)
         self.assertNotIn("billing_key", billing_method_fields)
@@ -446,16 +712,15 @@ class GenerateDocsTest(unittest.TestCase):
                         "fields": [
                             {
                                 "name": "_id",
-                                "type": "ObjectId",
+                                "type": "UuidString",
                                 "required": True,
-                                "description": "구독 문서 ID입니다."
+                                "description": "구독의 MongoDB _id입니다. 애플리케이션이 자체 UUID 방식으로 생성해 문자열로 저장합니다."
                             },
                             {
-                                "name": "userId",
-                                "type": "ObjectId",
+                                "name": "user_id",
+                                "type": "ExternalUserId",
                                 "required": True,
-                                "ref": "users._id",
-                                "description": "구독 소유 사용자입니다."
+                                "description": "회원 서비스가 소유한 외부 사용자 식별자입니다."
                             },
                             {
                                 "name": "status",
@@ -467,7 +732,7 @@ class GenerateDocsTest(unittest.TestCase):
                         ],
                         "indexes": [
                             {
-                                "fields": ["userId", "status"],
+                                "fields": ["user_id", "status"],
                                 "unique": False,
                                 "description": "사용자의 현재 구독 조회에 사용합니다."
                             }
@@ -477,10 +742,10 @@ class GenerateDocsTest(unittest.TestCase):
                 ],
                 "relationships": [
                     {
-                        "from": "subscriptions.userId",
-                        "to": "users._id",
+                        "from": "subscriptions.user_id",
+                        "to": "member_service.user",
                         "type": "reference",
-                        "description": "구독 소유 사용자를 참조합니다."
+                        "description": "구독 소유자는 외부 회원 서비스의 사용자입니다."
                     }
                 ],
                 "apiAccess": [
@@ -589,7 +854,7 @@ class GenerateDocsTest(unittest.TestCase):
             self.assertIn("shape: sequence_diagram", (out_dir / "diagrams" / "initial-subscription-success-main.d2").read_text(encoding="utf-8"))
             self.assertIn("MongoDB 구조", database)
             self.assertIn("subscriptions", database)
-            self.assertIn("subscriptions.userId", database)
+            self.assertIn("subscriptions.user_id", database)
             self.assertIn("POST /subscriptions/confirm", database)
             self.assertIn("active → cancel_scheduled", database)
 

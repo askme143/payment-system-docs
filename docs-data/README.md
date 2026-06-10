@@ -143,11 +143,16 @@ Use the same API id everywhere:
   "description": "사용자의 구독 상태와 다음 결제 일정을 관리합니다.",
   "fields": [
     {
-      "name": "userId",
-      "type": "ObjectId",
+      "name": "_id",
+      "type": "UuidString",
       "required": true,
-      "ref": "users._id",
-      "description": "구독 소유 사용자입니다."
+      "description": "구독의 MongoDB _id입니다. 애플리케이션이 자체 UUID 방식으로 생성해 문자열로 저장합니다."
+    },
+    {
+      "name": "user_id",
+      "type": "ExternalUserId",
+      "required": true,
+      "description": "회원 서비스가 소유한 외부 사용자 식별자입니다. 결제 시스템은 사용자 원본 문서를 저장하지 않습니다."
     },
     {
       "name": "status",
@@ -159,7 +164,7 @@ Use the same API id everywhere:
   ],
   "indexes": [
     {
-      "fields": ["userId", "status"],
+      "fields": ["user_id", "status"],
       "description": "사용자의 활성/예약 구독 조회에 사용합니다."
     }
   ],

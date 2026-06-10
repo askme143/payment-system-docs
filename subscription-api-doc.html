@@ -710,11 +710,11 @@ planId, successUrl, failUrl
     style.italic: false
   }
   server.note_4: &quot;상품별 중복 구독 검증\nUNIQUE active(userId, productCode)\n같은 상품의 활성 구독은 거부하고 다른 상품의 활성 구독은 허용&quot;
-  server.note_5: &quot;주문 및 구독 대기 상태 생성\npending_billing_auth\norderId, customerKey, amount 계산&quot;
+  server.note_5: &quot;주문 및 구독 대기 상태 생성\npending\ncustomerKey, amount 계산&quot;
   server -&gt; client: |md
 토스 SDK 호출 데이터 반환
 
-subscriptionId, orderId, customerKey, amount
+subscriptionId, customerKey, amount
 
 successUrl에는 subscriptionId 포함
 | {
@@ -840,7 +840,7 @@ status=active, paymentStatus=paid
 </section>
   <section id="states">
   <h2>상태 요약</h2>
-  <div class="table-scroll"><table class="has-many-columns"><thead><tr><th>시점</th><th>구독 상태</th><th>결제 상태</th><th>설명</th></tr></thead><tbody><tr><td data-label="시점">체크아웃 생성 후</td><td data-label="구독 상태"><code>pending_billing_auth</code></td><td data-label="결제 상태"><code>ready</code></td><td data-label="설명">회원이 토스 빌링 인증을 시작할 수 있습니다.</td></tr><tr><td data-label="시점">첫 결제 성공 후</td><td data-label="구독 상태"><code>active</code></td><td data-label="결제 상태"><code>paid</code></td><td data-label="설명">서비스 이용이 가능하고 다음 결제일이 예약됩니다.</td></tr></tbody></table></div>
+  <div class="table-scroll"><table class="has-many-columns"><thead><tr><th>시점</th><th>구독 상태</th><th>결제 상태</th><th>설명</th></tr></thead><tbody><tr><td data-label="시점">체크아웃 생성 후</td><td data-label="구독 상태"><code>pending</code></td><td data-label="결제 상태"><code>ready</code></td><td data-label="설명">회원이 토스 빌링 인증을 시작할 수 있습니다.</td></tr><tr><td data-label="시점">첫 결제 성공 후</td><td data-label="구독 상태"><code>active</code></td><td data-label="결제 상태"><code>paid</code></td><td data-label="설명">서비스 이용이 가능하고 다음 결제일이 예약됩니다.</td></tr></tbody></table></div>
 </section>
 </main>
 <script>

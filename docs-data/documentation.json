@@ -754,7 +754,7 @@
         {
           "name": "status",
           "source": "query",
-          "description": "active, cancel_scheduled, past_due, suspended, canceled 중 하나 이상으로 필터링합니다."
+          "description": "active, cancel_scheduled, past_due, canceled 중 하나 이상으로 필터링합니다."
         },
         {
           "name": "userId",
@@ -1403,7 +1403,6 @@
           "description": "구독 체크아웃 생성 성공",
           "bodyExample": {
             "subscriptionId": "sub_123",
-            "orderId": "ord_20260608_abc",
             "customerKey": "cus_7b57c0f1b4",
             "productCode": "ANALYTICS",
             "amount": 9900,
@@ -1421,8 +1420,8 @@
         "플랜의 productCode를 확인하고, 같은 회원에게 같은 productCode의 활성 구독이 이미 있으면 409로 거부하거나 해당 상품의 플랜 변경 플로우로 안내합니다.",
         "같은 회원에게 다른 productCode의 활성 구독이 있으면 별도 상품 구독으로 허용합니다.",
         "paymentCustomers에서 토스 customerKey를 조회하거나 없으면 새로 생성합니다.",
-        "subscription, order, payment 초안을 생성하고 상태를 pending_billing_auth로 저장합니다.",
-        "프론트가 토스 SDK를 호출할 수 있도록 clientKey, customerKey, orderId, 금액 정보를 반환합니다."
+        "subscription 초안을 생성하고 구독 상태를 pending으로 저장합니다.",
+        "프론트가 토스 SDK를 호출할 수 있도록 clientKey, customerKey, 금액 정보를 반환합니다."
       ],
       "riskIds": [
         "duplicate-active-subscription"
@@ -1526,11 +1525,12 @@
       ],
       "logic": [
         "회원 인증 후 subscriptionId가 현재 회원 소유인지 확인합니다.",
-        "subscription 상태가 pending_billing_auth 또는 재시도 가능한 상태인지 확인합니다.",
+        "subscription 상태가 pending 또는 재시도 가능한 상태인지 확인합니다.",
         "customerKey가 구독 체크아웃에 연결된 paymentCustomers.customerKey와 일치하는지 검증합니다.",
         "Idempotency-Key 또는 subscriptionId 기준으로 이미 성공 처리된 요청인지 확인합니다.",
         "토스페이먼츠 빌링키 발급 API를 호출하고 billingKey를 받습니다.",
         "billingKey는 암호화 저장하고, 화면 표시용 카드사와 마스킹 카드번호만 별도 저장합니다.",
+        "첫 결제용 payment와 토스 승인용 orderId를 생성합니다.",
         "토스페이먼츠 자동결제 승인 API를 호출해 첫 결제를 실행합니다.",
         "결제 성공 시 결제 레코드와 인보이스를 paid로 저장하고 구독을 active로 변경합니다.",
         "다음 결제일을 계산하고 정기 과금 배치가 읽을 수 있는 청구 예정 데이터를 생성합니다."
@@ -1887,7 +1887,7 @@
       ],
       "logic": [
         "회원 인증 후 subscriptionId가 현재 회원 소유인지 확인합니다.",
-        "구독 상태가 active인지 확인합니다. cancel_scheduled, canceled, suspended 상태는 변경 미리보기를 거부합니다.",
+        "구독 상태가 active인지 확인합니다. past_due, cancel_scheduled, canceled 상태는 변경 미리보기를 거부합니다.",
         "targetPlanId가 존재하고 판매 가능한 플랜인지 확인합니다.",
         "targetPlan.productCode == subscription.productCode인지 검증합니다. 다른 상품으로 이동하는 요청은 신규 구독 또는 별도 전환 정책으로 처리합니다.",
         "서버가 업그레이드와 다운그레이드를 판정합니다. 클라이언트가 immediate 또는 next_cycle 같은 적용 정책을 선택할 수 없습니다.",
@@ -2017,7 +2017,7 @@
       ],
       "logic": [
         "회원 인증 후 subscriptionId가 현재 회원 소유인지 확인합니다.",
-        "구독 상태가 active인지 확인합니다. past_due, cancel_scheduled, canceled, suspended 상태는 변경을 거부합니다.",
+        "구독 상태가 active인지 확인합니다. past_due, cancel_scheduled, canceled 상태는 변경을 거부합니다.",
         "confirmationToken이 이 구독, 이 회원, 이 targetPlanId, 이 serverDecision에 대해 발급됐고 만료되지 않았는지 확인합니다.",
         "confirmed=true인지 확인해 유저가 안내를 확인하지 않은 실행 요청을 거부합니다.",
         "토큰에 저장된 targetPlan.productCode == subscription.productCode인지 다시 검증합니다.",
@@ -2055,7 +2055,7 @@
       ]
     },
     "billing-auth": {
-      "summary": "회원이 새 결제수단을 등록하기 전에 서버가 토스 빌링 인증에 필요한 customerKey, orderId, successUrl, failUrl을 생성하는 API입니다. 이 단계에서는 빌링키를 저장하지 않고 인증 시도만 ready 상태로 기록합니다.",
+      "summary": "회원이 새 결제수단을 등록하기 전에 서버가 토스 빌링 인증에 필요한 customerKey, successUrl, failUrl을 생성하는 API입니다. 이 단계에서는 빌링키를 저장하지 않고 인증 시도만 ready 상태로 기록합니다.",
       "request": {
         "headers": [
           {
@@ -2116,7 +2116,6 @@
           "bodyExample": {
             "billingAuthId": "bauth_123",
             "customerKey": "cus_7b57c0f1b4",
-            "orderId": "billing_20260608_abcd",
             "clientKey": "test_ck_...",
             "successUrl": "https://example.com/account/billing-methods/success?billingAuthId=bauth_123",
             "failUrl": "https://example.com/account/billing-methods/fail?billingAuthId=bauth_123",
@@ -2136,10 +2135,10 @@
       "logic": [
         "회원 인증 후 결제수단 등록 가능 상태인지 확인합니다.",
         "successUrl과 failUrl이 허용된 서비스 도메인인지 검증합니다.",
-        "paymentCustomers에서 토스 customerKey를 조회하거나 없으면 새로 생성하고, 토스 빌링 인증용 orderId를 생성합니다.",
-        "billingAuthId, paymentCustomerId, customer_key_snapshot, orderId, setAsDefault, status=ready, 만료 시각을 저장합니다.",
+        "paymentCustomers에서 토스 customerKey를 조회하거나 없으면 새로 생성합니다.",
+        "billingAuthId로 노출할 _id, paymentCustomerId, customer_key_snapshot, setAsDefault, status=ready, 만료 시각을 저장합니다.",
         "현재 활성 결제수단이 없으면 setAsDefault=false 요청이어도 새 결제수단을 기본값으로 지정하도록 예약합니다.",
-        "프론트가 토스 SDK의 빌링 인증을 시작할 수 있도록 clientKey, customerKey, orderId, successUrl, failUrl을 반환합니다."
+        "프론트가 토스 SDK의 빌링 인증을 시작할 수 있도록 clientKey, customerKey, successUrl, failUrl을 반환합니다."
       ],
       "notes": [
         "토스 시크릿 키와 billingKey는 이 응답에 포함하지 않습니다.",
@@ -2269,7 +2268,7 @@
         "검증을 통과한 경우에만 토스페이먼츠 빌링키 발급 API POST /v1/billing/authorizations/issue를 호출합니다.",
         "토스 응답의 billingKey는 paymentInstruments에 암호화 저장하고, billingMethods에는 카드사와 마스킹 번호 같은 표시용 정보만 저장합니다.",
         "첫 활성 결제수단이거나 billing-auth에서 setAsDefault=true로 예약된 경우 기존 기본값을 해제하고 새 결제수단을 기본값으로 지정합니다.",
-        "발급 실패 시 billingAuthId를 failed로 저장하고 providerCode, 메시지, 재시도 가능 여부를 기록합니다."
+        "발급 실패 시 빌링 인증 시도를 failed로 저장하고 providerCode, 메시지, 재시도 가능 여부를 기록합니다."
       ],
       "externalCalls": [
         {
@@ -3260,7 +3259,7 @@
           {
             "name": "targetStatus",
             "required": false,
-            "description": "status_override 또는 clear_payment_failure에서 목표 구독 상태를 지정합니다. 예: active, canceled, suspended."
+            "description": "status_override 또는 clear_payment_failure에서 목표 구독 상태를 지정합니다. 예: active, past_due, cancel_scheduled, canceled."
           },
           {
             "name": "reasonCode",
@@ -3390,7 +3389,7 @@
           {
             "name": "status",
             "required": false,
-            "description": "draft, active, suspended, archived 중 하나입니다. 기본값은 draft입니다."
+            "description": "draft, active, paused, archived 중 하나입니다. 기본값은 draft입니다."
           }
         ]
       },
@@ -3567,7 +3566,7 @@
           {
             "name": "status",
             "required": false,
-            "description": "active, hidden, suspended 중 하나입니다. suspended 플랜은 신규 가입과 플랜 변경 후보에서 제외합니다."
+            "description": "active, hidden, paused 중 하나입니다. paused 플랜은 신규 가입과 플랜 변경 후보에서 제외합니다."
           },
           {
             "name": "entitlements",
@@ -3618,7 +3617,7 @@
         "productId와 planId가 존재하고 product.productType == subscription인지 검증합니다.",
         "amount, currency, status, entitlements를 검증하고 변경 가능한 필드만 반영합니다.",
         "가격이나 권한 정책이 바뀌면 기존 invoice와 payment는 그대로 두고 신규 가입 또는 다음 정기결제 계산에서 참조할 planVersion을 갱신합니다.",
-        "suspended 또는 hidden 상태의 플랜은 공개 플랜 목록, 신규 구독 체크아웃, 플랜 변경 후보에서 제외합니다.",
+        "paused 또는 hidden 상태의 플랜은 공개 플랜 목록, 신규 구독 체크아웃, 플랜 변경 후보에서 제외합니다.",
         "관리자 ID, 요청 IP, 변경 전후 값, changeReason을 감사 로그에 저장합니다."
       ],
       "failureRules": [
@@ -3733,14 +3732,16 @@
         "skuCode 중복, amount 양수, currency, 재고 정책과 limited일 때의 totalStock 초기값을 검증합니다.",
         "일반상품 SKU를 생성하고 주문 생성 API가 참조할 판매 가능 상태로 저장합니다.",
         "일반상품 SKU는 주문 생성 시점에 가격 스냅샷으로 고정합니다.",
-        "stockPolicy를 생략하면 unlimited로 저장하고 재고 카운터를 사용하지 않습니다.",
+        "API의 stockPolicy.type을 내부 one_time_skus.stock_policy 문자열로 저장합니다. stockPolicy를 생략하면 stock_policy=unlimited로 저장하고 재고 카운터를 사용하지 않습니다.",
         "limited 재고 SKU는 totalStock, reservedStock=0, soldStock=0을 함께 저장하고 availableStock은 totalStock - reservedStock - soldStock으로 계산합니다.",
         "SKU 생성 이력을 감사 로그에 남기고 판매 중인 SKU만 결제 주문 생성에서 선택할 수 있게 합니다."
       ],
       "notes": [
+        "응답의 skuId는 one_time_skus._id이며 코드에서는 OneTimeSku.id로 다룹니다. skuCode는 상품 안에서 관리하는 별도 코드입니다.",
         "일반상품 가격 수정은 미결제 checkout의 서버 재계산에는 반영될 수 있지만, 이미 승인 요청 중인 payment의 amount는 바꾸지 않습니다.",
         "대부분의 일반상품은 unlimited SKU로 두고, 수량 제한이 필요한 이벤트성 상품이나 실물 재고 상품에만 limited 카운터를 사용합니다.",
         "limited SKU의 재고 수량은 stockPolicy 객체 안에 숨기지 않고 SKU 카운터 필드로 관리합니다.",
+        "purchaseLimit는 선택 정책이며 요청에 없으면 내부 one_time_skus.purchase_limit도 생략합니다.",
         "limited SKU는 주문 생성 시 reservedStock을 증가시키고, 결제 승인 성공 시 reservedStock을 줄이며 soldStock을 증가시킵니다."
       ]
     },
@@ -3789,7 +3790,7 @@
           {
             "name": "status",
             "required": false,
-            "description": "active, hidden, suspended 중 하나입니다. suspended SKU는 신규 주문 생성에서 선택할 수 없습니다."
+            "description": "active, hidden, paused 중 하나입니다. paused SKU는 신규 주문 생성에서 선택할 수 없습니다."
           },
           {
             "name": "stockPolicy",
@@ -3854,9 +3855,9 @@
       "logic": [
         "관리자 인증과 product_manage 권한을 확인합니다.",
         "productId와 skuId가 존재하고 product.productType == one_time인지 검증합니다.",
-        "amount, currency, status, stockPolicy, totalStock, purchaseLimit를 검증하고 변경 가능한 필드만 반영합니다.",
+        "amount, currency, status, stockPolicy, totalStock, purchaseLimit를 검증하고 변경 가능한 필드만 반영합니다. API의 stockPolicy.type은 내부 one_time_skus.stock_policy 문자열로 저장합니다.",
         "SKU 가격 변경은 이후 새 주문 생성의 서버 재계산에만 적용하고, 이미 생성된 order, checkout, payment의 amount는 변경하지 않습니다.",
-        "suspended 또는 hidden 상태의 SKU는 일반결제 주문 생성 후보에서 제외합니다.",
+        "paused 또는 hidden 상태의 SKU는 일반결제 주문 생성 후보에서 제외합니다.",
         "재고 정책 변경 시 reservedStock + soldStock을 기준으로 음수 재고가 발생하지 않는지 확인합니다.",
         "관리자 ID, 요청 IP, 변경 전후 값, changeReason을 감사 로그에 저장합니다."
       ],
@@ -3886,7 +3887,7 @@
       ]
     },
     "admin-products-status": {
-      "summary": "공통 Product의 판매 상태를 draft, active, suspended, archived로 전환하는 API입니다. Product 상태는 구독 플랜과 일반 SKU의 노출 가능 여부를 감싸는 상위 상태이며, 결제 완료 이력과 기존 구독 데이터는 삭제하지 않습니다.",
+      "summary": "공통 Product의 판매 상태를 draft, active, paused, archived로 전환하는 API입니다. Product 상태는 구독 플랜과 일반 SKU의 노출 가능 여부를 감싸는 상위 상태이며, 결제 완료 이력과 기존 구독 데이터는 삭제하지 않습니다.",
       "request": {
         "headers": [
           {
@@ -3911,7 +3912,7 @@
           {
             "name": "status",
             "required": true,
-            "description": "draft, active, suspended, archived 중 하나입니다."
+            "description": "draft, active, paused, archived 중 하나입니다."
           },
           {
             "name": "reason",
@@ -3959,7 +3960,7 @@
         "관리자 인증과 product_manage 권한을 확인합니다.",
         "productId가 존재하는지 확인하고 현재 status에서 목표 status로 전환 가능한지 검증합니다.",
         "active 전환 시 subscription 상품은 active 플랜이 1개 이상, one_time 상품은 active SKU가 1개 이상 있는지 확인합니다.",
-        "suspended 전환 시 신규 구독 체크아웃과 일반결제 주문 생성을 차단하지만 기존 활성 구독의 다음 결제 정책은 별도 운영 정책에 따릅니다.",
+        "paused 전환 시 신규 구독 체크아웃과 일반결제 주문 생성을 차단하지만 기존 활성 구독의 다음 결제 정책은 별도 운영 정책에 따릅니다.",
         "archived 전환은 신규 판매와 공개 목록 노출을 차단하고, 기존 결제 내역, 환불, 인보이스 조회를 위해 Product 기록은 보존합니다.",
         "상태 변경 이벤트를 저장하고 공개 상품 목록, 플랜 목록, 주문 생성 캐시를 무효화합니다.",
         "관리자 ID, 요청 IP, previousStatus, status, reason을 감사 로그에 저장합니다."
@@ -3980,7 +3981,7 @@
       ],
       "notes": [
         "Product 상태는 상위 판매 가능 상태이고, 실제 결제 금액과 권한은 subscriptionPlans 또는 oneTimeSkus가 보유합니다.",
-        "suspended와 archived는 신규 판매를 막지만 기존 결제 내역과 환불 플로우가 참조할 수 있도록 Product와 하위 판매 단위 기록을 보존합니다.",
+        "paused와 archived는 신규 판매를 막지만 기존 결제 내역과 환불 플로우가 참조할 수 있도록 Product와 하위 판매 단위 기록을 보존합니다.",
         "구독상품 판매 중지는 신규 가입을 차단하는 의미이며, 기존 활성 구독의 유지, 해지, 다음 결제 차단 여부는 별도 운영 정책으로 결정합니다."
       ]
     }
@@ -4091,15 +4092,15 @@
               "type": "self",
               "from": "server",
               "label": "주문 및 구독 대기 상태 생성",
-              "code": "pending_billing_auth",
-              "note": "orderId, customerKey, amount 계산"
+              "code": "pending",
+              "note": "customerKey, amount 계산"
             },
             {
               "type": "message",
               "from": "server",
               "to": "client",
               "label": "토스 SDK 호출 데이터 반환",
-              "code": "subscriptionId, orderId, customerKey, amount",
+              "code": "subscriptionId, customerKey, amount",
               "note": "successUrl에는 subscriptionId 포함"
             },
             {
@@ -4202,7 +4203,7 @@
           "stateSummary": [
             {
               "event": "체크아웃 생성 후",
-              "subscriptionState": "pending_billing_auth",
+              "subscriptionState": "pending",
               "paymentState": "ready",
               "description": "회원이 토스 빌링 인증을 시작할 수 있습니다."
             },
@@ -4943,7 +4944,7 @@
               "type": "branch",
               "label": "재시도 실패 또는 한도 초과",
               "code": "invoice final_failed",
-              "note": "maxAttempts 도달 시 구독을 suspended 또는 canceled로 전환",
+              "note": "maxAttempts 도달 시 구독을 past_due로 유지하거나 canceled로 전환",
               "theme": "failure"
             },
             {
@@ -4986,7 +4987,7 @@
             },
             {
               "event": "최종 실패 후",
-              "subscriptionState": "suspended",
+              "subscriptionState": "past_due 또는 canceled",
               "paymentState": "final_failed",
               "description": "서비스 이용을 제한하고 회원에게 결제수단 변경 또는 재개를 안내합니다."
             }
@@ -6968,7 +6969,7 @@
               "to": "server",
               "label": "상품 판매 상태 전환",
               "apiId": "admin-products-status",
-              "note": "draft -> active 또는 active -> suspended"
+              "note": "draft -> active 또는 active -> paused"
             }
           ],
           "stateSummary": [
@@ -7059,7 +7060,7 @@
               "to": "server",
               "label": "상품 판매 상태 전환",
               "apiId": "admin-products-status",
-              "note": "active -> suspended이면 신규 주문 생성 차단"
+              "note": "active -> paused이면 신규 주문 생성 차단"
             }
           ],
           "stateSummary": [
@@ -7640,7 +7641,7 @@
           "stateSummary": [
             {
               "event": "결제 실패 해제 전",
-              "subscriptionState": "past_due 또는 suspended",
+              "subscriptionState": "past_due",
               "paymentState": "failed",
               "description": "자동 재시도는 끝났지만 고객이 별도 결제를 완료했거나 CS 예외 승인이 필요합니다."
             },
@@ -7661,54 +7662,8 @@
   ],
   "database": {
     "engine": "MongoDB",
-    "description": "결제 시스템의 주요 MongoDB 컬렉션 예시입니다. 컬렉션별 필드, 인덱스, 관계, API별 읽기/쓰기 지점을 함께 관리합니다.",
+    "description": "결제 시스템의 주요 MongoDB 컬렉션 예시입니다. 컬렉션별 필드, 인덱스, 관계, API별 읽기/쓰기 지점을 함께 관리합니다. 회원 원본 정보는 별도 회원 서비스가 소유하며 결제 시스템은 외부 user_id만 참조합니다. 각 컬렉션의 MongoDB _id는 애플리케이션이 자체 UUID 방식으로 생성한 문자열입니다.",
     "collections": [
-      {
-        "id": "users",
-        "name": "users",
-        "title": "사용자",
-        "description": "이미 존재하는 사용자 계정 컬렉션입니다. 결제 도메인은 user_id로만 참조하고 결제 관련 상태는 저장하지 않습니다.",
-        "fields": [
-          {
-            "name": "_id",
-            "type": "ObjectId",
-            "required": true,
-            "description": "사용자 문서 ID입니다."
-          },
-          {
-            "name": "email",
-            "type": "string",
-            "required": true,
-            "description": "로그인과 결제 안내에 사용하는 이메일입니다."
-          },
-          {
-            "name": "status",
-            "type": "string",
-            "required": true,
-            "enum": [
-              "active",
-              "withdrawn",
-              "blocked"
-            ],
-            "description": "사용자 계정 상태입니다."
-          }
-        ],
-        "indexes": [
-          {
-            "fields": [
-              "email"
-            ],
-            "unique": true,
-            "description": "이메일 중복 가입을 방지합니다."
-          }
-        ],
-        "relatedApis": [
-          "subscriptions-checkout",
-          "payments-orders",
-          "billing-auth",
-          "billing-issue"
-        ]
-      },
       {
         "id": "payment-customers",
         "name": "payment_customers",
@@ -7717,16 +7672,15 @@
         "fields": [
           {
             "name": "_id",
-            "type": "ObjectId",
+            "type": "UuidString",
             "required": true,
-            "description": "결제 고객 문서 ID입니다."
+            "description": "결제 고객의 MongoDB _id입니다. 애플리케이션이 자체 UUID 방식으로 생성해 문자열로 저장합니다."
           },
           {
             "name": "user_id",
-            "type": "ObjectId",
+            "type": "ExternalUserId",
             "required": true,
-            "ref": "users._id",
-            "description": "내부 사용자 문서 ID입니다."
+            "description": "회원 서비스가 소유한 외부 사용자 식별자입니다. 결제 시스템은 이 값을 참조만 하고 사용자 원본 문서를 저장하지 않습니다."
           },
           {
             "name": "provider",
@@ -7793,9 +7747,9 @@
         "fields": [
           {
             "name": "_id",
-            "type": "ObjectId",
+            "type": "UuidString",
             "required": true,
-            "description": "상품 문서 ID입니다."
+            "description": "상품의 MongoDB _id입니다. 애플리케이션이 자체 UUID 방식으로 생성해 문자열로 저장합니다."
           },
           {
             "name": "product_code",
@@ -7857,16 +7811,16 @@
         "fields": [
           {
             "name": "_id",
-            "type": "ObjectId",
+            "type": "UuidString",
             "required": true,
-            "description": "구독 플랜 문서 ID입니다."
+            "description": "구독 플랜의 MongoDB _id입니다. 애플리케이션이 자체 UUID 방식으로 생성해 문자열로 저장합니다."
           },
           {
             "name": "product_id",
-            "type": "ObjectId",
+            "type": "UuidString",
             "required": true,
             "ref": "products._id",
-            "description": "플랜이 속한 구독 상품입니다."
+            "description": "플랜이 속한 구독 상품입니다. 참조 대상 _id는 애플리케이션 생성 UUID 문자열입니다."
           },
           {
             "name": "plan_code",
@@ -7943,16 +7897,16 @@
         "fields": [
           {
             "name": "_id",
-            "type": "ObjectId",
+            "type": "UuidString",
             "required": true,
-            "description": "일회성 SKU 문서 ID입니다."
+            "description": "일회성 SKU의 MongoDB _id입니다. 애플리케이션이 자체 UUID 방식으로 생성해 문자열로 저장합니다."
           },
           {
             "name": "product_id",
-            "type": "ObjectId",
+            "type": "UuidString",
             "required": true,
             "ref": "products._id",
-            "description": "SKU가 속한 일반결제 상품입니다."
+            "description": "SKU가 속한 일반결제 상품입니다. 참조 대상 _id는 애플리케이션 생성 UUID 문자열입니다."
           },
           {
             "name": "sku_code",
@@ -8045,29 +7999,22 @@
         "fields": [
           {
             "name": "_id",
-            "type": "ObjectId",
+            "type": "UuidString",
             "required": true,
-            "description": "구매 의도 문서 ID입니다."
-          },
-          {
-            "name": "checkout_id",
-            "type": "string",
-            "required": true,
-            "description": "프론트 재시도와 결제 시도 묶음에 사용하는 공개 ID입니다."
+            "description": "구매 의도의 MongoDB _id입니다. 애플리케이션이 자체 UUID 방식으로 생성해 문자열로 저장하며 API에서는 checkoutId로 노출합니다."
           },
           {
             "name": "user_id",
-            "type": "ObjectId",
+            "type": "ExternalUserId",
             "required": true,
-            "ref": "users._id",
-            "description": "구매 의도 소유 사용자입니다."
+            "description": "구매 의도를 만든 외부 사용자 식별자입니다. 결제 시스템은 이 값으로 소유권을 확인하지만 사용자 원본 문서를 저장하지 않습니다."
           },
           {
             "name": "payment_customer_id",
-            "type": "ObjectId",
+            "type": "UuidString",
             "required": true,
             "ref": "payment_customers._id",
-            "description": "토스 결제창 호출에 사용할 PG 고객 식별자입니다."
+            "description": "토스 결제창 호출에 사용할 PG 고객 식별자입니다. 참조 대상 _id는 애플리케이션 생성 UUID 문자열입니다."
           },
           {
             "name": "items",
@@ -8089,10 +8036,10 @@
           },
           {
             "name": "last_payment_id",
-            "type": "ObjectId",
+            "type": "UuidString",
             "required": false,
             "ref": "payments._id",
-            "description": "마지막 결제 시도입니다."
+            "description": "마지막 결제 시도입니다. 참조 대상 _id는 애플리케이션 생성 UUID 문자열입니다."
           },
           {
             "name": "created_at",
@@ -8102,13 +8049,6 @@
           }
         ],
         "indexes": [
-          {
-            "fields": [
-              "checkout_id"
-            ],
-            "unique": true,
-            "description": "프론트가 전달하는 checkout_id를 고유하게 유지합니다."
-          },
           {
             "fields": [
               "user_id",
@@ -8136,29 +8076,22 @@
         "fields": [
           {
             "name": "_id",
-            "type": "ObjectId",
+            "type": "UuidString",
             "required": true,
-            "description": "빌링 인증 시도 문서 ID입니다."
-          },
-          {
-            "name": "billing_auth_id",
-            "type": "string",
-            "required": true,
-            "description": "프론트가 성공 페이지에서 다시 전달하는 인증 시도 ID입니다."
+            "description": "빌링 인증 시도의 MongoDB _id입니다. 애플리케이션이 자체 UUID 방식으로 생성해 문자열로 저장하며 API에서는 billingAuthId로 노출합니다."
           },
           {
             "name": "user_id",
-            "type": "ObjectId",
+            "type": "ExternalUserId",
             "required": true,
-            "ref": "users._id",
-            "description": "인증 시도 소유 사용자입니다."
+            "description": "결제수단을 등록하는 외부 사용자 식별자입니다. 회원 원본 정보는 회원 서비스에서 관리합니다."
           },
           {
             "name": "payment_customer_id",
-            "type": "ObjectId",
+            "type": "UuidString",
             "required": true,
             "ref": "payment_customers._id",
-            "description": "빌링 인증에 사용할 PG 고객 식별자 문서입니다."
+            "description": "빌링 인증에 사용할 PG 고객 식별자 문서입니다. 참조 대상 _id는 애플리케이션 생성 UUID 문자열입니다."
           },
           {
             "name": "customer_key_snapshot",
@@ -8167,10 +8100,10 @@
             "description": "리다이렉트 검증을 위해 인증 시점에 사용한 토스 customerKey 스냅샷입니다."
           },
           {
-            "name": "order_id",
-            "type": "string",
+            "name": "set_as_default",
+            "type": "boolean",
             "required": true,
-            "description": "토스 빌링 인증 요청에 사용한 주문 ID입니다."
+            "description": "빌링키 발급 후 새 결제수단을 기본 결제수단으로 지정할지 저장한 값입니다. 첫 결제수단이면 요청 값과 무관하게 기본값 지정 예약에 사용합니다."
           },
           {
             "name": "status",
@@ -8183,16 +8116,15 @@
               "expired"
             ],
             "description": "빌링키 발급 전후의 인증 시도 상태입니다."
+          },
+          {
+            "name": "expires_at",
+            "type": "Date",
+            "required": true,
+            "description": "빌링 인증 시도 만료 시각입니다. 만료 후 billing-issue 요청은 거부하고 인증 시도를 expired로 전환합니다."
           }
         ],
         "indexes": [
-          {
-            "fields": [
-              "billing_auth_id"
-            ],
-            "unique": true,
-            "description": "성공 페이지에서 인증 시도를 정확히 찾습니다."
-          },
           {
             "fields": [
               "user_id",
@@ -8214,30 +8146,29 @@
         "fields": [
           {
             "name": "_id",
-            "type": "ObjectId",
+            "type": "UuidString",
             "required": true,
-            "description": "구독 문서 ID입니다."
+            "description": "구독의 MongoDB _id입니다. 애플리케이션이 자체 UUID 방식으로 생성해 문자열로 저장합니다."
           },
           {
             "name": "user_id",
-            "type": "ObjectId",
+            "type": "ExternalUserId",
             "required": true,
-            "ref": "users._id",
-            "description": "구독 소유 사용자입니다."
+            "description": "구독 소유 외부 사용자 식별자입니다. 결제 시스템은 이 값으로 구독을 묶고 사용자 원본 문서를 저장하지 않습니다."
           },
           {
             "name": "payment_customer_id",
-            "type": "ObjectId",
+            "type": "UuidString",
             "required": true,
             "ref": "payment_customers._id",
-            "description": "구독 빌링 인증에 사용한 PG 고객 식별자입니다."
+            "description": "구독 빌링 인증에 사용한 PG 고객 식별자입니다. 참조 대상 _id는 애플리케이션 생성 UUID 문자열입니다."
           },
           {
             "name": "plan_id",
-            "type": "ObjectId",
+            "type": "UuidString",
             "required": true,
             "ref": "subscription_plans._id",
-            "description": "현재 적용 중인 구독 플랜입니다."
+            "description": "현재 적용 중인 구독 플랜입니다. 참조 대상 _id는 애플리케이션 생성 UUID 문자열입니다."
           },
           {
             "name": "product_code",
@@ -8343,16 +8274,16 @@
         "fields": [
           {
             "name": "_id",
-            "type": "ObjectId",
+            "type": "UuidString",
             "required": true,
-            "description": "결제 문서 ID입니다."
+            "description": "결제의 MongoDB _id입니다. 애플리케이션이 자체 UUID 방식으로 생성해 문자열로 저장합니다."
           },
           {
             "name": "subscription_id",
-            "type": "ObjectId",
+            "type": "UuidString",
             "required": false,
             "ref": "subscriptions._id",
-            "description": "구독 결제인 경우 연결되는 구독 ID입니다."
+            "description": "구독 결제인 경우 연결되는 구독 ID입니다. 참조 대상 _id는 애플리케이션 생성 UUID 문자열입니다."
           },
           {
             "name": "billing_cycle_key",
@@ -8362,17 +8293,17 @@
           },
           {
             "name": "checkout_id",
-            "type": "string",
+            "type": "UuidString",
             "required": false,
-            "ref": "checkouts.checkout_id",
-            "description": "일반결제 구매 의도와 연결되는 ID입니다."
+            "ref": "checkouts._id",
+            "description": "일반결제 구매 의도와 연결되는 ID입니다. API에서는 checkoutId로 노출되는 checkouts._id를 저장합니다."
           },
           {
             "name": "payment_customer_id",
-            "type": "ObjectId",
+            "type": "UuidString",
             "required": false,
             "ref": "payment_customers._id",
-            "description": "토스 승인에 사용한 PG 고객 식별자입니다."
+            "description": "토스 승인에 사용한 PG 고객 식별자입니다. 참조 대상 _id는 애플리케이션 생성 UUID 문자열입니다."
           },
           {
             "name": "order_id",
@@ -8465,7 +8396,7 @@
             "unique": true,
             "partialFilterExpression": {
               "subscription_id": {
-                "$type": "objectId"
+                "$type": "string"
               },
               "billing_cycle_key": {
                 "$type": "string"
@@ -8498,30 +8429,29 @@
         "fields": [
           {
             "name": "_id",
-            "type": "ObjectId",
+            "type": "UuidString",
             "required": true,
-            "description": "인보이스 문서 ID입니다."
+            "description": "인보이스의 MongoDB _id입니다. 애플리케이션이 자체 UUID 방식으로 생성해 문자열로 저장합니다."
           },
           {
             "name": "user_id",
-            "type": "ObjectId",
+            "type": "ExternalUserId",
             "required": true,
-            "ref": "users._id",
-            "description": "인보이스 소유 사용자입니다."
+            "description": "인보이스 소유 외부 사용자 식별자입니다. 마이페이지 조회와 결제 이력 필터에 사용합니다."
           },
           {
             "name": "payment_id",
-            "type": "ObjectId",
+            "type": "UuidString",
             "required": true,
             "ref": "payments._id",
-            "description": "인보이스를 발생시킨 결제입니다."
+            "description": "인보이스를 발생시킨 결제입니다. 참조 대상 _id는 애플리케이션 생성 UUID 문자열입니다."
           },
           {
             "name": "subscription_id",
-            "type": "ObjectId",
+            "type": "UuidString",
             "required": false,
             "ref": "subscriptions._id",
-            "description": "구독 청구 인보이스인 경우 연결되는 구독 ID입니다."
+            "description": "구독 청구 인보이스인 경우 연결되는 구독 ID입니다. 참조 대상 _id는 애플리케이션 생성 UUID 문자열입니다."
           },
           {
             "name": "billing_cycle_key",
@@ -8571,7 +8501,7 @@
             "unique": true,
             "partialFilterExpression": {
               "subscription_id": {
-                "$type": "objectId"
+                "$type": "string"
               },
               "billing_cycle_key": {
                 "$type": "string"
@@ -8607,30 +8537,29 @@
         "fields": [
           {
             "name": "_id",
-            "type": "ObjectId",
+            "type": "UuidString",
             "required": true,
-            "description": "결제수단 문서 ID입니다."
+            "description": "결제수단의 MongoDB _id입니다. 애플리케이션이 자체 UUID 방식으로 생성해 문자열로 저장합니다."
           },
           {
             "name": "user_id",
-            "type": "ObjectId",
+            "type": "ExternalUserId",
             "required": true,
-            "ref": "users._id",
-            "description": "결제수단 소유 사용자입니다."
+            "description": "결제수단 소유 외부 사용자 식별자입니다. 기본 결제수단 제약과 조회 기준으로 사용합니다."
           },
           {
             "name": "payment_customer_id",
-            "type": "ObjectId",
+            "type": "UuidString",
             "required": true,
             "ref": "payment_customers._id",
-            "description": "이 결제수단이 속한 PG 고객 식별자입니다."
+            "description": "이 결제수단이 속한 PG 고객 식별자입니다. 참조 대상 _id는 애플리케이션 생성 UUID 문자열입니다."
           },
           {
             "name": "instrument_id",
-            "type": "ObjectId",
+            "type": "UuidString",
             "required": true,
             "ref": "payment_instruments._id",
-            "description": "실제 PG 결제 토큰을 보관하는 결제수단 토큰 문서입니다."
+            "description": "실제 PG 결제 토큰을 보관하는 결제수단 토큰 문서입니다. 참조 대상 _id는 애플리케이션 생성 UUID 문자열입니다."
           },
           {
             "name": "display_name",
@@ -8712,16 +8641,16 @@
         "fields": [
           {
             "name": "_id",
-            "type": "ObjectId",
+            "type": "UuidString",
             "required": true,
-            "description": "결제수단 토큰 문서 ID입니다."
+            "description": "결제수단 토큰의 MongoDB _id입니다. 애플리케이션이 자체 UUID 방식으로 생성해 문자열로 저장합니다."
           },
           {
             "name": "payment_customer_id",
-            "type": "ObjectId",
+            "type": "UuidString",
             "required": true,
             "ref": "payment_customers._id",
-            "description": "이 결제 토큰이 속한 PG 고객 식별자입니다."
+            "description": "이 결제 토큰이 속한 PG 고객 식별자입니다. 참조 대상 _id는 애플리케이션 생성 UUID 문자열입니다."
           },
           {
             "name": "provider",
@@ -8802,9 +8731,9 @@
         "fields": [
           {
             "name": "_id",
-            "type": "ObjectId",
+            "type": "UuidString",
             "required": true,
-            "description": "웹훅 이벤트 문서 ID입니다."
+            "description": "웹훅 이벤트의 MongoDB _id입니다. 애플리케이션이 자체 UUID 방식으로 생성해 문자열로 저장합니다."
           },
           {
             "name": "provider",
@@ -8864,9 +8793,9 @@
         "fields": [
           {
             "name": "_id",
-            "type": "ObjectId",
+            "type": "UuidString",
             "required": true,
-            "description": "멱등키 문서 ID입니다."
+            "description": "멱등키의 MongoDB _id입니다. 애플리케이션이 자체 UUID 방식으로 생성해 문자열로 저장합니다."
           },
           {
             "name": "scope",
@@ -9006,9 +8935,9 @@
         "fields": [
           {
             "name": "_id",
-            "type": "ObjectId",
+            "type": "UuidString",
             "required": true,
-            "description": "작업 잠금 문서 ID입니다."
+            "description": "작업 잠금의 MongoDB _id입니다. 애플리케이션이 자체 UUID 방식으로 생성해 문자열로 저장합니다."
           },
           {
             "name": "lock_key",
@@ -9118,16 +9047,15 @@
         "fields": [
           {
             "name": "_id",
-            "type": "ObjectId",
+            "type": "UuidString",
             "required": true,
-            "description": "운영자 감사 로그 문서 ID입니다."
+            "description": "운영자 감사 로그의 MongoDB _id입니다. 애플리케이션이 자체 UUID 방식으로 생성해 문자열로 저장합니다."
           },
           {
             "name": "operator_id",
-            "type": "ObjectId",
+            "type": "ExternalUserId",
             "required": true,
-            "ref": "users._id",
-            "description": "작업을 실행한 관리자 또는 운영자 사용자 ID입니다."
+            "description": "작업을 실행한 외부 관리자 사용자 식별자입니다. 관리자 원본 정보는 회원 또는 운영자 서비스에서 관리합니다."
           },
           {
             "name": "action",
@@ -9149,10 +9077,10 @@
           },
           {
             "name": "idempotency_key_id",
-            "type": "ObjectId",
+            "type": "UuidString",
             "required": false,
             "ref": "idempotency_keys._id",
-            "description": "운영 작업 요청에 사용한 멱등키 문서입니다."
+            "description": "운영 작업 요청에 사용한 멱등키 문서입니다. 참조 대상 _id는 애플리케이션 생성 UUID 문자열입니다."
           },
           {
             "name": "idempotency_scope",
@@ -9261,12 +9189,6 @@
     ],
     "relationships": [
       {
-        "from": "payment_customers.user_id",
-        "to": "users._id",
-        "type": "reference",
-        "description": "결제 고객 식별자는 내부 사용자 계정에 속합니다."
-      },
-      {
         "from": "subscription_plans.product_id",
         "to": "products._id",
         "type": "reference",
@@ -9279,34 +9201,16 @@
         "description": "일회성 SKU는 일반결제 상품 문서를 참조합니다."
       },
       {
-        "from": "checkouts.user_id",
-        "to": "users._id",
-        "type": "reference",
-        "description": "구매 의도는 결제하려는 사용자를 참조합니다."
-      },
-      {
         "from": "checkouts.payment_customer_id",
         "to": "payment_customers._id",
         "type": "reference",
         "description": "구매 의도는 토스 결제창 호출에 사용할 PG 고객 식별자를 참조합니다."
       },
       {
-        "from": "billing_auths.user_id",
-        "to": "users._id",
-        "type": "reference",
-        "description": "빌링 인증 시도는 결제수단을 등록하는 사용자를 참조합니다."
-      },
-      {
         "from": "billing_auths.payment_customer_id",
         "to": "payment_customers._id",
         "type": "reference",
         "description": "빌링 인증 시도는 인증에 사용할 PG 고객 식별자를 참조합니다."
-      },
-      {
-        "from": "subscriptions.user_id",
-        "to": "users._id",
-        "type": "reference",
-        "description": "구독은 사용자 문서를 참조합니다."
       },
       {
         "from": "subscriptions.payment_customer_id",
@@ -9340,7 +9244,7 @@
       },
       {
         "from": "payments.checkout_id",
-        "to": "checkouts.checkout_id",
+        "to": "checkouts._id",
         "type": "reference",
         "description": "일반결제 결제 시도는 구매 의도 ID로 묶입니다."
       },
@@ -9375,12 +9279,6 @@
         "description": "운영자 작업은 중복 실행 방지를 위해 멱등성 기록과 연결될 수 있습니다."
       },
       {
-        "from": "operator_audits.operator_id",
-        "to": "users._id",
-        "type": "reference",
-        "description": "운영자 감사 로그는 작업을 수행한 관리자 사용자에 속합니다."
-      },
-      {
         "from": "webhook_events.payload",
         "to": "payments 또는 subscriptions",
         "type": "snapshot",
@@ -9397,6 +9295,16 @@
         ],
         "writes": [],
         "description": "상품과 활성 플랜을 조회하고, 로그인 사용자의 현재 구독 상태를 함께 계산합니다."
+      },
+      {
+        "apiId": "plans-detail",
+        "reads": [
+          "products",
+          "subscription-plans",
+          "subscriptions"
+        ],
+        "writes": [],
+        "description": "단일 플랜과 연결 상품을 조회하고 로그인 사용자의 현재 구독 여부를 함께 계산합니다."
       },
       {
         "apiId": "admin-products-create",
@@ -9420,6 +9328,18 @@
         "description": "구독 상품에 새 플랜 버전을 추가합니다."
       },
       {
+        "apiId": "admin-subscription-plans-update",
+        "reads": [
+          "products",
+          "subscription-plans"
+        ],
+        "writes": [
+          "subscription-plans",
+          "operator-audits"
+        ],
+        "description": "구독 상품의 플랜 판매 상태, 가격, 권한 정책을 갱신하고 운영 감사 로그를 남깁니다."
+      },
+      {
         "apiId": "admin-one-time-skus-create",
         "reads": [
           "products",
@@ -9431,9 +9351,34 @@
         "description": "일반결제 상품에 새 SKU를 추가합니다."
       },
       {
+        "apiId": "admin-one-time-skus-update",
+        "reads": [
+          "products",
+          "one-time-skus"
+        ],
+        "writes": [
+          "one-time-skus",
+          "operator-audits"
+        ],
+        "description": "일반결제 SKU의 가격, 재고 정책, 구매 제한, 판매 상태를 갱신하고 운영 감사 로그를 남깁니다."
+      },
+      {
+        "apiId": "admin-products-status",
+        "reads": [
+          "products",
+          "subscription-plans",
+          "one-time-skus",
+          "subscriptions"
+        ],
+        "writes": [
+          "products",
+          "operator-audits"
+        ],
+        "description": "상품 판매 상태 전환 가능 여부를 하위 플랜/SKU와 기존 구독 상태로 검증한 뒤 상품 상태와 감사 로그를 갱신합니다."
+      },
+      {
         "apiId": "payments-orders",
         "reads": [
-          "users",
           "payment-customers",
           "one-time-skus",
           "checkouts",
@@ -9462,9 +9407,21 @@
         "description": "토스 인증 실패 또는 사용자 취소 결과를 기록하고 limited SKU 예약 재고를 해제합니다."
       },
       {
+        "apiId": "payments-detail",
+        "reads": [
+          "payments",
+          "checkouts",
+          "one-time-skus",
+          "products",
+          "invoices",
+          "billing-methods"
+        ],
+        "writes": [],
+        "description": "결제 상세 화면에 필요한 결제 시도, 구매 의도, 상품 표시 정보, 인보이스와 결제수단 표시 정보를 조회합니다."
+      },
+      {
         "apiId": "billing-auth",
         "reads": [
-          "users",
           "payment-customers"
         ],
         "writes": [
@@ -9489,9 +9446,18 @@
         "description": "빌링 인증 성공 리다이렉트를 검증하고 빌링키는 결제수단 토큰으로, 표시 정보는 결제수단으로 저장합니다."
       },
       {
+        "apiId": "billing-methods",
+        "reads": [
+          "billing-methods",
+          "payment-instruments",
+          "subscriptions"
+        ],
+        "writes": [],
+        "description": "회원의 활성 결제수단 목록과 기본 결제수단, 활성 구독 기준 삭제 가능 여부를 조회합니다."
+      },
+      {
         "apiId": "subscriptions-checkout",
         "reads": [
-          "users",
           "payment-customers",
           "subscription-plans",
           "idempotency-keys"
@@ -9505,7 +9471,6 @@
       {
         "apiId": "subscriptions-confirm",
         "reads": [
-          "users",
           "payment-customers",
           "subscription-plans",
           "billing-methods",
@@ -9520,6 +9485,17 @@
           "idempotency-keys"
         ],
         "description": "빌링키 발급과 첫 결제 승인 후 구독, 결제, 인보이스를 확정합니다."
+      },
+      {
+        "apiId": "subscriptions-me",
+        "reads": [
+          "subscriptions",
+          "products",
+          "subscription-plans",
+          "billing-methods"
+        ],
+        "writes": [],
+        "description": "현재 회원의 상품별 구독 목록과 공통 기본 결제수단 표시 정보를 조회합니다."
       },
       {
         "apiId": "subscriptions-cancel",
@@ -9546,6 +9522,15 @@
           "idempotency-keys"
         ],
         "description": "구독 해지 예약 철회를 멱등하게 처리하고 구독 상태를 복구합니다."
+      },
+      {
+        "apiId": "subscriptions-change-preview",
+        "reads": [
+          "subscriptions",
+          "subscription-plans"
+        ],
+        "writes": [],
+        "description": "구독과 목표 플랜을 조회해 업그레이드/다운그레이드 정책과 예상 금액을 계산합니다."
       },
       {
         "apiId": "subscriptions-change",
@@ -9580,6 +9565,57 @@
           "one-time-skus"
         ],
         "description": "일반결제 승인 결과를 결제와 인보이스에 반영하고 limited SKU 예약 재고를 판매 확정 또는 해제로 전환합니다."
+      },
+      {
+        "apiId": "invoices-list",
+        "reads": [
+          "invoices",
+          "payments",
+          "subscriptions",
+          "subscription-plans",
+          "products"
+        ],
+        "writes": [],
+        "description": "회원의 인보이스 목록과 화면 표시용 결제/구독/상품 요약 정보를 조회합니다."
+      },
+      {
+        "apiId": "invoices-detail",
+        "reads": [
+          "invoices",
+          "payments",
+          "subscriptions",
+          "subscription-plans",
+          "products",
+          "billing-methods"
+        ],
+        "writes": [],
+        "description": "단일 인보이스의 결제 상태, 실패 사유, 구독/플랜, 결제수단 표시 정보를 조회합니다."
+      },
+      {
+        "apiId": "admin-payments",
+        "reads": [
+          "payments",
+          "checkouts",
+          "one-time-skus",
+          "products",
+          "invoices",
+          "billing-methods"
+        ],
+        "writes": [],
+        "description": "관리자 결제 목록 검색과 취소 가능 여부 표시에 필요한 결제, 주문, 상품, 인보이스, 결제수단 요약을 조회합니다."
+      },
+      {
+        "apiId": "admin-subscriptions",
+        "reads": [
+          "subscriptions",
+          "products",
+          "subscription-plans",
+          "billing-methods",
+          "invoices",
+          "payments"
+        ],
+        "writes": [],
+        "description": "관리자 구독 목록 검색과 보정 진입 판단에 필요한 구독, 상품, 플랜, 결제수단, 마지막 인보이스/결제 상태를 조회합니다."
       },
       {
         "apiId": "internal-billing-run",

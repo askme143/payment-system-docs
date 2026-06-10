@@ -721,7 +721,7 @@ planCode, billingPeriod, amount, entitlements
 
 **PATCH /admin/products/{productId}/status**
 
-draft -&gt; active 또는 active -&gt; suspended
+draft -&gt; active 또는 active -&gt; paused
 | {
     style.stroke: &quot;#1c7c66&quot;
     style.font-color: &quot;#334155&quot;
@@ -805,7 +805,7 @@ SKU 가격, 재고, 판매 상태 수정
 
 **PATCH /admin/products/{productId}/status**
 
-active -&gt; suspended이면 신규 주문 생성 차단
+active -&gt; paused이면 신규 주문 생성 차단
 | {
     style.stroke: &quot;#1c7c66&quot;
     style.font-color: &quot;#334155&quot;

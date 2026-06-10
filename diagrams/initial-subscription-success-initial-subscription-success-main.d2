@@ -49,11 +49,11 @@ planId, successUrl, failUrl
     style.italic: false
   }
   server.note_4: "상품별 중복 구독 검증\nUNIQUE active(userId, productCode)\n같은 상품의 활성 구독은 거부하고 다른 상품의 활성 구독은 허용"
-  server.note_5: "주문 및 구독 대기 상태 생성\npending_billing_auth\norderId, customerKey, amount 계산"
+  server.note_5: "주문 및 구독 대기 상태 생성\npending\ncustomerKey, amount 계산"
   server -> client: |md
 토스 SDK 호출 데이터 반환
 
-subscriptionId, orderId, customerKey, amount
+subscriptionId, customerKey, amount
 
 successUrl에는 subscriptionId 포함
 | {

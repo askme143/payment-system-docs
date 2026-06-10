@@ -56,7 +56,7 @@ DONE 또는 실패 코드
     style.italic: false
   }
   server.note_5: "재시도 성공\ninvoice paid, subscription active\nnextBillingDate를 정상 주기로 갱신하고 영수증 링크를 생성"
-  server.note_6: "재시도 실패 또는 한도 초과\ninvoice final_failed\nmaxAttempts 도달 시 구독을 suspended 또는 canceled로 전환"
+  server.note_6: "재시도 실패 또는 한도 초과\ninvoice final_failed\nmaxAttempts 도달 시 구독을 past_due로 유지하거나 canceled로 전환"
   server -> email: |md
 재시도 결과 이메일 발송 요청
 
