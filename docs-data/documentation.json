@@ -328,7 +328,7 @@
       "categoryId": "webhooks",
       "method": "POST",
       "path": "/webhooks/toss-payments",
-      "role": "토스페이먼츠 결제 이벤트를 수신하고 내부 결제/구독 상태를 보정합니다.",
+      "role": "토스페이먼츠 결제 이벤트를 수신하고 내부 결제/인보이스/구독 상태를 보정합니다.",
       "visibility": "webhook",
       "detailStatus": "available",
       "detailAnchor": "webhook"
@@ -10133,14 +10133,16 @@
         "apiId": "webhooks-toss-payments",
         "reads": [
           "payments",
+          "invoices",
           "subscriptions"
         ],
         "writes": [
           "webhook-events",
           "payments",
+          "invoices",
           "subscriptions"
         ],
-        "description": "토스 웹훅 원문을 저장한 뒤 내부 결제/구독 상태와 대조합니다."
+        "description": "토스 웹훅 원문을 저장한 뒤 내부 결제, 인보이스, 구독 상태와 대조하고 필요한 보정을 반영합니다."
       }
     ],
     "stateModels": [

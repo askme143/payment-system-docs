@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from datetime import datetime
 from typing import Literal
 
 from payments.domain.entities.ids import generate_uuid_id
@@ -11,7 +12,7 @@ class PaymentCustomer:
     provider: Literal["tosspayments"]
     customer_key: str
     status: Literal["active", "revoked"]
-    revoked_at: str
+    revoked_at: datetime | None = None
 
     @classmethod
     def generate_id(cls) -> str:

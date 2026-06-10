@@ -12,8 +12,8 @@ class Checkout:
     payment_customer_id: str
     items: list[dict]
     status: Literal["ready", "paid", "failed", "expired"]
-    last_payment_id: str
     created_at: datetime
+    last_payment_id: str | None = None
 
     @classmethod
     def generate_id(cls) -> str:

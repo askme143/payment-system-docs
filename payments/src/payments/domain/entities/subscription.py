@@ -13,10 +13,10 @@ class Subscription:
     plan_id: str
     product_code: str
     status: Literal["pending", "active", "past_due", "cancel_scheduled", "canceled"]
-    next_billing_at: datetime
-    current_period_start_at: datetime
-    current_period_end_at: datetime
     cancel_at_period_end: bool
+    next_billing_at: datetime | None = None
+    current_period_start_at: datetime | None = None
+    current_period_end_at: datetime | None = None
 
     @classmethod
     def generate_id(cls) -> str:

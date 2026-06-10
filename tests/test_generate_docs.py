@@ -1,3 +1,4 @@
+import ast
 import json
 import re
 import tempfile
@@ -13,6 +14,24 @@ class GenerateDocsTest(unittest.TestCase):
 
     def _index_by_name(self, collection, index_name):
         return next(index for index in collection["indexes"] if index.get("name") == index_name)
+
+    def _entity_fields(self, filename):
+        source = Path("payments/src/payments/domain/entities", filename).read_text(encoding="utf-8")
+        tree = ast.parse(source)
+        fields = {}
+        for node in tree.body:
+            if not isinstance(node, ast.ClassDef):
+                continue
+            for statement in node.body:
+                if not isinstance(statement, ast.AnnAssign) or not isinstance(statement.target, ast.Name):
+                    continue
+                annotation = ast.unparse(statement.annotation)
+                has_none_default = isinstance(statement.value, ast.Constant) and statement.value.value is None
+                fields[statement.target.id] = {
+                    "annotation": annotation,
+                    "optional": "None" in annotation or "Optional[" in annotation or has_none_default,
+                }
+        return fields
 
     def test_actor_theme_schema_covers_documented_themes(self):
         data = json.loads(Path("docs-data/documentation.json").read_text(encoding="utf-8"))
@@ -217,6 +236,17 @@ class GenerateDocsTest(unittest.TestCase):
         self.assertIn(("invoices.subscription_id", "subscriptions._id"), relationships)
         self.assertNotIn(("subscriptions.billing_method_id", "billing_methods._id"), relationships)
 
+    def test_webhook_invoice_reconciliation_access_is_mapped(self):
+        data = json.loads(Path("docs-data/documentation.json").read_text(encoding="utf-8"))
+        webhook_detail = data["apiDetails"]["webhooks-toss-payments"]
+        webhook_access = next(access for access in data["database"]["apiAccess"] if access["apiId"] == "webhooks-toss-payments")
+        webhook_contract = json.dumps(webhook_detail, ensure_ascii=False)
+
+        self.assertIn("인보이스", webhook_contract)
+        self.assertIn("invoices", webhook_access["reads"])
+        self.assertIn("invoices", webhook_access["writes"])
+        self.assertIn("인보이스", webhook_access["description"])
+
     def test_payment_docs_do_not_own_user_collection(self):
         data = json.loads(Path("docs-data/documentation.json").read_text(encoding="utf-8"))
         collection_ids = {collection["id"] for collection in data["database"]["collections"]}
@@ -369,6 +399,39 @@ class GenerateDocsTest(unittest.TestCase):
                 self.assertIn(f"{field_name}:", source, f"{filename} missing {field_name}")
                 for enum_value in field.get("enum", []):
                     self.assertIn(f'"{enum_value}"', source, f"{filename} missing enum {enum_value}")
+
+    def test_documented_optional_fields_match_python_entities(self):
+        data = json.loads(Path("docs-data/documentation.json").read_text(encoding="utf-8"))
+        entity_by_collection = {
+            "products": "product.py",
+            "subscription-plans": "subscription_plan.py",
+            "one-time-skus": "one_time_sku.py",
+            "checkouts": "checkout.py",
+            "payment-customers": "payment_customer.py",
+            "billing-auths": "billing_auth.py",
+            "subscriptions": "subscription.py",
+            "payments": "payment.py",
+            "payment-cancel-requests": "payment_cancel_request.py",
+            "invoices": "invoice.py",
+            "billing-methods": "billing_method.py",
+            "payment-instruments": "payment_instrument.py",
+            "webhook-events": "webhook_event.py",
+            "idempotency-keys": "idempotency_key.py",
+            "operation-locks": "operation_lock.py",
+            "operator-audits": "operator_audit.py",
+        }
+
+        for collection_id, filename in entity_by_collection.items():
+            collection = self._collection_by_id(data, collection_id)
+            entity_fields = self._entity_fields(filename)
+            for field in collection["fields"]:
+                field_name = "id" if field["name"] == "_id" else field["name"]
+                self.assertIn(field_name, entity_fields, f"{filename} missing {field_name}")
+                self.assertEqual(
+                    not field["required"],
+                    entity_fields[field_name]["optional"],
+                    f"{collection_id}.{field['name']} optional contract differs from {filename}",
+                )
 
     def test_payment_entity_matches_documented_payment_collection(self):
         data = json.loads(Path("docs-data/documentation.json").read_text(encoding="utf-8"))
