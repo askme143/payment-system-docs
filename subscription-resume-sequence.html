@@ -708,14 +708,14 @@
 
 **POST /subscriptions/{subscriptionId}/resume**
 
-resumeReason, Idempotency-Key, session
+resumeReason, Authorization, X-Request-User-Id, X-Request-Id, Idempotency-Key
 | {
     style.stroke: &quot;#1c7c66&quot;
     style.font-color: &quot;#334155&quot;
     style.font-size: 18
     style.italic: false
   }
-  server.note_2: &quot;회원과 구독 소유권 검증\nsession.userId == subscription.userId\n현재 회원 소유 구독만 재개 가능&quot;
+  server.note_2: &quot;회원과 구독 소유권 검증\nX-Request-User-Id == subscription.userId\n현재 회원 소유 구독만 재개 가능&quot;
   server.note_3: &quot;재개 가능 상태 확인\nstatus == cancel_scheduled\n이미 canceled이면 신규 구독 또는 별도 복구 정책으로 안내&quot;
   server.note_4: &quot;기간 종료 전 여부 확인\nnow &lt; currentPeriodEnd\n기간 종료 후에는 해지 예약 철회 불가&quot;
   server.note_5: &quot;구독 상태와 청구 일정 복구\nstatus=active, cancelAt=null\nnextBillingDate 복구&quot;

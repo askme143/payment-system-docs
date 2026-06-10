@@ -17,7 +17,7 @@ diagram: {
 
 **POST /subscriptions/confirm**
 
-Body + Idempotency-Key + session
+Body + Authorization + X-Request-User-Id + X-Request-Id + Idempotency-Key
 | {
     style.stroke: "#1c7c66"
     style.font-color: "#334155"

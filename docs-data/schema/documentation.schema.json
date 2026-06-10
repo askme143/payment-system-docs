@@ -4,7 +4,7 @@
   "title": "Payment System Documentation Data",
   "type": "object",
   "additionalProperties": false,
-  "required": ["version", "site", "actors", "apiCategories", "apis", "apiDetails", "sequenceGroups", "sequences", "policies"],
+  "required": ["version", "site", "actors", "apiCategories", "apis", "apiDetails", "sequenceGroups", "sequences", "database", "policies"],
   "properties": {
     "version": {
       "type": "string",

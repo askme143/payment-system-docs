@@ -62,7 +62,7 @@ successUrl에는 subscriptionId 포함
     style.font-size: 18
     style.italic: false
   }
-  client.note_7: "프론트가 구독 컨텍스트 보관\nsubscriptionId\nsessionStorage, URL state, route state 등"
+  client.note_7: "프론트가 구독 컨텍스트 보관\nsubscriptionId\n프론트 임시 저장소, URL state, route state 등"
   client -> toss: |md
 빌링 인증 요청
 
@@ -88,11 +88,11 @@ customerKey, successUrl?subscriptionId=..., failUrl
     style.italic: false
   }
   client -> server: |md
-프론트 성공 페이지가 구독 확정 요청
+백엔드 서버가 구독 확정 요청 전달
 
 **POST /subscriptions/confirm**
 
-Body: subscriptionId, authKey, customerKey / Header: Idempotency-Key / Cookie: session
+Body: subscriptionId, authKey, customerKey / Headers: Authorization, X-Request-User-Id, X-Request-Id, Idempotency-Key
 | {
     style.stroke: "#1c7c66"
     style.font-color: "#334155"

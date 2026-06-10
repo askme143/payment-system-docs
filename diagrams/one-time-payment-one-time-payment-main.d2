@@ -63,11 +63,11 @@ orderId, amount, successUrl?paymentId=..., failUrl?paymentId=...
     style.italic: false
   }
   client -> server: |md
-프론트 성공 페이지가 결제 승인 요청
+백엔드 서버가 결제 승인 요청 전달
 
 **POST /payments/confirm**
 
-paymentId, paymentKey, orderId, amount, Idempotency-Key
+paymentId, paymentKey, orderId, amount, Authorization, X-Request-User-Id, X-Request-Id, Idempotency-Key
 | {
     style.stroke: "#1c7c66"
     style.font-color: "#334155"

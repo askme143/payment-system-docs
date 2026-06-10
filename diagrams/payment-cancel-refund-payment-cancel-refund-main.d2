@@ -27,7 +27,7 @@ cancelAmount, cancelReason, Idempotency-Key
     style.font-size: 18
     style.italic: false
   }
-  server.note_2: "소유권 및 상태 검증\npayment.userId == session.userId, status in paid/partial_canceled\nfailed, expired, canceled 상태는 취소 거부"
+  server.note_2: "소유권 및 상태 검증\npayment.userId == X-Request-User-Id, status in paid/partial_canceled\nfailed, expired, canceled 상태는 취소 거부"
   server.note_3: "부분 취소 누적 금액 검증\ncancelAmount <= cancelableAmount\ncancelAmount 생략 시 남은 금액 전체 취소"
   server.note_4: "멱등 재시도\nsame paymentId + Idempotency-Key\n이미 성공한 취소 결과가 있으면 토스 재호출 없이 200 OK"
   server.note_5: "취소 요청 저장\ncancel.status = pending\n요청 금액, 사유, 요청자, 멱등 키 저장"

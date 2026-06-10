@@ -33,7 +33,7 @@ billingMethodId, Idempotency-Key
     style.font-size: 18
     style.italic: false
   }
-  server.note_3: "소유권과 활성 상태 검증\nbillingMethod.userId == session.userId\n삭제됨, 비활성, 인증 실패 결제수단은 기본값으로 지정할 수 없음"
+  server.note_3: "소유권과 활성 상태 검증\nbillingMethod.userId == X-Request-User-Id\n삭제됨, 비활성, 인증 실패 결제수단은 기본값으로 지정할 수 없음"
   server.note_4: "기존 기본값 해제 후 새 기본값 저장\nisDefault=false -> true\n같은 회원의 기본 결제수단은 항상 하나만 유지"
   server -> client: |md
 기본 결제수단 지정 결과 반환

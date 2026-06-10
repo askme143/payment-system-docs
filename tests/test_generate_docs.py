@@ -42,6 +42,23 @@ class GenerateDocsTest(unittest.TestCase):
 
         self.assertTrue(documented_themes.issubset(schema_themes))
 
+    def test_schema_root_requires_documented_top_level_models(self):
+        schema = json.loads(Path("docs-data/schema/documentation.schema.json").read_text(encoding="utf-8"))
+
+        for key in [
+            "version",
+            "site",
+            "actors",
+            "apiCategories",
+            "apis",
+            "apiDetails",
+            "sequenceGroups",
+            "sequences",
+            "database",
+            "policies",
+        ]:
+            self.assertIn(key, schema["required"])
+
     def test_schema_allows_mongodb_index_safety_metadata(self):
         schema = json.loads(Path("docs-data/schema/documentation.schema.json").read_text(encoding="utf-8"))
         index_properties = schema["$defs"]["dbIndex"]["properties"]
@@ -235,6 +252,37 @@ class GenerateDocsTest(unittest.TestCase):
         self.assertNotIn(("operator_audits.operator_id", "users._id"), relationships)
         self.assertIn(("invoices.subscription_id", "subscriptions._id"), relationships)
         self.assertNotIn(("subscriptions.billing_method_id", "billing_methods._id"), relationships)
+
+    def test_browser_session_cookies_do_not_cross_payment_system_boundary(self):
+        data = json.loads(Path("docs-data/documentation.json").read_text(encoding="utf-8"))
+        api_visibility = {api["id"]: api.get("visibility") for api in data["apis"]}
+
+        for api_id, detail in data["apiDetails"].items():
+            visibility = api_visibility[api_id]
+            request = detail["request"]
+            cookie_names = {cookie["name"] for cookie in request.get("cookies", [])}
+            header_names = {header["name"] for header in request.get("headers", [])}
+
+            self.assertFalse(
+                cookie_names & {"session", "SESSION", "ADMIN_SESSION", "csrf_token"},
+                f"{api_id} must not expose browser session/csrf cookies to the payment system",
+            )
+
+            if visibility in {"public", "authenticated", "admin"}:
+                self.assertEqual(request.get("cookies", []), [], api_id)
+                self.assertIn("Authorization", header_names, api_id)
+                self.assertIn("X-Request-Id", header_names, api_id)
+            if visibility == "authenticated":
+                self.assertIn("X-Request-User-Id", header_names, api_id)
+            if visibility == "admin":
+                self.assertIn("X-Request-Admin-Id", header_names, api_id)
+
+        serialized = json.dumps(data["apiDetails"], ensure_ascii=False)
+        self.assertNotIn("세션 쿠키", serialized)
+        self.assertNotIn("쿠키 기반 인증", serialized)
+        self.assertNotIn("csrf_token", serialized)
+        self.assertNotIn("프론트 성공 페이지가 호출", serialized)
+        self.assertNotIn("프론트 실패 페이지가 호출", serialized)
 
     def test_webhook_invoice_reconciliation_access_is_mapped(self):
         data = json.loads(Path("docs-data/documentation.json").read_text(encoding="utf-8"))
@@ -896,9 +944,9 @@ class GenerateDocsTest(unittest.TestCase):
                     "type": "message",
                     "from": "client",
                     "to": "server",
-                    "label": "프론트 성공 페이지가 결제 승인 요청",
+                    "label": "백엔드 서버가 결제 승인 요청 전달",
                     "apiId": "payments-confirm",
-                    "note": "paymentId, paymentKey, orderId, amount, Idempotency-Key"
+                    "note": "paymentId, paymentKey, orderId, amount, Authorization, X-Request-User-Id, X-Request-Id, Idempotency-Key"
                 }
             ]
         }
@@ -911,11 +959,11 @@ class GenerateDocsTest(unittest.TestCase):
         self.assertIn('style.font-size: 18', source)
         self.assertIn('style.italic: false', source)
         self.assertNotIn('style.bold: true', source)
-        self.assertIn("프론트 성공 페이지가 결제 승인 요청", source)
+        self.assertIn("백엔드 서버가 결제 승인 요청 전달", source)
         self.assertIn("**POST /payments/confirm**", source)
-        self.assertIn("paymentId, paymentKey, orderId, amount, Idempotency-Key", source)
-        self.assertNotIn("**paymentId, paymentKey, orderId, amount, Idempotency-Key**", source)
-        self.assertNotIn('client -> server: "프론트 성공 페이지가 결제 승인 요청"', source)
+        self.assertIn("paymentId, paymentKey, orderId, amount, Authorization, X-Request-User-Id, X-Request-Id, Idempotency-Key", source)
+        self.assertNotIn("**paymentId, paymentKey, orderId, amount, Authorization, X-Request-User-Id, X-Request-Id, Idempotency-Key**", source)
+        self.assertNotIn('client -> server: "백엔드 서버가 결제 승인 요청 전달"', source)
 
     def test_only_uri_lines_are_bold_in_message_labels(self):
         actors = {
@@ -976,14 +1024,14 @@ class GenerateDocsTest(unittest.TestCase):
             ],
             "apiDetails": {
                 "subscriptions-confirm": {
-                    "summary": "프론트 성공 페이지가 호출합니다.",
+                    "summary": "백엔드 서버가 프론트 성공 페이지 요청을 받아 결제 시스템에 전달합니다.",
                     "request": {
                         "headers": [
+                            {"name": "Authorization", "required": True, "description": "내부 서비스 토큰입니다."},
+                            {"name": "X-Request-User-Id", "required": True, "description": "백엔드 서버가 인증한 회원 ID입니다."},
                             {"name": "Idempotency-Key", "required": True, "description": "중복 결제를 방지합니다."}
                         ],
-                        "cookies": [
-                            {"name": "session", "required": True, "description": "회원 식별용 세션입니다."}
-                        ],
+                        "cookies": [],
                         "bodyFields": [
                             {"name": "subscriptionId", "required": True, "description": "구독 ID입니다."}
                         ],

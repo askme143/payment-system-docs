@@ -675,7 +675,7 @@
 <main class="wrap" id="content">
   <section>
     <h2>사용 API</h2>
-    <div class="grid"><div class="box"><a href="./all-api-doc.html#plans-list"><code>GET /plans</code></a><p>구매 가능한 상품과 구독 플랜 목록을 조회합니다.</p></div><div class="box"><a href="./all-api-doc.html#plans-detail"><code>GET /plans/{planId}</code></a><p>단일 플랜의 가격, 주기, 판매 가능 상태를 조회합니다.</p></div><div class="box"><a href="./all-api-doc.html#subscriptions-checkout"><code>POST /subscriptions/checkout</code></a><p>구독 빌링 인증 전에 구독 대기 레코드와 토스 SDK 호출 데이터를 생성합니다.</p></div><div class="box"><a href="./all-api-doc.html#subscriptions-confirm"><code>POST /subscriptions/confirm</code></a><p>프론트 성공 페이지가 호출하며, 빌링키 발급과 첫 결제로 구독을 활성화합니다.</p></div><div class="box"><a href="./all-api-doc.html#webhooks-toss-payments"><code>POST /webhooks/toss-payments</code></a><p>토스페이먼츠 결제 이벤트를 수신하고 내부 결제/인보이스/구독 상태를 보정합니다.</p></div></div>
+    <div class="grid"><div class="box"><a href="./all-api-doc.html#plans-list"><code>GET /plans</code></a><p>구매 가능한 상품과 구독 플랜 목록을 조회합니다.</p></div><div class="box"><a href="./all-api-doc.html#plans-detail"><code>GET /plans/{planId}</code></a><p>단일 플랜의 가격, 주기, 판매 가능 상태를 조회합니다.</p></div><div class="box"><a href="./all-api-doc.html#subscriptions-checkout"><code>POST /subscriptions/checkout</code></a><p>구독 빌링 인증 전에 구독 대기 레코드와 토스 SDK 호출 데이터를 생성합니다.</p></div><div class="box"><a href="./all-api-doc.html#subscriptions-confirm"><code>POST /subscriptions/confirm</code></a><p>프론트 성공 페이지 요청을 받은 백엔드 서버가 호출하며, 빌링키 발급과 첫 결제로 구독을 활성화합니다.</p></div><div class="box"><a href="./all-api-doc.html#webhooks-toss-payments"><code>POST /webhooks/toss-payments</code></a><p>토스페이먼츠 결제 이벤트를 수신하고 내부 결제/인보이스/구독 상태를 보정합니다.</p></div></div>
   </section>
   <div class="note">
   <strong>연관 잠재 위험</strong>
@@ -826,7 +826,7 @@ confirm API는 호출되지 않음
 
 **POST /subscriptions/confirm**
 
-Body + Idempotency-Key + session
+Body + Authorization + X-Request-User-Id + X-Request-Id + Idempotency-Key
 | {
     style.stroke: &quot;#1c7c66&quot;
     style.font-color: &quot;#334155&quot;

@@ -709,7 +709,7 @@ status, subscriptionId, from, to, cursor, limit
     style.font-size: 18
     style.italic: false
   }
-  server.note_2: &quot;회원과 조회 조건 검증\nsession.userId, filters, cursor\n현재 회원 소유 인보이스만 최신 청구일 순으로 조회&quot;
+  server.note_2: &quot;회원과 조회 조건 검증\nX-Request-User-Id, filters, cursor\n현재 회원 소유 인보이스만 최신 청구일 순으로 조회&quot;
   server -&gt; client: |md
 청구 내역 목록 반환
 
@@ -734,7 +734,7 @@ receiptAvailable, failureSummary, detailUrl 포함
     style.font-size: 18
     style.italic: false
   }
-  server.note_5: &quot;인보이스 소유권과 결제 상태 조회\ninvoice.userId == session.userId\n결제 시도, 구독, 플랜, 결제수단 표시 정보 연결&quot;
+  server.note_5: &quot;인보이스 소유권과 결제 상태 조회\ninvoice.userId == X-Request-User-Id\n결제 시도, 구독, 플랜, 결제수단 표시 정보 연결&quot;
   server -&gt; client: |md
 청구 상세 반환
 

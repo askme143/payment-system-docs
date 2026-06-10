@@ -715,7 +715,7 @@ cancelReason, feedback, Idempotency-Key
     style.font-size: 18
     style.italic: false
   }
-  server.note_2: &quot;회원과 구독 소유권 검증\nsession.userId == subscription.userId\n이미 cancel_scheduled면 기존 예약 결과 반환&quot;
+  server.note_2: &quot;회원과 구독 소유권 검증\nX-Request-User-Id == subscription.userId\n이미 cancel_scheduled면 기존 예약 결과 반환&quot;
   server.note_3: &quot;해지 예정일 확정\ncancelAt = currentPeriodEnd\n잔여 기간 권한은 유지&quot;
   server.note_4: &quot;해지 예약 상태 저장\nstatus=cancel_scheduled, nextBillingDate=null\n정기 과금 배치 조회 조건에서 제외&quot;
   server -&gt; client: |md

@@ -675,7 +675,7 @@
 <main class="wrap" id="content">
   <section>
     <h2>사용 API</h2>
-    <div class="grid"><div class="box"><a href="./all-api-doc.html#payments-orders"><code>POST /payments/orders</code></a><p>일반결제 결제창 호출 전에 내부 주문을 생성합니다.</p></div><div class="box"><a href="./all-api-doc.html#payments-confirm"><code>POST /payments/confirm</code></a><p>토스 결제 인증 후 일반결제를 최종 승인합니다.</p></div><div class="box"><a href="./all-api-doc.html#payments-detail"><code>GET /payments/{paymentId}</code></a><p>내부 결제 상태와 토스 승인 결과를 조회합니다.</p></div><div class="box"><a href="./all-api-doc.html#payments-auth-result"><code>POST /payments/{paymentId}/auth-result</code></a><p>토스 결제창 인증 실패 또는 사용자 취소 결과를 프론트 실패 페이지가 서버에 기록합니다.</p></div><div class="box"><a href="./all-api-doc.html#webhooks-toss-payments"><code>POST /webhooks/toss-payments</code></a><p>토스페이먼츠 결제 이벤트를 수신하고 내부 결제/인보이스/구독 상태를 보정합니다.</p></div></div>
+    <div class="grid"><div class="box"><a href="./all-api-doc.html#payments-orders"><code>POST /payments/orders</code></a><p>일반결제 결제창 호출 전에 내부 주문을 생성합니다.</p></div><div class="box"><a href="./all-api-doc.html#payments-confirm"><code>POST /payments/confirm</code></a><p>토스 결제 인증 후 일반결제를 최종 승인합니다.</p></div><div class="box"><a href="./all-api-doc.html#payments-detail"><code>GET /payments/{paymentId}</code></a><p>내부 결제 상태와 토스 승인 결과를 조회합니다.</p></div><div class="box"><a href="./all-api-doc.html#payments-auth-result"><code>POST /payments/{paymentId}/auth-result</code></a><p>프론트 실패 페이지 요청을 받은 백엔드 서버가 토스 결제창 인증 실패 또는 사용자 취소 결과를 기록합니다.</p></div><div class="box"><a href="./all-api-doc.html#webhooks-toss-payments"><code>POST /webhooks/toss-payments</code></a><p>토스페이먼츠 결제 이벤트를 수신하고 내부 결제/인보이스/구독 상태를 보정합니다.</p></div></div>
   </section>
   <div class="note">
   <strong>연관 잠재 위험</strong>
@@ -913,7 +913,7 @@ PAYMENT_CONFIRM_VALIDATION_FAILED
 </div></div>
 </section><section id="one-time-auth-result-missing-expire">
   <h2>결제창 실패 결과 미보고 및 만료</h2>
-  <p>토스가 failUrl로 보냈지만 프론트의 실패 결과 기록 API 호출이 실패하거나 사용자가 이탈한 경우입니다.</p>
+  <p>토스가 failUrl로 보냈지만 프론트 실패 페이지 요청을 받은 백엔드 서버의 실패 결과 기록 API 호출이 실패하거나 사용자가 이탈한 경우입니다.</p>
   <div class="diagram"><div class="d2-diagram">
   <div class="d2-toolbar"><a href="diagrams/one-time-payment-failure-one-time-auth-result-missing-expire.d2">D2 원본</a></div>
   <img class="d2-svg" src="diagrams/one-time-payment-failure-one-time-auth-result-missing-expire.svg" alt="결제창 실패 결과 미보고 및 만료">
