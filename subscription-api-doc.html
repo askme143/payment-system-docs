@@ -851,6 +851,30 @@ status=active, paymentStatus=paid
     style.font-size: 18
     style.italic: false
   }
+  client -&gt; server: |md
+현재 구독 상태 조회
+
+**GET /subscriptions/me**
+
+활성 구독, 다음 결제일, 기본 결제수단 표시 정보를 최신 상태로 조회
+| {
+    style.stroke: &quot;#1c7c66&quot;
+    style.font-color: &quot;#334155&quot;
+    style.font-size: 18
+    style.italic: false
+  }
+  server -&gt; client: |md
+현재 구독 화면 데이터 반환
+
+subscriptions[].status=active, nextBillingDate, defaultBillingMethodSummary
+
+프론트는 성공 화면 또는 마이페이지 구독 영역을 갱신
+| {
+    style.stroke: &quot;#2457a6&quot;
+    style.font-color: &quot;#334155&quot;
+    style.font-size: 18
+    style.italic: false
+  }
   toss -&gt; server: |md
 결제 상태 웹훅 수신 및 상태 보정
 

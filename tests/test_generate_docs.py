@@ -233,6 +233,27 @@ class GenerateDocsTest(unittest.TestCase):
                     access_by_api[api_id]["reads"] + access_by_api[api_id]["writes"]
                 )
 
+    def test_sequence_api_ids_cover_diagram_related_apis(self):
+        data = json.loads(Path("docs-data/documentation.json").read_text(encoding="utf-8"))
+
+        for sequence in data["sequences"]:
+            sequence_api_ids = set(sequence.get("apiIds", []))
+            sequence_body = {key: value for key, value in sequence.items() if key != "apiIds"}
+            serialized_sequence_body = json.dumps(sequence_body, ensure_ascii=False)
+            for diagram in sequence.get("diagrams", []):
+                related_api_ids = set(diagram.get("relatedApiIds", []))
+                self.assertTrue(
+                    related_api_ids.issubset(sequence_api_ids),
+                    f"{sequence['id']}/{diagram['id']} has related APIs outside sequence.apiIds",
+                )
+
+            for api_id in sequence_api_ids:
+                self.assertIn(
+                    api_id,
+                    serialized_sequence_body,
+                    f"{sequence['id']} lists {api_id} without mentioning why it is related",
+                )
+
     def test_every_documented_api_has_database_access_mapping(self):
         data = json.loads(Path("docs-data/documentation.json").read_text(encoding="utf-8"))
         api_detail_ids = set(data["apiDetails"])
@@ -1582,6 +1603,7 @@ class GenerateDocsTest(unittest.TestCase):
 
             detail = (out_dir / "api-detail-doc.html").read_text(encoding="utf-8")
             success_sequence = (out_dir / "subscription-api-doc.html").read_text(encoding="utf-8")
+            success_diagram = (out_dir / "diagrams" / "initial-subscription-success-initial-subscription-success-main.d2").read_text(encoding="utf-8")
             recurring_sequence = (out_dir / "recurring-billing-sequence.html").read_text(encoding="utf-8")
 
             self.assertIn("productCode", detail)
@@ -1590,6 +1612,9 @@ class GenerateDocsTest(unittest.TestCase):
             self.assertIn("다른 productCode의 활성 구독이 있으면 별도 상품 구독으로 허용", detail)
             self.assertIn("상품별 중복 구독 검증", success_sequence)
             self.assertIn("UNIQUE active(userId, productCode)", success_sequence)
+            self.assertIn("현재 구독 상태 조회", success_sequence)
+            self.assertIn("GET /subscriptions/me", success_diagram)
+            self.assertIn("현재 구독 화면 데이터 반환", success_diagram)
             self.assertIn("기본 결제수단 토큰", recurring_sequence)
             self.assertIn("productCode, plan amount", recurring_sequence)
 

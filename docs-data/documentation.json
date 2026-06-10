@@ -4178,7 +4178,8 @@
             "plans-detail",
             "subscriptions-checkout",
             "subscriptions-confirm",
-            "webhooks-toss-payments"
+            "webhooks-toss-payments",
+            "subscriptions-me"
           ],
           "steps": [
             {
@@ -4314,6 +4315,22 @@
               "label": "구독 활성화 결과 반환",
               "code": "status=active, paymentStatus=paid",
               "note": "프론트는 현재 구독 화면으로 이동"
+            },
+            {
+              "type": "message",
+              "from": "client",
+              "to": "server",
+              "label": "현재 구독 상태 조회",
+              "apiId": "subscriptions-me",
+              "note": "활성 구독, 다음 결제일, 기본 결제수단 표시 정보를 최신 상태로 조회"
+            },
+            {
+              "type": "message",
+              "from": "server",
+              "to": "client",
+              "label": "현재 구독 화면 데이터 반환",
+              "code": "subscriptions[].status=active, nextBillingDate, defaultBillingMethodSummary",
+              "note": "프론트는 성공 화면 또는 마이페이지 구독 영역을 갱신"
             },
             {
               "type": "message",
@@ -5303,7 +5320,7 @@
               "to": "client",
               "label": "해지 예약 결과 반환",
               "code": "cancelAt, accessUntil, resumeAvailable=true",
-              "note": "프론트는 구독 상세 화면에 해지 예정 배지를 표시"
+              "note": "프론트는 구독 상세 화면에 해지 예정 배지를 표시합니다. 해지 예약 철회 호출 자체는 구독 재개 플로우를 참조합니다."
             },
             {
               "type": "message",
