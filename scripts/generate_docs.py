@@ -232,6 +232,20 @@ def validate_data(data):
                         f"Architecture diagram {diagram['id']} edge references missing node {edge['to']}"
                     )
 
+    if data.get("notificationTemplateCatalog"):
+        template_event_types = set()
+        for template in data["notificationTemplateCatalog"].get("templates", []):
+            event_type = template["eventType"]
+            if event_type in template_event_types:
+                raise ValueError(f"Notification template event type {event_type} is duplicated")
+            template_event_types.add(event_type)
+            documented_args = set(template.get("requiredTemplateArgs", [])) | set(template.get("optionalTemplateArgs", []))
+            for arg in template.get("encryptedArgs", []):
+                if arg not in documented_args:
+                    raise ValueError(
+                        f"Notification template {event_type} encrypts undocumented template arg {arg}"
+                    )
+
     sequence_ids = {sequence["id"] for sequence in data["sequences"]}
     collection_ids = {collection["id"] for collection in data.get("database", {}).get("collections", [])}
     for risk in data.get("risks", []):
@@ -1255,6 +1269,12 @@ def table(html_table, columns=3):
     return f"<div class=\"table-scroll\">{labelled_table.replace('<table>', f'<table{class_name}>', 1)}</div>"
 
 
+def code_list(values):
+    if not values:
+        return "-"
+    return ", ".join(f"<code>{e(value)}</code>" for value in values)
+
+
 def format_db_subfield(field):
     parts = [field["name"]]
     if field.get("required"):
@@ -1334,6 +1354,9 @@ def database_links(data, include_architecture=True):
     page_ref = data["site"]["pages"].get("database")
     if page_ref:
         links.append((page_ref["title"], f"./{page_ref['file']}"))
+    template_ref = data["site"]["pages"].get("notificationTemplateCatalog")
+    if template_ref and data.get("notificationTemplateCatalog"):
+        links.append((template_ref["title"], f"./{template_ref['file']}"))
     risk_ref = data["site"]["pages"].get("risks")
     if risk_ref and data.get("risks"):
         links.append((risk_ref["title"], f"./{risk_ref['file']}"))
@@ -1576,6 +1599,9 @@ def render_database_doc(data):
         ("전체 API 목록", "./all-api-doc.html"),
         ("API 상세 설명", "./api-detail-doc.html"),
     ]
+    template_ref = pages.get("notificationTemplateCatalog")
+    if template_ref and data.get("notificationTemplateCatalog"):
+        links.append((template_ref["title"], f"./{template_ref['file']}"))
     body = header(
         pages["database"]["title"],
         "MongoDB Data Model",
@@ -2005,6 +2031,79 @@ def render_architecture_d2_block(diagram, rendered_d2_ids=None):
     )
 
 
+def render_notification_template_catalog_doc(data):
+    catalog = data["notificationTemplateCatalog"]
+    page_ref = data["site"]["pages"]["notificationTemplateCatalog"]
+    pages = data["site"]["pages"]
+    nav_items = [
+        ("overview", "개요"),
+        ("rules", "작성 규칙"),
+        ("fallback-policy", "Fallback 정책"),
+        ("template-args", "이벤트별 인자"),
+    ]
+
+    common_optional_args = code_list(catalog.get("commonOptionalArgs", []))
+    rule_items = "".join(f"<li>{e(rule)}</li>" for rule in catalog.get("rules", []))
+    fallback_items = "".join(f"<li>{e(rule)}</li>" for rule in catalog.get("fallbackPolicy", []))
+    template_rows = "".join(
+        "<tr>"
+        f"<td><code>{e(template['eventType'])}</code></td>"
+        f"<td>{e(template['purpose'])}</td>"
+        f"<td><code>{e(template['recipientType'])}</code></td>"
+        f"<td>{code_list(template['requiredTemplateArgs'])}</td>"
+        f"<td>{code_list(template['optionalTemplateArgs'])}</td>"
+        f"<td>{code_list(template.get('encryptedArgs', []))}</td>"
+        f"<td>{e(template.get('notes', ''))}</td>"
+        "</tr>"
+        for template in catalog["templates"]
+    )
+    links = [
+        ("전체 시퀀스 목록", "./sequence-index.html"),
+        ("전체 API 목록", "./all-api-doc.html"),
+        ("API 상세 설명", "./api-detail-doc.html"),
+    ]
+    database_ref = pages.get("database")
+    if database_ref:
+        links.append((database_ref["title"], f"./{database_ref['file']}"))
+    architecture_ref = pages.get("systemArchitecture")
+    if architecture_ref and data.get("systemArchitecture"):
+        links.append((architecture_ref["title"], f"./{architecture_ref['file']}"))
+
+    template_table = table(
+        "<table><thead><tr><th>event_type</th><th>목적</th><th>recipient_type</th>"
+        "<th>required_template_args</th><th>optional_template_args</th><th>Encrypted args</th><th>비고</th></tr></thead>"
+        f"<tbody>{template_rows}</tbody></table>",
+        columns=7,
+    )
+    sections = f"""<section id="overview">
+  <h2>개요</h2>
+  <p>{e(catalog['summary'])}</p>
+  <div class="note"><strong>공통 optional template_args</strong>: {common_optional_args}</div>
+</section>
+<section id="rules">
+  <h2>작성 규칙</h2>
+  <ul>{rule_items}</ul>
+</section>
+<section id="fallback-policy">
+  <h2>Fallback 정책</h2>
+  <ul>{fallback_items}</ul>
+</section>
+<section id="template-args">
+  <h2>이벤트별 인자</h2>
+  <p><code>notification_templates.required_template_args</code>와 <code>notification_outbox.template_args</code>가 맞아야 Worker가 렌더링을 시작할 수 있습니다.</p>
+  {template_table}
+</section>"""
+
+    body = header(
+        page_ref["title"],
+        "Notification Template Catalog",
+        catalog["summary"],
+        links,
+    )
+    body += f"<main class=\"wrap layout\" id=\"content\">{nav(nav_items)}<div>{sections}</div></main>"
+    return page(page_ref["title"], body)
+
+
 def render_system_architecture_doc(data, rendered_d2_ids=None):
     architecture = data["systemArchitecture"]
     page_ref = data["site"]["pages"]["systemArchitecture"]
@@ -2186,6 +2285,8 @@ def generate_docs(data_path, out_dir, render_d2=False, rendered_d2_ids=None):
         rendered[pages["database"]["file"]] = render_database_doc(data)
     if data.get("risks") and pages.get("risks"):
         rendered[pages["risks"]["file"]] = render_risk_doc(data)
+    if data.get("notificationTemplateCatalog") and pages.get("notificationTemplateCatalog"):
+        rendered[pages["notificationTemplateCatalog"]["file"]] = render_notification_template_catalog_doc(data)
     if data.get("systemArchitecture") and pages.get("systemArchitecture"):
         rendered[pages["systemArchitecture"]["file"]] = render_system_architecture_doc(data, rendered_ids)
     for sequence in data["sequences"]:
