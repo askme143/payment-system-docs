@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>결제 취소/환불 플로우</title>
+  <title>이메일 템플릿 카탈로그</title>
   <style>
     :root {
       --bg: #f5f7fb;
@@ -801,236 +801,34 @@
 <header>
   <div class="hero">
     <div class="wrap">
-    <p class="eyebrow">Sequence Diagram</p>
-    <h1>결제 취소/환불 플로우</h1>
-    <p class="lead">승인 완료된 일반결제를 회원 또는 운영자가 전체/부분 취소하고, 토스 취소 API 결과를 내부 결제 상태와 취소 이력에 반영하는 흐름입니다.</p>
+    <p class="eyebrow">Notification Template Catalog</p>
+    <h1>이메일 템플릿 카탈로그</h1>
+    <p class="lead">notification_templates 컬렉션에 seed로 들어갈 초기 이벤트 템플릿과 notification_outbox.template_args 계약입니다. Worker는 outbox에 저장된 template_key, template_version, template_args를 사용해 렌더링하며, 이 카탈로그는 각 event_type별 required_template_args와 암호화 대상 인자를 고정합니다.</p>
     <div class="search-panel">
       <input type="search" data-doc-search aria-label="문서 검색" placeholder="API, 상태, 컬렉션, 플로우 검색">
     </div>
-    <p class="top-links"><a href="./sequence-index.html">전체 시퀀스 목록</a><a href="./all-api-doc.html">전체 API 목록</a><a href="./api-detail-doc.html">API 상세 설명</a><a href="./system-architecture-doc.html">이메일 발송 시스템 아키텍처 문서</a><a href="./database-doc.html">MongoDB 구조 문서</a><a href="./notification-template-catalog-doc.html">이메일 템플릿 카탈로그</a><a href="./risk-register-doc.html">결제 시스템 잠재 위험 및 대응 문서</a></p>
+    <p class="top-links"><a href="./sequence-index.html">전체 시퀀스 목록</a><a href="./all-api-doc.html">전체 API 목록</a><a href="./api-detail-doc.html">API 상세 설명</a><a href="./database-doc.html">MongoDB 구조 문서</a><a href="./system-architecture-doc.html">이메일 발송 시스템 아키텍처 문서</a></p>
     </div>
   </div>
 </header>
-<main class="wrap" id="content">
-  <section>
-    <h2>사용 API</h2>
-    <div class="grid"><div class="box"><a href="./all-api-doc.html#payments-cancel"><code>POST /payments/{paymentId}/cancel</code></a><p>승인 완료된 일반결제를 전체 또는 부분 취소하고 내부 취소 이력을 저장합니다.</p></div><div class="box"><a href="./all-api-doc.html#admin-payments"><code>GET /admin/payments</code></a><p>CS와 운영자가 결제 목록을 검색합니다.</p></div><div class="box"><a href="./all-api-doc.html#admin-payment-cancel"><code>POST /admin/payments/{paymentId}/cancel</code></a><p>관리자가 회원 요청, 중복 결제, 장애 보정 사유로 일반결제를 전체 또는 부분 취소합니다.</p></div></div>
-  </section>
-  <div class="note">
-  <strong>연관 잠재 위험</strong>
-  <ul><li><a href="./risk-register-doc.html#cancel-refund-duplicate-or-mismatch"><code>cancel-refund-duplicate-or-mismatch</code></a> 취소/환불 중복 또는 외부/내부 불일치</li></ul>
-</div>
-  <section id="payment-cancel-refund-main">
-  <h2>전체 취소 및 부분 취소</h2>
-  <p>회원이 마이페이지에서 일반결제 취소를 요청했을 때 취소 가능 금액을 검증하고 토스 취소 API를 호출한 뒤 내부 상태를 canceled 또는 partial_canceled로 저장합니다.</p>
-  <div class="diagram"><div class="d2-diagram">
-  <div class="d2-toolbar">
-    <button type="button" class="d2-open-button" data-diagram-open data-diagram-src="diagrams/payment-cancel-refund-payment-cancel-refund-main.svg" data-diagram-title="전체 취소 및 부분 취소">크게 보기</button>
-    <a href="diagrams/payment-cancel-refund-payment-cancel-refund-main.d2">D2 원본</a>
-  </div>
-  <img class="d2-svg" src="diagrams/payment-cancel-refund-payment-cancel-refund-main.svg" alt="전체 취소 및 부분 취소">
-  <details class="d2-details">
-    <summary>D2 원본 보기</summary>
-    <pre class="d2-source"><code>diagram: {
-  shape: sequence_diagram
-  label: &quot;전체 취소 및 부분 취소&quot;
-
-  client: &quot;웹 클라이언트&quot;
-  client.style.fill: &quot;#e8f3ff&quot;
-  client.style.stroke: &quot;#2457a6&quot;
-  server: &quot;우리 서버&quot;
-  server.style.fill: &quot;#eaf8f3&quot;
-  server.style.stroke: &quot;#1c7c66&quot;
-  toss: &quot;토스페이먼츠 서버&quot;
-  toss.style.fill: &quot;#f1edff&quot;
-  toss.style.stroke: &quot;#7b4bc4&quot;
-  email: &quot;이메일 발송 시스템&quot;
-  email.style.fill: &quot;#f8fafc&quot;
-  email.style.stroke: &quot;#65758a&quot;
-
-  client -&gt; server: |md
-일반결제 취소 요청
-
-**POST /payments/{paymentId}/cancel**
-
-cancelAmount, cancelReason, Idempotency-Key
-| {
-    style.stroke: &quot;#1c7c66&quot;
-    style.font-color: &quot;#334155&quot;
-    style.font-size: 18
-    style.italic: false
-  }
-  server.note_2: &quot;소유권 및 상태 검증\npayment.userId == X-Request-User-Id, status in paid/partial_canceled\nfailed, expired, canceled 상태는 취소 거부&quot;
-  server.note_3: &quot;부분 취소 누적 금액 검증\ncancelAmount &lt;= cancelableAmount\ncancelAmount 생략 시 남은 금액 전체 취소&quot;
-  server.note_4: &quot;멱등 재시도\nsame paymentId + Idempotency-Key\n이미 성공한 취소 결과가 있으면 토스 재호출 없이 200 OK&quot;
-  server.note_5: &quot;취소 요청 저장\ncancel.status = pending\n요청 금액, 사유, 요청자, 멱등 키 저장&quot;
-  server -&gt; toss: |md
-토스 결제 취소 요청
-
-**POST /v1/payments/{paymentKey}/cancel**
-
-cancelReason, cancelAmount
-| {
-    style.stroke: &quot;#7b4bc4&quot;
-    style.font-color: &quot;#334155&quot;
-    style.font-size: 18
-    style.italic: false
-  }
-  toss -&gt; server: |md
-취소 승인 결과
-
-cancels[], cancelableAmount
-
-토스 응답 금액과 내부 금액 대조
-| {
-    style.stroke: &quot;#1c7c66&quot;
-    style.font-color: &quot;#334155&quot;
-    style.font-size: 18
-    style.italic: false
-  }
-  server.note_8: &quot;결제 상태 및 취소 이력 반영\npayment.status = canceled 또는 partial_canceled\ncancelHistory에 providerCancelId, canceledAt, receiptUrl 저장&quot;
-  server -&gt; email: |md
-취소 완료 알림 발송
-
-cancelHistory
-
-전체/부분 취소 금액과 영수증 링크 포함
-| {
-    style.stroke: &quot;#65758a&quot;
-    style.font-color: &quot;#334155&quot;
-    style.font-size: 18
-    style.italic: false
-  }
-  server -&gt; client: |md
-취소 결과 반환
-
-status, canceledAmount, cancelableAmount, cancelHistory
-
-프론트는 결제 상세의 취소 이력을 갱신
-| {
-    style.stroke: &quot;#2457a6&quot;
-    style.font-color: &quot;#334155&quot;
-    style.font-size: 18
-    style.italic: false
-  }
-  server.note_11: &quot;토스 취소 실패\nprovider_error / provider_rejected\npending 취소를 failed로 저장하고 재시도 가능 여부 안내&quot;
-}
-</code></pre>
-  </details>
-</div></div>
-</section><section id="admin-payment-cancel">
-  <h2>운영자 결제 취소</h2>
-  <p>관리자가 CS 요청이나 장애 보정 사유로 일반결제를 취소할 때 권한과 감사 로그를 남기고 동일한 취소 서비스로 처리합니다.</p>
-  <div class="diagram"><div class="d2-diagram">
-  <div class="d2-toolbar">
-    <button type="button" class="d2-open-button" data-diagram-open data-diagram-src="diagrams/payment-cancel-refund-admin-payment-cancel.svg" data-diagram-title="운영자 결제 취소">크게 보기</button>
-    <a href="diagrams/payment-cancel-refund-admin-payment-cancel.d2">D2 원본</a>
-  </div>
-  <img class="d2-svg" src="diagrams/payment-cancel-refund-admin-payment-cancel.svg" alt="운영자 결제 취소">
-  <details class="d2-details">
-    <summary>D2 원본 보기</summary>
-    <pre class="d2-source"><code>diagram: {
-  shape: sequence_diagram
-  label: &quot;운영자 결제 취소&quot;
-
-  admin: &quot;관리자&quot;
-  admin.style.fill: &quot;#f1f5f9&quot;
-  admin.style.stroke: &quot;#334155&quot;
-  server: &quot;우리 서버&quot;
-  server.style.fill: &quot;#eaf8f3&quot;
-  server.style.stroke: &quot;#1c7c66&quot;
-  toss: &quot;토스페이먼츠 서버&quot;
-  toss.style.fill: &quot;#f1edff&quot;
-  toss.style.stroke: &quot;#7b4bc4&quot;
-  email: &quot;이메일 발송 시스템&quot;
-  email.style.fill: &quot;#f8fafc&quot;
-  email.style.stroke: &quot;#65758a&quot;
-
-  admin -&gt; server: |md
-취소 대상 결제 검색
-
-**GET /admin/payments**
-
-회원, 주문번호, paymentKey, 상태, 결제일 조건으로 조회
-| {
-    style.stroke: &quot;#1c7c66&quot;
-    style.font-color: &quot;#334155&quot;
-    style.font-size: 18
-    style.italic: false
-  }
-  admin -&gt; server: |md
-운영자 결제 취소 요청
-
-**POST /admin/payments/{paymentId}/cancel**
-
-cancelAmount, cancelReason, reasonMessage, notifyCustomer
-| {
-    style.stroke: &quot;#1c7c66&quot;
-    style.font-color: &quot;#334155&quot;
-    style.font-size: 18
-    style.italic: false
-  }
-  server.note_3: &quot;관리자 권한 검증\npermission == payment_cancel\n관리자 ID, 요청 IP, 사유를 감사 로그에 기록&quot;
-  server.note_4: &quot;취소 가능 금액 검증\ncancelAmount &lt;= cancelableAmount\n회원용 API와 같은 금액 검증 정책 사용&quot;
-  server -&gt; toss: |md
-토스 결제 취소 요청
-
-**POST /v1/payments/{paymentKey}/cancel**
-
-운영자 사유는 내부 감사 로그에 보관
-| {
-    style.stroke: &quot;#7b4bc4&quot;
-    style.font-color: &quot;#334155&quot;
-    style.font-size: 18
-    style.italic: false
-  }
-  toss -&gt; server: |md
-취소 승인 결과
-
-cancels[], cancelableAmount
-
-providerCancelId와 영수증 URL 저장
-| {
-    style.stroke: &quot;#1c7c66&quot;
-    style.font-color: &quot;#334155&quot;
-    style.font-size: 18
-    style.italic: false
-  }
-  server.note_7: &quot;운영자 취소 이력 반영\ncancelHistory.requestedBy = admin\noperatorAuditId와 연결&quot;
-  server -&gt; email: |md
-회원 알림 발송
-
-notifyCustomer == true
-
-취소 완료 금액과 결제 상세 링크 포함
-| {
-    style.stroke: &quot;#65758a&quot;
-    style.font-color: &quot;#334155&quot;
-    style.font-size: 18
-    style.italic: false
-  }
-  server -&gt; admin: |md
-운영자 취소 결과 반환
-
-operatorAuditId, status, cancelHistory
-
-관리자 콘솔은 감사 로그 링크를 표시
-| {
-    style.stroke: &quot;#334155&quot;
-    style.font-color: &quot;#334155&quot;
-    style.font-size: 18
-    style.italic: false
-  }
-}
-</code></pre>
-  </details>
-</div></div>
+<main class="wrap layout" id="content"><nav aria-label="문서 목차"><a href="#overview">개요</a><a href="#rules">작성 규칙</a><a href="#fallback-policy">Fallback 정책</a><a href="#template-args">이벤트별 인자</a></nav><div><section id="overview">
+  <h2>개요</h2>
+  <p>notification_templates 컬렉션에 seed로 들어갈 초기 이벤트 템플릿과 notification_outbox.template_args 계약입니다. Worker는 outbox에 저장된 template_key, template_version, template_args를 사용해 렌더링하며, 이 카탈로그는 각 event_type별 required_template_args와 암호화 대상 인자를 고정합니다.</p>
+  <div class="note"><strong>공통 optional template_args</strong>: <code>recipientName</code>, <code>locale</code>, <code>timezone</code>, <code>supportUrl</code></div>
 </section>
-  <section id="states">
-  <h2>상태 요약</h2>
-  <div class="table-scroll"><table class="has-many-columns"><thead><tr><th>시점</th><th>구독 상태</th><th>결제 상태</th><th>설명</th></tr></thead><tbody><tr><td data-label="시점">취소 전</td><td data-label="구독 상태"><code>-</code></td><td data-label="결제 상태"><code>paid</code></td><td data-label="설명">승인 완료 결제이며 cancelableAmount가 남아 있습니다.</td></tr><tr><td data-label="시점">부분 취소 후</td><td data-label="구독 상태"><code>-</code></td><td data-label="결제 상태"><code>partial_canceled</code></td><td data-label="설명">일부 금액만 취소됐고 남은 금액은 추가 취소할 수 있습니다.</td></tr><tr><td data-label="시점">전체 취소 후</td><td data-label="구독 상태"><code>-</code></td><td data-label="결제 상태"><code>canceled</code></td><td data-label="설명">취소 가능 금액이 0이며 추가 취소 요청은 멱등 결과 또는 409로 처리합니다.</td></tr><tr><td data-label="시점">운영자 취소 전</td><td data-label="구독 상태"><code>-</code></td><td data-label="결제 상태"><code>paid 또는 partial_canceled</code></td><td data-label="설명">관리자가 취소 가능 금액과 사유를 확인합니다.</td></tr><tr><td data-label="시점">운영자 취소 후</td><td data-label="구독 상태"><code>-</code></td><td data-label="결제 상태"><code>canceled 또는 partial_canceled</code></td><td data-label="설명">회원 결제 내역과 운영 감사 로그가 같은 취소 건을 가리킵니다.</td></tr></tbody></table></div>
+<section id="rules">
+  <h2>작성 규칙</h2>
+  <ul><li>template_args key는 camelCase를 사용합니다. MongoDB 필드명은 snake_case를 유지하되 템플릿 인자는 프론트/메일 템플릿 친화적인 camelCase로 고정합니다.</li><li>recipientName은 모든 템플릿의 공통 optional 인자입니다. NotificationRecipientResolver가 enqueue 시점에 반환한 표시 이름 스냅샷을 template_args.recipientName에 복사합니다.</li><li>recipientEmail, recipientType, recipientUserId, recipientAdminId, productCode, templateKey, templateVersion은 outbox metadata이며 template_args에 중복 저장하지 않습니다.</li><li>로그인 링크, 비밀번호 재설정 링크, OTP, magic link, reset token처럼 인증에 사용할 수 있는 값은 template_args 내부에서 필드 단위 encrypted value object로 저장하고 Worker가 렌더링 직전에만 복호화합니다.</li><li>idempotency_payload_hash는 암호화 전 canonical value 또는 결정적 비가역 digest로 계산합니다. randomized ciphertext를 hash 입력으로 사용하지 않습니다.</li></ul>
 </section>
-</main>
+<section id="fallback-policy">
+  <h2>Fallback 정책</h2>
+  <ul><li>product_code가 있으면 {product_code}.{event_type} 활성 템플릿을 가장 먼저 찾습니다.</li><li>product_type이 있으면 {product_type}.{event_type} 활성 템플릿을 다음 후보로 찾습니다.</li><li>마지막으로 default.{event_type} 활성 템플릿을 사용합니다.</li><li>enqueue 시점에 template_key와 template_version을 확정해 outbox에 저장하며 Worker는 fallback을 다시 해석하지 않습니다.</li></ul>
+</section>
+<section id="template-args">
+  <h2>이벤트별 인자</h2>
+  <p><code>notification_templates.required_template_args</code>와 <code>notification_outbox.template_args</code>가 맞아야 Worker가 렌더링을 시작할 수 있습니다.</p>
+  <div class="table-scroll"><table class="has-many-columns"><thead><tr><th>event_type</th><th>목적</th><th>recipient_type</th><th>required_template_args</th><th>optional_template_args</th><th>Encrypted args</th><th>비고</th></tr></thead><tbody><tr><td data-label="event_type"><code>admin_auth.login_link</code></td><td data-label="목적">관리자 이메일 로그인 링크 발송</td><td data-label="recipient_type"><code>admin</code></td><td data-label="required_template_args"><code>loginLink</code>, <code>expiresMinutes</code></td><td data-label="optional_template_args"><code>recipientName</code>, <code>requestIp</code>, <code>userAgent</code>, <code>supportUrl</code>, <code>locale</code>, <code>timezone</code></td><td data-label="Encrypted args"><code>loginLink</code></td><td data-label="비고">loginLink는 토큰 원문을 포함하므로 encrypted value object로 저장합니다.</td></tr><tr><td data-label="event_type"><code>admin_auth.password_reset</code></td><td data-label="목적">관리자 비밀번호 재설정 링크 발송</td><td data-label="recipient_type"><code>admin</code></td><td data-label="required_template_args"><code>resetLink</code>, <code>expiresMinutes</code></td><td data-label="optional_template_args"><code>recipientName</code>, <code>requestIp</code>, <code>supportUrl</code>, <code>locale</code>, <code>timezone</code></td><td data-label="Encrypted args"><code>resetLink</code></td><td data-label="비고">resetLink는 토큰 원문을 포함하므로 encrypted value object로 저장합니다.</td></tr><tr><td data-label="event_type"><code>subscription_billing_reminder</code></td><td data-label="목적">다음 정기결제 사전 안내</td><td data-label="recipient_type"><code>user</code></td><td data-label="required_template_args"><code>subscriptionId</code>, <code>planName</code>, <code>amount</code>, <code>currency</code>, <code>billingDate</code>, <code>subscriptionManageUrl</code></td><td data-label="optional_template_args"><code>recipientName</code>, <code>productName</code>, <code>billingMethodSummary</code>, <code>supportUrl</code>, <code>locale</code>, <code>timezone</code></td><td data-label="Encrypted args">-</td><td data-label="비고">금액과 결제 예정일은 enqueue 시점의 청구 스냅샷을 사용합니다.</td></tr><tr><td data-label="event_type"><code>subscription_payment_paid</code></td><td data-label="목적">정기결제 성공 영수증 발송</td><td data-label="recipient_type"><code>user</code></td><td data-label="required_template_args"><code>subscriptionId</code>, <code>invoiceId</code>, <code>amount</code>, <code>currency</code>, <code>billingDate</code>, <code>receiptUrl</code></td><td data-label="optional_template_args"><code>recipientName</code>, <code>planName</code>, <code>productName</code>, <code>paidAt</code>, <code>paymentMethodSummary</code>, <code>supportUrl</code>, <code>locale</code>, <code>timezone</code></td><td data-label="Encrypted args">-</td><td data-label="비고">receiptUrl은 사용자 인증이 필요한 내부 영수증 URL 또는 짧은 수명 서명 URL만 사용합니다.</td></tr><tr><td data-label="event_type"><code>subscription_payment_failed</code></td><td data-label="목적">정기결제 실패 및 재시도 안내</td><td data-label="recipient_type"><code>user</code></td><td data-label="required_template_args"><code>subscriptionId</code>, <code>invoiceId</code>, <code>amount</code>, <code>currency</code>, <code>failureSummary</code>, <code>retryScheduledAt</code>, <code>billingMethodUpdateUrl</code></td><td data-label="optional_template_args"><code>recipientName</code>, <code>planName</code>, <code>productName</code>, <code>providerCode</code>, <code>supportUrl</code>, <code>locale</code>, <code>timezone</code></td><td data-label="Encrypted args">-</td><td data-label="비고">failureSummary는 provider secret이나 원문 stack trace가 아닌 사용자 노출 가능 문구만 저장합니다.</td></tr><tr><td data-label="event_type"><code>subscription_canceled_payment_failed</code></td><td data-label="목적">반복 결제 실패로 구독 취소 안내</td><td data-label="recipient_type"><code>user</code></td><td data-label="required_template_args"><code>subscriptionId</code>, <code>invoiceId</code>, <code>canceledAt</code>, <code>failureSummary</code>, <code>cancelReason</code>, <code>subscriptionManageUrl</code>, <code>resubscribeUrl</code></td><td data-label="optional_template_args"><code>recipientName</code>, <code>amount</code>, <code>currency</code>, <code>providerCode</code>, <code>planName</code>, <code>productName</code>, <code>supportUrl</code>, <code>locale</code>, <code>timezone</code></td><td data-label="Encrypted args">-</td><td data-label="비고">cancelReason은 내부 enum을 사용자에게 노출 가능한 설명으로 변환한 값을 저장합니다.</td></tr><tr><td data-label="event_type"><code>subscription_canceled_after_period</code></td><td data-label="목적">해지 예약 후 이용기간 종료 안내</td><td data-label="recipient_type"><code>user</code></td><td data-label="required_template_args"><code>subscriptionId</code>, <code>periodEndAt</code>, <code>canceledAt</code>, <code>accessUntil</code>, <code>resubscribeUrl</code></td><td data-label="optional_template_args"><code>recipientName</code>, <code>planName</code>, <code>productName</code>, <code>subscriptionManageUrl</code>, <code>supportUrl</code>, <code>locale</code>, <code>timezone</code></td><td data-label="Encrypted args">-</td><td data-label="비고">accessUntil은 서비스 권한 종료 시각을 명확히 보여주기 위한 사용자 기준 시각입니다.</td></tr><tr><td data-label="event_type"><code>subscription_plan_upgrade_receipt</code></td><td data-label="목적">구독 플랜 업그레이드 결제 영수증 발송</td><td data-label="recipient_type"><code>user</code></td><td data-label="required_template_args"><code>subscriptionId</code>, <code>invoiceId</code>, <code>paymentId</code>, <code>fromPlanName</code>, <code>toPlanName</code>, <code>amount</code>, <code>currency</code>, <code>changedAt</code>, <code>receiptUrl</code></td><td data-label="optional_template_args"><code>recipientName</code>, <code>effectiveAt</code>, <code>paymentMethodSummary</code>, <code>supportUrl</code>, <code>locale</code>, <code>timezone</code></td><td data-label="Encrypted args">-</td><td data-label="비고">플랜명은 결제 당시 표시명을 스냅샷으로 저장합니다.</td></tr><tr><td data-label="event_type"><code>payment_cancel_completed</code></td><td data-label="목적">일반결제 취소 완료 안내</td><td data-label="recipient_type"><code>user</code></td><td data-label="required_template_args"><code>paymentId</code>, <code>cancelAmount</code>, <code>currency</code>, <code>canceledAt</code></td><td data-label="optional_template_args"><code>recipientName</code>, <code>invoiceId</code>, <code>orderName</code>, <code>cancelReason</code>, <code>receiptUrl</code>, <code>supportUrl</code>, <code>locale</code>, <code>timezone</code></td><td data-label="Encrypted args">-</td><td data-label="비고">부분 취소인 경우 cancelAmount와 원 결제 금액을 혼동하지 않도록 템플릿 문구에서 취소 금액으로 표기합니다.</td></tr><tr><td data-label="event_type"><code>subscription_adjustment_completed</code></td><td data-label="목적">관리자 구독 보정 완료 안내</td><td data-label="recipient_type"><code>user</code></td><td data-label="required_template_args"><code>subscriptionId</code>, <code>adjustmentType</code>, <code>status</code>, <code>adjustedAt</code></td><td data-label="optional_template_args"><code>recipientName</code>, <code>previousStatus</code>, <code>nextBillingAt</code>, <code>accessUntil</code>, <code>reasonSummary</code>, <code>subscriptionManageUrl</code>, <code>supportUrl</code>, <code>locale</code>, <code>timezone</code></td><td data-label="Encrypted args">-</td><td data-label="비고">reasonSummary는 운영자 내부 메모가 아니라 사용자 통지용 요약만 저장합니다.</td></tr><tr><td data-label="event_type"><code>one_time_payment_paid</code></td><td data-label="목적">일반결제 성공 영수증 발송</td><td data-label="recipient_type"><code>user</code></td><td data-label="required_template_args"><code>checkoutId</code>, <code>paymentId</code>, <code>orderName</code>, <code>amount</code>, <code>currency</code>, <code>paidAt</code>, <code>receiptUrl</code></td><td data-label="optional_template_args"><code>recipientName</code>, <code>itemSummary</code>, <code>paymentMethodSummary</code>, <code>supportUrl</code>, <code>locale</code>, <code>timezone</code></td><td data-label="Encrypted args">-</td><td data-label="비고">checkoutId와 paymentId를 함께 넣어 결제 시도와 승인 결과를 운영상 추적할 수 있게 합니다.</td></tr></tbody></table></div>
+</section></div></main>
 <div class="d2-modal" data-diagram-modal hidden role="dialog" aria-modal="true" aria-labelledby="diagram-modal-title">
   <div class="d2-modal__panel" role="document">
     <div class="d2-modal__header">

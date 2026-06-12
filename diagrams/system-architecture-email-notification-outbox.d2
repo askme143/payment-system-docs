@@ -25,6 +25,18 @@ auth_service: "Admin/User Auth Service" {
   style.stroke: "#1c7c66"
   style.border-radius: 6
 }
+recipient_resolver: "NotificationRecipientResolver" {
+  shape: rectangle
+  style.fill: "#eaf8f3"
+  style.stroke: "#1c7c66"
+  style.border-radius: 6
+}
+profile_source: "회원/관리자 프로필 소스" {
+  shape: rectangle
+  style.fill: "#f8fafc"
+  style.stroke: "#65758a"
+  style.border-radius: 6
+}
 auth_tokens: "admin_auth_tokens / auth challenges" {
   shape: rectangle
   style.fill: "#f1f5f9"
@@ -71,12 +83,15 @@ mailbox: "회원 메일함" {
 client -> payment_api: "결제/구독 요청"
 subscription_jobs -> payment_api: "내부 배치 진입점 호출"
 payment_api -> business_state: "업무 상태 저장"
-payment_api -> notification_outbox: "알림 intent enqueue"
+payment_api -> recipient_resolver: "회원 recipient profile resolve"
+payment_api -> notification_outbox: "recipient_email snapshot + intent enqueue"
 subscription_jobs -> notification_outbox: "배치 알림 enqueue"
 auth_service -> auth_tokens: "OTP/token hash + expires_at 저장"
-auth_service -> notification_outbox: "인증 메일 enqueue"
+auth_service -> recipient_resolver: "관리자 recipient profile resolve"
+recipient_resolver -> profile_source: "adapter lookup"
+auth_service -> notification_outbox: "encrypted auth args enqueue"
 notification_worker -> notification_outbox: "claim / 만료 확인 / status update"
-notification_worker -> notification_templates: "template_key + version + required_args 조회"
+notification_worker -> notification_templates: "template_key + version + required_template_args 조회"
 notification_worker -> smtp_adapter: "rendered email send"
 smtp_adapter -> mailbox: "SMTP delivery"
 smtp_adapter -> notification_worker: "provider_message_id / error"

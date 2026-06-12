@@ -55,6 +55,7 @@ class GenerateDocsTest(unittest.TestCase):
             "sequenceGroups",
             "sequences",
             "database",
+            "notificationTemplateCatalog",
             "systemArchitecture",
             "policies",
         ]:
@@ -82,7 +83,7 @@ class GenerateDocsTest(unittest.TestCase):
                 "Admin/User Auth Service",
                 "admin_auth_tokens",
                 "template_args",
-                "admin_auth.login_otp",
+                "admin_auth.login_link",
                 "expires_at",
                 "retry_scheduled",
                 "dead_letter",
@@ -107,6 +108,36 @@ class GenerateDocsTest(unittest.TestCase):
             self.assertTrue(lifecycle_d2.exists())
             self.assertIn("notification_outbox", outbox_d2.read_text(encoding="utf-8"))
             self.assertIn("dead_letter", lifecycle_d2.read_text(encoding="utf-8"))
+
+    def test_notification_template_catalog_page_is_generated(self):
+        data = json.loads(Path("docs-data/documentation.json").read_text(encoding="utf-8"))
+        self.assertIn("notificationTemplateCatalog", data["site"]["pages"])
+        self.assertIn("notificationTemplateCatalog", data)
+
+        with tempfile.TemporaryDirectory() as tmp:
+            out_dir = Path(tmp)
+
+            generated = generate_docs("docs-data/documentation.json", out_dir)
+
+            generated_names = {path.name for path in generated}
+            self.assertIn("notification-template-catalog-doc.html", generated_names)
+            catalog = (out_dir / "notification-template-catalog-doc.html").read_text(encoding="utf-8")
+            database = (out_dir / "database-doc.html").read_text(encoding="utf-8")
+            architecture = (out_dir / "system-architecture-doc.html").read_text(encoding="utf-8")
+
+            for expected in [
+                "이메일 템플릿 카탈로그",
+                "subscription_payment_failed",
+                "admin_auth.login_link",
+                "recipientName",
+                "required_template_args",
+                "Encrypted args",
+                "billingMethodUpdateUrl",
+                "loginLink",
+            ]:
+                self.assertIn(expected, catalog)
+            self.assertIn("notification-template-catalog-doc.html", database)
+            self.assertIn("notification-template-catalog-doc.html", architecture)
 
     def test_system_architecture_diagrams_do_not_render_tooltip_appendix(self):
         with tempfile.TemporaryDirectory() as tmp:

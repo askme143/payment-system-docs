@@ -27,6 +27,10 @@
       "systemArchitecture": {
         "title": "이메일 발송 시스템 아키텍처 문서",
         "file": "system-architecture-doc.html"
+      },
+      "notificationTemplateCatalog": {
+        "title": "이메일 템플릿 카탈로그",
+        "file": "notification-template-catalog-doc.html"
       }
     }
   },
@@ -12094,6 +12098,411 @@
           "admin-auth-password-reset-request",
           "admin-auth-password-reset-confirm"
         ]
+      },
+      {
+        "id": "notification-outbox",
+        "name": "notification_outbox",
+        "title": "이메일 알림 Outbox",
+        "description": "결제, 구독, 인증 흐름에서 생성한 이메일 발송 의도를 저장하는 Mongo 기반 내구성 큐입니다. 업무 원본 데이터가 아니라 발송 메타데이터와 템플릿 렌더링 인자만 저장합니다.",
+        "fields": [
+          {
+            "name": "_id",
+            "type": "UuidString",
+            "required": true,
+            "description": "알림 outbox item의 MongoDB _id입니다. 애플리케이션이 자체 UUID 방식으로 생성해 문자열로 저장합니다."
+          },
+          {
+            "name": "idempotency_key",
+            "type": "string",
+            "required": true,
+            "description": "같은 비즈니스 이벤트의 이메일 발송 의도를 한 번만 저장하기 위한 결정적 키입니다."
+          },
+          {
+            "name": "idempotency_payload_hash",
+            "type": "string",
+            "required": true,
+            "description": "같은 idempotency_key로 재적재된 요청의 발송 내용이 동일한지 확인하기 위한 canonical hash입니다. 민감 template_args는 암호화 전 canonical 값 또는 결정적 비가역 digest를 사용해 계산하며, randomized ciphertext에 의존하지 않습니다."
+          },
+          {
+            "name": "event_type",
+            "type": "string",
+            "required": true,
+            "description": "알림 이벤트 유형입니다. 예: subscription_payment_failed, subscription_payment_paid, admin_auth.login_link"
+          },
+          {
+            "name": "recipient_type",
+            "type": "string",
+            "required": true,
+            "enum": [
+              "user",
+              "admin",
+              "external"
+            ],
+            "description": "수신자 소유 주체입니다."
+          },
+          {
+            "name": "recipient_user_id",
+            "type": "ExternalUserId",
+            "required": false,
+            "description": "회원 수신자인 경우 회원 서비스가 소유한 외부 사용자 식별자입니다."
+          },
+          {
+            "name": "recipient_admin_id",
+            "type": "UuidString",
+            "required": false,
+            "ref": "admin_accounts._id",
+            "description": "관리자 수신자인 경우 관리자 계정 ID입니다."
+          },
+          {
+            "name": "recipient_email",
+            "type": "string",
+            "required": true,
+            "description": "SMTP 전송에 사용할 실제 수신 이메일 주소입니다. NotificationRecipientResolver port가 enqueue 시점에 확정한 수신자 프로필 스냅샷이며 Worker는 수신자 조회를 다시 수행하지 않습니다."
+          },
+          {
+            "name": "product_code",
+            "type": "string",
+            "required": false,
+            "description": "상품별 템플릿 선택에 사용하는 상품 코드입니다."
+          },
+          {
+            "name": "product_type",
+            "type": "string",
+            "required": false,
+            "description": "상품 유형별 템플릿 선택에 사용하는 상품 유형입니다."
+          },
+          {
+            "name": "template_key",
+            "type": "string",
+            "required": true,
+            "description": "enqueue 시점에 확정한 템플릿 키입니다. Worker는 fallback을 다시 해석하지 않고 이 key와 version을 조회합니다."
+          },
+          {
+            "name": "template_version",
+            "type": "number",
+            "required": true,
+            "description": "enqueue 시점에 확정한 템플릿 버전입니다."
+          },
+          {
+            "name": "template_args",
+            "type": "object",
+            "required": true,
+            "description": "선택된 템플릿 렌더링에 필요한 최소 인자입니다. 결제, 인보이스, 구독 원본 전체를 복제하지 않습니다. 모든 템플릿은 공통 optional 인자인 recipientName, locale, timezone을 사용할 수 있으며, 이 값은 NotificationRecipientResolver가 enqueue 시점에 반환한 스냅샷을 복사합니다. 금액, invoiceId, 날짜 같은 비민감 값은 평문 JSON으로 저장할 수 있지만 로그인 링크, reset token, OTP, magic link 같은 인증 비밀은 필드 단위 encrypted value object로 저장하고 Worker가 렌더링 직전에만 복호화합니다."
+          },
+          {
+            "name": "status",
+            "type": "string",
+            "required": true,
+            "enum": [
+              "pending",
+              "processing",
+              "sent",
+              "retry_scheduled",
+              "dead_letter"
+            ],
+            "description": "이메일 발송 생명주기 상태입니다."
+          },
+          {
+            "name": "attempt_count",
+            "type": "number",
+            "required": true,
+            "description": "SMTP/provider 전송 시도 횟수입니다. 초기값은 0입니다."
+          },
+          {
+            "name": "available_at",
+            "type": "Date",
+            "required": true,
+            "description": "Worker가 이 item을 처리할 수 있는 가장 이른 시각입니다."
+          },
+          {
+            "name": "locked_until_at",
+            "type": "Date",
+            "required": false,
+            "description": "processing claim의 만료 시각입니다. 이 시각이 지나면 다른 worker가 다시 claim할 수 있습니다."
+          },
+          {
+            "name": "worker_id",
+            "type": "string",
+            "required": false,
+            "description": "현재 또는 마지막으로 item을 claim한 worker 식별자입니다."
+          },
+          {
+            "name": "provider_message_id",
+            "type": "string",
+            "required": false,
+            "description": "SMTP/provider가 발송 수락 후 반환한 메시지 식별자입니다."
+          },
+          {
+            "name": "last_error",
+            "type": "object",
+            "required": false,
+            "description": "마지막 실패의 provider-safe 요약입니다. provider secret, 토큰 원문, 복호화된 template_args, stack trace 원문은 저장하지 않습니다.",
+            "properties": [
+              {
+                "name": "code",
+                "type": "string",
+                "required": true,
+                "description": "표준화된 오류 코드입니다."
+              },
+              {
+                "name": "message",
+                "type": "string",
+                "required": true,
+                "description": "운영자가 볼 수 있는 짧은 오류 설명입니다."
+              },
+              {
+                "name": "retryable",
+                "type": "boolean",
+                "required": true,
+                "description": "자동 재시도 대상 오류인지 여부입니다."
+              },
+              {
+                "name": "occurred_at",
+                "type": "Date",
+                "required": true,
+                "description": "오류가 기록된 시각입니다."
+              }
+            ]
+          },
+          {
+            "name": "expires_at",
+            "type": "Date",
+            "required": false,
+            "description": "발송 가능 만료 시각입니다. 이 시각 이후 Worker는 provider 호출 없이 dead_letter로 전환합니다."
+          },
+          {
+            "name": "sent_at",
+            "type": "Date",
+            "required": false,
+            "description": "SMTP/provider가 이메일을 수락한 시각입니다."
+          },
+          {
+            "name": "created_at",
+            "type": "Date",
+            "required": true,
+            "description": "outbox item 생성 시각입니다."
+          },
+          {
+            "name": "updated_at",
+            "type": "Date",
+            "required": true,
+            "description": "outbox item 상태 또는 메타데이터를 마지막으로 갱신한 시각입니다."
+          },
+          {
+            "name": "purge_after_at",
+            "type": "Date",
+            "required": false,
+            "description": "Mongo TTL 삭제 기준 시각입니다. 발송 가능 여부를 판단하는 expires_at과 분리합니다."
+          }
+        ],
+        "indexes": [
+          {
+            "name": "uniq_notification_outbox_id",
+            "fields": [
+              "_id"
+            ],
+            "unique": true,
+            "description": "outbox item ID를 고유하게 유지합니다."
+          },
+          {
+            "name": "uniq_notification_outbox_idempotency_key",
+            "fields": [
+              "idempotency_key"
+            ],
+            "unique": true,
+            "description": "같은 비즈니스 이벤트의 이메일 intent가 중복 저장되지 않게 합니다."
+          },
+          {
+            "name": "idx_notification_outbox_due_claim",
+            "fields": [
+              "status",
+              "available_at",
+              "locked_until_at",
+              "created_at"
+            ],
+            "description": "pending 또는 retry_scheduled 상태의 due item을 worker가 안정적으로 claim할 때 사용합니다."
+          },
+          {
+            "name": "idx_notification_outbox_user_recipient",
+            "fields": [
+              "recipient_type",
+              "recipient_user_id",
+              "created_at"
+            ],
+            "description": "회원별 이메일 발송 이력과 운영 진단 조회에 사용합니다."
+          },
+          {
+            "name": "idx_notification_outbox_admin_recipient",
+            "fields": [
+              "recipient_type",
+              "recipient_admin_id",
+              "created_at"
+            ],
+            "description": "관리자 인증 메일 발송 이력과 운영 진단 조회에 사용합니다."
+          },
+          {
+            "name": "idx_notification_outbox_dead_letter",
+            "fields": [
+              "status",
+              "updated_at"
+            ],
+            "description": "dead_letter 상태의 운영 확인 대상 item을 조회합니다."
+          },
+          {
+            "name": "idx_notification_outbox_event_created",
+            "fields": [
+              "event_type",
+              "created_at"
+            ],
+            "description": "이벤트 유형별 발송 추적과 집계에 사용합니다."
+          },
+          {
+            "name": "idx_notification_outbox_template_version",
+            "fields": [
+              "template_key",
+              "template_version",
+              "created_at"
+            ],
+            "description": "템플릿 버전별 발송 영향 범위를 진단합니다."
+          },
+          {
+            "name": "ttl_notification_outbox_purge_after",
+            "fields": [
+              "purge_after_at"
+            ],
+            "expireAfterSeconds": 0,
+            "description": "보존 기간이 끝난 outbox item을 자동 삭제합니다."
+          }
+        ],
+        "relatedApis": [
+          "admin-auth-login",
+          "admin-auth-password-reset-request",
+          "internal-billing-run",
+          "admin-scheduler-runs-create"
+        ],
+        "riskIds": [
+          "idempotency-store-missing",
+          "recurring-billing-duplicate-run",
+          "cancel-scheduled-billing-race",
+          "notification-secret-leak-or-unstable-hash"
+        ]
+      },
+      {
+        "id": "notification-templates",
+        "name": "notification_templates",
+        "title": "이메일 알림 템플릿",
+        "description": "이메일 이벤트별 subject/html/text 템플릿과 필수 template_args 계약을 저장합니다. 상품별, 상품 유형별, 기본 이벤트 템플릿 fallback을 지원합니다.",
+        "fields": [
+          {
+            "name": "_id",
+            "type": "UuidString",
+            "required": true,
+            "description": "알림 템플릿의 MongoDB _id입니다. 애플리케이션이 자체 UUID 방식으로 생성해 문자열로 저장합니다."
+          },
+          {
+            "name": "template_key",
+            "type": "string",
+            "required": true,
+            "description": "템플릿 선택 결과로 사용하는 키입니다. 예: default.subscription_payment_failed"
+          },
+          {
+            "name": "version",
+            "type": "number",
+            "required": true,
+            "description": "동일 template_key 안의 템플릿 버전입니다."
+          },
+          {
+            "name": "event_type",
+            "type": "string",
+            "required": true,
+            "description": "템플릿이 처리하는 알림 이벤트 유형입니다."
+          },
+          {
+            "name": "product_code",
+            "type": "string",
+            "required": false,
+            "description": "특정 상품에만 적용되는 템플릿이면 상품 코드를 저장합니다."
+          },
+          {
+            "name": "product_type",
+            "type": "string",
+            "required": false,
+            "description": "특정 상품 유형에 적용되는 템플릿이면 상품 유형을 저장합니다."
+          },
+          {
+            "name": "status",
+            "type": "string",
+            "required": true,
+            "enum": [
+              "active",
+              "inactive"
+            ],
+            "description": "enqueue 시점의 템플릿 선택 가능 상태입니다."
+          },
+          {
+            "name": "subject_template",
+            "type": "string",
+            "required": true,
+            "description": "이메일 제목 템플릿입니다."
+          },
+          {
+            "name": "html_template",
+            "type": "string",
+            "required": true,
+            "description": "HTML 본문 템플릿입니다."
+          },
+          {
+            "name": "text_template",
+            "type": "string",
+            "required": true,
+            "description": "텍스트 본문 템플릿입니다."
+          },
+          {
+            "name": "required_template_args",
+            "type": "array<string>",
+            "required": true,
+            "description": "렌더링 전에 template_args에 포함되어야 하는 필수 인자 이름 목록입니다."
+          },
+          {
+            "name": "created_at",
+            "type": "Date",
+            "required": true,
+            "description": "템플릿 생성 시각입니다."
+          },
+          {
+            "name": "updated_at",
+            "type": "Date",
+            "required": true,
+            "description": "템플릿 마지막 수정 시각입니다."
+          }
+        ],
+        "indexes": [
+          {
+            "name": "uniq_notification_templates_key_version",
+            "fields": [
+              "template_key",
+              "version"
+            ],
+            "unique": true,
+            "description": "동일 template_key와 version 조합을 고유하게 유지합니다."
+          },
+          {
+            "name": "idx_notification_templates_resolution",
+            "fields": [
+              "event_type",
+              "product_code",
+              "product_type",
+              "status"
+            ],
+            "description": "상품별, 상품 유형별, 기본 이벤트 템플릿 fallback 후보를 찾습니다."
+          }
+        ],
+        "relatedApis": [
+          "admin-auth-login",
+          "admin-auth-password-reset-request",
+          "internal-billing-run",
+          "admin-scheduler-runs-create"
+        ]
       }
     ],
     "relationships": [
@@ -12952,6 +13361,292 @@
       }
     ]
   },
+  "notificationTemplateCatalog": {
+    "title": "이메일 템플릿 카탈로그",
+    "summary": "notification_templates 컬렉션에 seed로 들어갈 초기 이벤트 템플릿과 notification_outbox.template_args 계약입니다. Worker는 outbox에 저장된 template_key, template_version, template_args를 사용해 렌더링하며, 이 카탈로그는 각 event_type별 required_template_args와 암호화 대상 인자를 고정합니다.",
+    "commonOptionalArgs": [
+      "recipientName",
+      "locale",
+      "timezone",
+      "supportUrl"
+    ],
+    "rules": [
+      "template_args key는 camelCase를 사용합니다. MongoDB 필드명은 snake_case를 유지하되 템플릿 인자는 프론트/메일 템플릿 친화적인 camelCase로 고정합니다.",
+      "recipientName은 모든 템플릿의 공통 optional 인자입니다. NotificationRecipientResolver가 enqueue 시점에 반환한 표시 이름 스냅샷을 template_args.recipientName에 복사합니다.",
+      "recipientEmail, recipientType, recipientUserId, recipientAdminId, productCode, templateKey, templateVersion은 outbox metadata이며 template_args에 중복 저장하지 않습니다.",
+      "로그인 링크, 비밀번호 재설정 링크, OTP, magic link, reset token처럼 인증에 사용할 수 있는 값은 template_args 내부에서 필드 단위 encrypted value object로 저장하고 Worker가 렌더링 직전에만 복호화합니다.",
+      "idempotency_payload_hash는 암호화 전 canonical value 또는 결정적 비가역 digest로 계산합니다. randomized ciphertext를 hash 입력으로 사용하지 않습니다."
+    ],
+    "fallbackPolicy": [
+      "product_code가 있으면 {product_code}.{event_type} 활성 템플릿을 가장 먼저 찾습니다.",
+      "product_type이 있으면 {product_type}.{event_type} 활성 템플릿을 다음 후보로 찾습니다.",
+      "마지막으로 default.{event_type} 활성 템플릿을 사용합니다.",
+      "enqueue 시점에 template_key와 template_version을 확정해 outbox에 저장하며 Worker는 fallback을 다시 해석하지 않습니다."
+    ],
+    "templates": [
+      {
+        "eventType": "admin_auth.login_link",
+        "purpose": "관리자 이메일 로그인 링크 발송",
+        "recipientType": "admin",
+        "requiredTemplateArgs": [
+          "loginLink",
+          "expiresMinutes"
+        ],
+        "optionalTemplateArgs": [
+          "recipientName",
+          "requestIp",
+          "userAgent",
+          "supportUrl",
+          "locale",
+          "timezone"
+        ],
+        "encryptedArgs": [
+          "loginLink"
+        ],
+        "notes": "loginLink는 토큰 원문을 포함하므로 encrypted value object로 저장합니다."
+      },
+      {
+        "eventType": "admin_auth.password_reset",
+        "purpose": "관리자 비밀번호 재설정 링크 발송",
+        "recipientType": "admin",
+        "requiredTemplateArgs": [
+          "resetLink",
+          "expiresMinutes"
+        ],
+        "optionalTemplateArgs": [
+          "recipientName",
+          "requestIp",
+          "supportUrl",
+          "locale",
+          "timezone"
+        ],
+        "encryptedArgs": [
+          "resetLink"
+        ],
+        "notes": "resetLink는 토큰 원문을 포함하므로 encrypted value object로 저장합니다."
+      },
+      {
+        "eventType": "subscription_billing_reminder",
+        "purpose": "다음 정기결제 사전 안내",
+        "recipientType": "user",
+        "requiredTemplateArgs": [
+          "subscriptionId",
+          "planName",
+          "amount",
+          "currency",
+          "billingDate",
+          "subscriptionManageUrl"
+        ],
+        "optionalTemplateArgs": [
+          "recipientName",
+          "productName",
+          "billingMethodSummary",
+          "supportUrl",
+          "locale",
+          "timezone"
+        ],
+        "encryptedArgs": [],
+        "notes": "금액과 결제 예정일은 enqueue 시점의 청구 스냅샷을 사용합니다."
+      },
+      {
+        "eventType": "subscription_payment_paid",
+        "purpose": "정기결제 성공 영수증 발송",
+        "recipientType": "user",
+        "requiredTemplateArgs": [
+          "subscriptionId",
+          "invoiceId",
+          "amount",
+          "currency",
+          "billingDate",
+          "receiptUrl"
+        ],
+        "optionalTemplateArgs": [
+          "recipientName",
+          "planName",
+          "productName",
+          "paidAt",
+          "paymentMethodSummary",
+          "supportUrl",
+          "locale",
+          "timezone"
+        ],
+        "encryptedArgs": [],
+        "notes": "receiptUrl은 사용자 인증이 필요한 내부 영수증 URL 또는 짧은 수명 서명 URL만 사용합니다."
+      },
+      {
+        "eventType": "subscription_payment_failed",
+        "purpose": "정기결제 실패 및 재시도 안내",
+        "recipientType": "user",
+        "requiredTemplateArgs": [
+          "subscriptionId",
+          "invoiceId",
+          "amount",
+          "currency",
+          "failureSummary",
+          "retryScheduledAt",
+          "billingMethodUpdateUrl"
+        ],
+        "optionalTemplateArgs": [
+          "recipientName",
+          "planName",
+          "productName",
+          "providerCode",
+          "supportUrl",
+          "locale",
+          "timezone"
+        ],
+        "encryptedArgs": [],
+        "notes": "failureSummary는 provider secret이나 원문 stack trace가 아닌 사용자 노출 가능 문구만 저장합니다."
+      },
+      {
+        "eventType": "subscription_canceled_payment_failed",
+        "purpose": "반복 결제 실패로 구독 취소 안내",
+        "recipientType": "user",
+        "requiredTemplateArgs": [
+          "subscriptionId",
+          "invoiceId",
+          "canceledAt",
+          "failureSummary",
+          "cancelReason",
+          "subscriptionManageUrl",
+          "resubscribeUrl"
+        ],
+        "optionalTemplateArgs": [
+          "recipientName",
+          "amount",
+          "currency",
+          "providerCode",
+          "planName",
+          "productName",
+          "supportUrl",
+          "locale",
+          "timezone"
+        ],
+        "encryptedArgs": [],
+        "notes": "cancelReason은 내부 enum을 사용자에게 노출 가능한 설명으로 변환한 값을 저장합니다."
+      },
+      {
+        "eventType": "subscription_canceled_after_period",
+        "purpose": "해지 예약 후 이용기간 종료 안내",
+        "recipientType": "user",
+        "requiredTemplateArgs": [
+          "subscriptionId",
+          "periodEndAt",
+          "canceledAt",
+          "accessUntil",
+          "resubscribeUrl"
+        ],
+        "optionalTemplateArgs": [
+          "recipientName",
+          "planName",
+          "productName",
+          "subscriptionManageUrl",
+          "supportUrl",
+          "locale",
+          "timezone"
+        ],
+        "encryptedArgs": [],
+        "notes": "accessUntil은 서비스 권한 종료 시각을 명확히 보여주기 위한 사용자 기준 시각입니다."
+      },
+      {
+        "eventType": "subscription_plan_upgrade_receipt",
+        "purpose": "구독 플랜 업그레이드 결제 영수증 발송",
+        "recipientType": "user",
+        "requiredTemplateArgs": [
+          "subscriptionId",
+          "invoiceId",
+          "paymentId",
+          "fromPlanName",
+          "toPlanName",
+          "amount",
+          "currency",
+          "changedAt",
+          "receiptUrl"
+        ],
+        "optionalTemplateArgs": [
+          "recipientName",
+          "effectiveAt",
+          "paymentMethodSummary",
+          "supportUrl",
+          "locale",
+          "timezone"
+        ],
+        "encryptedArgs": [],
+        "notes": "플랜명은 결제 당시 표시명을 스냅샷으로 저장합니다."
+      },
+      {
+        "eventType": "payment_cancel_completed",
+        "purpose": "일반결제 취소 완료 안내",
+        "recipientType": "user",
+        "requiredTemplateArgs": [
+          "paymentId",
+          "cancelAmount",
+          "currency",
+          "canceledAt"
+        ],
+        "optionalTemplateArgs": [
+          "recipientName",
+          "invoiceId",
+          "orderName",
+          "cancelReason",
+          "receiptUrl",
+          "supportUrl",
+          "locale",
+          "timezone"
+        ],
+        "encryptedArgs": [],
+        "notes": "부분 취소인 경우 cancelAmount와 원 결제 금액을 혼동하지 않도록 템플릿 문구에서 취소 금액으로 표기합니다."
+      },
+      {
+        "eventType": "subscription_adjustment_completed",
+        "purpose": "관리자 구독 보정 완료 안내",
+        "recipientType": "user",
+        "requiredTemplateArgs": [
+          "subscriptionId",
+          "adjustmentType",
+          "status",
+          "adjustedAt"
+        ],
+        "optionalTemplateArgs": [
+          "recipientName",
+          "previousStatus",
+          "nextBillingAt",
+          "accessUntil",
+          "reasonSummary",
+          "subscriptionManageUrl",
+          "supportUrl",
+          "locale",
+          "timezone"
+        ],
+        "encryptedArgs": [],
+        "notes": "reasonSummary는 운영자 내부 메모가 아니라 사용자 통지용 요약만 저장합니다."
+      },
+      {
+        "eventType": "one_time_payment_paid",
+        "purpose": "일반결제 성공 영수증 발송",
+        "recipientType": "user",
+        "requiredTemplateArgs": [
+          "checkoutId",
+          "paymentId",
+          "orderName",
+          "amount",
+          "currency",
+          "paidAt",
+          "receiptUrl"
+        ],
+        "optionalTemplateArgs": [
+          "recipientName",
+          "itemSummary",
+          "paymentMethodSummary",
+          "supportUrl",
+          "locale",
+          "timezone"
+        ],
+        "encryptedArgs": [],
+        "notes": "checkoutId와 paymentId를 함께 넣어 결제 시도와 승인 결과를 운영상 추적할 수 있게 합니다."
+      }
+    ]
+  },
   "policies": {
     "idempotency": [
       "체크아웃 생성, 구독 확정, 일반결제 주문 생성, 일반결제 승인은 Idempotency-Key를 지원합니다.",
@@ -13390,6 +14085,41 @@
       ]
     },
     {
+      "id": "notification-secret-leak-or-unstable-hash",
+      "title": "알림 template_args 비밀 노출 또는 불안정 멱등 해시",
+      "severity": "high",
+      "category": "security",
+      "summary": "로그인 링크, reset token, OTP 같은 인증 비밀이 notification_outbox.template_args, 로그, last_error에 평문으로 남거나, randomized ciphertext로 idempotency_payload_hash를 계산해 같은 알림이 충돌하는 위험입니다.",
+      "trigger": "인증 메일 template_args를 평문 JSON으로 저장하거나, AES-GCM처럼 매번 달라지는 ciphertext를 canonical hash 입력으로 사용할 때 발생합니다.",
+      "impact": "DB 또는 로그 접근자가 일회용 인증 값을 탈취할 수 있고, 같은 idempotency_key 재시도가 잘못된 conflict로 처리되어 인증/결제 알림 발송이 불안정해질 수 있습니다.",
+      "detection": "notification_outbox와 worker 로그에서 token, otp, magicLink, resetToken 같은 민감 키가 평문으로 남는지 스캔하고, 같은 idempotency_key의 hash 충돌률을 모니터링합니다.",
+      "handling": [
+        "노출된 인증 토큰은 즉시 revoked 또는 expired 처리하고 관련 계정 접근 로그를 확인합니다.",
+        "불안정 hash로 dead_letter 또는 conflict가 발생한 item은 canonical hash 정책에 맞춰 재생성합니다.",
+        "last_error와 worker summary에서 복호화된 template_args를 제거합니다."
+      ],
+      "prevention": [
+        "민감 template_args는 필드 단위 encrypted value object로 저장하고 Worker가 렌더링 직전에만 복호화합니다.",
+        "idempotency_payload_hash는 암호화 전 canonical 값 또는 민감 값의 결정적 비가역 digest로 계산합니다.",
+        "로그, 테스트 assertion, last_error, scheduler summary에는 민감 값 원문을 남기지 않습니다."
+      ],
+      "relatedApis": [
+        "admin-auth-login",
+        "admin-auth-password-reset-request",
+        "internal-billing-run"
+      ],
+      "relatedSequences": [
+        "admin-auth",
+        "subscription-recurring-billing",
+        "subscription-retry"
+      ],
+      "relatedCollections": [
+        "notification-outbox",
+        "notification-templates",
+        "admin-auth-tokens"
+      ]
+    },
+    {
       "id": "webhook-auth-weak-contract",
       "title": "웹훅 인증 계약 약화",
       "severity": "medium",
@@ -13453,6 +14183,18 @@
             "description": "OTP, 로그인 링크, 비밀번호 재설정 토큰을 생성하고 검증 책임을 가집니다."
           },
           {
+            "id": "recipient-resolver",
+            "label": "NotificationRecipientResolver",
+            "kind": "server",
+            "description": "user/admin 수신자 이메일과 최소 프로필 개인화 값을 enqueue 시점에 해석하는 application port입니다."
+          },
+          {
+            "id": "profile-source",
+            "label": "회원/관리자 프로필 소스",
+            "kind": "external",
+            "description": "초기에는 Mongo/projection adapter가, 이후에는 회원 API adapter가 사용할 수 있는 수신자 데이터 원천입니다."
+          },
+          {
             "id": "auth-tokens",
             "label": "admin_auth_tokens / auth challenges",
             "kind": "database",
@@ -13474,7 +14216,7 @@
             "id": "notification-templates",
             "label": "notification_templates",
             "kind": "database",
-            "description": "목적별, 상품별 template_key, version, required_args, subject/html/text 본문을 저장합니다."
+            "description": "목적별, 상품별 template_key, version, required_template_args, subject/html/text 본문을 저장합니다."
           },
           {
             "id": "notification-worker",
@@ -13513,8 +14255,13 @@
           },
           {
             "from": "payment-api",
+            "to": "recipient-resolver",
+            "label": "회원 recipient profile resolve"
+          },
+          {
+            "from": "payment-api",
             "to": "notification-outbox",
-            "label": "알림 intent enqueue"
+            "label": "recipient_email snapshot + intent enqueue"
           },
           {
             "from": "subscription-jobs",
@@ -13528,8 +14275,18 @@
           },
           {
             "from": "auth-service",
+            "to": "recipient-resolver",
+            "label": "관리자 recipient profile resolve"
+          },
+          {
+            "from": "recipient-resolver",
+            "to": "profile-source",
+            "label": "adapter lookup"
+          },
+          {
+            "from": "auth-service",
             "to": "notification-outbox",
-            "label": "인증 메일 enqueue"
+            "label": "encrypted auth args enqueue"
           },
           {
             "from": "notification-worker",
@@ -13539,7 +14296,7 @@
           {
             "from": "notification-worker",
             "to": "notification-templates",
-            "label": "template_key + version + required_args 조회"
+            "label": "template_key + version + required_template_args 조회"
           },
           {
             "from": "notification-worker",
@@ -13579,7 +14336,7 @@
             "id": "render",
             "label": "validate args + render\npurpose/product template",
             "kind": "worker",
-            "description": "template_key별 required_args를 확인하고 목적별/상품별 템플릿 fallback 순서로 본문을 생성합니다."
+            "description": "template_key별 required_template_args를 확인하고 목적별/상품별 템플릿 fallback 순서로 본문을 생성합니다."
           },
           {
             "id": "send",
@@ -13678,13 +14435,18 @@
         "failurePolicy": "Email Worker에 인증 판단을 위임하지 않습니다. 토큰 생성, 검증, 폐기, 재발급 정책은 Auth Service가 소유합니다."
       },
       {
+        "name": "NotificationRecipientResolver",
+        "responsibility": "회원/관리자 수신자 이메일과 display_name, locale, timezone, email_opt_out 같은 최소 프로필 개인화 값을 enqueue 시점에 해석합니다.",
+        "failurePolicy": "Application은 user/admin DB를 직접 읽지 않고 port에 의존합니다. 임시 Mongo 조회는 adapter 내부에만 격리하며, 향후 회원 API adapter로 교체할 수 있어야 합니다. 결제/구독 상태, billingKey, provider customer key, 주소, 전화번호 같은 불필요한 개인정보는 반환하지 않습니다."
+      },
+      {
         "name": "notification_outbox",
-        "responsibility": "발송 대상, recipient_type, template_key, template_args, expires_at, status, attempt_count, available_at, locked_until_at을 보관합니다.",
-        "failurePolicy": "중복 enqueue는 deterministic idempotency_key unique index로 억제하고, expires_at이 지난 인증 메일은 발송하지 않습니다."
+        "responsibility": "발송 대상, recipient_type, recipient_email 스냅샷, template_key, template_version, template_args, expires_at, purge_after_at, status, attempt_count, available_at, locked_until_at을 보관합니다.",
+        "failurePolicy": "중복 enqueue는 deterministic idempotency_key unique index로 억제하고, expires_at이 지난 인증 메일은 발송하지 않습니다. 민감 template_args는 필드 단위 encrypted value로 저장합니다."
       },
       {
         "name": "notification_templates",
-        "responsibility": "목적별, 상품별, 상품 유형별, 기본 event template과 version, required_args schema를 관리합니다.",
+        "responsibility": "목적별, 상품별, 상품 유형별, 기본 event template과 version, required_template_args schema를 관리합니다.",
         "failurePolicy": "템플릿 미존재 또는 template_args 검증 실패는 dead_letter로 분류합니다."
       },
       {
@@ -13705,11 +14467,13 @@
         "keys": [
           "_id",
           "idempotency_key",
+          "idempotency_payload_hash",
           "recipient_type + template_key",
           "status + available_at + locked_until_at",
-          "expires_at"
+          "expires_at",
+          "purge_after_at"
         ],
-        "notes": "pending, processing, sent, retry_scheduled, dead_letter 상태를 가진 내구성 큐입니다. template_args에는 템플릿에 필요한 값만 담고 민감 인증 값은 TTL과 로그 마스킹 정책을 적용합니다."
+        "notes": "pending, processing, sent, retry_scheduled, dead_letter 상태를 가진 내구성 큐입니다. recipient_email과 template_args의 recipientName/locale/timezone 같은 개인화 값은 enqueue 시점 수신자 프로필 스냅샷입니다. template_args에는 템플릿에 필요한 값만 담고, 인증 비밀은 필드 단위 암호화합니다. expires_at은 발송 가능 기한, purge_after_at은 TTL 삭제 기한으로 분리합니다."
       },
       {
         "name": "notification_templates",
@@ -13718,7 +14482,7 @@
           "template_key + version",
           "purpose + product_code + product_type + status"
         ],
-        "notes": "admin_auth.login_otp, user_auth.password_reset, product_code.event_type, product_type.event_type, default.event_type 순서로 해석하며 required_args schema를 함께 관리합니다."
+        "notes": "admin_auth.login_link, admin_auth.password_reset, product_code.event_type, product_type.event_type, default.event_type 순서로 해석하며 required_template_args schema를 함께 관리합니다."
       },
       {
         "name": "admin_auth_tokens / auth challenges",
@@ -13773,11 +14537,23 @@
       },
       {
         "title": "Auth email security boundary",
-        "description": "OTP, 로그인 링크, 비밀번호 재설정 토큰은 Auth Service가 생성하고 검증합니다. Email Worker는 인증 메일을 발송만 하며 만료된 expires_at 이후에는 보내지 않습니다."
+        "description": "OTP, 로그인 링크, 비밀번호 재설정 토큰은 Auth Service가 생성하고 검증합니다. Email Worker는 인증 메일을 발송만 하며 만료된 expires_at 이후에는 보내지 않습니다. raw token, OTP, magic link는 template_args에서 필드 단위 암호화하고 렌더링 직전에만 복호화합니다."
       },
       {
         "title": "Template argument contract",
-        "description": "각 template_key는 required_args schema를 갖고 enqueue 시점과 render 시점에 template_args를 검증합니다. 예: admin_auth.login_otp는 admin_name, otp_code, expires_minutes를 요구합니다."
+        "description": "각 template_key는 required_template_args schema를 갖고 enqueue 시점과 render 시점에 template_args를 검증합니다. recipientName은 모든 템플릿의 공통 optional 인자이며, 없으면 템플릿은 고객님/관리자님 같은 기본 문구를 사용합니다. 예: admin_auth.login_link는 loginLink, expiresMinutes를 요구합니다."
+      },
+      {
+        "title": "Initial template catalog",
+        "description": "첫 카탈로그는 admin_auth.login_link, admin_auth.password_reset, subscription_billing_reminder, subscription_payment_paid, subscription_payment_failed, subscription_canceled_payment_failed, subscription_canceled_after_period, subscription_plan_upgrade_receipt, payment_cancel_completed, subscription_adjustment_completed, one_time_payment_paid를 포함합니다."
+      },
+      {
+        "title": "Recipient resolution boundary",
+        "description": "수신자 이메일과 recipientName, locale, timezone 같은 최소 프로필 개인화 값은 NotificationRecipientResolver port로 enqueue 시점에 확정합니다. 임시 Mongo/projection 조회는 adapter 내부에만 두고, Worker는 수신자 API나 사용자 DB를 다시 조회하지 않습니다."
+      },
+      {
+        "title": "Stable idempotency hash",
+        "description": "idempotency_payload_hash는 암호화 전 canonical 값 또는 민감 값의 결정적 비가역 digest로 계산합니다. AES-GCM 같은 randomized ciphertext 값에 의존하지 않습니다."
       }
     ]
   }

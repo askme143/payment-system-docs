@@ -4,7 +4,7 @@
   "title": "Payment System Documentation Data",
   "type": "object",
   "additionalProperties": false,
-  "required": ["version", "site", "actors", "apiCategories", "apis", "apiDetails", "sequenceGroups", "sequences", "database", "systemArchitecture", "policies"],
+  "required": ["version", "site", "actors", "apiCategories", "apis", "apiDetails", "sequenceGroups", "sequences", "database", "notificationTemplateCatalog", "systemArchitecture", "policies"],
   "properties": {
     "version": {
       "type": "string",
@@ -74,6 +74,9 @@
     "database": {
       "$ref": "#/$defs/database"
     },
+    "notificationTemplateCatalog": {
+      "$ref": "#/$defs/notificationTemplateCatalog"
+    },
     "systemArchitecture": {
       "$ref": "#/$defs/systemArchitecture"
     }
@@ -93,7 +96,7 @@
         "pages": {
           "type": "object",
           "additionalProperties": false,
-          "required": ["sequenceIndex", "apiCatalog", "apiDetails"],
+          "required": ["sequenceIndex", "apiCatalog", "apiDetails", "notificationTemplateCatalog"],
           "properties": {
             "sequenceIndex": {
               "$ref": "#/$defs/pageRef"
@@ -111,6 +114,9 @@
               "$ref": "#/$defs/pageRef"
             },
             "systemArchitecture": {
+              "$ref": "#/$defs/pageRef"
+            },
+            "notificationTemplateCatalog": {
               "$ref": "#/$defs/pageRef"
             }
           }
@@ -973,6 +979,82 @@
           "items": {
             "type": "string"
           }
+        }
+      }
+    },
+    "notificationTemplateCatalog": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["title", "summary", "commonOptionalArgs", "rules", "fallbackPolicy", "templates"],
+      "properties": {
+        "title": {
+          "type": "string"
+        },
+        "summary": {
+          "type": "string"
+        },
+        "commonOptionalArgs": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "rules": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "fallbackPolicy": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "templates": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/notificationTemplateCatalogItem"
+          }
+        }
+      }
+    },
+    "notificationTemplateCatalogItem": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["eventType", "purpose", "recipientType", "requiredTemplateArgs", "optionalTemplateArgs", "encryptedArgs"],
+      "properties": {
+        "eventType": {
+          "type": "string"
+        },
+        "purpose": {
+          "type": "string"
+        },
+        "recipientType": {
+          "type": "string",
+          "enum": ["user", "admin", "external"]
+        },
+        "requiredTemplateArgs": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "optionalTemplateArgs": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "encryptedArgs": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "notes": {
+          "type": "string"
         }
       }
     },
