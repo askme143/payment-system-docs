@@ -12123,7 +12123,7 @@
             "name": "event_type",
             "type": "string",
             "required": true,
-            "description": "알림 이벤트 유형입니다. 예: subscription_payment_failed, subscription_payment_paid, admin_auth.login_otp"
+            "description": "알림 이벤트 유형입니다. 예: subscription_payment_failed, subscription_payment_paid, admin_auth.login_link"
           },
           {
             "name": "recipient_type",
@@ -12183,7 +12183,7 @@
             "name": "template_args",
             "type": "object",
             "required": true,
-            "description": "선택된 템플릿 렌더링에 필요한 최소 인자입니다. 결제, 인보이스, 구독 원본 전체를 복제하지 않습니다. 템플릿이 요구하는 userName, adminName, locale, timezone 같은 개인화 값은 NotificationRecipientResolver가 enqueue 시점에 반환한 스냅샷을 복사합니다. 금액, invoiceId, 날짜 같은 비민감 값은 평문 JSON으로 저장할 수 있지만 로그인 링크, reset token, OTP, magic link 같은 인증 비밀은 필드 단위 encrypted value object로 저장하고 Worker가 렌더링 직전에만 복호화합니다."
+            "description": "선택된 템플릿 렌더링에 필요한 최소 인자입니다. 결제, 인보이스, 구독 원본 전체를 복제하지 않습니다. 모든 템플릿은 공통 optional 인자인 recipientName, locale, timezone을 사용할 수 있으며, 이 값은 NotificationRecipientResolver가 enqueue 시점에 반환한 스냅샷을 복사합니다. 금액, invoiceId, 날짜 같은 비민감 값은 평문 JSON으로 저장할 수 있지만 로그인 링크, reset token, OTP, magic link 같은 인증 비밀은 필드 단위 encrypted value object로 저장하고 Worker가 렌더링 직전에만 복호화합니다."
           },
           {
             "name": "status",
@@ -14183,7 +14183,7 @@
           "expires_at",
           "purge_after_at"
         ],
-        "notes": "pending, processing, sent, retry_scheduled, dead_letter 상태를 가진 내구성 큐입니다. recipient_email과 template_args의 userName/adminName/locale/timezone 같은 개인화 값은 enqueue 시점 수신자 프로필 스냅샷입니다. template_args에는 템플릿에 필요한 값만 담고, 인증 비밀은 필드 단위 암호화합니다. expires_at은 발송 가능 기한, purge_after_at은 TTL 삭제 기한으로 분리합니다."
+        "notes": "pending, processing, sent, retry_scheduled, dead_letter 상태를 가진 내구성 큐입니다. recipient_email과 template_args의 recipientName/locale/timezone 같은 개인화 값은 enqueue 시점 수신자 프로필 스냅샷입니다. template_args에는 템플릿에 필요한 값만 담고, 인증 비밀은 필드 단위 암호화합니다. expires_at은 발송 가능 기한, purge_after_at은 TTL 삭제 기한으로 분리합니다."
       },
       {
         "name": "notification_templates",
@@ -14192,7 +14192,7 @@
           "template_key + version",
           "purpose + product_code + product_type + status"
         ],
-        "notes": "admin_auth.login_otp, user_auth.password_reset, product_code.event_type, product_type.event_type, default.event_type 순서로 해석하며 required_template_args schema를 함께 관리합니다."
+        "notes": "admin_auth.login_link, admin_auth.password_reset, product_code.event_type, product_type.event_type, default.event_type 순서로 해석하며 required_template_args schema를 함께 관리합니다."
       },
       {
         "name": "admin_auth_tokens / auth challenges",
@@ -14251,11 +14251,15 @@
       },
       {
         "title": "Template argument contract",
-        "description": "각 template_key는 required_template_args schema를 갖고 enqueue 시점과 render 시점에 template_args를 검증합니다. 예: admin_auth.login_otp는 admin_name, otp_code, expires_minutes를 요구합니다."
+        "description": "각 template_key는 required_template_args schema를 갖고 enqueue 시점과 render 시점에 template_args를 검증합니다. recipientName은 모든 템플릿의 공통 optional 인자이며, 없으면 템플릿은 고객님/관리자님 같은 기본 문구를 사용합니다. 예: admin_auth.login_link는 loginLink, expiresMinutes를 요구합니다."
+      },
+      {
+        "title": "Initial template catalog",
+        "description": "첫 카탈로그는 admin_auth.login_link, admin_auth.password_reset, subscription_billing_reminder, subscription_payment_paid, subscription_payment_failed, subscription_canceled_payment_failed, subscription_canceled_after_period, subscription_plan_upgrade_receipt, payment_cancel_completed, subscription_adjustment_completed, one_time_payment_paid를 포함합니다."
       },
       {
         "title": "Recipient resolution boundary",
-        "description": "수신자 이메일과 display_name, locale, timezone 같은 최소 프로필 개인화 값은 NotificationRecipientResolver port로 enqueue 시점에 확정합니다. 임시 Mongo/projection 조회는 adapter 내부에만 두고, Worker는 수신자 API나 사용자 DB를 다시 조회하지 않습니다."
+        "description": "수신자 이메일과 recipientName, locale, timezone 같은 최소 프로필 개인화 값은 NotificationRecipientResolver port로 enqueue 시점에 확정합니다. 임시 Mongo/projection 조회는 adapter 내부에만 두고, Worker는 수신자 API나 사용자 DB를 다시 조회하지 않습니다."
       },
       {
         "title": "Stable idempotency hash",

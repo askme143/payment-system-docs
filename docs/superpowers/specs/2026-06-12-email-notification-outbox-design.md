@@ -54,7 +54,7 @@ documents, worker code, logs, and tests.
 | `_id` | yes | `UuidString` | MongoDB document ID and application-generated outbox item ID. |
 | `idempotency_key` | yes | `string` | Deterministic business event identity. Unique across outbox items. |
 | `idempotency_payload_hash` | yes | `string` | Canonical hash of the enqueue content used to detect same-key content conflicts. |
-| `event_type` | yes | `string` | Notification event, such as `subscription_payment_failed`. |
+| `event_type` | yes | `string` | Notification event, such as `subscription_payment_failed` or `admin_auth.login_link`. |
 | `recipient_type` | yes | `string` | `user`, `admin`, or `external`. |
 | `recipient_user_id` | no | `ExternalUserId` | Set when `recipient_type = user`. |
 | `recipient_admin_id` | no | `UuidString` | Set when `recipient_type = admin`. |
@@ -336,7 +336,7 @@ Add ports under `payments/src/payments/application/ports/notifications.py`:
 - `NotificationTemplateRepository`
   - find active template by resolution candidates.
 - `NotificationRecipientResolver`
-  - resolve user/admin recipient email snapshots at enqueue time.
+  - resolve user/admin recipient profile snapshots at enqueue time.
 - `TemplateRenderer`
   - render subject, HTML body, and text body.
 - `EmailSender`

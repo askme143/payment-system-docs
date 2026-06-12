@@ -82,7 +82,7 @@ class GenerateDocsTest(unittest.TestCase):
                 "Admin/User Auth Service",
                 "admin_auth_tokens",
                 "template_args",
-                "admin_auth.login_otp",
+                "admin_auth.login_link",
                 "expires_at",
                 "retry_scheduled",
                 "dead_letter",
