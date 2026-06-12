@@ -297,8 +297,28 @@
       border-bottom: 1px solid var(--line);
       background: var(--surface-2);
     }
-    .d2-toolbar a {
+    .d2-toolbar a,
+    .d2-open-button {
+      min-height: 34px;
+      display: inline-flex;
+      align-items: center;
+      padding: 6px 10px;
+      color: var(--blue);
+      background: #ffffff;
+      border: 1px solid var(--line);
+      border-radius: 8px;
       font-size: 13px;
+      font-weight: 800;
+      line-height: 1.2;
+      cursor: pointer;
+      transition: border-color 160ms ease, background-color 160ms ease, color 160ms ease;
+    }
+    .d2-toolbar a:hover,
+    .d2-open-button:hover {
+      color: var(--ink);
+      background: var(--blue-soft);
+      border-color: color-mix(in srgb, var(--blue), var(--line) 55%);
+      text-decoration: none;
     }
     .d2-source {
       margin: 0;
@@ -321,6 +341,77 @@
       color: var(--muted);
       font-size: 13px;
       font-weight: 800;
+    }
+    .d2-modal[hidden] {
+      display: none;
+    }
+    .d2-modal {
+      position: fixed;
+      inset: 0;
+      z-index: 50;
+      display: grid;
+      place-items: center;
+      padding: 22px;
+      background: rgba(9, 18, 28, 0.72);
+    }
+    .d2-modal__panel {
+      width: min(1500px, 96vw);
+      max-height: 94vh;
+      min-width: 0;
+      min-height: 0;
+      display: grid;
+      grid-template-rows: auto minmax(0, 1fr);
+      overflow: clip;
+      background: #ffffff;
+      border: 1px solid rgba(255, 255, 255, 0.28);
+      border-radius: 8px;
+      box-shadow: 0 24px 80px rgba(0, 0, 0, 0.32);
+    }
+    .d2-modal__header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 12px 14px;
+      border-bottom: 1px solid var(--line);
+      background: var(--surface-2);
+    }
+    .d2-modal__title {
+      margin: 0;
+      font-size: 15px;
+      font-weight: 900;
+      line-height: 1.35;
+      overflow-wrap: anywhere;
+    }
+    .d2-modal__close {
+      min-width: 44px;
+      min-height: 38px;
+      padding: 7px 11px;
+      color: var(--ink);
+      background: #ffffff;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      font: inherit;
+      font-size: 13px;
+      font-weight: 900;
+      cursor: pointer;
+    }
+    .d2-modal__close:hover {
+      background: var(--soft);
+    }
+    .d2-modal__viewport {
+      min-height: 0;
+      overflow: auto;
+      padding: 16px;
+      background: #ffffff;
+    }
+    .d2-modal__image {
+      display: block;
+      width: max(1200px, 100%);
+      max-width: none;
+      height: auto;
+      margin: 0 auto;
+      background: #ffffff;
     }
     @media (min-width: 901px) {
       .wrap {
@@ -607,6 +698,7 @@
         justify-content: flex-start;
       }
       .d2-toolbar a,
+      .d2-open-button,
       .d2-details summary {
         min-height: 44px;
         display: inline-flex;
@@ -645,6 +737,19 @@
         padding: 8px 9px;
       }
       .d2-svg { width: 820px; }
+      .d2-modal {
+        padding: 8px;
+      }
+      .d2-modal__panel {
+        width: calc(100vw - 16px);
+        max-height: calc(100vh - 16px);
+      }
+      .d2-modal__viewport {
+        padding: 10px;
+      }
+      .d2-modal__image {
+        width: 920px;
+      }
     }
     @media (prefers-reduced-motion: reduce) {
       html { scroll-behavior: auto; }
@@ -685,7 +790,10 @@
   <h2>결제 수단 추가</h2>
   <p>회원이 새 카드를 빌링 인증하고, 서버가 토스에서 새 빌링키를 발급받아 결제수단으로 저장하는 흐름입니다.</p>
   <div class="diagram"><div class="d2-diagram">
-  <div class="d2-toolbar"><a href="diagrams/billing-method-management-billing-method-add.d2">D2 원본</a></div>
+  <div class="d2-toolbar">
+    <button type="button" class="d2-open-button" data-diagram-open data-diagram-src="diagrams/billing-method-management-billing-method-add.svg" data-diagram-title="결제 수단 추가">크게 보기</button>
+    <a href="diagrams/billing-method-management-billing-method-add.d2">D2 원본</a>
+  </div>
   <img class="d2-svg" src="diagrams/billing-method-management-billing-method-add.svg" alt="결제 수단 추가">
   <details class="d2-details">
     <summary>D2 원본 보기</summary>
@@ -821,7 +929,10 @@ billingMethodId, isDefault, displayName
   <h2>기본 결제수단 지정</h2>
   <p>활성 결제수단 중 하나를 모든 상품 구독의 다음 정기결제에 사용할 공통 기본 결제수단으로 지정하는 흐름입니다.</p>
   <div class="diagram"><div class="d2-diagram">
-  <div class="d2-toolbar"><a href="diagrams/billing-method-management-billing-method-set-default.d2">D2 원본</a></div>
+  <div class="d2-toolbar">
+    <button type="button" class="d2-open-button" data-diagram-open data-diagram-src="diagrams/billing-method-management-billing-method-set-default.svg" data-diagram-title="기본 결제수단 지정">크게 보기</button>
+    <a href="diagrams/billing-method-management-billing-method-set-default.d2">D2 원본</a>
+  </div>
   <img class="d2-svg" src="diagrams/billing-method-management-billing-method-set-default.svg" alt="기본 결제수단 지정">
   <details class="d2-details">
     <summary>D2 원본 보기</summary>
@@ -894,7 +1005,10 @@ billingMethodId, isDefault=true
   <h2>결제 수단 삭제</h2>
   <p>회원이 사용하지 않는 결제수단을 비활성화하되, 활성 구독이 1개 이상 있는 회원은 공통 결제수단이 최소 1개 남아야 합니다.</p>
   <div class="diagram"><div class="d2-diagram">
-  <div class="d2-toolbar"><a href="diagrams/billing-method-management-billing-method-delete.d2">D2 원본</a></div>
+  <div class="d2-toolbar">
+    <button type="button" class="d2-open-button" data-diagram-open data-diagram-src="diagrams/billing-method-management-billing-method-delete.svg" data-diagram-title="결제 수단 삭제">크게 보기</button>
+    <a href="diagrams/billing-method-management-billing-method-delete.d2">D2 원본</a>
+  </div>
   <img class="d2-svg" src="diagrams/billing-method-management-billing-method-delete.svg" alt="결제 수단 삭제">
   <details class="d2-details">
     <summary>D2 원본 보기</summary>
@@ -971,11 +1085,26 @@ deleted=true 또는 409 errorCode
   <div class="table-scroll"><table class="has-many-columns"><thead><tr><th>시점</th><th>구독 상태</th><th>결제 상태</th><th>설명</th></tr></thead><tbody><tr><td data-label="시점">추가 인증 시작 후</td><td data-label="구독 상태"><code>active</code></td><td data-label="결제 상태"><code>billing_auth_pending</code></td><td data-label="설명">회원은 기존 구독을 유지한 채 새 카드 빌링 인증을 진행합니다.</td></tr><tr><td data-label="시점">첫 결제수단 저장 후</td><td data-label="구독 상태"><code>active</code></td><td data-label="결제 상태"><code>billing_method_active</code></td><td data-label="설명">저장된 결제수단이 자동으로 기본 결제수단이 됩니다.</td></tr><tr><td data-label="시점">추가 결제수단 저장 후</td><td data-label="구독 상태"><code>active</code></td><td data-label="결제 상태"><code>billing_method_active</code></td><td data-label="설명">요청 정책에 따라 새 결제수단을 기본값으로 지정하거나 기존 기본값을 유지합니다.</td></tr><tr><td data-label="시점">기본값 변경 전</td><td data-label="구독 상태"><code>active</code></td><td data-label="결제 상태"><code>billing_method_active</code></td><td data-label="설명">기존 기본 결제수단이 모든 상품 구독의 다음 정기결제 대상으로 지정되어 있습니다.</td></tr><tr><td data-label="시점">기본값 변경 후</td><td data-label="구독 상태"><code>active</code></td><td data-label="결제 상태"><code>billing_method_active</code></td><td data-label="설명">새 기본 결제수단이 모든 상품 구독의 다음 정기결제 대상으로 지정되고 기존 결제수단은 활성 상태로 남습니다.</td></tr><tr><td data-label="시점">삭제 요청 전</td><td data-label="구독 상태"><code>active</code></td><td data-label="결제 상태"><code>billing_method_active</code></td><td data-label="설명">모든 활성 상품 구독의 다음 결제에 사용할 공통 기본 결제수단이 존재합니다.</td></tr><tr><td data-label="시점">마지막 결제수단 삭제 시도</td><td data-label="구독 상태"><code>active</code></td><td data-label="결제 상태"><code>billing_method_required</code></td><td data-label="설명">구독 유지를 위해 삭제를 거부하고 결제수단 추가를 안내합니다.</td></tr><tr><td data-label="시점">보조 결제수단 삭제 후</td><td data-label="구독 상태"><code>active</code></td><td data-label="결제 상태"><code>billing_method_active</code></td><td data-label="설명">삭제 대상만 비활성화되고 기본 결제수단은 그대로 유지됩니다.</td></tr></tbody></table></div>
 </section>
 </main>
+<div class="d2-modal" data-diagram-modal hidden role="dialog" aria-modal="true" aria-labelledby="diagram-modal-title">
+  <div class="d2-modal__panel" role="document">
+    <div class="d2-modal__header">
+      <p class="d2-modal__title" id="diagram-modal-title">다이어그램 크게 보기</p>
+      <button type="button" class="d2-modal__close" data-diagram-close>닫기</button>
+    </div>
+    <div class="d2-modal__viewport">
+      <img class="d2-modal__image" data-diagram-modal-image alt="">
+    </div>
+  </div>
+</div>
 <script>
 (() => {
   const input = document.querySelector("[data-doc-search]");
   const targets = Array.from(document.querySelectorAll("main section, article.card, article.box"));
   const navLinks = Array.from(document.querySelectorAll("nav a[href^='#']"));
+  const modal = document.querySelector("[data-diagram-modal]");
+  const modalImage = modal?.querySelector("[data-diagram-modal-image]");
+  const modalTitle = modal?.querySelector("#diagram-modal-title");
+  let lastDiagramButton = null;
 
   if (input) {
     input.addEventListener("input", () => {
@@ -1000,6 +1129,41 @@ deleted=true 또는 409 errorCode
     }, { rootMargin: "-18% 0px -68% 0px", threshold: [0.01, 0.18, 0.36] });
     for (const section of document.querySelectorAll("main section[id]")) observer.observe(section);
   }
+
+  const closeDiagramModal = () => {
+    if (!modal) return;
+    modal.hidden = true;
+    document.body.style.overflow = "";
+    if (modalImage) {
+      modalImage.removeAttribute("src");
+      modalImage.alt = "";
+    }
+    if (lastDiagramButton) lastDiagramButton.focus();
+  };
+
+  const openDiagramModal = (button) => {
+    if (!modal || !modalImage || !modalTitle) return;
+    lastDiagramButton = button;
+    const title = button.getAttribute("data-diagram-title") || "다이어그램";
+    modalTitle.textContent = title;
+    modalImage.src = button.getAttribute("data-diagram-src");
+    modalImage.alt = title;
+    modal.hidden = false;
+    document.body.style.overflow = "hidden";
+    modal.querySelector("[data-diagram-close]")?.focus();
+  };
+
+  for (const button of document.querySelectorAll("[data-diagram-open]")) {
+    button.addEventListener("click", () => openDiagramModal(button));
+  }
+
+  modal?.addEventListener("click", (event) => {
+    if (event.target === modal || event.target.closest("[data-diagram-close]")) closeDiagramModal();
+  });
+
+  document.addEventListener("keydown", (event) => {
+    if (event.key === "Escape" && modal && !modal.hidden) closeDiagramModal();
+  });
 })();
 </script>
 </body>

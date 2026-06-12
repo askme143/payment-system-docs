@@ -13421,7 +13421,7 @@
   ],
   "systemArchitecture": {
     "title": "이메일 발송 시스템 아키텍처",
-    "summary": "이메일 알림 outbox가 결제/구독 상태 변경과 분리되어 큐 적재, 템플릿 해석, SMTP 발송, 재시도와 dead-letter 처리를 수행하는 구조입니다.",
+    "summary": "이메일 알림 outbox가 인증, 결제, 구독 상태 변경과 분리되어 큐 적재, 템플릿 인자 검증, SMTP 발송, 재시도와 dead-letter 처리를 수행하는 구조입니다.",
     "diagrams": [
       {
         "id": "email-notification-outbox",
@@ -13447,6 +13447,18 @@
             "description": "정기 결제, 재시도, 해지 만료 배치를 실행합니다."
           },
           {
+            "id": "auth-service",
+            "label": "Admin/User Auth Service",
+            "kind": "server",
+            "description": "OTP, 로그인 링크, 비밀번호 재설정 토큰을 생성하고 검증 책임을 가집니다."
+          },
+          {
+            "id": "auth-tokens",
+            "label": "admin_auth_tokens / auth challenges",
+            "kind": "database",
+            "description": "인증 토큰 해시, 상태, 만료 시각을 저장하는 인증 도메인 저장소입니다."
+          },
+          {
             "id": "business-state",
             "label": "payments / invoices / subscriptions",
             "kind": "database",
@@ -13456,13 +13468,13 @@
             "id": "notification-outbox",
             "label": "notification_outbox",
             "kind": "queue",
-            "description": "메일 발송 요청, status, lock, retry 정보를 저장하는 내구성 큐입니다."
+            "description": "메일 발송 요청, template_args, expires_at, status, lock, retry 정보를 저장하는 내구성 큐입니다."
           },
           {
             "id": "notification-templates",
             "label": "notification_templates",
             "kind": "database",
-            "description": "상품별 template_key, version, subject/html/text 본문을 저장합니다."
+            "description": "목적별, 상품별 template_key, version, required_args, subject/html/text 본문을 저장합니다."
           },
           {
             "id": "notification-worker",
@@ -13510,14 +13522,24 @@
             "label": "배치 알림 enqueue"
           },
           {
+            "from": "auth-service",
+            "to": "auth-tokens",
+            "label": "OTP/token hash + expires_at 저장"
+          },
+          {
+            "from": "auth-service",
+            "to": "notification-outbox",
+            "label": "인증 메일 enqueue"
+          },
+          {
             "from": "notification-worker",
             "to": "notification-outbox",
-            "label": "claim / status update"
+            "label": "claim / 만료 확인 / status update"
           },
           {
             "from": "notification-worker",
             "to": "notification-templates",
-            "label": "template_key + version 조회"
+            "label": "template_key + version + required_args 조회"
           },
           {
             "from": "notification-worker",
@@ -13555,9 +13577,9 @@
           },
           {
             "id": "render",
-            "label": "resolve + render\nproduct template",
+            "label": "validate args + render\npurpose/product template",
             "kind": "worker",
-            "description": "상품별 템플릿 fallback 순서로 본문을 생성합니다."
+            "description": "template_key별 required_args를 확인하고 목적별/상품별 템플릿 fallback 순서로 본문을 생성합니다."
           },
           {
             "id": "send",
@@ -13585,9 +13607,9 @@
           },
           {
             "id": "business-state",
-            "label": "payment / invoice / subscription state",
+            "label": "auth / payment / subscription state",
             "kind": "database",
-            "description": "메일 실패와 독립적으로 이미 커밋된 업무 상태입니다."
+            "description": "메일 실패와 독립적으로 이미 커밋된 인증, 결제, 구독 업무 상태입니다."
           }
         ],
         "edges": [
@@ -13627,6 +13649,11 @@
             "label": "template validation failure"
           },
           {
+            "from": "claim",
+            "to": "dead-letter",
+            "label": "auth mail expired"
+          },
+          {
             "from": "retry-scheduled",
             "to": "claim",
             "label": "backoff elapsed"
@@ -13646,19 +13673,24 @@
         "failurePolicy": "메일 provider 장애를 직접 처리하지 않고 outbox 저장 성공까지만 책임집니다."
       },
       {
+        "name": "Admin/User Auth Service",
+        "responsibility": "OTP, 로그인 링크, 비밀번호 재설정 토큰을 생성하고 해시, 만료 시각, 인증 요청 상태를 저장한 뒤 인증 메일 intent를 적재합니다.",
+        "failurePolicy": "Email Worker에 인증 판단을 위임하지 않습니다. 토큰 생성, 검증, 폐기, 재발급 정책은 Auth Service가 소유합니다."
+      },
+      {
         "name": "notification_outbox",
-        "responsibility": "발송 대상, payload, template_key, status, attempt_count, available_at, locked_until_at을 보관합니다.",
-        "failurePolicy": "중복 enqueue는 deterministic idempotency_key unique index로 억제합니다."
+        "responsibility": "발송 대상, recipient_type, template_key, template_args, expires_at, status, attempt_count, available_at, locked_until_at을 보관합니다.",
+        "failurePolicy": "중복 enqueue는 deterministic idempotency_key unique index로 억제하고, expires_at이 지난 인증 메일은 발송하지 않습니다."
       },
       {
         "name": "notification_templates",
-        "responsibility": "상품별, 상품 유형별, 기본 event template과 version을 관리합니다.",
-        "failurePolicy": "템플릿 미존재 또는 payload 검증 실패는 dead_letter로 분류합니다."
+        "responsibility": "목적별, 상품별, 상품 유형별, 기본 event template과 version, required_args schema를 관리합니다.",
+        "failurePolicy": "템플릿 미존재 또는 template_args 검증 실패는 dead_letter로 분류합니다."
       },
       {
         "name": "Notification Worker",
-        "responsibility": "due item을 claim하고 템플릿을 렌더링한 뒤 SMTPEmailSender로 전송합니다.",
-        "failurePolicy": "일시 실패는 retry_scheduled, 영구 실패는 dead_letter로 상태를 기록합니다."
+        "responsibility": "due item을 claim하고 만료 여부와 template_args를 검증한 뒤 SMTPEmailSender로 전송합니다.",
+        "failurePolicy": "일시 실패는 retry_scheduled, 영구 실패와 만료된 인증 메일은 dead_letter로 상태를 기록합니다."
       },
       {
         "name": "SMTPEmailSender",
@@ -13673,18 +13705,30 @@
         "keys": [
           "_id",
           "idempotency_key",
-          "status + available_at + locked_until_at"
+          "recipient_type + template_key",
+          "status + available_at + locked_until_at",
+          "expires_at"
         ],
-        "notes": "pending, processing, sent, retry_scheduled, dead_letter 상태를 가진 내구성 큐입니다."
+        "notes": "pending, processing, sent, retry_scheduled, dead_letter 상태를 가진 내구성 큐입니다. template_args에는 템플릿에 필요한 값만 담고 민감 인증 값은 TTL과 로그 마스킹 정책을 적용합니다."
       },
       {
         "name": "notification_templates",
         "owner": "NotificationTemplateRepository",
         "keys": [
           "template_key + version",
-          "event_type + product_code + product_type + status"
+          "purpose + product_code + product_type + status"
         ],
-        "notes": "product_code.event_type, product_type.event_type, default.event_type 순서로 해석됩니다."
+        "notes": "admin_auth.login_otp, user_auth.password_reset, product_code.event_type, product_type.event_type, default.event_type 순서로 해석하며 required_args schema를 함께 관리합니다."
+      },
+      {
+        "name": "admin_auth_tokens / auth challenges",
+        "owner": "Auth repositories",
+        "keys": [
+          "token_hash",
+          "account_id + type + status",
+          "expires_at"
+        ],
+        "notes": "OTP와 reset token의 생성, 해시 저장, 만료, 검증 상태는 Auth Service가 소유합니다. Email Worker는 이 저장소를 기준으로 인증을 판단하지 않습니다."
       },
       {
         "name": "payments / invoices / subscriptions",
@@ -13725,7 +13769,15 @@
       },
       {
         "title": "Template failure visibility",
-        "description": "template_key 누락, required payload 누락, render 실패는 last_error와 함께 dead_letter로 남깁니다."
+        "description": "template_key 누락, required template_args 누락, render 실패는 last_error와 함께 dead_letter로 남깁니다."
+      },
+      {
+        "title": "Auth email security boundary",
+        "description": "OTP, 로그인 링크, 비밀번호 재설정 토큰은 Auth Service가 생성하고 검증합니다. Email Worker는 인증 메일을 발송만 하며 만료된 expires_at 이후에는 보내지 않습니다."
+      },
+      {
+        "title": "Template argument contract",
+        "description": "각 template_key는 required_args schema를 갖고 enqueue 시점과 render 시점에 template_args를 검증합니다. 예: admin_auth.login_otp는 admin_name, otp_code, expires_minutes를 요구합니다."
       }
     ]
   }

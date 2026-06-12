@@ -297,8 +297,28 @@
       border-bottom: 1px solid var(--line);
       background: var(--surface-2);
     }
-    .d2-toolbar a {
+    .d2-toolbar a,
+    .d2-open-button {
+      min-height: 34px;
+      display: inline-flex;
+      align-items: center;
+      padding: 6px 10px;
+      color: var(--blue);
+      background: #ffffff;
+      border: 1px solid var(--line);
+      border-radius: 8px;
       font-size: 13px;
+      font-weight: 800;
+      line-height: 1.2;
+      cursor: pointer;
+      transition: border-color 160ms ease, background-color 160ms ease, color 160ms ease;
+    }
+    .d2-toolbar a:hover,
+    .d2-open-button:hover {
+      color: var(--ink);
+      background: var(--blue-soft);
+      border-color: color-mix(in srgb, var(--blue), var(--line) 55%);
+      text-decoration: none;
     }
     .d2-source {
       margin: 0;
@@ -321,6 +341,77 @@
       color: var(--muted);
       font-size: 13px;
       font-weight: 800;
+    }
+    .d2-modal[hidden] {
+      display: none;
+    }
+    .d2-modal {
+      position: fixed;
+      inset: 0;
+      z-index: 50;
+      display: grid;
+      place-items: center;
+      padding: 22px;
+      background: rgba(9, 18, 28, 0.72);
+    }
+    .d2-modal__panel {
+      width: min(1500px, 96vw);
+      max-height: 94vh;
+      min-width: 0;
+      min-height: 0;
+      display: grid;
+      grid-template-rows: auto minmax(0, 1fr);
+      overflow: clip;
+      background: #ffffff;
+      border: 1px solid rgba(255, 255, 255, 0.28);
+      border-radius: 8px;
+      box-shadow: 0 24px 80px rgba(0, 0, 0, 0.32);
+    }
+    .d2-modal__header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 12px 14px;
+      border-bottom: 1px solid var(--line);
+      background: var(--surface-2);
+    }
+    .d2-modal__title {
+      margin: 0;
+      font-size: 15px;
+      font-weight: 900;
+      line-height: 1.35;
+      overflow-wrap: anywhere;
+    }
+    .d2-modal__close {
+      min-width: 44px;
+      min-height: 38px;
+      padding: 7px 11px;
+      color: var(--ink);
+      background: #ffffff;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      font: inherit;
+      font-size: 13px;
+      font-weight: 900;
+      cursor: pointer;
+    }
+    .d2-modal__close:hover {
+      background: var(--soft);
+    }
+    .d2-modal__viewport {
+      min-height: 0;
+      overflow: auto;
+      padding: 16px;
+      background: #ffffff;
+    }
+    .d2-modal__image {
+      display: block;
+      width: max(1200px, 100%);
+      max-width: none;
+      height: auto;
+      margin: 0 auto;
+      background: #ffffff;
     }
     @media (min-width: 901px) {
       .wrap {
@@ -607,6 +698,7 @@
         justify-content: flex-start;
       }
       .d2-toolbar a,
+      .d2-open-button,
       .d2-details summary {
         min-height: 44px;
         display: inline-flex;
@@ -645,6 +737,19 @@
         padding: 8px 9px;
       }
       .d2-svg { width: 820px; }
+      .d2-modal {
+        padding: 8px;
+      }
+      .d2-modal__panel {
+        width: calc(100vw - 16px);
+        max-height: calc(100vh - 16px);
+      }
+      .d2-modal__viewport {
+        padding: 10px;
+      }
+      .d2-modal__image {
+        width: 920px;
+      }
     }
     @media (prefers-reduced-motion: reduce) {
       html { scroll-behavior: auto; }
@@ -685,7 +790,10 @@
   <h2>전체 취소 및 부분 취소</h2>
   <p>회원이 마이페이지에서 일반결제 취소를 요청했을 때 취소 가능 금액을 검증하고 토스 취소 API를 호출한 뒤 내부 상태를 canceled 또는 partial_canceled로 저장합니다.</p>
   <div class="diagram"><div class="d2-diagram">
-  <div class="d2-toolbar"><a href="diagrams/payment-cancel-refund-payment-cancel-refund-main.d2">D2 원본</a></div>
+  <div class="d2-toolbar">
+    <button type="button" class="d2-open-button" data-diagram-open data-diagram-src="diagrams/payment-cancel-refund-payment-cancel-refund-main.svg" data-diagram-title="전체 취소 및 부분 취소">크게 보기</button>
+    <a href="diagrams/payment-cancel-refund-payment-cancel-refund-main.d2">D2 원본</a>
+  </div>
   <img class="d2-svg" src="diagrams/payment-cancel-refund-payment-cancel-refund-main.svg" alt="전체 취소 및 부분 취소">
   <details class="d2-details">
     <summary>D2 원본 보기</summary>
@@ -780,7 +888,10 @@ status, canceledAmount, cancelableAmount, cancelHistory
   <h2>운영자 결제 취소</h2>
   <p>관리자가 CS 요청이나 장애 보정 사유로 일반결제를 취소할 때 권한과 감사 로그를 남기고 동일한 취소 서비스로 처리합니다.</p>
   <div class="diagram"><div class="d2-diagram">
-  <div class="d2-toolbar"><a href="diagrams/payment-cancel-refund-admin-payment-cancel.d2">D2 원본</a></div>
+  <div class="d2-toolbar">
+    <button type="button" class="d2-open-button" data-diagram-open data-diagram-src="diagrams/payment-cancel-refund-admin-payment-cancel.svg" data-diagram-title="운영자 결제 취소">크게 보기</button>
+    <a href="diagrams/payment-cancel-refund-admin-payment-cancel.d2">D2 원본</a>
+  </div>
   <img class="d2-svg" src="diagrams/payment-cancel-refund-admin-payment-cancel.svg" alt="운영자 결제 취소">
   <details class="d2-details">
     <summary>D2 원본 보기</summary>
@@ -886,11 +997,26 @@ operatorAuditId, status, cancelHistory
   <div class="table-scroll"><table class="has-many-columns"><thead><tr><th>시점</th><th>구독 상태</th><th>결제 상태</th><th>설명</th></tr></thead><tbody><tr><td data-label="시점">취소 전</td><td data-label="구독 상태"><code>-</code></td><td data-label="결제 상태"><code>paid</code></td><td data-label="설명">승인 완료 결제이며 cancelableAmount가 남아 있습니다.</td></tr><tr><td data-label="시점">부분 취소 후</td><td data-label="구독 상태"><code>-</code></td><td data-label="결제 상태"><code>partial_canceled</code></td><td data-label="설명">일부 금액만 취소됐고 남은 금액은 추가 취소할 수 있습니다.</td></tr><tr><td data-label="시점">전체 취소 후</td><td data-label="구독 상태"><code>-</code></td><td data-label="결제 상태"><code>canceled</code></td><td data-label="설명">취소 가능 금액이 0이며 추가 취소 요청은 멱등 결과 또는 409로 처리합니다.</td></tr><tr><td data-label="시점">운영자 취소 전</td><td data-label="구독 상태"><code>-</code></td><td data-label="결제 상태"><code>paid 또는 partial_canceled</code></td><td data-label="설명">관리자가 취소 가능 금액과 사유를 확인합니다.</td></tr><tr><td data-label="시점">운영자 취소 후</td><td data-label="구독 상태"><code>-</code></td><td data-label="결제 상태"><code>canceled 또는 partial_canceled</code></td><td data-label="설명">회원 결제 내역과 운영 감사 로그가 같은 취소 건을 가리킵니다.</td></tr></tbody></table></div>
 </section>
 </main>
+<div class="d2-modal" data-diagram-modal hidden role="dialog" aria-modal="true" aria-labelledby="diagram-modal-title">
+  <div class="d2-modal__panel" role="document">
+    <div class="d2-modal__header">
+      <p class="d2-modal__title" id="diagram-modal-title">다이어그램 크게 보기</p>
+      <button type="button" class="d2-modal__close" data-diagram-close>닫기</button>
+    </div>
+    <div class="d2-modal__viewport">
+      <img class="d2-modal__image" data-diagram-modal-image alt="">
+    </div>
+  </div>
+</div>
 <script>
 (() => {
   const input = document.querySelector("[data-doc-search]");
   const targets = Array.from(document.querySelectorAll("main section, article.card, article.box"));
   const navLinks = Array.from(document.querySelectorAll("nav a[href^='#']"));
+  const modal = document.querySelector("[data-diagram-modal]");
+  const modalImage = modal?.querySelector("[data-diagram-modal-image]");
+  const modalTitle = modal?.querySelector("#diagram-modal-title");
+  let lastDiagramButton = null;
 
   if (input) {
     input.addEventListener("input", () => {
@@ -915,6 +1041,41 @@ operatorAuditId, status, cancelHistory
     }, { rootMargin: "-18% 0px -68% 0px", threshold: [0.01, 0.18, 0.36] });
     for (const section of document.querySelectorAll("main section[id]")) observer.observe(section);
   }
+
+  const closeDiagramModal = () => {
+    if (!modal) return;
+    modal.hidden = true;
+    document.body.style.overflow = "";
+    if (modalImage) {
+      modalImage.removeAttribute("src");
+      modalImage.alt = "";
+    }
+    if (lastDiagramButton) lastDiagramButton.focus();
+  };
+
+  const openDiagramModal = (button) => {
+    if (!modal || !modalImage || !modalTitle) return;
+    lastDiagramButton = button;
+    const title = button.getAttribute("data-diagram-title") || "다이어그램";
+    modalTitle.textContent = title;
+    modalImage.src = button.getAttribute("data-diagram-src");
+    modalImage.alt = title;
+    modal.hidden = false;
+    document.body.style.overflow = "hidden";
+    modal.querySelector("[data-diagram-close]")?.focus();
+  };
+
+  for (const button of document.querySelectorAll("[data-diagram-open]")) {
+    button.addEventListener("click", () => openDiagramModal(button));
+  }
+
+  modal?.addEventListener("click", (event) => {
+    if (event.target === modal || event.target.closest("[data-diagram-close]")) closeDiagramModal();
+  });
+
+  document.addEventListener("keydown", (event) => {
+    if (event.key === "Escape" && modal && !modal.hidden) closeDiagramModal();
+  });
 })();
 </script>
 </body>

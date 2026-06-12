@@ -297,8 +297,28 @@
       border-bottom: 1px solid var(--line);
       background: var(--surface-2);
     }
-    .d2-toolbar a {
+    .d2-toolbar a,
+    .d2-open-button {
+      min-height: 34px;
+      display: inline-flex;
+      align-items: center;
+      padding: 6px 10px;
+      color: var(--blue);
+      background: #ffffff;
+      border: 1px solid var(--line);
+      border-radius: 8px;
       font-size: 13px;
+      font-weight: 800;
+      line-height: 1.2;
+      cursor: pointer;
+      transition: border-color 160ms ease, background-color 160ms ease, color 160ms ease;
+    }
+    .d2-toolbar a:hover,
+    .d2-open-button:hover {
+      color: var(--ink);
+      background: var(--blue-soft);
+      border-color: color-mix(in srgb, var(--blue), var(--line) 55%);
+      text-decoration: none;
     }
     .d2-source {
       margin: 0;
@@ -321,6 +341,77 @@
       color: var(--muted);
       font-size: 13px;
       font-weight: 800;
+    }
+    .d2-modal[hidden] {
+      display: none;
+    }
+    .d2-modal {
+      position: fixed;
+      inset: 0;
+      z-index: 50;
+      display: grid;
+      place-items: center;
+      padding: 22px;
+      background: rgba(9, 18, 28, 0.72);
+    }
+    .d2-modal__panel {
+      width: min(1500px, 96vw);
+      max-height: 94vh;
+      min-width: 0;
+      min-height: 0;
+      display: grid;
+      grid-template-rows: auto minmax(0, 1fr);
+      overflow: clip;
+      background: #ffffff;
+      border: 1px solid rgba(255, 255, 255, 0.28);
+      border-radius: 8px;
+      box-shadow: 0 24px 80px rgba(0, 0, 0, 0.32);
+    }
+    .d2-modal__header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 12px 14px;
+      border-bottom: 1px solid var(--line);
+      background: var(--surface-2);
+    }
+    .d2-modal__title {
+      margin: 0;
+      font-size: 15px;
+      font-weight: 900;
+      line-height: 1.35;
+      overflow-wrap: anywhere;
+    }
+    .d2-modal__close {
+      min-width: 44px;
+      min-height: 38px;
+      padding: 7px 11px;
+      color: var(--ink);
+      background: #ffffff;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      font: inherit;
+      font-size: 13px;
+      font-weight: 900;
+      cursor: pointer;
+    }
+    .d2-modal__close:hover {
+      background: var(--soft);
+    }
+    .d2-modal__viewport {
+      min-height: 0;
+      overflow: auto;
+      padding: 16px;
+      background: #ffffff;
+    }
+    .d2-modal__image {
+      display: block;
+      width: max(1200px, 100%);
+      max-width: none;
+      height: auto;
+      margin: 0 auto;
+      background: #ffffff;
     }
     @media (min-width: 901px) {
       .wrap {
@@ -607,6 +698,7 @@
         justify-content: flex-start;
       }
       .d2-toolbar a,
+      .d2-open-button,
       .d2-details summary {
         min-height: 44px;
         display: inline-flex;
@@ -645,6 +737,19 @@
         padding: 8px 9px;
       }
       .d2-svg { width: 820px; }
+      .d2-modal {
+        padding: 8px;
+      }
+      .d2-modal__panel {
+        width: calc(100vw - 16px);
+        max-height: calc(100vh - 16px);
+      }
+      .d2-modal__viewport {
+        padding: 10px;
+      }
+      .d2-modal__image {
+        width: 920px;
+      }
     }
     @media (prefers-reduced-motion: reduce) {
       html { scroll-behavior: auto; }
@@ -685,7 +790,10 @@
   <h2>체크아웃 생성 실패</h2>
   <p>로그인하지 않았거나, 플랜이 비활성화됐거나, 같은 상품의 활성 구독이 이미 있는 경우입니다.</p>
   <div class="diagram"><div class="d2-diagram">
-  <div class="d2-toolbar"><a href="diagrams/initial-subscription-failure-checkout-fail.d2">D2 원본</a></div>
+  <div class="d2-toolbar">
+    <button type="button" class="d2-open-button" data-diagram-open data-diagram-src="diagrams/initial-subscription-failure-checkout-fail.svg" data-diagram-title="체크아웃 생성 실패">크게 보기</button>
+    <a href="diagrams/initial-subscription-failure-checkout-fail.d2">D2 원본</a>
+  </div>
   <img class="d2-svg" src="diagrams/initial-subscription-failure-checkout-fail.svg" alt="체크아웃 생성 실패">
   <details class="d2-details">
     <summary>D2 원본 보기</summary>
@@ -754,7 +862,10 @@
   <h2>토스 빌링 인증 실패</h2>
   <p>사용자가 인증을 취소했거나 카드 등록 인증이 실패한 경우입니다.</p>
   <div class="diagram"><div class="d2-diagram">
-  <div class="d2-toolbar"><a href="diagrams/initial-subscription-failure-auth-fail.d2">D2 원본</a></div>
+  <div class="d2-toolbar">
+    <button type="button" class="d2-open-button" data-diagram-open data-diagram-src="diagrams/initial-subscription-failure-auth-fail.svg" data-diagram-title="토스 빌링 인증 실패">크게 보기</button>
+    <a href="diagrams/initial-subscription-failure-auth-fail.d2">D2 원본</a>
+  </div>
   <img class="d2-svg" src="diagrams/initial-subscription-failure-auth-fail.svg" alt="토스 빌링 인증 실패">
   <details class="d2-details">
     <summary>D2 원본 보기</summary>
@@ -803,7 +914,10 @@ confirm API는 호출되지 않음
   <h2>구독 확정 검증 실패</h2>
   <p>subscriptionId 누락, 소유자 불일치, customerKey 불일치, 중복 성공 요청 같은 서버 검증 실패입니다.</p>
   <div class="diagram"><div class="d2-diagram">
-  <div class="d2-toolbar"><a href="diagrams/initial-subscription-failure-confirm-fail.d2">D2 원본</a></div>
+  <div class="d2-toolbar">
+    <button type="button" class="d2-open-button" data-diagram-open data-diagram-src="diagrams/initial-subscription-failure-confirm-fail.svg" data-diagram-title="구독 확정 검증 실패">크게 보기</button>
+    <a href="diagrams/initial-subscription-failure-confirm-fail.d2">D2 원본</a>
+  </div>
   <img class="d2-svg" src="diagrams/initial-subscription-failure-confirm-fail.svg" alt="구독 확정 검증 실패">
   <details class="d2-details">
     <summary>D2 원본 보기</summary>
@@ -852,7 +966,10 @@ FORBIDDEN / CONFLICT / ALREADY_CONFIRMED
   <h2>빌링키 발급 실패</h2>
   
   <div class="diagram"><div class="d2-diagram">
-  <div class="d2-toolbar"><a href="diagrams/initial-subscription-failure-billing-key-fail.d2">D2 원본</a></div>
+  <div class="d2-toolbar">
+    <button type="button" class="d2-open-button" data-diagram-open data-diagram-src="diagrams/initial-subscription-failure-billing-key-fail.svg" data-diagram-title="빌링키 발급 실패">크게 보기</button>
+    <a href="diagrams/initial-subscription-failure-billing-key-fail.d2">D2 원본</a>
+  </div>
   <img class="d2-svg" src="diagrams/initial-subscription-failure-billing-key-fail.svg" alt="빌링키 발급 실패">
   <details class="d2-details">
     <summary>D2 원본 보기</summary>
@@ -918,7 +1035,10 @@ BILLING_KEY_ISSUE_FAILED
   <h2>첫 자동결제 실패</h2>
   
   <div class="diagram"><div class="d2-diagram">
-  <div class="d2-toolbar"><a href="diagrams/initial-subscription-failure-first-payment-fail.d2">D2 원본</a></div>
+  <div class="d2-toolbar">
+    <button type="button" class="d2-open-button" data-diagram-open data-diagram-src="diagrams/initial-subscription-failure-first-payment-fail.svg" data-diagram-title="첫 자동결제 실패">크게 보기</button>
+    <a href="diagrams/initial-subscription-failure-first-payment-fail.d2">D2 원본</a>
+  </div>
   <img class="d2-svg" src="diagrams/initial-subscription-failure-first-payment-fail.svg" alt="첫 자동결제 실패">
   <details class="d2-details">
     <summary>D2 원본 보기</summary>
@@ -986,7 +1106,10 @@ CARD_DECLINED / EXCEED_MAX_AMOUNT / INSUFFICIENT_FUNDS
   <h2>웹훅 실패 또는 중복 이벤트</h2>
   
   <div class="diagram"><div class="d2-diagram">
-  <div class="d2-toolbar"><a href="diagrams/initial-subscription-failure-webhook-fail.d2">D2 원본</a></div>
+  <div class="d2-toolbar">
+    <button type="button" class="d2-open-button" data-diagram-open data-diagram-src="diagrams/initial-subscription-failure-webhook-fail.svg" data-diagram-title="웹훅 실패 또는 중복 이벤트">크게 보기</button>
+    <a href="diagrams/initial-subscription-failure-webhook-fail.d2">D2 원본</a>
+  </div>
   <img class="d2-svg" src="diagrams/initial-subscription-failure-webhook-fail.svg" alt="웹훅 실패 또는 중복 이벤트">
   <details class="d2-details">
     <summary>D2 원본 보기</summary>
@@ -1020,11 +1143,26 @@ CARD_DECLINED / EXCEED_MAX_AMOUNT / INSUFFICIENT_FUNDS
 </section>
   
 </main>
+<div class="d2-modal" data-diagram-modal hidden role="dialog" aria-modal="true" aria-labelledby="diagram-modal-title">
+  <div class="d2-modal__panel" role="document">
+    <div class="d2-modal__header">
+      <p class="d2-modal__title" id="diagram-modal-title">다이어그램 크게 보기</p>
+      <button type="button" class="d2-modal__close" data-diagram-close>닫기</button>
+    </div>
+    <div class="d2-modal__viewport">
+      <img class="d2-modal__image" data-diagram-modal-image alt="">
+    </div>
+  </div>
+</div>
 <script>
 (() => {
   const input = document.querySelector("[data-doc-search]");
   const targets = Array.from(document.querySelectorAll("main section, article.card, article.box"));
   const navLinks = Array.from(document.querySelectorAll("nav a[href^='#']"));
+  const modal = document.querySelector("[data-diagram-modal]");
+  const modalImage = modal?.querySelector("[data-diagram-modal-image]");
+  const modalTitle = modal?.querySelector("#diagram-modal-title");
+  let lastDiagramButton = null;
 
   if (input) {
     input.addEventListener("input", () => {
@@ -1049,6 +1187,41 @@ CARD_DECLINED / EXCEED_MAX_AMOUNT / INSUFFICIENT_FUNDS
     }, { rootMargin: "-18% 0px -68% 0px", threshold: [0.01, 0.18, 0.36] });
     for (const section of document.querySelectorAll("main section[id]")) observer.observe(section);
   }
+
+  const closeDiagramModal = () => {
+    if (!modal) return;
+    modal.hidden = true;
+    document.body.style.overflow = "";
+    if (modalImage) {
+      modalImage.removeAttribute("src");
+      modalImage.alt = "";
+    }
+    if (lastDiagramButton) lastDiagramButton.focus();
+  };
+
+  const openDiagramModal = (button) => {
+    if (!modal || !modalImage || !modalTitle) return;
+    lastDiagramButton = button;
+    const title = button.getAttribute("data-diagram-title") || "다이어그램";
+    modalTitle.textContent = title;
+    modalImage.src = button.getAttribute("data-diagram-src");
+    modalImage.alt = title;
+    modal.hidden = false;
+    document.body.style.overflow = "hidden";
+    modal.querySelector("[data-diagram-close]")?.focus();
+  };
+
+  for (const button of document.querySelectorAll("[data-diagram-open]")) {
+    button.addEventListener("click", () => openDiagramModal(button));
+  }
+
+  modal?.addEventListener("click", (event) => {
+    if (event.target === modal || event.target.closest("[data-diagram-close]")) closeDiagramModal();
+  });
+
+  document.addEventListener("keydown", (event) => {
+    if (event.key === "Escape" && modal && !modal.hidden) closeDiagramModal();
+  });
 })();
 </script>
 </body>

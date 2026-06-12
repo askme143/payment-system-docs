@@ -19,6 +19,18 @@ subscription_jobs: "Subscription Jobs" {
   style.stroke: "#9a5b00"
   style.border-radius: 6
 }
+auth_service: "Admin/User Auth Service" {
+  shape: rectangle
+  style.fill: "#eaf8f3"
+  style.stroke: "#1c7c66"
+  style.border-radius: 6
+}
+auth_tokens: "admin_auth_tokens / auth challenges" {
+  shape: rectangle
+  style.fill: "#f1f5f9"
+  style.stroke: "#334155"
+  style.border-radius: 6
+}
 business_state: "payments / invoices / subscriptions" {
   shape: rectangle
   style.fill: "#f1f5f9"
@@ -61,8 +73,10 @@ subscription_jobs -> payment_api: "내부 배치 진입점 호출"
 payment_api -> business_state: "업무 상태 저장"
 payment_api -> notification_outbox: "알림 intent enqueue"
 subscription_jobs -> notification_outbox: "배치 알림 enqueue"
-notification_worker -> notification_outbox: "claim / status update"
-notification_worker -> notification_templates: "template_key + version 조회"
+auth_service -> auth_tokens: "OTP/token hash + expires_at 저장"
+auth_service -> notification_outbox: "인증 메일 enqueue"
+notification_worker -> notification_outbox: "claim / 만료 확인 / status update"
+notification_worker -> notification_templates: "template_key + version + required_args 조회"
 notification_worker -> smtp_adapter: "rendered email send"
 smtp_adapter -> mailbox: "SMTP delivery"
 smtp_adapter -> notification_worker: "provider_message_id / error"

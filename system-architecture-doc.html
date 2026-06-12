@@ -297,8 +297,28 @@
       border-bottom: 1px solid var(--line);
       background: var(--surface-2);
     }
-    .d2-toolbar a {
+    .d2-toolbar a,
+    .d2-open-button {
+      min-height: 34px;
+      display: inline-flex;
+      align-items: center;
+      padding: 6px 10px;
+      color: var(--blue);
+      background: #ffffff;
+      border: 1px solid var(--line);
+      border-radius: 8px;
       font-size: 13px;
+      font-weight: 800;
+      line-height: 1.2;
+      cursor: pointer;
+      transition: border-color 160ms ease, background-color 160ms ease, color 160ms ease;
+    }
+    .d2-toolbar a:hover,
+    .d2-open-button:hover {
+      color: var(--ink);
+      background: var(--blue-soft);
+      border-color: color-mix(in srgb, var(--blue), var(--line) 55%);
+      text-decoration: none;
     }
     .d2-source {
       margin: 0;
@@ -321,6 +341,77 @@
       color: var(--muted);
       font-size: 13px;
       font-weight: 800;
+    }
+    .d2-modal[hidden] {
+      display: none;
+    }
+    .d2-modal {
+      position: fixed;
+      inset: 0;
+      z-index: 50;
+      display: grid;
+      place-items: center;
+      padding: 22px;
+      background: rgba(9, 18, 28, 0.72);
+    }
+    .d2-modal__panel {
+      width: min(1500px, 96vw);
+      max-height: 94vh;
+      min-width: 0;
+      min-height: 0;
+      display: grid;
+      grid-template-rows: auto minmax(0, 1fr);
+      overflow: clip;
+      background: #ffffff;
+      border: 1px solid rgba(255, 255, 255, 0.28);
+      border-radius: 8px;
+      box-shadow: 0 24px 80px rgba(0, 0, 0, 0.32);
+    }
+    .d2-modal__header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 12px 14px;
+      border-bottom: 1px solid var(--line);
+      background: var(--surface-2);
+    }
+    .d2-modal__title {
+      margin: 0;
+      font-size: 15px;
+      font-weight: 900;
+      line-height: 1.35;
+      overflow-wrap: anywhere;
+    }
+    .d2-modal__close {
+      min-width: 44px;
+      min-height: 38px;
+      padding: 7px 11px;
+      color: var(--ink);
+      background: #ffffff;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      font: inherit;
+      font-size: 13px;
+      font-weight: 900;
+      cursor: pointer;
+    }
+    .d2-modal__close:hover {
+      background: var(--soft);
+    }
+    .d2-modal__viewport {
+      min-height: 0;
+      overflow: auto;
+      padding: 16px;
+      background: #ffffff;
+    }
+    .d2-modal__image {
+      display: block;
+      width: max(1200px, 100%);
+      max-width: none;
+      height: auto;
+      margin: 0 auto;
+      background: #ffffff;
     }
     @media (min-width: 901px) {
       .wrap {
@@ -607,6 +698,7 @@
         justify-content: flex-start;
       }
       .d2-toolbar a,
+      .d2-open-button,
       .d2-details summary {
         min-height: 44px;
         display: inline-flex;
@@ -645,6 +737,19 @@
         padding: 8px 9px;
       }
       .d2-svg { width: 820px; }
+      .d2-modal {
+        padding: 8px;
+      }
+      .d2-modal__panel {
+        width: calc(100vw - 16px);
+        max-height: calc(100vh - 16px);
+      }
+      .d2-modal__viewport {
+        padding: 10px;
+      }
+      .d2-modal__image {
+        width: 920px;
+      }
     }
     @media (prefers-reduced-motion: reduce) {
       html { scroll-behavior: auto; }
@@ -664,7 +769,7 @@
     <div class="wrap">
     <p class="eyebrow">Email Notification Architecture</p>
     <h1>이메일 발송 시스템 아키텍처 문서</h1>
-    <p class="lead">이메일 알림 outbox가 결제/구독 상태 변경과 분리되어 큐 적재, 템플릿 해석, SMTP 발송, 재시도와 dead-letter 처리를 수행하는 구조입니다.</p>
+    <p class="lead">이메일 알림 outbox가 인증, 결제, 구독 상태 변경과 분리되어 큐 적재, 템플릿 인자 검증, SMTP 발송, 재시도와 dead-letter 처리를 수행하는 구조입니다.</p>
     <div class="search-panel">
       <input type="search" data-doc-search aria-label="문서 검색" placeholder="API, 상태, 컬렉션, 플로우 검색">
     </div>
@@ -674,13 +779,16 @@
 </header>
 <main class="wrap layout" id="content"><nav aria-label="문서 목차"><a href="#overview">개요</a><a href="#email-notification-outbox">이메일 알림 Outbox 아키텍처</a><a href="#email-delivery-lifecycle">이메일 발송 생명주기</a><a href="#components">컴포넌트 책임</a><a href="#data-stores">데이터 소유권</a><a href="#operations">운영과 실패 처리</a></nav><div><section id="overview">
   <h2>개요</h2>
-  <p>이메일 알림 outbox가 결제/구독 상태 변경과 분리되어 큐 적재, 템플릿 해석, SMTP 발송, 재시도와 dead-letter 처리를 수행하는 구조입니다.</p>
+  <p>이메일 알림 outbox가 인증, 결제, 구독 상태 변경과 분리되어 큐 적재, 템플릿 인자 검증, SMTP 발송, 재시도와 dead-letter 처리를 수행하는 구조입니다.</p>
   <div class="note">이메일 실패는 결제, 인보이스, 구독, 감사 로그 상태를 롤백하지 않습니다. 발송 실패는 outbox 상태와 worker summary로 추적합니다.</div>
 </section><section id="email-notification-outbox">
   <h2>이메일 알림 Outbox 아키텍처</h2>
   <p>결제 API와 구독 배치가 메일을 직접 보내지 않고 MongoDB outbox에 발송 의도를 저장한 뒤 Notification Worker가 비동기로 발송합니다.</p>
   <div class="diagram"><div class="d2-diagram">
-  <div class="d2-toolbar"><a href="diagrams/system-architecture-email-notification-outbox.d2">D2 원본</a></div>
+  <div class="d2-toolbar">
+    <button type="button" class="d2-open-button" data-diagram-open data-diagram-src="diagrams/system-architecture-email-notification-outbox.svg" data-diagram-title="이메일 알림 Outbox 아키텍처">크게 보기</button>
+    <a href="diagrams/system-architecture-email-notification-outbox.d2">D2 원본</a>
+  </div>
   <img class="d2-svg" src="diagrams/system-architecture-email-notification-outbox.svg" alt="이메일 알림 Outbox 아키텍처">
   <details class="d2-details">
     <summary>D2 원본 보기</summary>
@@ -703,6 +811,18 @@ subscription_jobs: &quot;Subscription Jobs&quot; {
   shape: rectangle
   style.fill: &quot;#fff8e6&quot;
   style.stroke: &quot;#9a5b00&quot;
+  style.border-radius: 6
+}
+auth_service: &quot;Admin/User Auth Service&quot; {
+  shape: rectangle
+  style.fill: &quot;#eaf8f3&quot;
+  style.stroke: &quot;#1c7c66&quot;
+  style.border-radius: 6
+}
+auth_tokens: &quot;admin_auth_tokens / auth challenges&quot; {
+  shape: rectangle
+  style.fill: &quot;#f1f5f9&quot;
+  style.stroke: &quot;#334155&quot;
   style.border-radius: 6
 }
 business_state: &quot;payments / invoices / subscriptions&quot; {
@@ -747,8 +867,10 @@ subscription_jobs -&gt; payment_api: &quot;내부 배치 진입점 호출&quot;
 payment_api -&gt; business_state: &quot;업무 상태 저장&quot;
 payment_api -&gt; notification_outbox: &quot;알림 intent enqueue&quot;
 subscription_jobs -&gt; notification_outbox: &quot;배치 알림 enqueue&quot;
-notification_worker -&gt; notification_outbox: &quot;claim / status update&quot;
-notification_worker -&gt; notification_templates: &quot;template_key + version 조회&quot;
+auth_service -&gt; auth_tokens: &quot;OTP/token hash + expires_at 저장&quot;
+auth_service -&gt; notification_outbox: &quot;인증 메일 enqueue&quot;
+notification_worker -&gt; notification_outbox: &quot;claim / 만료 확인 / status update&quot;
+notification_worker -&gt; notification_templates: &quot;template_key + version + required_args 조회&quot;
 notification_worker -&gt; smtp_adapter: &quot;rendered email send&quot;
 smtp_adapter -&gt; mailbox: &quot;SMTP delivery&quot;
 smtp_adapter -&gt; notification_worker: &quot;provider_message_id / error&quot;
@@ -759,7 +881,10 @@ smtp_adapter -&gt; notification_worker: &quot;provider_message_id / error&quot;
   <h2>이메일 발송 생명주기</h2>
   <p>outbox item은 pending에서 시작해 worker claim 후 sent, retry_scheduled, dead_letter 중 하나로 귀결됩니다.</p>
   <div class="diagram"><div class="d2-diagram">
-  <div class="d2-toolbar"><a href="diagrams/system-architecture-email-delivery-lifecycle.d2">D2 원본</a></div>
+  <div class="d2-toolbar">
+    <button type="button" class="d2-open-button" data-diagram-open data-diagram-src="diagrams/system-architecture-email-delivery-lifecycle.svg" data-diagram-title="이메일 발송 생명주기">크게 보기</button>
+    <a href="diagrams/system-architecture-email-delivery-lifecycle.d2">D2 원본</a>
+  </div>
   <img class="d2-svg" src="diagrams/system-architecture-email-delivery-lifecycle.svg" alt="이메일 발송 생명주기">
   <details class="d2-details">
     <summary>D2 원본 보기</summary>
@@ -778,7 +903,7 @@ claim: &quot;claim\nstatus=processing&quot; {
   style.stroke: &quot;#1c7c66&quot;
   style.border-radius: 6
 }
-render: &quot;resolve + render\nproduct template&quot; {
+render: &quot;validate args + render\npurpose/product template&quot; {
   shape: rectangle
   style.fill: &quot;#eaf8f3&quot;
   style.stroke: &quot;#1c7c66&quot;
@@ -808,7 +933,7 @@ dead_letter: &quot;dead_letter&quot; {
   style.stroke: &quot;#b42318&quot;
   style.border-radius: 6
 }
-business_state: &quot;payment / invoice / subscription state&quot; {
+business_state: &quot;auth / payment / subscription state&quot; {
   shape: rectangle
   style.fill: &quot;#f1f5f9&quot;
   style.stroke: &quot;#334155&quot;
@@ -822,6 +947,7 @@ send -&gt; sent: &quot;provider accepted&quot;
 send -&gt; retry_scheduled: &quot;timeout / 429 / 5xx&quot;
 send -&gt; dead_letter: &quot;invalid email / 4xx&quot;
 render -&gt; dead_letter: &quot;template validation failure&quot;
+claim -&gt; dead_letter: &quot;auth mail expired&quot;
 retry_scheduled -&gt; claim: &quot;backoff elapsed&quot;
 business_state -&gt; enqueue: &quot;same transaction writes intent&quot;
 </code></pre>
@@ -829,19 +955,34 @@ business_state -&gt; enqueue: &quot;same transaction writes intent&quot;
 </div></div>
 </section><section id="components">
   <h2>컴포넌트 책임</h2>
-  <div class="table-scroll"><table><thead><tr><th>컴포넌트</th><th>책임</th><th>실패 정책</th></tr></thead><tbody><tr><td data-label="컴포넌트">Payment API / Subscription Use Cases</td><td data-label="책임">결제, 인보이스, 구독 상태를 변경하고 메일 발송 intent를 idempotency_key와 함께 저장합니다.</td><td data-label="실패 정책">메일 provider 장애를 직접 처리하지 않고 outbox 저장 성공까지만 책임집니다.</td></tr><tr><td data-label="컴포넌트">notification_outbox</td><td data-label="책임">발송 대상, payload, template_key, status, attempt_count, available_at, locked_until_at을 보관합니다.</td><td data-label="실패 정책">중복 enqueue는 deterministic idempotency_key unique index로 억제합니다.</td></tr><tr><td data-label="컴포넌트">notification_templates</td><td data-label="책임">상품별, 상품 유형별, 기본 event template과 version을 관리합니다.</td><td data-label="실패 정책">템플릿 미존재 또는 payload 검증 실패는 dead_letter로 분류합니다.</td></tr><tr><td data-label="컴포넌트">Notification Worker</td><td data-label="책임">due item을 claim하고 템플릿을 렌더링한 뒤 SMTPEmailSender로 전송합니다.</td><td data-label="실패 정책">일시 실패는 retry_scheduled, 영구 실패는 dead_letter로 상태를 기록합니다.</td></tr><tr><td data-label="컴포넌트">SMTPEmailSender</td><td data-label="책임">렌더링된 subject/html/text를 SMTP 서버에 전달하고 provider_message_id를 반환합니다.</td><td data-label="실패 정책">timeout, 429, 5xx는 retryable 오류로, 잘못된 수신자나 4xx는 permanent 오류로 변환합니다.</td></tr></tbody></table></div>
+  <div class="table-scroll"><table><thead><tr><th>컴포넌트</th><th>책임</th><th>실패 정책</th></tr></thead><tbody><tr><td data-label="컴포넌트">Payment API / Subscription Use Cases</td><td data-label="책임">결제, 인보이스, 구독 상태를 변경하고 메일 발송 intent를 idempotency_key와 함께 저장합니다.</td><td data-label="실패 정책">메일 provider 장애를 직접 처리하지 않고 outbox 저장 성공까지만 책임집니다.</td></tr><tr><td data-label="컴포넌트">Admin/User Auth Service</td><td data-label="책임">OTP, 로그인 링크, 비밀번호 재설정 토큰을 생성하고 해시, 만료 시각, 인증 요청 상태를 저장한 뒤 인증 메일 intent를 적재합니다.</td><td data-label="실패 정책">Email Worker에 인증 판단을 위임하지 않습니다. 토큰 생성, 검증, 폐기, 재발급 정책은 Auth Service가 소유합니다.</td></tr><tr><td data-label="컴포넌트">notification_outbox</td><td data-label="책임">발송 대상, recipient_type, template_key, template_args, expires_at, status, attempt_count, available_at, locked_until_at을 보관합니다.</td><td data-label="실패 정책">중복 enqueue는 deterministic idempotency_key unique index로 억제하고, expires_at이 지난 인증 메일은 발송하지 않습니다.</td></tr><tr><td data-label="컴포넌트">notification_templates</td><td data-label="책임">목적별, 상품별, 상품 유형별, 기본 event template과 version, required_args schema를 관리합니다.</td><td data-label="실패 정책">템플릿 미존재 또는 template_args 검증 실패는 dead_letter로 분류합니다.</td></tr><tr><td data-label="컴포넌트">Notification Worker</td><td data-label="책임">due item을 claim하고 만료 여부와 template_args를 검증한 뒤 SMTPEmailSender로 전송합니다.</td><td data-label="실패 정책">일시 실패는 retry_scheduled, 영구 실패와 만료된 인증 메일은 dead_letter로 상태를 기록합니다.</td></tr><tr><td data-label="컴포넌트">SMTPEmailSender</td><td data-label="책임">렌더링된 subject/html/text를 SMTP 서버에 전달하고 provider_message_id를 반환합니다.</td><td data-label="실패 정책">timeout, 429, 5xx는 retryable 오류로, 잘못된 수신자나 4xx는 permanent 오류로 변환합니다.</td></tr></tbody></table></div>
 </section><section id="data-stores">
   <h2>데이터 소유권</h2>
-  <div class="table-scroll"><table class="has-many-columns"><thead><tr><th>저장소</th><th>소유 포트</th><th>주요 키/인덱스</th><th>비고</th></tr></thead><tbody><tr><td data-label="저장소"><code>notification_outbox</code></td><td data-label="소유 포트">NotificationOutboxRepository</td><td data-label="주요 키/인덱스">_id, idempotency_key, status + available_at + locked_until_at</td><td data-label="비고">pending, processing, sent, retry_scheduled, dead_letter 상태를 가진 내구성 큐입니다.</td></tr><tr><td data-label="저장소"><code>notification_templates</code></td><td data-label="소유 포트">NotificationTemplateRepository</td><td data-label="주요 키/인덱스">template_key + version, event_type + product_code + product_type + status</td><td data-label="비고">product_code.event_type, product_type.event_type, default.event_type 순서로 해석됩니다.</td></tr><tr><td data-label="저장소"><code>payments / invoices / subscriptions</code></td><td data-label="소유 포트">Payment and subscription repositories</td><td data-label="주요 키/인덱스">domain ids, billing_cycle_key, payment_id</td><td data-label="비고">메일 발송 실패로 롤백되지 않는 결제 업무 상태입니다.</td></tr><tr><td data-label="저장소"><code>operation_locks</code></td><td data-label="소유 포트">OperationLockRepository</td><td data-label="주요 키/인덱스">lock_key, fencing_token</td><td data-label="비고">배치와 worker의 중복 실행을 막고 오래된 worker write를 탐지합니다.</td></tr></tbody></table></div>
+  <div class="table-scroll"><table class="has-many-columns"><thead><tr><th>저장소</th><th>소유 포트</th><th>주요 키/인덱스</th><th>비고</th></tr></thead><tbody><tr><td data-label="저장소"><code>notification_outbox</code></td><td data-label="소유 포트">NotificationOutboxRepository</td><td data-label="주요 키/인덱스">_id, idempotency_key, recipient_type + template_key, status + available_at + locked_until_at, expires_at</td><td data-label="비고">pending, processing, sent, retry_scheduled, dead_letter 상태를 가진 내구성 큐입니다. template_args에는 템플릿에 필요한 값만 담고 민감 인증 값은 TTL과 로그 마스킹 정책을 적용합니다.</td></tr><tr><td data-label="저장소"><code>notification_templates</code></td><td data-label="소유 포트">NotificationTemplateRepository</td><td data-label="주요 키/인덱스">template_key + version, purpose + product_code + product_type + status</td><td data-label="비고">admin_auth.login_otp, user_auth.password_reset, product_code.event_type, product_type.event_type, default.event_type 순서로 해석하며 required_args schema를 함께 관리합니다.</td></tr><tr><td data-label="저장소"><code>admin_auth_tokens / auth challenges</code></td><td data-label="소유 포트">Auth repositories</td><td data-label="주요 키/인덱스">token_hash, account_id + type + status, expires_at</td><td data-label="비고">OTP와 reset token의 생성, 해시 저장, 만료, 검증 상태는 Auth Service가 소유합니다. Email Worker는 이 저장소를 기준으로 인증을 판단하지 않습니다.</td></tr><tr><td data-label="저장소"><code>payments / invoices / subscriptions</code></td><td data-label="소유 포트">Payment and subscription repositories</td><td data-label="주요 키/인덱스">domain ids, billing_cycle_key, payment_id</td><td data-label="비고">메일 발송 실패로 롤백되지 않는 결제 업무 상태입니다.</td></tr><tr><td data-label="저장소"><code>operation_locks</code></td><td data-label="소유 포트">OperationLockRepository</td><td data-label="주요 키/인덱스">lock_key, fencing_token</td><td data-label="비고">배치와 worker의 중복 실행을 막고 오래된 worker write를 탐지합니다.</td></tr></tbody></table></div>
 </section><section id="operations">
   <h2>운영과 실패 처리</h2>
-  <div class="grid"><article class="box"><h3>Worker run summary</h3><p>selected_count, claimed_count, sent_count, retry_scheduled_count, dead_letter_count, skipped_count, failed_count를 기록합니다.</p></article><article class="box"><h3>Retry policy</h3><p>일시 실패는 1분, 5분, 30분, 2시간, 12시간 backoff 후 retry_scheduled 상태로 재시도합니다.</p></article><article class="box"><h3>Dead-letter handling</h3><p>dead_letter는 자동 재시도하지 않고 Mongo 상태, worker summary, 로그로 운영자가 확인합니다.</p></article><article class="box"><h3>Stale processing recovery</h3><p>locked_until_at이 지난 processing item은 다른 worker가 다시 claim할 수 있습니다.</p></article><article class="box"><h3>Template failure visibility</h3><p>template_key 누락, required payload 누락, render 실패는 last_error와 함께 dead_letter로 남깁니다.</p></article></div>
+  <div class="grid"><article class="box"><h3>Worker run summary</h3><p>selected_count, claimed_count, sent_count, retry_scheduled_count, dead_letter_count, skipped_count, failed_count를 기록합니다.</p></article><article class="box"><h3>Retry policy</h3><p>일시 실패는 1분, 5분, 30분, 2시간, 12시간 backoff 후 retry_scheduled 상태로 재시도합니다.</p></article><article class="box"><h3>Dead-letter handling</h3><p>dead_letter는 자동 재시도하지 않고 Mongo 상태, worker summary, 로그로 운영자가 확인합니다.</p></article><article class="box"><h3>Stale processing recovery</h3><p>locked_until_at이 지난 processing item은 다른 worker가 다시 claim할 수 있습니다.</p></article><article class="box"><h3>Template failure visibility</h3><p>template_key 누락, required template_args 누락, render 실패는 last_error와 함께 dead_letter로 남깁니다.</p></article><article class="box"><h3>Auth email security boundary</h3><p>OTP, 로그인 링크, 비밀번호 재설정 토큰은 Auth Service가 생성하고 검증합니다. Email Worker는 인증 메일을 발송만 하며 만료된 expires_at 이후에는 보내지 않습니다.</p></article><article class="box"><h3>Template argument contract</h3><p>각 template_key는 required_args schema를 갖고 enqueue 시점과 render 시점에 template_args를 검증합니다. 예: admin_auth.login_otp는 admin_name, otp_code, expires_minutes를 요구합니다.</p></article></div>
 </section></div></main>
+<div class="d2-modal" data-diagram-modal hidden role="dialog" aria-modal="true" aria-labelledby="diagram-modal-title">
+  <div class="d2-modal__panel" role="document">
+    <div class="d2-modal__header">
+      <p class="d2-modal__title" id="diagram-modal-title">다이어그램 크게 보기</p>
+      <button type="button" class="d2-modal__close" data-diagram-close>닫기</button>
+    </div>
+    <div class="d2-modal__viewport">
+      <img class="d2-modal__image" data-diagram-modal-image alt="">
+    </div>
+  </div>
+</div>
 <script>
 (() => {
   const input = document.querySelector("[data-doc-search]");
   const targets = Array.from(document.querySelectorAll("main section, article.card, article.box"));
   const navLinks = Array.from(document.querySelectorAll("nav a[href^='#']"));
+  const modal = document.querySelector("[data-diagram-modal]");
+  const modalImage = modal?.querySelector("[data-diagram-modal-image]");
+  const modalTitle = modal?.querySelector("#diagram-modal-title");
+  let lastDiagramButton = null;
 
   if (input) {
     input.addEventListener("input", () => {
@@ -866,6 +1007,41 @@ business_state -&gt; enqueue: &quot;same transaction writes intent&quot;
     }, { rootMargin: "-18% 0px -68% 0px", threshold: [0.01, 0.18, 0.36] });
     for (const section of document.querySelectorAll("main section[id]")) observer.observe(section);
   }
+
+  const closeDiagramModal = () => {
+    if (!modal) return;
+    modal.hidden = true;
+    document.body.style.overflow = "";
+    if (modalImage) {
+      modalImage.removeAttribute("src");
+      modalImage.alt = "";
+    }
+    if (lastDiagramButton) lastDiagramButton.focus();
+  };
+
+  const openDiagramModal = (button) => {
+    if (!modal || !modalImage || !modalTitle) return;
+    lastDiagramButton = button;
+    const title = button.getAttribute("data-diagram-title") || "다이어그램";
+    modalTitle.textContent = title;
+    modalImage.src = button.getAttribute("data-diagram-src");
+    modalImage.alt = title;
+    modal.hidden = false;
+    document.body.style.overflow = "hidden";
+    modal.querySelector("[data-diagram-close]")?.focus();
+  };
+
+  for (const button of document.querySelectorAll("[data-diagram-open]")) {
+    button.addEventListener("click", () => openDiagramModal(button));
+  }
+
+  modal?.addEventListener("click", (event) => {
+    if (event.target === modal || event.target.closest("[data-diagram-close]")) closeDiagramModal();
+  });
+
+  document.addEventListener("keydown", (event) => {
+    if (event.key === "Escape" && modal && !modal.hidden) closeDiagramModal();
+  });
 })();
 </script>
 </body>

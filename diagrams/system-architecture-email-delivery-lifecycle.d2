@@ -13,7 +13,7 @@ claim: "claim\nstatus=processing" {
   style.stroke: "#1c7c66"
   style.border-radius: 6
 }
-render: "resolve + render\nproduct template" {
+render: "validate args + render\npurpose/product template" {
   shape: rectangle
   style.fill: "#eaf8f3"
   style.stroke: "#1c7c66"
@@ -43,7 +43,7 @@ dead_letter: "dead_letter" {
   style.stroke: "#b42318"
   style.border-radius: 6
 }
-business_state: "payment / invoice / subscription state" {
+business_state: "auth / payment / subscription state" {
   shape: rectangle
   style.fill: "#f1f5f9"
   style.stroke: "#334155"
@@ -57,5 +57,6 @@ send -> sent: "provider accepted"
 send -> retry_scheduled: "timeout / 429 / 5xx"
 send -> dead_letter: "invalid email / 4xx"
 render -> dead_letter: "template validation failure"
+claim -> dead_letter: "auth mail expired"
 retry_scheduled -> claim: "backoff elapsed"
 business_state -> enqueue: "same transaction writes intent"

@@ -79,6 +79,11 @@ class GenerateDocsTest(unittest.TestCase):
                 "notification_outbox",
                 "notification_templates",
                 "Notification Worker",
+                "Admin/User Auth Service",
+                "admin_auth_tokens",
+                "template_args",
+                "admin_auth.login_otp",
+                "expires_at",
                 "retry_scheduled",
                 "dead_letter",
                 "SMTP",
@@ -1430,6 +1435,8 @@ class GenerateDocsTest(unittest.TestCase):
             sequence = (out_dir / "payment.html").read_text(encoding="utf-8")
 
             self.assertIn('<img class="d2-svg" src="diagrams/payment-main.svg"', sequence)
+            self.assertIn('data-diagram-open data-diagram-src="diagrams/payment-main.svg"', sequence)
+            self.assertIn('data-diagram-modal hidden role="dialog"', sequence)
 
     def test_sequence_page_uses_existing_svg_without_rerendering_d2(self):
         data = {
@@ -1500,6 +1507,7 @@ class GenerateDocsTest(unittest.TestCase):
             sequence = (out_dir / "payment.html").read_text(encoding="utf-8")
 
             self.assertIn('<img class="d2-svg" src="diagrams/payment-main.svg"', sequence)
+            self.assertIn('data-diagram-open data-diagram-src="diagrams/payment-main.svg"', sequence)
 
     def test_real_documentation_includes_subscription_cancel_flow(self):
         with tempfile.TemporaryDirectory() as tmp:
