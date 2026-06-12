@@ -30,29 +30,52 @@ Payment and subscription application functions write notification outbox documen
 
 This keeps the first implementation small and consistent with the current backend. If volume later requires Redis, SQS, or another queue, the application port can stay stable while the adapter changes.
 
+Recipient email addresses and minimal personalization profile fields are
+resolved at enqueue time through a `NotificationRecipientResolver` port.
+Application use cases must not read user, admin, or profile databases directly
+for notification recipient data. A temporary Mongo-backed resolver is
+acceptable as an adapter implementation while the member/profile API is not
+ready, but the application contract must stay the same so it can later be
+replaced by an HTTP/member-service adapter.
+
 ## Domain Model
 
-Add a `NotificationOutboxItem` entity with these core fields:
+Add a `NotificationOutboxItem` entity backed by `notification_outbox`.
+The outbox stores delivery metadata and `template_args`, not arbitrary
+business payload. Payment, invoice, subscription, and auth collections remain
+the source of truth for business state.
 
-- `id`
-- `event_type`
-- `template_key`
-- `template_version`
-- `product_code`
-- `recipient_user_id`
-- `recipient_email`
-- `payload`
-- `status`
-- `attempt_count`
-- `available_at`
-- `locked_until_at`
-- `worker_id`
-- `provider_message_id`
-- `last_error`
-- `idempotency_key`
-- `created_at`
-- `updated_at`
-- `sent_at`
+`payload` is not used as a field name in the first implementation. Use
+`template_args` consistently in domain entities, repository ports, Mongo
+documents, worker code, logs, and tests.
+
+| Field | Required | Type | Description |
+| --- | --- | --- | --- |
+| `_id` | yes | `UuidString` | MongoDB document ID and application-generated outbox item ID. |
+| `idempotency_key` | yes | `string` | Deterministic business event identity. Unique across outbox items. |
+| `idempotency_payload_hash` | yes | `string` | Canonical hash of the enqueue content used to detect same-key content conflicts. |
+| `event_type` | yes | `string` | Notification event, such as `subscription_payment_failed`. |
+| `recipient_type` | yes | `string` | `user`, `admin`, or `external`. |
+| `recipient_user_id` | no | `ExternalUserId` | Set when `recipient_type = user`. |
+| `recipient_admin_id` | no | `UuidString` | Set when `recipient_type = admin`. |
+| `recipient_email` | yes | `string` | Actual delivery address. |
+| `product_code` | no | `string` | Product-specific template resolution context. |
+| `product_type` | no | `string` | Product-type template resolution context. |
+| `template_key` | yes | `string` | Template key selected at enqueue time. |
+| `template_version` | yes | `number` | Template version selected at enqueue time. |
+| `template_args` | yes | `object` | Minimal rendering arguments required by the selected template. Non-sensitive billing values may be plain JSON; sensitive auth values must be field-level encrypted value objects. |
+| `status` | yes | `string` | Delivery lifecycle status. |
+| `attempt_count` | yes | `number` | Number of provider send attempts. Initial value is `0`. |
+| `available_at` | yes | `Date` | Earliest time a worker may process the item. |
+| `locked_until_at` | no | `Date` | Claim lock expiry for processing recovery. |
+| `worker_id` | no | `string` | Worker that currently owns or last owned the item. |
+| `provider_message_id` | no | `string` | Provider message identifier returned after accepted delivery. |
+| `last_error` | no | `object` | Provider-safe summary: `code`, `message`, `retryable`, `occurred_at`. |
+| `expires_at` | no | `Date` | Send eligibility deadline. Workers must not send after this time. |
+| `sent_at` | no | `Date` | Time the provider accepted the email. |
+| `created_at` | yes | `Date` | Creation time. |
+| `updated_at` | yes | `Date` | Last mutation time. |
+| `purge_after_at` | no | `Date` | Mongo TTL deletion time. This is separate from `expires_at`. |
 
 Allowed statuses:
 
@@ -74,7 +97,125 @@ Examples:
 - `email:subscription_canceled_payment_failed:{subscription_id}:{invoice_id}`
 - `email:subscription_canceled_after_period:{subscription_id}:{canceled_at_date}`
 
-`notification_outbox.idempotency_key` gets a unique index. If an enqueue operation is repeated with the same key and same payload, it returns the existing item. If the same key is used with a different payload, the application raises an idempotency conflict.
+`notification_outbox.idempotency_key` gets a unique index.
+`idempotency_key` identifies the business event; `idempotency_payload_hash`
+verifies that repeated enqueue attempts for that event carry the same delivery
+content.
+
+The payload hash is calculated from a canonical representation of the enqueue
+content, including:
+
+- `event_type`
+- `recipient_type`
+- `recipient_user_id`
+- `recipient_admin_id`
+- `recipient_email`
+- `product_code`
+- `product_type`
+- `template_key`
+- `template_version`
+- `template_args`
+- `expires_at`
+
+The hash must not depend on randomized ciphertext. For sensitive template
+arguments, calculate the hash before encryption or replace the raw sensitive
+value with a deterministic non-reversible digest in the canonical hash input.
+
+If an enqueue operation is repeated with the same `idempotency_key` and the
+same `idempotency_payload_hash`, it returns the existing item. If the same key
+is used with a different hash, the application raises an idempotency conflict.
+
+## Recipient Resolution
+
+Add a `NotificationRecipientResolver` port under
+`payments/src/payments/application/ports/notifications.py`.
+
+Suggested port shape:
+
+```python
+class NotificationRecipientResolver(Protocol):
+    async def resolve_user(self, user_id: str) -> ResolvedNotificationRecipient:
+        ...
+
+    async def resolve_admin(
+        self,
+        admin_id: str,
+    ) -> ResolvedNotificationRecipient:
+        ...
+```
+
+`ResolvedNotificationRecipient` includes the `recipient_type`, source recipient
+id, `email`, and optional minimal profile fields:
+
+- `display_name`
+- `locale`
+- `timezone`
+- `email_opt_out` or equivalent send-permission flag when the source supports it
+
+The resolved email is copied into `notification_outbox.recipient_email` at
+enqueue time. `recipientName` is a common optional template argument for all
+templates. It is copied from the resolved recipient display name when available;
+templates must fall back to generic copy such as "customer" or "administrator"
+when it is absent. `locale` and `timezone` may also be copied into
+`template_args` when the selected template uses them. The worker must not call
+the resolver again.
+
+The resolver must stay narrow. It may return email delivery and email
+personalisation data, but it must not return payment state, subscription state,
+billing keys, provider customer keys, phone numbers, addresses, or arbitrary
+template-specific business payload.
+
+Resolver implementation policy:
+
+- The first adapter may read Mongo or a local projection while the member API is
+  not available.
+- That direct data-source access stays inside the adapter. Application use cases
+  depend only on the port.
+- A future HTTP/member-service adapter must be swappable without changing
+  payment, subscription, auth, or notification application code.
+- Provider/network calls and slow profile lookups should not happen inside a
+  Mongo transaction. Resolve the recipient before the short transaction that
+  writes business state plus the outbox item.
+
+Failure policy:
+
+- Payment and subscription notification recipient resolution failure must not
+  roll back already-valid payment state. Record a skipped notification or a
+  `dead_letter` item with `last_error.code = recipient_unresolved`, depending on
+  the use-case boundary.
+- Auth email recipient resolution failure is part of the auth flow. Revoke or
+  expire the generated auth token and return a stable failure rather than
+  leaving an active token without a deliverable email.
+
+## Template Argument Security
+
+`template_args` remains an object. Do not encrypt the entire object because the
+worker and operations need to validate required argument names and diagnose
+dead-letter causes. Encrypt only sensitive fields.
+
+Plain values are allowed for non-sensitive billing and product display data,
+such as amount, invoice ID, subscription ID, billing date, retry date, and
+receipt/manage URLs that do not embed secrets.
+
+Sensitive auth values must be stored as field-level encrypted value objects and
+decrypted only inside the notification worker immediately before rendering.
+Examples include login links, reset tokens, OTP codes, magic links, and any
+future one-time credential.
+
+Encrypted value shape:
+
+```json
+{
+  "encrypted": true,
+  "ciphertext": "...",
+  "keyId": "notification-template-args-v1",
+  "algorithm": "AES-GCM"
+}
+```
+
+Logs, worker summaries, `last_error`, and test assertion messages must not
+include decrypted sensitive values. They should use argument names, error codes,
+or masked values only.
 
 ## Queue Processing
 
@@ -89,8 +230,8 @@ The worker flow is:
    - set `worker_id`.
    - set `locked_until_at = now + processing_ttl`.
    - increment or preserve worker claim metadata as needed.
-3. Resolve the template.
-4. Validate the payload against the template contract.
+3. Load the stored `template_key` and `template_version`.
+4. Validate `template_args` against the template contract.
 5. Render subject, HTML body, and text body.
 6. Send through the `EmailSender` port.
 7. Mark as `sent` with `provider_message_id` and `sent_at`, or schedule retry/dead letter.
@@ -118,13 +259,13 @@ Suggested backoff schedule:
 
 After the maximum retry count, the item moves to `dead_letter`.
 
-Permanent failures include invalid recipient email, template not found, template payload validation failure, and non-retryable provider 4xx responses. These move directly to `dead_letter`.
+Permanent failures include invalid recipient email, template not found, template argument validation failure, and non-retryable provider 4xx responses. These move directly to `dead_letter`.
 
 Email failure never rolls back payment, invoice, subscription, or audit state. Operational visibility comes from outbox status, worker run summaries, logs, and later admin views.
 
 ## Template Resolution
 
-Templates are resolved by event and product context.
+Templates are resolved by event and product context at enqueue time.
 
 Resolution order:
 
@@ -149,13 +290,38 @@ Template fields:
 - `subject_template`
 - `html_template`
 - `text_template`
-- `required_payload_keys`
+- `required_template_args`
 - `status`
 - `version`
 - `created_at`
 - `updated_at`
 
-The selected `template_key` and `template_version` are stored on the outbox item when it is enqueued. This preserves the meaning of already queued emails even if templates change later.
+The selected `template_key` and `template_version` are stored on the outbox item when it is enqueued. This preserves the meaning of already queued emails even if templates change later. The worker loads the stored key/version and does not re-resolve fallback candidates.
+
+## Initial Template Catalog
+
+Use camelCase for `template_args`. `recipientName`, `locale`, `timezone`, and
+`supportUrl` are common optional arguments for every template. `recipientName`
+replaces event-specific names such as `adminName` or `userName`.
+
+| Event type | Required template args | Optional template args | Encrypted args |
+| --- | --- | --- | --- |
+| `admin_auth.login_link` | `loginLink`, `expiresMinutes` | `recipientName`, `requestIp`, `userAgent`, `supportUrl`, `locale`, `timezone` | `loginLink` |
+| `admin_auth.password_reset` | `resetLink`, `expiresMinutes` | `recipientName`, `requestIp`, `supportUrl`, `locale`, `timezone` | `resetLink` |
+| `subscription_billing_reminder` | `subscriptionId`, `planName`, `amount`, `currency`, `billingDate`, `subscriptionManageUrl` | `recipientName`, `productName`, `billingMethodSummary`, `supportUrl`, `locale`, `timezone` | none |
+| `subscription_payment_paid` | `subscriptionId`, `invoiceId`, `amount`, `currency`, `billingDate`, `receiptUrl` | `recipientName`, `planName`, `productName`, `paidAt`, `paymentMethodSummary`, `supportUrl`, `locale`, `timezone` | none |
+| `subscription_payment_failed` | `subscriptionId`, `invoiceId`, `amount`, `currency`, `failureSummary`, `retryScheduledAt`, `billingMethodUpdateUrl` | `recipientName`, `planName`, `productName`, `providerCode`, `supportUrl`, `locale`, `timezone` | none |
+| `subscription_canceled_payment_failed` | `subscriptionId`, `invoiceId`, `canceledAt`, `failureSummary`, `cancelReason`, `subscriptionManageUrl`, `resubscribeUrl` | `recipientName`, `amount`, `currency`, `providerCode`, `planName`, `productName`, `supportUrl`, `locale`, `timezone` | none |
+| `subscription_canceled_after_period` | `subscriptionId`, `periodEndAt`, `canceledAt`, `accessUntil`, `resubscribeUrl` | `recipientName`, `planName`, `productName`, `subscriptionManageUrl`, `supportUrl`, `locale`, `timezone` | none |
+| `subscription_plan_upgrade_receipt` | `subscriptionId`, `invoiceId`, `paymentId`, `fromPlanName`, `toPlanName`, `amount`, `currency`, `changedAt`, `receiptUrl` | `recipientName`, `effectiveAt`, `paymentMethodSummary`, `supportUrl`, `locale`, `timezone` | none |
+| `payment_cancel_completed` | `paymentId`, `cancelAmount`, `currency`, `canceledAt` | `recipientName`, `invoiceId`, `orderName`, `cancelReason`, `receiptUrl`, `supportUrl`, `locale`, `timezone` | none |
+| `subscription_adjustment_completed` | `subscriptionId`, `adjustmentType`, `status`, `adjustedAt` | `recipientName`, `previousStatus`, `nextBillingAt`, `accessUntil`, `reasonSummary`, `subscriptionManageUrl`, `supportUrl`, `locale`, `timezone` | none |
+| `one_time_payment_paid` | `checkoutId`, `paymentId`, `orderName`, `amount`, `currency`, `paidAt`, `receiptUrl` | `recipientName`, `itemSummary`, `paymentMethodSummary`, `supportUrl`, `locale`, `timezone` | none |
+
+Do not include `recipientEmail`, `recipientType`, `templateKey`, or
+`templateVersion` in `template_args`; those are outbox metadata. Do not include
+provider raw responses, billing keys, card numbers, provider secrets, or raw auth
+token hashes in any template argument.
 
 ## Application Ports
 
@@ -169,6 +335,8 @@ Add ports under `payments/src/payments/application/ports/notifications.py`:
   - mark dead letter.
 - `NotificationTemplateRepository`
   - find active template by resolution candidates.
+- `NotificationRecipientResolver`
+  - resolve user/admin recipient email snapshots at enqueue time.
 - `TemplateRenderer`
   - render subject, HTML body, and text body.
 - `EmailSender`
@@ -182,6 +350,8 @@ Mongo adapters:
 
 - `payments/src/payments/adapters/mongo/notifications.py`
 - index additions in `payments/src/payments/adapters/mongo/indexes.py`
+- a temporary Mongo-backed recipient resolver adapter if the member/profile API
+  is not ready.
 
 Email provider adapters:
 
@@ -203,14 +373,38 @@ Recommended indexes:
 - unique: `id`
 - unique: `idempotency_key`
 - processing scan: `(status, available_at, locked_until_at, created_at)`
-- recipient lookup: `(recipient_user_id, created_at)`
+- recipient lookup: `(recipient_type, recipient_user_id, created_at)`
+- admin recipient lookup: `(recipient_type, recipient_admin_id, created_at)`
 - dead-letter operations: `(status, updated_at)`
 - event lookup: `(event_type, created_at)`
+- template lookup/debug: `(template_key, template_version, created_at)`
+- TTL: `purge_after_at` with `expireAfterSeconds = 0`
 
 For `notification_templates`:
 
 - unique: `(template_key, version)`
 - active lookup: `(event_type, product_code, product_type, status)`
+
+## Retention Policy
+
+`expires_at` and `purge_after_at` have different meanings.
+
+- `expires_at`: send eligibility deadline. If `expires_at <= now`, the worker
+  marks the item `dead_letter` and does not call the provider.
+- `purge_after_at`: Mongo TTL deletion deadline. It controls storage
+  retention only and must not be used to decide whether an email can be sent.
+
+Retention defaults:
+
+- `pending` and `retry_scheduled`: keep until delivery completes or until an
+  explicit operational retention deadline. Auth emails use a short
+  `expires_at`.
+- `processing`: do not TTL-delete solely because the item is processing.
+  Recovery uses `locked_until_at`.
+- `sent`: set `purge_after_at = sent_at + 90 days`.
+- `dead_letter`: set `purge_after_at = updated_at + 180 days`.
+- auth email items: set `expires_at` to the auth token expiry and
+  `purge_after_at` no later than `expires_at + 1 day`.
 
 ## Existing Flow Integration
 
@@ -222,17 +416,17 @@ Subscription billing reminder:
 Subscription payment success:
 
 - Enqueue `subscription_payment_paid` after invoice and payment are saved as paid.
-- Include amount, billing date, receipt URL, invoice ID, and subscription ID.
+- Include amount, billing date, receipt URL, invoice ID, and subscription ID in `template_args`.
 
 Subscription payment failure:
 
 - Enqueue `subscription_payment_failed` when retry is scheduled.
-- Include failure reason summary, retry date, billing method update URL, invoice ID, and subscription ID.
+- Include failure reason summary, retry date, billing method update URL, invoice ID, and subscription ID in `template_args`.
 
 Final payment failure cancellation:
 
 - Enqueue `subscription_canceled_payment_failed`.
-- Include canceled date, failure reason summary, manage URL, and resubscribe URL.
+- Include canceled date, failure reason summary, manage URL, and resubscribe URL in `template_args`.
 
 Cancel-at-period-end expiration:
 
@@ -257,8 +451,16 @@ This mirrors the existing scheduler job style and makes internal/manual runs obs
 
 Application tests:
 
-- enqueue is idempotent with the same payload.
-- enqueue conflicts on same idempotency key with different payload.
+- enqueue is idempotent with the same `idempotency_payload_hash`.
+- enqueue conflicts on same idempotency key with different hash.
+- recipient email is resolved at enqueue time and stored as an outbox snapshot.
+- payment/subscription recipient resolution failure does not roll back valid
+  business state.
+- auth recipient resolution failure revokes or expires generated auth tokens.
+- sensitive `template_args` are encrypted at field level and never appear in
+  logs, summaries, or `last_error`.
+- idempotency hash remains stable when encrypted fields use randomized
+  ciphertext.
 - worker claims each item once even when locks exist.
 - transient provider failure schedules retry with expected backoff.
 - permanent render or provider failure marks dead letter.
@@ -287,6 +489,13 @@ Contract tests:
 ## First Implementation Decisions
 
 - Use Mongo for both `notification_outbox` and `notification_templates`.
+- Use `template_args` as the only rendering-argument field name. Do not add a
+  `payload` field to `notification_outbox`.
+- Select and store `template_key` and `template_version` at enqueue time.
+- Use `idempotency_key` for business-event identity and
+  `idempotency_payload_hash` for same-key content conflict detection.
+- Separate `expires_at` for send eligibility from `purge_after_at` for TTL
+  deletion.
 - Implement `SMTPEmailSender` as the first real provider adapter.
 - Keep `RecordingEmailSender` for tests and local development.
 - Include an internal worker/job entrypoint for sending due notifications.
