@@ -3,63 +3,54 @@ title: "이메일 알림 Outbox 아키텍처"
 
 client: "웹 클라이언트" {
   shape: rectangle
-  tooltip: "결제와 구독 화면을 호출합니다."
   style.fill: "#e8f3ff"
   style.stroke: "#2457a6"
   style.border-radius: 6
 }
 payment_api: "Payment API" {
   shape: rectangle
-  tooltip: "일반결제, 구독, 청구 API를 처리합니다."
   style.fill: "#eaf8f3"
   style.stroke: "#1c7c66"
   style.border-radius: 6
 }
 subscription_jobs: "Subscription Jobs" {
   shape: rectangle
-  tooltip: "정기 결제, 재시도, 해지 만료 배치를 실행합니다."
   style.fill: "#fff8e6"
   style.stroke: "#9a5b00"
   style.border-radius: 6
 }
 business_state: "payments / invoices / subscriptions" {
   shape: rectangle
-  tooltip: "결제, 인보이스, 구독의 최종 업무 상태입니다."
   style.fill: "#f1f5f9"
   style.stroke: "#334155"
   style.border-radius: 6
 }
 notification_outbox: "notification_outbox" {
   shape: rectangle
-  tooltip: "메일 발송 요청, status, lock, retry 정보를 저장하는 내구성 큐입니다."
   style.fill: "#fff5dd"
   style.stroke: "#9a5b00"
   style.border-radius: 6
 }
 notification_templates: "notification_templates" {
   shape: rectangle
-  tooltip: "상품별 template_key, version, subject/html/text 본문을 저장합니다."
   style.fill: "#f1f5f9"
   style.stroke: "#334155"
   style.border-radius: 6
 }
 notification_worker: "Notification Worker" {
   shape: rectangle
-  tooltip: "available_at이 지난 outbox item을 claim하고 렌더링 후 발송합니다."
   style.fill: "#eaf8f3"
   style.stroke: "#1c7c66"
   style.border-radius: 6
 }
 smtp_adapter: "SMTPEmailSender" {
   shape: rectangle
-  tooltip: "SMTP 서버로 렌더링된 이메일을 전송합니다."
   style.fill: "#f1edff"
   style.stroke: "#7b4bc4"
   style.border-radius: 6
 }
 mailbox: "회원 메일함" {
   shape: rectangle
-  tooltip: "결제 예정, 성공, 실패, 해지 안내 메일을 받습니다."
   style.fill: "#f8fafc"
   style.stroke: "#65758a"
   style.border-radius: 6

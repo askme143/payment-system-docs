@@ -3,56 +3,48 @@ title: "이메일 발송 생명주기"
 
 enqueue: "enqueue\nstatus=pending" {
   shape: rectangle
-  tooltip: "업무 트랜잭션과 함께 outbox item을 저장합니다."
   style.fill: "#eaf8f3"
   style.stroke: "#1c7c66"
   style.border-radius: 6
 }
 claim: "claim\nstatus=processing" {
   shape: rectangle
-  tooltip: "worker_id와 locked_until_at으로 선점합니다."
   style.fill: "#eaf8f3"
   style.stroke: "#1c7c66"
   style.border-radius: 6
 }
 render: "resolve + render\nproduct template" {
   shape: rectangle
-  tooltip: "상품별 템플릿 fallback 순서로 본문을 생성합니다."
   style.fill: "#eaf8f3"
   style.stroke: "#1c7c66"
   style.border-radius: 6
 }
 send: "SMTP send" {
   shape: rectangle
-  tooltip: "SMTPEmailSender가 외부 메일 서버로 전송합니다."
   style.fill: "#f1edff"
   style.stroke: "#7b4bc4"
   style.border-radius: 6
 }
 sent: "sent" {
   shape: rectangle
-  tooltip: "provider_message_id와 sent_at을 저장합니다."
   style.fill: "#e5f4ef"
   style.stroke: "#1c7c66"
   style.border-radius: 6
 }
 retry_scheduled: "retry_scheduled" {
   shape: rectangle
-  tooltip: "일시 실패는 backoff 후 재시도합니다."
   style.fill: "#fff8e6"
   style.stroke: "#9a5b00"
   style.border-radius: 6
 }
 dead_letter: "dead_letter" {
   shape: rectangle
-  tooltip: "영구 실패 또는 최대 재시도 초과 시 자동 발송을 멈춥니다."
   style.fill: "#fff1f0"
   style.stroke: "#b42318"
   style.border-radius: 6
 }
 business_state: "payment / invoice / subscription state" {
   shape: rectangle
-  tooltip: "메일 실패와 독립적으로 이미 커밋된 업무 상태입니다."
   style.fill: "#f1f5f9"
   style.stroke: "#334155"
   style.border-radius: 6

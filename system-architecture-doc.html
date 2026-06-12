@@ -689,63 +689,54 @@ title: &quot;이메일 알림 Outbox 아키텍처&quot;
 
 client: &quot;웹 클라이언트&quot; {
   shape: rectangle
-  tooltip: &quot;결제와 구독 화면을 호출합니다.&quot;
   style.fill: &quot;#e8f3ff&quot;
   style.stroke: &quot;#2457a6&quot;
   style.border-radius: 6
 }
 payment_api: &quot;Payment API&quot; {
   shape: rectangle
-  tooltip: &quot;일반결제, 구독, 청구 API를 처리합니다.&quot;
   style.fill: &quot;#eaf8f3&quot;
   style.stroke: &quot;#1c7c66&quot;
   style.border-radius: 6
 }
 subscription_jobs: &quot;Subscription Jobs&quot; {
   shape: rectangle
-  tooltip: &quot;정기 결제, 재시도, 해지 만료 배치를 실행합니다.&quot;
   style.fill: &quot;#fff8e6&quot;
   style.stroke: &quot;#9a5b00&quot;
   style.border-radius: 6
 }
 business_state: &quot;payments / invoices / subscriptions&quot; {
   shape: rectangle
-  tooltip: &quot;결제, 인보이스, 구독의 최종 업무 상태입니다.&quot;
   style.fill: &quot;#f1f5f9&quot;
   style.stroke: &quot;#334155&quot;
   style.border-radius: 6
 }
 notification_outbox: &quot;notification_outbox&quot; {
   shape: rectangle
-  tooltip: &quot;메일 발송 요청, status, lock, retry 정보를 저장하는 내구성 큐입니다.&quot;
   style.fill: &quot;#fff5dd&quot;
   style.stroke: &quot;#9a5b00&quot;
   style.border-radius: 6
 }
 notification_templates: &quot;notification_templates&quot; {
   shape: rectangle
-  tooltip: &quot;상품별 template_key, version, subject/html/text 본문을 저장합니다.&quot;
   style.fill: &quot;#f1f5f9&quot;
   style.stroke: &quot;#334155&quot;
   style.border-radius: 6
 }
 notification_worker: &quot;Notification Worker&quot; {
   shape: rectangle
-  tooltip: &quot;available_at이 지난 outbox item을 claim하고 렌더링 후 발송합니다.&quot;
   style.fill: &quot;#eaf8f3&quot;
   style.stroke: &quot;#1c7c66&quot;
   style.border-radius: 6
 }
 smtp_adapter: &quot;SMTPEmailSender&quot; {
   shape: rectangle
-  tooltip: &quot;SMTP 서버로 렌더링된 이메일을 전송합니다.&quot;
   style.fill: &quot;#f1edff&quot;
   style.stroke: &quot;#7b4bc4&quot;
   style.border-radius: 6
 }
 mailbox: &quot;회원 메일함&quot; {
   shape: rectangle
-  tooltip: &quot;결제 예정, 성공, 실패, 해지 안내 메일을 받습니다.&quot;
   style.fill: &quot;#f8fafc&quot;
   style.stroke: &quot;#65758a&quot;
   style.border-radius: 6
@@ -777,56 +768,48 @@ title: &quot;이메일 발송 생명주기&quot;
 
 enqueue: &quot;enqueue\nstatus=pending&quot; {
   shape: rectangle
-  tooltip: &quot;업무 트랜잭션과 함께 outbox item을 저장합니다.&quot;
   style.fill: &quot;#eaf8f3&quot;
   style.stroke: &quot;#1c7c66&quot;
   style.border-radius: 6
 }
 claim: &quot;claim\nstatus=processing&quot; {
   shape: rectangle
-  tooltip: &quot;worker_id와 locked_until_at으로 선점합니다.&quot;
   style.fill: &quot;#eaf8f3&quot;
   style.stroke: &quot;#1c7c66&quot;
   style.border-radius: 6
 }
 render: &quot;resolve + render\nproduct template&quot; {
   shape: rectangle
-  tooltip: &quot;상품별 템플릿 fallback 순서로 본문을 생성합니다.&quot;
   style.fill: &quot;#eaf8f3&quot;
   style.stroke: &quot;#1c7c66&quot;
   style.border-radius: 6
 }
 send: &quot;SMTP send&quot; {
   shape: rectangle
-  tooltip: &quot;SMTPEmailSender가 외부 메일 서버로 전송합니다.&quot;
   style.fill: &quot;#f1edff&quot;
   style.stroke: &quot;#7b4bc4&quot;
   style.border-radius: 6
 }
 sent: &quot;sent&quot; {
   shape: rectangle
-  tooltip: &quot;provider_message_id와 sent_at을 저장합니다.&quot;
   style.fill: &quot;#e5f4ef&quot;
   style.stroke: &quot;#1c7c66&quot;
   style.border-radius: 6
 }
 retry_scheduled: &quot;retry_scheduled&quot; {
   shape: rectangle
-  tooltip: &quot;일시 실패는 backoff 후 재시도합니다.&quot;
   style.fill: &quot;#fff8e6&quot;
   style.stroke: &quot;#9a5b00&quot;
   style.border-radius: 6
 }
 dead_letter: &quot;dead_letter&quot; {
   shape: rectangle
-  tooltip: &quot;영구 실패 또는 최대 재시도 초과 시 자동 발송을 멈춥니다.&quot;
   style.fill: &quot;#fff1f0&quot;
   style.stroke: &quot;#b42318&quot;
   style.border-radius: 6
 }
 business_state: &quot;payment / invoice / subscription state&quot; {
   shape: rectangle
-  tooltip: &quot;메일 실패와 독립적으로 이미 커밋된 업무 상태입니다.&quot;
   style.fill: &quot;#f1f5f9&quot;
   style.stroke: &quot;#334155&quot;
   style.border-radius: 6

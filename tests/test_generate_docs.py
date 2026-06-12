@@ -101,6 +101,26 @@ class GenerateDocsTest(unittest.TestCase):
             self.assertIn("notification_outbox", outbox_d2.read_text(encoding="utf-8"))
             self.assertIn("dead_letter", lifecycle_d2.read_text(encoding="utf-8"))
 
+    def test_system_architecture_diagrams_do_not_render_tooltip_appendix(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            out_dir = Path(tmp)
+
+            generate_docs("docs-data/documentation.json", out_dir)
+
+            outbox_d2 = (
+                out_dir
+                / "diagrams"
+                / "system-architecture-email-notification-outbox.d2"
+            ).read_text(encoding="utf-8")
+            lifecycle_d2 = (
+                out_dir
+                / "diagrams"
+                / "system-architecture-email-delivery-lifecycle.d2"
+            ).read_text(encoding="utf-8")
+
+            self.assertNotIn("tooltip:", outbox_d2)
+            self.assertNotIn("tooltip:", lifecycle_d2)
+
     def test_schema_allows_mongodb_index_safety_metadata(self):
         schema = json.loads(Path("docs-data/schema/documentation.schema.json").read_text(encoding="utf-8"))
         index_properties = schema["$defs"]["dbIndex"]["properties"]

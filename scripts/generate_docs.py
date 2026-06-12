@@ -1680,7 +1680,6 @@ def render_architecture_d2_diagram(diagram):
         )
         lines.append(f"{node_id}: {d2_quote(node['label'])} {{")
         lines.append("  shape: rectangle")
-        lines.append(f"  tooltip: {d2_quote(node['description'])}")
         lines.append(f"  style.fill: {d2_quote(fill)}")
         lines.append(f"  style.stroke: {d2_quote(stroke)}")
         lines.append("  style.border-radius: 6")
