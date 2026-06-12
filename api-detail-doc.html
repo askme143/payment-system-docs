@@ -672,7 +672,7 @@
     </div>
   </div>
 </header>
-<main class="wrap layout" id="content"><nav aria-label="문서 목차"><a href="#plans-list">GET /plans</a><a href="#plans-detail">GET /plans/{planId}</a><a href="#payments-orders">POST /payments/orders</a><a href="#payments-confirm">POST /payments/confirm</a><a href="#payments-detail">GET /payments/{paymentId}</a><a href="#payments-auth-result">POST /payments/{paymentId}/auth-result</a><a href="#payments-cancel">POST /payments/{paymentId}/cancel</a><a href="#checkout">POST /subscriptions/checkout</a><a href="#confirm">POST /subscriptions/confirm</a><a href="#me">GET /subscriptions/me</a><a href="#cancel">POST /subscriptions/{subscriptionId}/cancel</a><a href="#resume">POST /subscriptions/{subscriptionId}/resume</a><a href="#change-preview">POST /subscriptions/{subscriptionId}/change-preview</a><a href="#change">PATCH /subscriptions/{subscriptionId}</a><a href="#billing-auth">POST /billing/auth</a><a href="#billing-issue">POST /billing/issue</a><a href="#billing-methods">GET /billing/methods</a><a href="#billing-method-default">PATCH /billing/methods/{billingMethodId}/default</a><a href="#billing-method-delete">DELETE /billing/methods/{billingMethodId}</a><a href="#invoices-list">GET /invoices</a><a href="#invoice-detail">GET /invoices/{invoiceId}</a><a href="#webhook">POST /webhooks/toss-payments</a><a href="#billing-run">POST /internal/subscription-billing/run</a><a href="#billing-retry">POST /internal/subscription-billing/{invoiceId}/retry</a><a href="#admin-payments">GET /admin/payments</a><a href="#admin-subscriptions">GET /admin/subscriptions</a><a href="#admin-payment-cancel">POST /admin/payments/{paymentId}/cancel</a><a href="#admin-subscription-adjust">POST /admin/subscriptions/{subscriptionId}/adjust</a><a href="#admin-products-create">POST /admin/products</a><a href="#admin-subscription-plans-create">POST /admin/products/{productId}/subscription-plans</a><a href="#admin-subscription-plans-update">PATCH /admin/products/{productId}/subscription-plans/{planId}</a><a href="#admin-one-time-skus-create">POST /admin/products/{productId}/one-time-skus</a><a href="#admin-one-time-skus-update">PATCH /admin/products/{productId}/one-time-skus/{skuId}</a><a href="#admin-products-status">PATCH /admin/products/{productId}/status</a></nav><div><section id="plans-list">
+<main class="wrap layout" id="content"><nav aria-label="문서 목차"><a href="#plans-list">GET /plans</a><a href="#plans-detail">GET /plans/{planId}</a><a href="#payments-orders">POST /payments/orders</a><a href="#payments-confirm">POST /payments/confirm</a><a href="#payments-detail">GET /payments/{paymentId}</a><a href="#payments-auth-result">POST /payments/{paymentId}/auth-result</a><a href="#payments-cancel">POST /payments/{paymentId}/cancel</a><a href="#checkout">POST /subscriptions/checkout</a><a href="#confirm">POST /subscriptions/confirm</a><a href="#me">GET /subscriptions/me</a><a href="#cancel">POST /subscriptions/{subscriptionId}/cancel</a><a href="#resume">POST /subscriptions/{subscriptionId}/resume</a><a href="#change-preview">POST /subscriptions/{subscriptionId}/change-preview</a><a href="#change">PATCH /subscriptions/{subscriptionId}</a><a href="#billing-auth">POST /billing/auth</a><a href="#billing-issue">POST /billing/issue</a><a href="#billing-methods">GET /billing/methods</a><a href="#billing-method-default">PATCH /billing/methods/{billingMethodId}/default</a><a href="#billing-method-delete">DELETE /billing/methods/{billingMethodId}</a><a href="#invoices-list">GET /invoices</a><a href="#invoice-detail">GET /invoices/{invoiceId}</a><a href="#webhook">POST /webhooks/toss-payments</a><a href="#billing-run">POST /internal/subscription-billing/run</a><a href="#admin-auth-password-reset-confirm">POST /admin/auth/password-reset/confirm</a><a href="#admin-auth-password-reset-request">POST /admin/auth/password-reset/request</a><a href="#admin-auth-logout">POST /admin/auth/logout</a><a href="#admin-auth-refresh">POST /admin/auth/refresh</a><a href="#admin-auth-me">GET /admin/auth/me</a><a href="#admin-auth-login">POST /admin/auth/login</a><a href="#admin-auth-login-confirm">POST /admin/auth/login/confirm</a><a href="#billing-retry">POST /internal/subscription-billing/{invoiceId}/retry</a><a href="#admin-payments">GET /admin/payments</a><a href="#admin-subscriptions">GET /admin/subscriptions</a><a href="#admin-payment-cancel">POST /admin/payments/{paymentId}/cancel</a><a href="#admin-subscription-adjust">POST /admin/subscriptions/{subscriptionId}/adjust</a><a href="#admin-products-create">POST /admin/products</a><a href="#admin-subscription-plans-create">POST /admin/products/{productId}/subscription-plans</a><a href="#admin-subscription-plans-update">PATCH /admin/products/{productId}/subscription-plans/{planId}</a><a href="#admin-one-time-skus-create">POST /admin/products/{productId}/one-time-skus</a><a href="#admin-one-time-skus-update">PATCH /admin/products/{productId}/one-time-skus/{skuId}</a><a href="#admin-products-status">PATCH /admin/products/{productId}/status</a></nav><div><section id="plans-list">
   <h2><code>GET /plans</code></h2>
   <p>구독 체크아웃이나 플랜 변경 화면에서 사용자가 선택할 수 있는 공개 상품/구독 플랜 목록을 조회하는 API입니다. 판매 중인 구독상품과 활성 플랜만 반환하며, 결제 금액은 이후 체크아웃 또는 플랜 변경 미리보기 API에서 서버가 다시 계산합니다.</p>
   <h3>Header</h3>
@@ -1562,6 +1562,167 @@
   <h3>처리 로직</h3>
   <ol><li>Internal-Job-Token 또는 내부 인증 정책으로 호출자를 검증합니다.</li><li>jobType, billingDate, limit 같은 운영 옵션을 검증하고 배치 실행 락을 획득합니다.</li><li>jobType=reminder이면 nextBillingDate가 billingDate+7일인 활성 구독을 조회하고, 결제일과 결제 금액이 포함된 사전 알림 이메일을 발송합니다.</li><li>status=active이고 nextBillingDate가 billingDate 이하인 구독만 조회합니다.</li><li>cancel_scheduled 상태의 구독과 nextBillingDate가 null인 구독은 제외합니다.</li><li>nextBillingDate가 null인 구독은 제외 대상 수로 집계하고 결제 승인 API를 호출하지 않습니다.</li><li>대상 구독별로 별도의 인보이스와 payment 초안을 생성한 뒤 기본 결제수단이 참조하는 결제수단 토큰의 billingKey로 토스 자동결제 승인을 요청합니다.</li><li>결제 성공 시 invoice와 payment를 paid로 저장하고 nextBillingDate를 다음 주기로 갱신합니다.</li><li>결제 성공 이메일에는 결제 금액, 결제일, invoiceId, receiptUrl을 포함해 발송 큐에 넣습니다.</li><li>결제 실패 시 payment.status=failed, 실패 사유, 재시도 플로우가 읽을 수 있는 retry_scheduled_at을 저장합니다.</li><li>결제 실패 이메일에는 재시도 일자, 결제수단 수정 링크, 해지 처리 안내 중 실제 분기에 맞는 값을 포함해 발송 큐에 넣습니다.</li><li>처리 건수, 성공, 실패, 제외 건수를 운영 로그와 모니터링 지표에 남깁니다.</li></ol>
   <div class="note">이 API는 내부 API이므로 일반 회원 프론트에서 직접 호출하지 않습니다.</div><div class="note">한 회원이 여러 상품 구독을 동시에 보유해도 구독별 invoice와 payment를 분리해 생성하고, 결제수단은 회원 공통 기본 결제수단 하나를 사용합니다.</div><div class="note">해지 예약된 구독은 기간 종료 전까지 권한은 유지하지만 다음 결제 대상에서는 제외됩니다.</div><div class="note">dryRun=true인 경우 토스 결제 승인과 이메일 발송 요청을 만들지 않고 대상 건수와 예상 payload만 반환합니다.</div>
+</section><section id="admin-auth-password-reset-confirm">
+  <h2><code>POST /admin/auth/password-reset/confirm</code></h2>
+  <p>이메일로 전달된 일회용 재설정 토큰과 새 비밀번호로 관리자 계정 비밀번호를 교체하는 API입니다. 성공하면 기존 refreshToken을 모두 폐기해 이전 기기 로그인을 끊습니다.</p>
+  <h3>Header</h3>
+<div class="table-scroll"><table><thead><tr><th>이름</th><th>필수</th><th>설명</th></tr></thead><tbody><tr><td data-label="이름"><code>Content-Type</code></td><td data-label="필수">예</td><td data-label="설명">application/json</td></tr><tr><td data-label="이름"><code>X-Request-Id</code></td><td data-label="필수">예</td><td data-label="설명">어드민 콘솔 또는 서버가 생성하는 요청 추적 ID입니다.</td></tr></tbody></table></div>
+  <h3>Cookie</h3>
+<div class="table-scroll"><table><thead><tr><th>이름</th><th>필수</th><th>설명</th></tr></thead><tbody></tbody></table></div>
+  <h3>Body</h3><pre><code>{
+  &quot;resetToken&quot;: &quot;apr_...&quot;,
+  &quot;newPassword&quot;: &quot;new-correct-horse-battery-staple&quot;
+}</code></pre>
+  <h3>Body 필드</h3>
+<div class="table-scroll"><table><thead><tr><th>이름</th><th>필수</th><th>설명</th></tr></thead><tbody><tr><td data-label="이름"><code>resetToken</code></td><td data-label="필수">예</td><td data-label="설명">재설정 이메일로 받은 일회용 토큰입니다.</td></tr><tr><td data-label="이름"><code>newPassword</code></td><td data-label="필수">예</td><td data-label="설명">정책을 만족하는 새 관리자 비밀번호입니다.</td></tr></tbody></table></div>
+  <h3>Response 204</h3><p>비밀번호 재설정 성공</p><h3>Response 400</h3><p>토큰 또는 새 비밀번호 형식이 유효하지 않은 요청</p><h3>Response 401</h3><p>재설정 토큰이 만료, 사용 완료, 위조된 요청</p><h3>Response 403</h3><p>관리자 계정이 비활성화되어 재설정할 수 없는 요청</p>
+
+  <h3>처리 로직</h3>
+  <ol><li>resetToken 원문을 해시해 active password_reset 토큰을 찾고 만료 시각과 사용 여부를 검증합니다.</li><li>새 비밀번호가 길이, 복잡도, 재사용 제한 정책을 만족하는지 확인합니다.</li><li>admin_accounts.password_hash를 새 해시로 교체하고 failedLoginCount와 lockedUntilAt을 초기화합니다.</li><li>사용한 password_reset 토큰을 consumed 상태로 바꿉니다.</li><li>해당 관리자 계정의 active refresh_token을 모두 revoked 상태로 바꿉니다.</li><li>비밀번호 재설정 성공 이벤트를 관리자 ID, 요청 IP와 함께 접근 로그로 남깁니다.</li></ol>
+  <div class="note">비밀번호 변경 후에는 다시 POST /admin/auth/login으로 로그인해야 합니다.</div>
+</section><section id="admin-auth-password-reset-request">
+  <h2><code>POST /admin/auth/password-reset/request</code></h2>
+  <p>관리자가 비밀번호를 잊었을 때 이메일로 일회용 재설정 링크 또는 코드를 요청하는 API입니다. 계정 존재 여부를 노출하지 않도록 성공과 실패 모두 동일한 202 응답을 반환합니다.</p>
+  <h3>Header</h3>
+<div class="table-scroll"><table><thead><tr><th>이름</th><th>필수</th><th>설명</th></tr></thead><tbody><tr><td data-label="이름"><code>Content-Type</code></td><td data-label="필수">예</td><td data-label="설명">application/json</td></tr><tr><td data-label="이름"><code>X-Request-Id</code></td><td data-label="필수">예</td><td data-label="설명">어드민 콘솔 또는 서버가 생성하는 요청 추적 ID입니다.</td></tr></tbody></table></div>
+  <h3>Cookie</h3>
+<div class="table-scroll"><table><thead><tr><th>이름</th><th>필수</th><th>설명</th></tr></thead><tbody></tbody></table></div>
+  <h3>Body</h3><pre><code>{
+  &quot;email&quot;: &quot;ops@example.com&quot;
+}</code></pre>
+  <h3>Body 필드</h3>
+<div class="table-scroll"><table><thead><tr><th>이름</th><th>필수</th><th>설명</th></tr></thead><tbody><tr><td data-label="이름"><code>email</code></td><td data-label="필수">예</td><td data-label="설명">비밀번호를 재설정할 관리자 이메일입니다.</td></tr></tbody></table></div>
+  <h3>Response 202</h3><p>재설정 요청 접수</p><pre><code>{
+  &quot;accepted&quot;: true
+}</code></pre><h3>Response 400</h3><p>이메일 형식이 유효하지 않은 요청</p><h3>Response 429</h3><p>동일 이메일 또는 IP에서 너무 많은 재설정 요청</p>
+
+  <h3>처리 로직</h3>
+  <ol><li>이메일 형식과 요청 빈도 제한을 검증합니다.</li><li>active 관리자 계정이 있으면 짧은 만료 시간의 password_reset 토큰 해시를 admin_auth_tokens에 저장합니다.</li><li>이메일 발송 시스템에 재설정 링크 또는 코드를 전달합니다.</li><li>계정이 없거나 비활성화된 경우에도 같은 202 응답을 반환해 관리자 계정 존재 여부를 숨깁니다.</li></ol>
+  <div class="note">재설정 토큰 원문은 이메일에만 포함하고 데이터베이스에는 해시만 저장합니다.</div>
+</section><section id="admin-auth-logout">
+  <h2><code>POST /admin/auth/logout</code></h2>
+  <p>관리자가 어드민 콘솔에서 로그아웃할 때 현재 refreshToken을 폐기하는 API입니다. 액세스 토큰은 짧은 만료 시간으로 자연 소멸시키고 서버 저장소에는 refreshToken 상태만 남깁니다.</p>
+  <h3>Header</h3>
+<div class="table-scroll"><table><thead><tr><th>이름</th><th>필수</th><th>설명</th></tr></thead><tbody><tr><td data-label="이름"><code>Content-Type</code></td><td data-label="필수">예</td><td data-label="설명">application/json</td></tr><tr><td data-label="이름"><code>Authorization</code></td><td data-label="필수">예</td><td data-label="설명">POST /admin/auth/login 또는 POST /admin/auth/refresh에서 발급한 관리자 액세스 토큰입니다. 형식은 Bearer adminAccessToken입니다.</td></tr><tr><td data-label="이름"><code>X-Request-Id</code></td><td data-label="필수">예</td><td data-label="설명">어드민 콘솔 또는 서버가 생성하는 요청 추적 ID입니다.</td></tr></tbody></table></div>
+  <h3>Cookie</h3>
+<div class="table-scroll"><table><thead><tr><th>이름</th><th>필수</th><th>설명</th></tr></thead><tbody></tbody></table></div>
+  <h3>Body</h3><pre><code>{
+  &quot;adminRefreshToken&quot;: &quot;art_...&quot;
+}</code></pre>
+  <h3>Body 필드</h3>
+<div class="table-scroll"><table><thead><tr><th>이름</th><th>필수</th><th>설명</th></tr></thead><tbody><tr><td data-label="이름"><code>adminRefreshToken</code></td><td data-label="필수">아니오</td><td data-label="설명">현재 브라우저 탭이 보관 중인 관리자 refreshToken입니다. 없으면 액세스 토큰 subject의 모든 현재 기기 로그아웃 정책을 적용할 수 있습니다.</td></tr></tbody></table></div>
+  <h3>Response 204</h3><p>로그아웃 처리 완료</p><h3>Response 401</h3><p>관리자 액세스 토큰이 없거나 유효하지 않은 요청</p>
+
+  <h3>처리 로직</h3>
+  <ol><li>adminAccessToken을 검증해 관리자 계정과 권한 경계를 확인합니다.</li><li>body의 adminRefreshToken이 있으면 해당 토큰 해시를 revoked 상태로 바꿉니다.</li><li>토큰이 이미 폐기되었거나 존재하지 않아도 동일하게 204를 반환해 로그아웃을 멱등하게 처리합니다.</li><li>로그아웃 시각, 관리자 ID, 요청 IP, User-Agent를 접근 로그로 남깁니다.</li></ol>
+  <div class="note">민감한 운영 화면에서는 클라이언트 저장소의 토큰 삭제와 서버 refreshToken 폐기를 모두 수행합니다.</div>
+</section><section id="admin-auth-refresh">
+  <h2><code>POST /admin/auth/refresh</code></h2>
+  <p>관리자 refreshToken을 검증하고 새 adminAccessToken과 새 refreshToken으로 회전하는 API입니다. 탈취된 refreshToken 재사용을 감지하기 위해 기존 토큰은 사용 즉시 폐기합니다.</p>
+  <h3>Header</h3>
+<div class="table-scroll"><table><thead><tr><th>이름</th><th>필수</th><th>설명</th></tr></thead><tbody><tr><td data-label="이름"><code>Content-Type</code></td><td data-label="필수">예</td><td data-label="설명">application/json</td></tr><tr><td data-label="이름"><code>X-Request-Id</code></td><td data-label="필수">예</td><td data-label="설명">어드민 콘솔 또는 서버가 생성하는 요청 추적 ID입니다.</td></tr></tbody></table></div>
+  <h3>Cookie</h3>
+<div class="table-scroll"><table><thead><tr><th>이름</th><th>필수</th><th>설명</th></tr></thead><tbody></tbody></table></div>
+  <h3>Body</h3><pre><code>{
+  &quot;adminRefreshToken&quot;: &quot;art_...&quot;
+}</code></pre>
+  <h3>Body 필드</h3>
+<div class="table-scroll"><table><thead><tr><th>이름</th><th>필수</th><th>설명</th></tr></thead><tbody><tr><td data-label="이름"><code>adminRefreshToken</code></td><td data-label="필수">예</td><td data-label="설명">로그인 또는 이전 refresh 응답에서 받은 관리자 refreshToken 원문입니다.</td></tr></tbody></table></div>
+  <h3>Response 200</h3><p>토큰 갱신 성공</p><pre><code>{
+  &quot;adminAccessToken&quot;: &quot;eyJhbGciOi...&quot;,
+  &quot;expiresInSeconds&quot;: 900,
+  &quot;adminRefreshToken&quot;: &quot;art_new_...&quot;,
+  &quot;refreshExpiresAt&quot;: &quot;2026-06-18T09:30:00+09:00&quot;
+}</code></pre><h3>Response 400</h3><p>refreshToken 형식이 유효하지 않은 요청</p><h3>Response 401</h3><p>refreshToken이 만료, 폐기, 재사용 또는 위조된 요청</p><h3>Response 403</h3><p>관리자 계정이 비활성화되었거나 권한이 회수된 요청</p>
+
+  <h3>처리 로직</h3>
+  <ol><li>adminRefreshToken 원문을 해시해 admin_auth_tokens에서 active refresh_token 문서를 찾습니다.</li><li>토큰 만료, 폐기, 이전 사용 여부와 관리자 계정 status를 검증합니다.</li><li>기존 refreshToken을 rotated 상태로 바꾸고 새 refreshToken 해시를 저장합니다.</li><li>새 adminAccessToken은 현재 roles와 permissions를 기준으로 발급합니다.</li><li>폐기된 refreshToken 재사용이 감지되면 해당 관리자 계정의 활성 refreshToken을 모두 revoke 처리합니다.</li></ol>
+  <div class="note">refreshToken은 장기 권한이므로 원문을 데이터베이스에 저장하지 않습니다.</div>
+</section><section id="admin-auth-me">
+  <h2><code>GET /admin/auth/me</code></h2>
+  <p>어드민 콘솔 초기 로딩 또는 권한 변경 후 현재 관리자 프로필과 권한을 확인하는 API입니다.</p>
+  <h3>Header</h3>
+<div class="table-scroll"><table><thead><tr><th>이름</th><th>필수</th><th>설명</th></tr></thead><tbody><tr><td data-label="이름"><code>Authorization</code></td><td data-label="필수">예</td><td data-label="설명">POST /admin/auth/login 또는 POST /admin/auth/refresh에서 발급한 관리자 액세스 토큰입니다. 형식은 Bearer adminAccessToken입니다.</td></tr><tr><td data-label="이름"><code>X-Request-Id</code></td><td data-label="필수">예</td><td data-label="설명">어드민 콘솔 또는 서버가 생성하는 요청 추적 ID입니다.</td></tr></tbody></table></div>
+  <h3>Cookie</h3>
+<div class="table-scroll"><table><thead><tr><th>이름</th><th>필수</th><th>설명</th></tr></thead><tbody></tbody></table></div>
+  <h3>Body</h3><pre><code>요청 바디 없음</code></pre>
+  <h3>Response 200</h3><p>현재 관리자 정보 조회 성공</p><pre><code>{
+  &quot;adminId&quot;: &quot;admin_123&quot;,
+  &quot;email&quot;: &quot;ops@example.com&quot;,
+  &quot;displayName&quot;: &quot;운영 담당자&quot;,
+  &quot;roles&quot;: [
+    &quot;operator&quot;
+  ],
+  &quot;permissions&quot;: [
+    &quot;payment_read&quot;,
+    &quot;payment_cancel&quot;,
+    &quot;subscription_adjust&quot;
+  ],
+  &quot;status&quot;: &quot;active&quot;
+}</code></pre><h3>Response 401</h3><p>관리자 액세스 토큰이 없거나 만료된 요청</p><h3>Response 403</h3><p>관리자 계정이 비활성화되었거나 어드민 콘솔 접근 권한이 없는 요청</p>
+
+  <h3>처리 로직</h3>
+  <ol><li>Authorization 헤더의 adminAccessToken 서명, 만료 시각, audience를 검증합니다.</li><li>토큰 subject의 adminId로 admin_accounts를 조회하고 계정 status와 권한 버전을 확인합니다.</li><li>계정이 active가 아니거나 권한 버전이 토큰보다 최신이면 재로그인을 요구합니다.</li><li>어드민 콘솔 메뉴와 버튼 제어에 필요한 roles와 permissions만 반환합니다.</li></ol>
+  <div class="note">권한 판단의 최종 기준은 서버 검증 결과이며 클라이언트 UI 제어는 보조 수단입니다.</div>
+</section><section id="admin-auth-login">
+  <h2><code>POST /admin/auth/login</code></h2>
+  <p>어드민 콘솔 전용 이메일+비밀번호 로그인 시작 API입니다. 비밀번호가 맞으면 즉시 로그인시키지 않고 SMTP 클라이언트로 관리자 이메일에 일회용 로그인 링크를 발송합니다.</p>
+  <h3>Header</h3>
+<div class="table-scroll"><table><thead><tr><th>이름</th><th>필수</th><th>설명</th></tr></thead><tbody><tr><td data-label="이름"><code>Content-Type</code></td><td data-label="필수">예</td><td data-label="설명">application/json</td></tr><tr><td data-label="이름"><code>X-Request-Id</code></td><td data-label="필수">예</td><td data-label="설명">어드민 콘솔 또는 서버가 생성하는 요청 추적 ID입니다.</td></tr></tbody></table></div>
+  <h3>Cookie</h3>
+<div class="table-scroll"><table><thead><tr><th>이름</th><th>필수</th><th>설명</th></tr></thead><tbody></tbody></table></div>
+  <h3>Body</h3><pre><code>{
+  &quot;email&quot;: &quot;ops@example.com&quot;,
+  &quot;password&quot;: &quot;correct-horse-battery-staple&quot;
+}</code></pre>
+  <h3>Body 필드</h3>
+<div class="table-scroll"><table><thead><tr><th>이름</th><th>필수</th><th>설명</th></tr></thead><tbody><tr><td data-label="이름"><code>email</code></td><td data-label="필수">예</td><td data-label="설명">로그인할 관리자 이메일입니다.</td></tr><tr><td data-label="이름"><code>password</code></td><td data-label="필수">예</td><td data-label="설명">관리자 계정 비밀번호입니다.</td></tr></tbody></table></div>
+  <h3>프론트 입력값</h3><div class="table-scroll"><table><thead><tr><th>값</th><th>출처</th><th>설명</th></tr></thead><tbody><tr><td data-label="값"><code>email</code></td><td data-label="출처">generatedByFrontend</td><td data-label="설명">어드민 로그인 화면에서 입력받습니다.</td></tr><tr><td data-label="값"><code>password</code></td><td data-label="출처">generatedByFrontend</td><td data-label="설명">어드민 로그인 화면에서 입력받으며 클라이언트 저장소에 보관하지 않습니다.</td></tr></tbody></table></div>
+  <h3>Response 202</h3><p>이메일 링크 발송 요청 접수</p><pre><code>{
+  &quot;accepted&quot;: true,
+  &quot;delivery&quot;: &quot;email_link&quot;,
+  &quot;expiresInSeconds&quot;: 600
+}</code></pre><h3>Response 400</h3><p>이메일 또는 비밀번호 형식이 유효하지 않은 요청</p><h3>Response 401</h3><p>이메일 또는 비밀번호가 일치하지 않는 요청</p><h3>Response 423</h3><p>반복 실패 또는 운영자 비활성화로 잠긴 관리자 계정</p><h3>Response 429</h3><p>동일 관리자 계정 또는 IP에서 너무 많은 로그인 링크 요청</p>
+
+  <h3>처리 로직</h3>
+  <ol><li>이메일을 정규화하고 admin_accounts.email_lower 고유 인덱스로 관리자 계정을 조회합니다.</li><li>계정 status가 active인지, lockedUntilAt이 현재 시각 이후가 아닌지 확인합니다.</li><li>비밀번호 해시를 검증하고 실패 횟수와 잠금 정책을 갱신합니다.</li><li>비밀번호 검증 성공 시 짧은 만료 시간의 login_link 토큰 해시를 admin_auth_tokens에 저장합니다.</li><li>SMTP 클라이언트로 관리자 이메일에 로그인 확정 링크를 발송합니다.</li><li>링크에는 토큰 원문과 어드민 콘솔 confirm 화면 URL만 포함하고 accessToken 또는 refreshToken은 포함하지 않습니다.</li><li>로그인 링크 요청 성공과 실패는 요청 ID, IP, User-Agent와 함께 접근 로그로 남깁니다.</li></ol>
+  <div class="note">회원 로그인과 공유하지 않는 어드민 전용 인증 경계입니다.</div><div class="note">관리자 비밀번호 원문과 로그인 링크 토큰 원문은 데이터베이스 또는 로그에 남기지 않습니다.</div><div class="note">SMTP 전송 실패는 재시도 가능 오류로 다루되 이미 만든 login_link 토큰은 폐기하거나 짧은 TTL로 만료시킵니다.</div>
+</section><section id="admin-auth-login-confirm">
+  <h2><code>POST /admin/auth/login/confirm</code></h2>
+  <p>이메일로 받은 어드민 로그인 링크의 일회용 토큰을 확정하는 API입니다. 토큰이 유효할 때만 관리자 액세스 토큰과 refreshToken을 발급합니다.</p>
+  <h3>Header</h3>
+<div class="table-scroll"><table><thead><tr><th>이름</th><th>필수</th><th>설명</th></tr></thead><tbody><tr><td data-label="이름"><code>Content-Type</code></td><td data-label="필수">예</td><td data-label="설명">application/json</td></tr><tr><td data-label="이름"><code>X-Request-Id</code></td><td data-label="필수">예</td><td data-label="설명">어드민 콘솔 또는 서버가 생성하는 요청 추적 ID입니다.</td></tr></tbody></table></div>
+  <h3>Cookie</h3>
+<div class="table-scroll"><table><thead><tr><th>이름</th><th>필수</th><th>설명</th></tr></thead><tbody></tbody></table></div>
+  <h3>Body</h3><pre><code>{
+  &quot;loginToken&quot;: &quot;alt_...&quot;
+}</code></pre>
+  <h3>Body 필드</h3>
+<div class="table-scroll"><table><thead><tr><th>이름</th><th>필수</th><th>설명</th></tr></thead><tbody><tr><td data-label="이름"><code>loginToken</code></td><td data-label="필수">예</td><td data-label="설명">SMTP로 발송된 로그인 링크에서 어드민 콘솔이 추출한 일회용 토큰입니다.</td></tr></tbody></table></div>
+  <h3>프론트 입력값</h3><div class="table-scroll"><table><thead><tr><th>값</th><th>출처</th><th>설명</th></tr></thead><tbody><tr><td data-label="값"><code>loginToken</code></td><td data-label="출처">routeState</td><td data-label="설명">이메일 링크가 여는 어드민 콘솔 confirm 라우트에서 추출합니다.</td></tr></tbody></table></div>
+  <h3>Response 200</h3><p>로그인 확정 성공</p><pre><code>{
+  &quot;admin&quot;: {
+    &quot;adminId&quot;: &quot;admin_123&quot;,
+    &quot;email&quot;: &quot;ops@example.com&quot;,
+    &quot;displayName&quot;: &quot;운영 담당자&quot;,
+    &quot;roles&quot;: [
+      &quot;operator&quot;
+    ],
+    &quot;permissions&quot;: [
+      &quot;payment_read&quot;,
+      &quot;payment_cancel&quot;,
+      &quot;subscription_adjust&quot;
+    ]
+  },
+  &quot;adminAccessToken&quot;: &quot;eyJhbGciOi...&quot;,
+  &quot;expiresInSeconds&quot;: 900,
+  &quot;adminRefreshToken&quot;: &quot;art_...&quot;,
+  &quot;refreshExpiresAt&quot;: &quot;2026-06-18T09:00:00+09:00&quot;
+}</code></pre><h3>Response 400</h3><p>loginToken 형식이 유효하지 않은 요청</p><h3>Response 401</h3><p>loginToken이 만료, 사용 완료, 폐기 또는 위조된 요청</p><h3>Response 403</h3><p>관리자 계정이 비활성화되었거나 권한이 회수된 요청</p>
+
+  <h3>처리 로직</h3>
+  <ol><li>loginToken 원문을 해시해 active login_link 토큰을 찾고 만료 시각과 사용 여부를 검증합니다.</li><li>연결된 admin_accounts 문서를 조회해 status, roles, permissions, permissionVersion을 확인합니다.</li><li>사용한 login_link 토큰을 consumed 상태로 바꿔 재사용을 막습니다.</li><li>관리자 ID, 역할, 권한, 토큰 만료 시각을 담은 짧은 수명의 adminAccessToken을 발급합니다.</li><li>refreshToken 원문은 응답에만 반환하고 서버에는 해시와 만료 시각만 admin_auth_tokens에 저장합니다.</li><li>lastLoginAt, lastLoginIp, failedLoginCount를 갱신하고 로그인 확정 이벤트를 접근 로그로 남깁니다.</li></ol>
+  <div class="note">링크 클릭만으로 서버 상태를 변경하지 않도록 어드민 콘솔이 토큰을 읽은 뒤 POST로 확정합니다.</div><div class="note">로그인 링크 토큰은 단일 사용이며 짧은 TTL을 둡니다.</div>
 </section><section id="billing-retry">
   <h2><code>POST /internal/subscription-billing/{invoiceId}/retry</code></h2>
   <p>결제 실패가 연결된 issued 인보이스를 내부 배치 또는 운영자 도구에서 다시 결제하는 API입니다. 재시도 성공 시 영수증 링크를 포함한 성공 알림을, 실패 시 다음 재시도 일자나 결제수단 수정 링크 또는 해지 처리 알림을 발송합니다.</p>
@@ -1606,7 +1767,7 @@
   <h2><code>GET /admin/payments</code></h2>
   <p>CS와 운영자가 결제 취소, 장애 보정, 고객 문의 대응 전에 일반결제 목록을 검색하는 관리자 API입니다. 결제 상태, 회원, 주문번호, paymentKey, 결제일 조건으로 조회하고 취소 가능 금액과 상세/취소 진입 정보를 반환합니다.</p>
   <h3>Header</h3>
-<div class="table-scroll"><table><thead><tr><th>이름</th><th>필수</th><th>설명</th></tr></thead><tbody><tr><td data-label="이름"><code>Authorization</code></td><td data-label="필수">예</td><td data-label="설명">백엔드 서버가 결제 시스템을 호출할 때 사용하는 내부 서비스 토큰입니다. 브라우저 세션이나 사용자 Bearer 토큰을 전달하지 않습니다.</td></tr><tr><td data-label="이름"><code>X-Request-Admin-Id</code></td><td data-label="필수">예</td><td data-label="설명">백엔드 서버가 인증한 관리자 ID입니다. 결제 시스템은 이 값과 내부 권한 클레임으로 운영 작업 권한을 확인합니다.</td></tr><tr><td data-label="이름"><code>X-Request-Id</code></td><td data-label="필수">예</td><td data-label="설명">백엔드 서버가 생성하거나 전달하는 요청 추적 ID입니다.</td></tr></tbody></table></div>
+<div class="table-scroll"><table><thead><tr><th>이름</th><th>필수</th><th>설명</th></tr></thead><tbody><tr><td data-label="이름"><code>Authorization</code></td><td data-label="필수">예</td><td data-label="설명">어드민 로그인 API에서 발급한 관리자 액세스 토큰입니다. 서버는 토큰 subject, roles, permissions로 운영 권한을 검증합니다.</td></tr><tr><td data-label="이름"><code>X-Request-Id</code></td><td data-label="필수">예</td><td data-label="설명">어드민 콘솔 또는 서버가 생성하는 요청 추적 ID입니다.</td></tr></tbody></table></div>
   <h3>Cookie</h3>
 <div class="table-scroll"><table><thead><tr><th>이름</th><th>필수</th><th>설명</th></tr></thead><tbody></tbody></table></div>
   <h3>Body</h3><pre><code>요청 바디 없음</code></pre>
@@ -1636,16 +1797,16 @@
     &quot;nextCursor&quot;: &quot;eyJhcHByb3ZlZEF0IjoiMjAyNi0wNi0wOFQxMDoxNTowMCswOTowMCJ9&quot;,
     &quot;hasMore&quot;: false
   }
-}</code></pre><h3>Response 400</h3><p>필터, 기간, 페이지네이션 값이 유효하지 않은 요청</p><h3>Response 401</h3><p>내부 서비스 토큰 또는 관리자 컨텍스트가 없거나 유효하지 않은 요청</p><h3>Response 403</h3><p>결제 조회 권한이 없는 관리자 계정</p>
+}</code></pre><h3>Response 400</h3><p>필터, 기간, 페이지네이션 값이 유효하지 않은 요청</p><h3>Response 401</h3><p>관리자 액세스 토큰이 없거나 만료 또는 위조된 요청</p><h3>Response 403</h3><p>결제 조회 권한이 없는 관리자 계정</p>
 
   <h3>처리 로직</h3>
-  <ol><li>백엔드 서버가 인증해 전달한 X-Request-Admin-Id와 내부 권한 클레임으로 payment_read 또는 payment_cancel 권한을 확인합니다.</li><li>status, userId, orderId, paymentKey, 기간, cursor, limit 쿼리 파라미터를 검증합니다.</li><li>조건에 맞는 결제를 승인일 내림차순, paymentId 내림차순으로 안정 정렬하고 커서 기반 페이지네이션을 적용합니다.</li><li>회원 이메일, 주문명, 결제 상태, 승인 금액, 취소 가능 금액, 결제수단 요약, 상세/취소 진입 URL을 구성합니다.</li><li>카드 전체 번호, billingKey, 토스 시크릿 키, provider 원본 응답의 민감 필드는 반환하지 않습니다.</li><li>운영자가 취소 화면으로 들어갈 수 있도록 paid 또는 partial_canceled 결제에만 cancelableAmount와 cancelUrl을 활성화합니다.</li><li>검색 조건, 조회 관리자 ID, 요청 IP를 운영 감사 로그 또는 접근 로그에 남깁니다.</li></ol>
+  <ol><li>관리자 액세스 토큰의 subject와 권한 클레임으로 payment_read 또는 payment_cancel 권한을 확인합니다.</li><li>status, userId, orderId, paymentKey, 기간, cursor, limit 쿼리 파라미터를 검증합니다.</li><li>조건에 맞는 결제를 승인일 내림차순, paymentId 내림차순으로 안정 정렬하고 커서 기반 페이지네이션을 적용합니다.</li><li>회원 이메일, 주문명, 결제 상태, 승인 금액, 취소 가능 금액, 결제수단 요약, 상세/취소 진입 URL을 구성합니다.</li><li>카드 전체 번호, billingKey, 토스 시크릿 키, provider 원본 응답의 민감 필드는 반환하지 않습니다.</li><li>운영자가 취소 화면으로 들어갈 수 있도록 paid 또는 partial_canceled 결제에만 cancelableAmount와 cancelUrl을 활성화합니다.</li><li>검색 조건, 조회 토큰에서 확인한 관리자 ID, 요청 IP를 운영 감사 로그 또는 접근 로그에 남깁니다.</li></ol>
   <div class="note">이 API는 조회 전용이며 결제 상태를 변경하지 않습니다.</div><div class="note">paymentKey 검색은 장애 보정과 토스 대시보드 대조를 위한 운영 기능이므로 관리자 권한과 접근 로그가 필수입니다.</div><div class="note">대량 다운로드나 정산용 원장 추출은 별도 리포트 API로 분리하고, 이 API는 콘솔 화면 검색에 맞춘 페이지네이션 응답을 반환합니다.</div>
 </section><section id="admin-subscriptions">
   <h2><code>GET /admin/subscriptions</code></h2>
   <p>운영자가 구독 수동 보정, 결제 실패 대응, CS 문의 처리 전에 구독 목록과 현재 상태를 검색하는 관리자 API입니다. 구독 상태, 회원, 상품, 다음 결제일, 결제 실패 여부로 필터링하고 보정 진입에 필요한 요약 정보를 반환합니다.</p>
   <h3>Header</h3>
-<div class="table-scroll"><table><thead><tr><th>이름</th><th>필수</th><th>설명</th></tr></thead><tbody><tr><td data-label="이름"><code>Authorization</code></td><td data-label="필수">예</td><td data-label="설명">백엔드 서버가 결제 시스템을 호출할 때 사용하는 내부 서비스 토큰입니다. 브라우저 세션이나 사용자 Bearer 토큰을 전달하지 않습니다.</td></tr><tr><td data-label="이름"><code>X-Request-Admin-Id</code></td><td data-label="필수">예</td><td data-label="설명">백엔드 서버가 인증한 관리자 ID입니다. 결제 시스템은 이 값과 내부 권한 클레임으로 운영 작업 권한을 확인합니다.</td></tr><tr><td data-label="이름"><code>X-Request-Id</code></td><td data-label="필수">예</td><td data-label="설명">백엔드 서버가 생성하거나 전달하는 요청 추적 ID입니다.</td></tr></tbody></table></div>
+<div class="table-scroll"><table><thead><tr><th>이름</th><th>필수</th><th>설명</th></tr></thead><tbody><tr><td data-label="이름"><code>Authorization</code></td><td data-label="필수">예</td><td data-label="설명">어드민 로그인 API에서 발급한 관리자 액세스 토큰입니다. 서버는 토큰 subject, roles, permissions로 운영 권한을 검증합니다.</td></tr><tr><td data-label="이름"><code>X-Request-Id</code></td><td data-label="필수">예</td><td data-label="설명">어드민 콘솔 또는 서버가 생성하는 요청 추적 ID입니다.</td></tr></tbody></table></div>
   <h3>Cookie</h3>
 <div class="table-scroll"><table><thead><tr><th>이름</th><th>필수</th><th>설명</th></tr></thead><tbody></tbody></table></div>
   <h3>Body</h3><pre><code>요청 바디 없음</code></pre>
@@ -1679,10 +1840,10 @@
     &quot;nextCursor&quot;: null,
     &quot;hasMore&quot;: false
   }
-}</code></pre><h3>Response 400</h3><p>필터, 날짜 범위, 페이지네이션 값이 유효하지 않은 요청</p><h3>Response 401</h3><p>내부 서비스 토큰 또는 관리자 컨텍스트가 없거나 유효하지 않은 요청</p><h3>Response 403</h3><p>구독 조회 권한이 없는 관리자 계정</p>
+}</code></pre><h3>Response 400</h3><p>필터, 날짜 범위, 페이지네이션 값이 유효하지 않은 요청</p><h3>Response 401</h3><p>관리자 액세스 토큰이 없거나 만료 또는 위조된 요청</p><h3>Response 403</h3><p>구독 조회 권한이 없는 관리자 계정</p>
 
   <h3>처리 로직</h3>
-  <ol><li>백엔드 서버가 인증해 전달한 X-Request-Admin-Id와 내부 권한 클레임으로 subscription_read 또는 subscription_adjust 권한을 확인합니다.</li><li>status, userId, productCode, paymentFailure, nextBillingFrom, nextBillingTo, cursor, limit 쿼리 파라미터를 검증합니다.</li><li>조건에 맞는 구독을 다음 결제일 오름차순 또는 최신 변경일 내림차순으로 안정 정렬하고 커서 기반 페이지네이션을 적용합니다.</li><li>구독, 회원, 상품, 플랜, 기본 결제수단 표시 정보, 마지막 인보이스와 실패 상태를 조인해 운영 화면 요약을 구성합니다.</li><li>결제 실패 구독에는 lastInvoiceId, failureCode, retryScheduledAt, retry 가능 여부를 포함합니다.</li><li>보정 가능한 상태의 구독에만 adjustUrl을 활성화하고, 해지 완료나 진행 중 청구와 충돌하는 상태는 화면에서 보정 제한 사유를 표시할 수 있게 합니다.</li><li>billingKey, 카드 전체 번호, provider 원본 응답, 내부 운영 메모의 민감 필드는 반환하지 않습니다.</li><li>검색 조건, 조회 관리자 ID, 요청 IP를 운영 감사 로그 또는 접근 로그에 남깁니다.</li></ol>
+  <ol><li>관리자 액세스 토큰의 subject와 권한 클레임으로 subscription_read 또는 subscription_adjust 권한을 확인합니다.</li><li>status, userId, productCode, paymentFailure, nextBillingFrom, nextBillingTo, cursor, limit 쿼리 파라미터를 검증합니다.</li><li>조건에 맞는 구독을 다음 결제일 오름차순 또는 최신 변경일 내림차순으로 안정 정렬하고 커서 기반 페이지네이션을 적용합니다.</li><li>구독, 회원, 상품, 플랜, 기본 결제수단 표시 정보, 마지막 인보이스와 실패 상태를 조인해 운영 화면 요약을 구성합니다.</li><li>결제 실패 구독에는 lastInvoiceId, failureCode, retryScheduledAt, retry 가능 여부를 포함합니다.</li><li>보정 가능한 상태의 구독에만 adjustUrl을 활성화하고, 해지 완료나 진행 중 청구와 충돌하는 상태는 화면에서 보정 제한 사유를 표시할 수 있게 합니다.</li><li>billingKey, 카드 전체 번호, provider 원본 응답, 내부 운영 메모의 민감 필드는 반환하지 않습니다.</li><li>검색 조건, 조회 토큰에서 확인한 관리자 ID, 요청 IP를 운영 감사 로그 또는 접근 로그에 남깁니다.</li></ol>
   <div class="note">이 API는 조회 전용이며 구독 상태, 다음 결제일, 실패 플래그를 변경하지 않습니다.</div><div class="note">운영자 보정 전 대상 구독을 찾고 현재 상태를 확인하기 위한 API이며, 실제 보정은 admin-subscription-adjust API에서만 수행합니다.</div><div class="note">결제 실패 상세 메시지나 영수증 URL처럼 인보이스 단위 상세 정보가 필요하면 인보이스 상세 또는 관리자용 상세 화면에서 별도로 조회합니다.</div>
 </section><section id="admin-payment-cancel">
   <h2><code>POST /admin/payments/{paymentId}/cancel</code></h2>
@@ -1692,7 +1853,7 @@
   <ul><li><a href="./risk-register-doc.html#cancel-refund-duplicate-or-mismatch"><code>cancel-refund-duplicate-or-mismatch</code></a> 취소/환불 중복 또는 외부/내부 불일치</li></ul>
 </div>
   <h3>Header</h3>
-<div class="table-scroll"><table><thead><tr><th>이름</th><th>필수</th><th>설명</th></tr></thead><tbody><tr><td data-label="이름"><code>Content-Type</code></td><td data-label="필수">예</td><td data-label="설명">application/json</td></tr><tr><td data-label="이름"><code>Authorization</code></td><td data-label="필수">예</td><td data-label="설명">백엔드 서버가 결제 시스템을 호출할 때 사용하는 내부 서비스 토큰입니다. 브라우저 세션이나 사용자 Bearer 토큰을 전달하지 않습니다.</td></tr><tr><td data-label="이름"><code>X-Request-Admin-Id</code></td><td data-label="필수">예</td><td data-label="설명">백엔드 서버가 인증한 관리자 ID입니다. 결제 시스템은 이 값과 내부 권한 클레임으로 운영 작업 권한을 확인합니다.</td></tr><tr><td data-label="이름"><code>X-Request-Id</code></td><td data-label="필수">예</td><td data-label="설명">백엔드 서버가 생성하거나 전달하는 요청 추적 ID입니다.</td></tr><tr><td data-label="이름"><code>Idempotency-Key</code></td><td data-label="필수">예</td><td data-label="설명">운영자 도구 재시도와 중복 클릭을 같은 취소 건으로 묶기 위한 키입니다.</td></tr></tbody></table></div>
+<div class="table-scroll"><table><thead><tr><th>이름</th><th>필수</th><th>설명</th></tr></thead><tbody><tr><td data-label="이름"><code>Content-Type</code></td><td data-label="필수">예</td><td data-label="설명">application/json</td></tr><tr><td data-label="이름"><code>Authorization</code></td><td data-label="필수">예</td><td data-label="설명">어드민 로그인 API에서 발급한 관리자 액세스 토큰입니다. 서버는 토큰 subject, roles, permissions로 운영 권한을 검증합니다.</td></tr><tr><td data-label="이름"><code>X-Request-Id</code></td><td data-label="필수">예</td><td data-label="설명">어드민 콘솔 또는 서버가 생성하는 요청 추적 ID입니다.</td></tr><tr><td data-label="이름"><code>Idempotency-Key</code></td><td data-label="필수">예</td><td data-label="설명">운영자 도구 재시도와 중복 클릭을 같은 취소 건으로 묶기 위한 키입니다.</td></tr></tbody></table></div>
   <h3>Cookie</h3>
 <div class="table-scroll"><table><thead><tr><th>이름</th><th>필수</th><th>설명</th></tr></thead><tbody></tbody></table></div>
   <h3>Body</h3><pre><code>{
@@ -1718,10 +1879,10 @@
       &quot;status&quot;: &quot;succeeded&quot;
     }
   ]
-}</code></pre><h3>Response 400</h3><p>취소 금액이나 운영 취소 사유가 유효하지 않은 요청</p><h3>Response 401</h3><p>내부 서비스 토큰 또는 관리자 컨텍스트가 없거나 유효하지 않은 요청</p><h3>Response 403</h3><p>결제 취소 권한이 없는 관리자 계정</p><h3>Response 404</h3><p>존재하지 않는 결제</p><h3>Response 409</h3><p>이미 전액 취소됐거나 취소할 수 없는 결제 상태</p><h3>Response 502</h3><p>토스페이먼츠 취소 API 호출 실패 또는 응답 검증 실패</p>
+}</code></pre><h3>Response 400</h3><p>취소 금액이나 운영 취소 사유가 유효하지 않은 요청</p><h3>Response 401</h3><p>관리자 액세스 토큰이 없거나 만료 또는 위조된 요청</p><h3>Response 403</h3><p>결제 취소 권한이 없는 관리자 계정</p><h3>Response 404</h3><p>존재하지 않는 결제</p><h3>Response 409</h3><p>이미 전액 취소됐거나 취소할 수 없는 결제 상태</p><h3>Response 502</h3><p>토스페이먼츠 취소 API 호출 실패 또는 응답 검증 실패</p>
 
   <h3>처리 로직</h3>
-  <ol><li>백엔드 서버가 인증해 전달한 X-Request-Admin-Id와 내부 권한 클레임으로 payment_cancel 권한을 확인합니다.</li><li>결제 상태, paymentKey, payment.amount에서 매핑한 paidAmount, cancelableAmount, 기존 cancelHistory를 조회합니다.</li><li>cancelAmount가 남은 취소 가능 금액 이내인지 검증하고 전체 취소인지 부분 취소인지 결정합니다.</li><li>운영자 ID, 요청 IP, cancelReason, reasonMessage를 감사 로그에 먼저 기록합니다.</li><li>토스페이먼츠 결제 취소 API POST /v1/payments/{paymentKey}/cancel을 호출하고 응답 금액을 내부 금액과 대조합니다.</li><li>결제 상태를 canceled 또는 partial_canceled로 저장하고 cancelHistory에 requestedBy=admin 정보를 추가합니다.</li><li>notifyCustomer가 true이면 결제 취소 완료 알림을 발송 큐에 넣습니다.</li><li>같은 Idempotency-Key 재시도는 기존 operatorAuditId와 취소 결과를 반환합니다.</li></ol>
+  <ol><li>관리자 액세스 토큰의 subject와 권한 클레임으로 payment_cancel 권한을 확인합니다.</li><li>결제 상태, paymentKey, payment.amount에서 매핑한 paidAmount, cancelableAmount, 기존 cancelHistory를 조회합니다.</li><li>cancelAmount가 남은 취소 가능 금액 이내인지 검증하고 전체 취소인지 부분 취소인지 결정합니다.</li><li>운영자 ID, 요청 IP, cancelReason, reasonMessage를 감사 로그에 먼저 기록합니다.</li><li>토스페이먼츠 결제 취소 API POST /v1/payments/{paymentKey}/cancel을 호출하고 응답 금액을 내부 금액과 대조합니다.</li><li>결제 상태를 canceled 또는 partial_canceled로 저장하고 cancelHistory에 requestedBy=admin 정보를 추가합니다.</li><li>notifyCustomer가 true이면 결제 취소 완료 알림을 발송 큐에 넣습니다.</li><li>같은 Idempotency-Key 재시도는 기존 operatorAuditId와 취소 결과를 반환합니다.</li></ol>
   <div class="note">운영자 API는 회원 소유권을 보지 않지만 관리자 권한과 감사 로그가 필수입니다.</div><div class="note">회원용 payments-cancel API와 같은 내부 취소 서비스와 토스 취소 호출 정책을 공유합니다.</div><div class="note">운영자 보정 취소도 회원 결제 내역의 cancelHistory에 표시할 수 있어야 합니다.</div>
 </section><section id="admin-subscription-adjust">
   <h2><code>POST /admin/subscriptions/{subscriptionId}/adjust</code></h2>
@@ -1731,7 +1892,7 @@
   <ul><li><a href="./risk-register-doc.html#provider-paid-internal-unpaid"><code>provider-paid-internal-unpaid</code></a> PG 승인 성공 후 내부 미반영</li><li><a href="./risk-register-doc.html#idempotency-store-missing"><code>idempotency-store-missing</code></a> 멱등키 저장소 부재</li></ul>
 </div>
   <h3>Header</h3>
-<div class="table-scroll"><table><thead><tr><th>이름</th><th>필수</th><th>설명</th></tr></thead><tbody><tr><td data-label="이름"><code>Content-Type</code></td><td data-label="필수">예</td><td data-label="설명">application/json</td></tr><tr><td data-label="이름"><code>Authorization</code></td><td data-label="필수">예</td><td data-label="설명">백엔드 서버가 결제 시스템을 호출할 때 사용하는 내부 서비스 토큰입니다. 브라우저 세션이나 사용자 Bearer 토큰을 전달하지 않습니다.</td></tr><tr><td data-label="이름"><code>X-Request-Admin-Id</code></td><td data-label="필수">예</td><td data-label="설명">백엔드 서버가 인증한 관리자 ID입니다. 결제 시스템은 이 값과 내부 권한 클레임으로 운영 작업 권한을 확인합니다.</td></tr><tr><td data-label="이름"><code>X-Request-Id</code></td><td data-label="필수">예</td><td data-label="설명">백엔드 서버가 생성하거나 전달하는 요청 추적 ID입니다.</td></tr><tr><td data-label="이름"><code>Idempotency-Key</code></td><td data-label="필수">예</td><td data-label="설명">운영자 도구 재시도와 중복 클릭을 같은 보정 건으로 묶기 위한 키입니다.</td></tr></tbody></table></div>
+<div class="table-scroll"><table><thead><tr><th>이름</th><th>필수</th><th>설명</th></tr></thead><tbody><tr><td data-label="이름"><code>Content-Type</code></td><td data-label="필수">예</td><td data-label="설명">application/json</td></tr><tr><td data-label="이름"><code>Authorization</code></td><td data-label="필수">예</td><td data-label="설명">어드민 로그인 API에서 발급한 관리자 액세스 토큰입니다. 서버는 토큰 subject, roles, permissions로 운영 권한을 검증합니다.</td></tr><tr><td data-label="이름"><code>X-Request-Id</code></td><td data-label="필수">예</td><td data-label="설명">어드민 콘솔 또는 서버가 생성하는 요청 추적 ID입니다.</td></tr><tr><td data-label="이름"><code>Idempotency-Key</code></td><td data-label="필수">예</td><td data-label="설명">운영자 도구 재시도와 중복 클릭을 같은 보정 건으로 묶기 위한 키입니다.</td></tr></tbody></table></div>
   <h3>Cookie</h3>
 <div class="table-scroll"><table><thead><tr><th>이름</th><th>필수</th><th>설명</th></tr></thead><tbody></tbody></table></div>
   <h3>Body</h3><pre><code>{
@@ -1758,16 +1919,16 @@
   },
   &quot;operatorAuditId&quot;: &quot;audit_20260608_0007&quot;,
   &quot;notifiedCustomer&quot;: true
-}</code></pre><h3>Response 400</h3><p>보정 유형별 필수 값 누락, 음수 연기 일수, 허용 범위를 벗어난 nextBillingAt</p><h3>Response 401</h3><p>내부 서비스 토큰 또는 관리자 컨텍스트가 없거나 유효하지 않은 요청</p><h3>Response 403</h3><p>구독 보정 권한이 없는 관리자 계정</p><h3>Response 404</h3><p>존재하지 않는 구독, 결제, 인보이스</p><h3>Response 409</h3><p>현재 구독 상태에서 허용되지 않는 보정이거나 같은 멱등 키로 다른 보정 값을 보낸 요청</p><h3>Response 502</h3><p>provider_payment_sync 중 토스 결제 조회 실패 또는 응답 검증 실패</p>
+}</code></pre><h3>Response 400</h3><p>보정 유형별 필수 값 누락, 음수 연기 일수, 허용 범위를 벗어난 nextBillingAt</p><h3>Response 401</h3><p>관리자 액세스 토큰이 없거나 만료 또는 위조된 요청</p><h3>Response 403</h3><p>구독 보정 권한이 없는 관리자 계정</p><h3>Response 404</h3><p>존재하지 않는 구독, 결제, 인보이스</p><h3>Response 409</h3><p>현재 구독 상태에서 허용되지 않는 보정이거나 같은 멱등 키로 다른 보정 값을 보낸 요청</p><h3>Response 502</h3><p>provider_payment_sync 중 토스 결제 조회 실패 또는 응답 검증 실패</p>
 
   <h3>처리 로직</h3>
-  <ol><li>백엔드 서버가 인증해 전달한 X-Request-Admin-Id와 내부 권한 클레임으로 subscription_adjust 권한을 확인합니다.</li><li>subscriptionId 기준으로 구독, 현재 상태, nextBillingAt, 마지막 invoice, 실패 상태를 조회하고 잠금을 획득합니다.</li><li>Idempotency-Key가 이미 성공한 보정 건이면 기존 operatorAuditId와 currentState를 반환합니다.</li><li>adjustmentType별 필수 필드를 검증합니다. provider_payment_sync는 paymentKey 또는 invoiceId가 필요하고, postpone_next_billing은 postponeBy.days가 필요하며, set_next_billing_date는 nextBillingAt이 필요합니다.</li><li>provider_payment_sync는 토스 결제 조회 결과가 DONE 또는 취소/환불 상태인지 확인하고 내부 payment, invoice, subscription 상태를 외부 결제 사실에 맞춥니다.</li><li>postpone_next_billing은 현재 nextBillingAt에 postponeBy.days를 더해 새 nextBillingAt을 계산합니다.</li><li>set_next_billing_date는 요청한 nextBillingAt으로 다음 결제일을 덮어쓰되 과거 일시, 과도한 미래 일시, 진행 중 청구와의 충돌을 거부합니다.</li><li>clear_payment_failure는 결제 실패 플래그, retryAt, past_due 상태를 해제하고 필요하면 구독을 active로 복구합니다.</li><li>status_override는 환불 후 구독 유지/종료 같은 CS 정책 예외를 targetStatus로 반영합니다.</li><li>변경 전 previousState와 변경 후 currentState, reasonCode, reasonMessage, 관리자 ID, 요청 IP를 operatorAuditId에 연결해 저장합니다.</li><li>notifyCustomer가 true이면 구독 보정 결과 알림을 발송 큐에 넣습니다.</li></ol>
+  <ol><li>관리자 액세스 토큰의 subject와 권한 클레임으로 subscription_adjust 권한을 확인합니다.</li><li>subscriptionId 기준으로 구독, 현재 상태, nextBillingAt, 마지막 invoice, 실패 상태를 조회하고 잠금을 획득합니다.</li><li>Idempotency-Key가 이미 성공한 보정 건이면 기존 operatorAuditId와 currentState를 반환합니다.</li><li>adjustmentType별 필수 필드를 검증합니다. provider_payment_sync는 paymentKey 또는 invoiceId가 필요하고, postpone_next_billing은 postponeBy.days가 필요하며, set_next_billing_date는 nextBillingAt이 필요합니다.</li><li>provider_payment_sync는 토스 결제 조회 결과가 DONE 또는 취소/환불 상태인지 확인하고 내부 payment, invoice, subscription 상태를 외부 결제 사실에 맞춥니다.</li><li>postpone_next_billing은 현재 nextBillingAt에 postponeBy.days를 더해 새 nextBillingAt을 계산합니다.</li><li>set_next_billing_date는 요청한 nextBillingAt으로 다음 결제일을 덮어쓰되 과거 일시, 과도한 미래 일시, 진행 중 청구와의 충돌을 거부합니다.</li><li>clear_payment_failure는 결제 실패 플래그, retryAt, past_due 상태를 해제하고 필요하면 구독을 active로 복구합니다.</li><li>status_override는 환불 후 구독 유지/종료 같은 CS 정책 예외를 targetStatus로 반영합니다.</li><li>변경 전 previousState와 변경 후 currentState, reasonCode, reasonMessage, 토큰에서 확인한 관리자 ID, 요청 IP를 operatorAuditId에 연결해 저장합니다.</li><li>notifyCustomer가 true이면 구독 보정 결과 알림을 발송 큐에 넣습니다.</li></ol>
   <div class="note">postpone_next_billing은 현재 값 기준 +N일 보정이고, set_next_billing_date는 특정 날짜로 덮어쓰기입니다.</div><div class="note">외부 결제 사실이 필요한 보정은 운영자 입력만으로 처리하지 않고 토스 조회 또는 내부 결제 증빙을 검증합니다.</div><div class="note">DB 직접 수정 대신 이 API를 사용하면 모든 구독 보정이 감사 로그와 멱등 키를 남깁니다.</div>
 </section><section id="admin-products-create">
   <h2><code>POST /admin/products</code></h2>
   <p>관리자가 공통 Product 아래에서 구독상품과 일반상품을 분리해 생성하는 API입니다. Product는 이름, 코드, 노출 상태 같은 공통 속성만 보관하고, 구독상품은 subscriptionPlans로, 일반상품은 oneTimeSkus로 판매 조건을 따로 관리합니다.</p>
   <h3>Header</h3>
-<div class="table-scroll"><table><thead><tr><th>이름</th><th>필수</th><th>설명</th></tr></thead><tbody><tr><td data-label="이름"><code>Content-Type</code></td><td data-label="필수">예</td><td data-label="설명">application/json</td></tr><tr><td data-label="이름"><code>Authorization</code></td><td data-label="필수">예</td><td data-label="설명">백엔드 서버가 결제 시스템을 호출할 때 사용하는 내부 서비스 토큰입니다. 브라우저 세션이나 사용자 Bearer 토큰을 전달하지 않습니다.</td></tr><tr><td data-label="이름"><code>X-Request-Admin-Id</code></td><td data-label="필수">예</td><td data-label="설명">백엔드 서버가 인증한 관리자 ID입니다. 결제 시스템은 이 값과 내부 권한 클레임으로 운영 작업 권한을 확인합니다.</td></tr><tr><td data-label="이름"><code>X-Request-Id</code></td><td data-label="필수">예</td><td data-label="설명">백엔드 서버가 생성하거나 전달하는 요청 추적 ID입니다.</td></tr></tbody></table></div>
+<div class="table-scroll"><table><thead><tr><th>이름</th><th>필수</th><th>설명</th></tr></thead><tbody><tr><td data-label="이름"><code>Content-Type</code></td><td data-label="필수">예</td><td data-label="설명">application/json</td></tr><tr><td data-label="이름"><code>Authorization</code></td><td data-label="필수">예</td><td data-label="설명">어드민 로그인 API에서 발급한 관리자 액세스 토큰입니다. 서버는 토큰 subject, roles, permissions로 운영 권한을 검증합니다.</td></tr><tr><td data-label="이름"><code>X-Request-Id</code></td><td data-label="필수">예</td><td data-label="설명">어드민 콘솔 또는 서버가 생성하는 요청 추적 ID입니다.</td></tr></tbody></table></div>
   <h3>Cookie</h3>
 <div class="table-scroll"><table><thead><tr><th>이름</th><th>필수</th><th>설명</th></tr></thead><tbody></tbody></table></div>
   <h3>Body</h3><pre><code>{
@@ -1790,13 +1951,13 @@
 }</code></pre><h3>Response 400</h3><p>상품 코드, 타입, 표시 정보가 유효하지 않은 요청</p><h3>Response 403</h3><p>상품 관리 권한이 없는 관리자 계정</p><h3>Response 409</h3><p>이미 같은 productCode가 존재하는 요청</p>
 
   <h3>처리 로직</h3>
-  <ol><li>백엔드 서버가 인증해 전달한 X-Request-Admin-Id와 내부 권한 클레임으로 product_manage 권한을 확인합니다.</li><li>productCode 형식과 중복 여부를 검증합니다.</li><li>productType이 subscription 또는 one_time인지 확인합니다.</li><li>공통 Product만 draft 상태로 생성하고 타입별 판매 조건은 별도 API에서 생성하도록 분리합니다.</li><li>관리자 ID, 요청 IP, productType, 변경 전후 값을 감사 로그에 저장합니다.</li></ol>
+  <ol><li>관리자 액세스 토큰의 subject와 권한 클레임으로 product_manage 권한을 확인합니다.</li><li>productCode 형식과 중복 여부를 검증합니다.</li><li>productType이 subscription 또는 one_time인지 확인합니다.</li><li>공통 Product만 draft 상태로 생성하고 타입별 판매 조건은 별도 API에서 생성하도록 분리합니다.</li><li>토큰에서 확인한 관리자 ID, 요청 IP, productType, 변경 전후 값을 감사 로그에 저장합니다.</li></ol>
   <div class="note">공통 Product 아래에서 구독상품과 일반상품을 분리하면 상품 노출 정보와 결제 생명주기 정책이 섞이지 않습니다.</div><div class="note">productType은 생성 후 변경하지 않는 것을 원칙으로 합니다. 타입 전환이 필요하면 새 Product를 만들고 기존 상품은 archived로 전환합니다.</div>
 </section><section id="admin-subscription-plans-create">
   <h2><code>POST /admin/products/{productId}/subscription-plans</code></h2>
   <p>구독상품 Product에 월간, 연간, Basic, Pro 같은 구독 플랜을 추가하는 API입니다. 플랜 가격은 신규 구독과 다음 정기 결제 계산에 쓰이며, 기존 활성 구독의 과거 결제 스냅샷을 덮어쓰지 않습니다.</p>
   <h3>Header</h3>
-<div class="table-scroll"><table><thead><tr><th>이름</th><th>필수</th><th>설명</th></tr></thead><tbody><tr><td data-label="이름"><code>Content-Type</code></td><td data-label="필수">예</td><td data-label="설명">application/json</td></tr><tr><td data-label="이름"><code>Authorization</code></td><td data-label="필수">예</td><td data-label="설명">백엔드 서버가 결제 시스템을 호출할 때 사용하는 내부 서비스 토큰입니다. 브라우저 세션이나 사용자 Bearer 토큰을 전달하지 않습니다.</td></tr><tr><td data-label="이름"><code>X-Request-Admin-Id</code></td><td data-label="필수">예</td><td data-label="설명">백엔드 서버가 인증한 관리자 ID입니다. 결제 시스템은 이 값과 내부 권한 클레임으로 운영 작업 권한을 확인합니다.</td></tr><tr><td data-label="이름"><code>X-Request-Id</code></td><td data-label="필수">예</td><td data-label="설명">백엔드 서버가 생성하거나 전달하는 요청 추적 ID입니다.</td></tr></tbody></table></div>
+<div class="table-scroll"><table><thead><tr><th>이름</th><th>필수</th><th>설명</th></tr></thead><tbody><tr><td data-label="이름"><code>Content-Type</code></td><td data-label="필수">예</td><td data-label="설명">application/json</td></tr><tr><td data-label="이름"><code>Authorization</code></td><td data-label="필수">예</td><td data-label="설명">어드민 로그인 API에서 발급한 관리자 액세스 토큰입니다. 서버는 토큰 subject, roles, permissions로 운영 권한을 검증합니다.</td></tr><tr><td data-label="이름"><code>X-Request-Id</code></td><td data-label="필수">예</td><td data-label="설명">어드민 콘솔 또는 서버가 생성하는 요청 추적 ID입니다.</td></tr></tbody></table></div>
   <h3>Cookie</h3>
 <div class="table-scroll"><table><thead><tr><th>이름</th><th>필수</th><th>설명</th></tr></thead><tbody></tbody></table></div>
   <h3>Body</h3><pre><code>{
@@ -1824,13 +1985,13 @@
 }</code></pre><h3>Response 400</h3><p>금액, 결제 주기, 권한 정책이 유효하지 않은 요청</p><h3>Response 404</h3><p>존재하지 않는 상품</p><h3>Response 409</h3><p>일반상품에 구독 플랜을 추가하려 했거나 같은 planCode가 이미 존재하는 요청</p>
 
   <h3>처리 로직</h3>
-  <ol><li>백엔드 서버가 인증해 전달한 X-Request-Admin-Id와 내부 권한 클레임으로 product_manage 권한을 확인합니다.</li><li>productId가 존재하고 productType이 subscription인지 검증합니다.</li><li>planCode 중복, amount 양수, currency, billingPeriod를 검증합니다.</li><li>구독 플랜을 생성하고 신규 구독 가능 여부와 권한 정책을 연결합니다.</li><li>구독 플랜은 기존 활성 구독의 과거 가격을 덮어쓰지 않습니다.</li><li>플랜 생성 이력을 감사 로그에 남기고 공개 /plans 응답에는 active 플랜만 노출합니다.</li></ol>
+  <ol><li>관리자 액세스 토큰의 subject와 권한 클레임으로 product_manage 권한을 확인합니다.</li><li>productId가 존재하고 productType이 subscription인지 검증합니다.</li><li>planCode 중복, amount 양수, currency, billingPeriod를 검증합니다.</li><li>구독 플랜을 생성하고 신규 구독 가능 여부와 권한 정책을 연결합니다.</li><li>구독 플랜은 기존 활성 구독의 과거 가격을 덮어쓰지 않습니다.</li><li>플랜 생성 이력을 감사 로그에 남기고 공개 /plans 응답에는 active 플랜만 노출합니다.</li></ol>
   <div class="note">가격 변경은 기존 planId를 직접 덮어쓰기보다 신규 planVersion 또는 새 planId를 만들어 적용 범위를 명확히 합니다.</div><div class="note">구독 플랜 변경 플로우는 같은 productCode 안에서만 허용한다는 기존 정책을 유지합니다.</div>
 </section><section id="admin-subscription-plans-update">
   <h2><code>PATCH /admin/products/{productId}/subscription-plans/{planId}</code></h2>
   <p>구독상품 Product에 속한 플랜의 표시 정보, 판매 상태, 가격 정책, 권한 정책을 수정하는 API입니다. 이미 생성된 구독과 청구 내역의 금액 스냅샷은 변경하지 않고, 신규 가입 또는 다음 정기결제부터 적용할 정책만 갱신합니다.</p>
   <h3>Header</h3>
-<div class="table-scroll"><table><thead><tr><th>이름</th><th>필수</th><th>설명</th></tr></thead><tbody><tr><td data-label="이름"><code>Content-Type</code></td><td data-label="필수">예</td><td data-label="설명">application/json</td></tr><tr><td data-label="이름"><code>Authorization</code></td><td data-label="필수">예</td><td data-label="설명">백엔드 서버가 결제 시스템을 호출할 때 사용하는 내부 서비스 토큰입니다. 브라우저 세션이나 사용자 Bearer 토큰을 전달하지 않습니다.</td></tr><tr><td data-label="이름"><code>X-Request-Admin-Id</code></td><td data-label="필수">예</td><td data-label="설명">백엔드 서버가 인증한 관리자 ID입니다. 결제 시스템은 이 값과 내부 권한 클레임으로 운영 작업 권한을 확인합니다.</td></tr><tr><td data-label="이름"><code>X-Request-Id</code></td><td data-label="필수">예</td><td data-label="설명">백엔드 서버가 생성하거나 전달하는 요청 추적 ID입니다.</td></tr></tbody></table></div>
+<div class="table-scroll"><table><thead><tr><th>이름</th><th>필수</th><th>설명</th></tr></thead><tbody><tr><td data-label="이름"><code>Content-Type</code></td><td data-label="필수">예</td><td data-label="설명">application/json</td></tr><tr><td data-label="이름"><code>Authorization</code></td><td data-label="필수">예</td><td data-label="설명">어드민 로그인 API에서 발급한 관리자 액세스 토큰입니다. 서버는 토큰 subject, roles, permissions로 운영 권한을 검증합니다.</td></tr><tr><td data-label="이름"><code>X-Request-Id</code></td><td data-label="필수">예</td><td data-label="설명">어드민 콘솔 또는 서버가 생성하는 요청 추적 ID입니다.</td></tr></tbody></table></div>
   <h3>Cookie</h3>
 <div class="table-scroll"><table><thead><tr><th>이름</th><th>필수</th><th>설명</th></tr></thead><tbody></tbody></table></div>
   <h3>Body</h3><pre><code>{
@@ -1859,13 +2020,13 @@
 }</code></pre><h3>Response 400</h3><p>변경 가능한 필드가 없거나 금액, 상태, 권한 정책이 유효하지 않은 요청</p><h3>Response 403</h3><p>상품 관리 권한이 없는 관리자 계정</p><h3>Response 404</h3><p>존재하지 않는 상품 또는 구독 플랜</p><h3>Response 409</h3><p>일반상품의 SKU를 구독 플랜 API로 수정하려 했거나 비활성화할 수 없는 기본 플랜</p>
   <h3>실패 규칙</h3><div class="table-scroll"><table class="has-many-columns"><thead><tr><th>코드</th><th>HTTP</th><th>재시도</th><th>설명</th><th>결과 상태</th></tr></thead><tbody><tr><td data-label="코드"><code>PRODUCT_TYPE_MISMATCH</code></td><td data-label="HTTP">409</td><td data-label="재시도">아니오</td><td data-label="설명">one_time 상품에 구독 플랜 수정 API를 호출한 경우입니다.</td><td data-label="결과 상태">-</td></tr><tr><td data-label="코드"><code>PLAN_IN_USE_PRICE_SNAPSHOT_LOCKED</code></td><td data-label="HTTP">409</td><td data-label="재시도">아니오</td><td data-label="설명">이미 생성된 invoice 또는 결제 시도의 금액 스냅샷을 직접 변경하려 한 경우입니다.</td><td data-label="결과 상태">-</td></tr></tbody></table></div>
   <h3>처리 로직</h3>
-  <ol><li>백엔드 서버가 인증해 전달한 X-Request-Admin-Id와 내부 권한 클레임으로 product_manage 권한을 확인합니다.</li><li>productId와 planId가 존재하고 product.productType == subscription인지 검증합니다.</li><li>amount, currency, status, entitlements를 검증하고 변경 가능한 필드만 반영합니다.</li><li>가격이나 권한 정책이 바뀌면 기존 invoice와 payment는 그대로 두고 신규 가입 또는 다음 정기결제 계산에서 참조할 planVersion을 갱신합니다.</li><li>paused 또는 archived 상태의 플랜은 공개 플랜 목록, 신규 구독 체크아웃, 플랜 변경 후보에서 제외합니다.</li><li>관리자 ID, 요청 IP, 변경 전후 값, changeReason을 감사 로그에 저장합니다.</li></ol>
+  <ol><li>관리자 액세스 토큰의 subject와 권한 클레임으로 product_manage 권한을 확인합니다.</li><li>productId와 planId가 존재하고 product.productType == subscription인지 검증합니다.</li><li>amount, currency, status, entitlements를 검증하고 변경 가능한 필드만 반영합니다.</li><li>가격이나 권한 정책이 바뀌면 기존 invoice와 payment는 그대로 두고 신규 가입 또는 다음 정기결제 계산에서 참조할 planVersion을 갱신합니다.</li><li>paused 또는 archived 상태의 플랜은 공개 플랜 목록, 신규 구독 체크아웃, 플랜 변경 후보에서 제외합니다.</li><li>토큰에서 확인한 관리자 ID, 요청 IP, 변경 전후 값, changeReason을 감사 로그에 저장합니다.</li></ol>
   <div class="note">가격 변경은 과거 청구 금액을 덮어쓰지 않습니다. 운영 화면에서는 적용 범위를 신규 가입, 다음 주기, 신규 planVersion 중 하나로 명확히 표시해야 합니다.</div><div class="note">구독 플랜 변경 플로우는 현재 구독과 같은 productCode의 활성 플랜만 선택할 수 있습니다.</div>
 </section><section id="admin-one-time-skus-create">
   <h2><code>POST /admin/products/{productId}/one-time-skus</code></h2>
   <p>일반상품 Product에 단건 구매용 SKU를 추가하는 API입니다. 기본 재고 정책은 unlimited이며, limited SKU만 주문 생성 시점에 가격 스냅샷과 재고 예약을 함께 고정합니다. 이후 가격 수정은 이미 생성된 주문이나 결제 시도 금액을 바꾸지 않습니다.</p>
   <h3>Header</h3>
-<div class="table-scroll"><table><thead><tr><th>이름</th><th>필수</th><th>설명</th></tr></thead><tbody><tr><td data-label="이름"><code>Content-Type</code></td><td data-label="필수">예</td><td data-label="설명">application/json</td></tr><tr><td data-label="이름"><code>Authorization</code></td><td data-label="필수">예</td><td data-label="설명">백엔드 서버가 결제 시스템을 호출할 때 사용하는 내부 서비스 토큰입니다. 브라우저 세션이나 사용자 Bearer 토큰을 전달하지 않습니다.</td></tr><tr><td data-label="이름"><code>X-Request-Admin-Id</code></td><td data-label="필수">예</td><td data-label="설명">백엔드 서버가 인증한 관리자 ID입니다. 결제 시스템은 이 값과 내부 권한 클레임으로 운영 작업 권한을 확인합니다.</td></tr><tr><td data-label="이름"><code>X-Request-Id</code></td><td data-label="필수">예</td><td data-label="설명">백엔드 서버가 생성하거나 전달하는 요청 추적 ID입니다.</td></tr></tbody></table></div>
+<div class="table-scroll"><table><thead><tr><th>이름</th><th>필수</th><th>설명</th></tr></thead><tbody><tr><td data-label="이름"><code>Content-Type</code></td><td data-label="필수">예</td><td data-label="설명">application/json</td></tr><tr><td data-label="이름"><code>Authorization</code></td><td data-label="필수">예</td><td data-label="설명">어드민 로그인 API에서 발급한 관리자 액세스 토큰입니다. 서버는 토큰 subject, roles, permissions로 운영 권한을 검증합니다.</td></tr><tr><td data-label="이름"><code>X-Request-Id</code></td><td data-label="필수">예</td><td data-label="설명">어드민 콘솔 또는 서버가 생성하는 요청 추적 ID입니다.</td></tr></tbody></table></div>
   <h3>Cookie</h3>
 <div class="table-scroll"><table><thead><tr><th>이름</th><th>필수</th><th>설명</th></tr></thead><tbody></tbody></table></div>
   <h3>Body</h3><pre><code>{
@@ -1896,13 +2057,13 @@
 }</code></pre><h3>Response 400</h3><p>금액, 재고 정책, 구매 제한 정책이 유효하지 않은 요청</p><h3>Response 404</h3><p>존재하지 않는 상품</p><h3>Response 409</h3><p>구독상품에 일반 SKU를 추가하려 했거나 같은 skuCode가 이미 존재하는 요청</p>
 
   <h3>처리 로직</h3>
-  <ol><li>백엔드 서버가 인증해 전달한 X-Request-Admin-Id와 내부 권한 클레임으로 product_manage 권한을 확인합니다.</li><li>productId가 존재하고 productType이 one_time인지 검증합니다.</li><li>skuCode 중복, amount 양수, currency, 재고 정책과 limited일 때의 totalStock 초기값을 검증합니다.</li><li>일반상품 SKU를 생성하고 주문 생성 API가 참조할 판매 가능 상태로 저장합니다.</li><li>일반상품 SKU는 주문 생성 시점에 가격 스냅샷으로 고정합니다.</li><li>API의 stockPolicy.type을 내부 one_time_skus.stock_policy 문자열로 저장합니다. stockPolicy를 생략하면 stock_policy=unlimited로 저장하고 재고 카운터를 사용하지 않습니다.</li><li>limited 재고 SKU는 totalStock, reservedStock=0, soldStock=0을 함께 저장하고 availableStock은 totalStock - reservedStock - soldStock으로 계산합니다.</li><li>SKU 생성 이력을 감사 로그에 남기고 판매 중인 SKU만 결제 주문 생성에서 선택할 수 있게 합니다.</li></ol>
+  <ol><li>관리자 액세스 토큰의 subject와 권한 클레임으로 product_manage 권한을 확인합니다.</li><li>productId가 존재하고 productType이 one_time인지 검증합니다.</li><li>skuCode 중복, amount 양수, currency, 재고 정책과 limited일 때의 totalStock 초기값을 검증합니다.</li><li>일반상품 SKU를 생성하고 주문 생성 API가 참조할 판매 가능 상태로 저장합니다.</li><li>일반상품 SKU는 주문 생성 시점에 가격 스냅샷으로 고정합니다.</li><li>API의 stockPolicy.type을 내부 one_time_skus.stock_policy 문자열로 저장합니다. stockPolicy를 생략하면 stock_policy=unlimited로 저장하고 재고 카운터를 사용하지 않습니다.</li><li>limited 재고 SKU는 totalStock, reservedStock=0, soldStock=0을 함께 저장하고 availableStock은 totalStock - reservedStock - soldStock으로 계산합니다.</li><li>SKU 생성 이력을 감사 로그에 남기고 판매 중인 SKU만 결제 주문 생성에서 선택할 수 있게 합니다.</li></ol>
   <div class="note">응답의 skuId는 one_time_skus._id이며 코드에서는 OneTimeSku.id로 다룹니다. skuCode는 상품 안에서 관리하는 별도 코드입니다.</div><div class="note">일반상품 가격 수정은 미결제 checkout의 서버 재계산에는 반영될 수 있지만, 이미 승인 요청 중인 payment의 amount는 바꾸지 않습니다.</div><div class="note">대부분의 일반상품은 unlimited SKU로 두고, 수량 제한이 필요한 이벤트성 상품이나 실물 재고 상품에만 limited 카운터를 사용합니다.</div><div class="note">limited SKU의 재고 수량은 stockPolicy 객체 안에 숨기지 않고 SKU 카운터 필드로 관리합니다.</div><div class="note">purchaseLimit는 선택 정책이며 요청에 없으면 내부 one_time_skus.purchase_limit도 생략합니다.</div><div class="note">limited SKU는 주문 생성 시 reservedStock을 증가시키고, 결제 승인 성공 시 reservedStock을 줄이며 soldStock을 증가시킵니다.</div>
 </section><section id="admin-one-time-skus-update">
   <h2><code>PATCH /admin/products/{productId}/one-time-skus/{skuId}</code></h2>
   <p>일반상품 Product에 속한 SKU의 표시 정보, 판매 가격, 재고 정책, 구매 제한, 판매 상태를 수정하는 API입니다. 주문 생성 시 저장된 가격 스냅샷과 결제 승인 중인 amount는 변경하지 않고, 이후 새 주문 계산에만 반영합니다.</p>
   <h3>Header</h3>
-<div class="table-scroll"><table><thead><tr><th>이름</th><th>필수</th><th>설명</th></tr></thead><tbody><tr><td data-label="이름"><code>Content-Type</code></td><td data-label="필수">예</td><td data-label="설명">application/json</td></tr><tr><td data-label="이름"><code>Authorization</code></td><td data-label="필수">예</td><td data-label="설명">백엔드 서버가 결제 시스템을 호출할 때 사용하는 내부 서비스 토큰입니다. 브라우저 세션이나 사용자 Bearer 토큰을 전달하지 않습니다.</td></tr><tr><td data-label="이름"><code>X-Request-Admin-Id</code></td><td data-label="필수">예</td><td data-label="설명">백엔드 서버가 인증한 관리자 ID입니다. 결제 시스템은 이 값과 내부 권한 클레임으로 운영 작업 권한을 확인합니다.</td></tr><tr><td data-label="이름"><code>X-Request-Id</code></td><td data-label="필수">예</td><td data-label="설명">백엔드 서버가 생성하거나 전달하는 요청 추적 ID입니다.</td></tr></tbody></table></div>
+<div class="table-scroll"><table><thead><tr><th>이름</th><th>필수</th><th>설명</th></tr></thead><tbody><tr><td data-label="이름"><code>Content-Type</code></td><td data-label="필수">예</td><td data-label="설명">application/json</td></tr><tr><td data-label="이름"><code>Authorization</code></td><td data-label="필수">예</td><td data-label="설명">어드민 로그인 API에서 발급한 관리자 액세스 토큰입니다. 서버는 토큰 subject, roles, permissions로 운영 권한을 검증합니다.</td></tr><tr><td data-label="이름"><code>X-Request-Id</code></td><td data-label="필수">예</td><td data-label="설명">어드민 콘솔 또는 서버가 생성하는 요청 추적 ID입니다.</td></tr></tbody></table></div>
   <h3>Cookie</h3>
 <div class="table-scroll"><table><thead><tr><th>이름</th><th>필수</th><th>설명</th></tr></thead><tbody></tbody></table></div>
   <h3>Body</h3><pre><code>{
@@ -1939,13 +2100,13 @@
 }</code></pre><h3>Response 400</h3><p>변경 가능한 필드가 없거나 금액, 재고 정책, 구매 제한 정책이 유효하지 않은 요청</p><h3>Response 403</h3><p>상품 관리 권한이 없는 관리자 계정</p><h3>Response 404</h3><p>존재하지 않는 상품 또는 SKU</p><h3>Response 409</h3><p>구독상품의 플랜을 SKU API로 수정하려 했거나 진행 중인 결제 금액을 직접 변경하려 한 요청</p>
   <h3>실패 규칙</h3><div class="table-scroll"><table class="has-many-columns"><thead><tr><th>코드</th><th>HTTP</th><th>재시도</th><th>설명</th><th>결과 상태</th></tr></thead><tbody><tr><td data-label="코드"><code>PRODUCT_TYPE_MISMATCH</code></td><td data-label="HTTP">409</td><td data-label="재시도">아니오</td><td data-label="설명">subscription 상품에 일반상품 SKU 수정 API를 호출한 경우입니다.</td><td data-label="결과 상태">-</td></tr><tr><td data-label="코드"><code>PAYMENT_AMOUNT_SNAPSHOT_LOCKED</code></td><td data-label="HTTP">409</td><td data-label="재시도">아니오</td><td data-label="설명">이미 생성된 결제 시도 금액을 SKU 수정으로 바꾸려 한 경우입니다.</td><td data-label="결과 상태">-</td></tr><tr><td data-label="코드"><code>STOCK_POLICY_CONFLICT</code></td><td data-label="HTTP">409</td><td data-label="재시도">아니오</td><td data-label="설명">새 totalStock 또는 재고 정책이 이미 판매되었거나 예약된 수량보다 작은 재고를 만들 때 발생합니다.</td><td data-label="결과 상태">-</td></tr></tbody></table></div>
   <h3>처리 로직</h3>
-  <ol><li>백엔드 서버가 인증해 전달한 X-Request-Admin-Id와 내부 권한 클레임으로 product_manage 권한을 확인합니다.</li><li>productId와 skuId가 존재하고 product.productType == one_time인지 검증합니다.</li><li>amount, currency, status, stockPolicy, totalStock, purchaseLimit를 검증하고 변경 가능한 필드만 반영합니다. API의 stockPolicy.type은 내부 one_time_skus.stock_policy 문자열로 저장합니다.</li><li>SKU 가격 변경은 이후 새 주문 생성의 서버 재계산에만 적용하고, 이미 생성된 order, checkout, payment의 amount는 변경하지 않습니다.</li><li>paused 또는 archived 상태의 SKU는 일반결제 주문 생성 후보에서 제외합니다.</li><li>재고 정책 변경 시 reservedStock + soldStock을 기준으로 음수 재고가 발생하지 않는지 확인합니다.</li><li>관리자 ID, 요청 IP, 변경 전후 값, changeReason을 감사 로그에 저장합니다.</li></ol>
+  <ol><li>관리자 액세스 토큰의 subject와 권한 클레임으로 product_manage 권한을 확인합니다.</li><li>productId와 skuId가 존재하고 product.productType == one_time인지 검증합니다.</li><li>amount, currency, status, stockPolicy, totalStock, purchaseLimit를 검증하고 변경 가능한 필드만 반영합니다. API의 stockPolicy.type은 내부 one_time_skus.stock_policy 문자열로 저장합니다.</li><li>SKU 가격 변경은 이후 새 주문 생성의 서버 재계산에만 적용하고, 이미 생성된 order, checkout, payment의 amount는 변경하지 않습니다.</li><li>paused 또는 archived 상태의 SKU는 일반결제 주문 생성 후보에서 제외합니다.</li><li>재고 정책 변경 시 reservedStock + soldStock을 기준으로 음수 재고가 발생하지 않는지 확인합니다.</li><li>토큰에서 확인한 관리자 ID, 요청 IP, 변경 전후 값, changeReason을 감사 로그에 저장합니다.</li></ol>
   <div class="note">일반상품 SKU는 주문 생성 시점에 가격 스냅샷을 고정하고, limited SKU만 재고 예약도 함께 고정합니다. 따라서 가격 수정 후에도 기존 결제 시도의 Toss 승인 amount와 내부 payment amount는 동일해야 합니다.</div><div class="note">판매 중지된 SKU라도 기존 결제 내역, 환불, 영수증 조회를 위해 SKU 기록은 보존합니다.</div>
 </section><section id="admin-products-status">
   <h2><code>PATCH /admin/products/{productId}/status</code></h2>
   <p>공통 Product의 판매 상태를 draft, active, paused, archived로 전환하는 API입니다. Product 상태는 구독 플랜과 일반 SKU의 노출 가능 여부를 감싸는 상위 상태이며, 결제 완료 이력과 기존 구독 데이터는 삭제하지 않습니다.</p>
   <h3>Header</h3>
-<div class="table-scroll"><table><thead><tr><th>이름</th><th>필수</th><th>설명</th></tr></thead><tbody><tr><td data-label="이름"><code>Content-Type</code></td><td data-label="필수">예</td><td data-label="설명">application/json</td></tr><tr><td data-label="이름"><code>Authorization</code></td><td data-label="필수">예</td><td data-label="설명">백엔드 서버가 결제 시스템을 호출할 때 사용하는 내부 서비스 토큰입니다. 브라우저 세션이나 사용자 Bearer 토큰을 전달하지 않습니다.</td></tr><tr><td data-label="이름"><code>X-Request-Admin-Id</code></td><td data-label="필수">예</td><td data-label="설명">백엔드 서버가 인증한 관리자 ID입니다. 결제 시스템은 이 값과 내부 권한 클레임으로 운영 작업 권한을 확인합니다.</td></tr><tr><td data-label="이름"><code>X-Request-Id</code></td><td data-label="필수">예</td><td data-label="설명">백엔드 서버가 생성하거나 전달하는 요청 추적 ID입니다.</td></tr></tbody></table></div>
+<div class="table-scroll"><table><thead><tr><th>이름</th><th>필수</th><th>설명</th></tr></thead><tbody><tr><td data-label="이름"><code>Content-Type</code></td><td data-label="필수">예</td><td data-label="설명">application/json</td></tr><tr><td data-label="이름"><code>Authorization</code></td><td data-label="필수">예</td><td data-label="설명">어드민 로그인 API에서 발급한 관리자 액세스 토큰입니다. 서버는 토큰 subject, roles, permissions로 운영 권한을 검증합니다.</td></tr><tr><td data-label="이름"><code>X-Request-Id</code></td><td data-label="필수">예</td><td data-label="설명">어드민 콘솔 또는 서버가 생성하는 요청 추적 ID입니다.</td></tr></tbody></table></div>
   <h3>Cookie</h3>
 <div class="table-scroll"><table><thead><tr><th>이름</th><th>필수</th><th>설명</th></tr></thead><tbody></tbody></table></div>
   <h3>Body</h3><pre><code>{
@@ -1965,7 +2126,7 @@
 }</code></pre><h3>Response 400</h3><p>상태 값, 전환 사유, 적용 시각이 유효하지 않은 요청</p><h3>Response 403</h3><p>상품 관리 권한이 없는 관리자 계정</p><h3>Response 404</h3><p>존재하지 않는 상품</p><h3>Response 409</h3><p>필수 플랜 또는 SKU가 없거나 현재 상태에서 허용되지 않는 전환</p>
   <h3>실패 규칙</h3><div class="table-scroll"><table class="has-many-columns"><thead><tr><th>코드</th><th>HTTP</th><th>재시도</th><th>설명</th><th>결과 상태</th></tr></thead><tbody><tr><td data-label="코드"><code>INVALID_STATUS_TRANSITION</code></td><td data-label="HTTP">409</td><td data-label="재시도">아니오</td><td data-label="설명">archived 상품을 active로 되돌리는 등 허용되지 않는 상태 전환입니다.</td><td data-label="결과 상태">-</td></tr><tr><td data-label="코드"><code>MISSING_ACTIVE_SELLING_UNIT</code></td><td data-label="HTTP">409</td><td data-label="재시도">아니오</td><td data-label="설명">구독상품에 활성 플랜이 없거나 일반상품에 활성 SKU가 없어 active로 전환할 수 없는 경우입니다.</td><td data-label="결과 상태">-</td></tr></tbody></table></div>
   <h3>처리 로직</h3>
-  <ol><li>백엔드 서버가 인증해 전달한 X-Request-Admin-Id와 내부 권한 클레임으로 product_manage 권한을 확인합니다.</li><li>productId가 존재하는지 확인하고 현재 status에서 목표 status로 전환 가능한지 검증합니다.</li><li>active 전환 시 subscription 상품은 active 플랜이 1개 이상, one_time 상품은 active SKU가 1개 이상 있는지 확인합니다.</li><li>paused 전환 시 신규 구독 체크아웃과 일반결제 주문 생성을 차단하지만 기존 활성 구독의 다음 결제 정책은 별도 운영 정책에 따릅니다.</li><li>archived 전환은 신규 판매와 공개 목록 노출을 차단하고, 기존 결제 내역, 환불, 인보이스 조회를 위해 Product 기록은 보존합니다.</li><li>상태 변경 이벤트를 저장하고 공개 상품 목록, 플랜 목록, 주문 생성 캐시를 무효화합니다.</li><li>관리자 ID, 요청 IP, previousStatus, status, reason을 감사 로그에 저장합니다.</li></ol>
+  <ol><li>관리자 액세스 토큰의 subject와 권한 클레임으로 product_manage 권한을 확인합니다.</li><li>productId가 존재하는지 확인하고 현재 status에서 목표 status로 전환 가능한지 검증합니다.</li><li>active 전환 시 subscription 상품은 active 플랜이 1개 이상, one_time 상품은 active SKU가 1개 이상 있는지 확인합니다.</li><li>paused 전환 시 신규 구독 체크아웃과 일반결제 주문 생성을 차단하지만 기존 활성 구독의 다음 결제 정책은 별도 운영 정책에 따릅니다.</li><li>archived 전환은 신규 판매와 공개 목록 노출을 차단하고, 기존 결제 내역, 환불, 인보이스 조회를 위해 Product 기록은 보존합니다.</li><li>상태 변경 이벤트를 저장하고 공개 상품 목록, 플랜 목록, 주문 생성 캐시를 무효화합니다.</li><li>토큰에서 확인한 관리자 ID, 요청 IP, previousStatus, status, reason을 감사 로그에 저장합니다.</li></ol>
   <div class="note">Product 상태는 상위 판매 가능 상태이고, 실제 결제 금액과 권한은 subscriptionPlans 또는 oneTimeSkus가 보유합니다.</div><div class="note">paused와 archived는 신규 판매를 막지만 기존 결제 내역과 환불 플로우가 참조할 수 있도록 Product와 하위 판매 단위 기록을 보존합니다.</div><div class="note">구독상품 판매 중지는 신규 가입을 차단하는 의미이며, 기존 활성 구독의 유지, 해지, 다음 결제 차단 여부는 별도 운영 정책으로 결정합니다.</div>
 </section></div></main>
 <script>

@@ -672,7 +672,7 @@
     </div>
   </div>
 </header>
-<main class="wrap layout" id="content"><nav aria-label="문서 목차"><a href="#plans">상품/플랜 API</a><a href="#payments">일반결제 API</a><a href="#subscriptions">구독 API</a><a href="#billing">빌링키/결제수단 API</a><a href="#invoices">인보이스 API</a><a href="#webhooks">웹훅 API</a><a href="#internal">내부 배치 API</a><a href="#admin">관리자 API</a></nav><div><section id="plans">
+<main class="wrap layout" id="content"><nav aria-label="문서 목차"><a href="#plans">상품/플랜 API</a><a href="#payments">일반결제 API</a><a href="#subscriptions">구독 API</a><a href="#billing">빌링키/결제수단 API</a><a href="#invoices">인보이스 API</a><a href="#webhooks">웹훅 API</a><a href="#internal">내부 배치 API</a><a href="#admin-auth">어드민 인증 API</a><a href="#admin">관리자 API</a></nav><div><section id="plans">
   <h2>상품/플랜 API</h2>
   <div class="table-scroll"><table>
     <thead><tr><th>API</th><th>역할</th><th>상세</th></tr></thead>
@@ -713,6 +713,12 @@
   <div class="table-scroll"><table>
     <thead><tr><th>API</th><th>역할</th><th>상세</th></tr></thead>
     <tbody><tr id="internal-billing-run"><td><code>POST /internal/subscription-billing/run</code></td><td>다음 결제일이 도래한 구독을 찾아 정기 자동결제를 실행합니다.</td><td><a href="./api-detail-doc.html#billing-run">상세 보기</a></td></tr><tr id="internal-billing-retry"><td><code>POST /internal/subscription-billing/{invoiceId}/retry</code></td><td>실패한 구독 결제를 수동 또는 배치로 재시도합니다.</td><td><a href="./api-detail-doc.html#billing-retry">상세 보기</a></td></tr></tbody>
+  </table></div>
+</section><section id="admin-auth">
+  <h2>어드민 인증 API</h2>
+  <div class="table-scroll"><table>
+    <thead><tr><th>API</th><th>역할</th><th>상세</th></tr></thead>
+    <tbody><tr id="admin-auth-password-reset-confirm"><td><code>POST /admin/auth/password-reset/confirm</code></td><td>이메일로 받은 일회용 토큰으로 관리자 비밀번호를 재설정합니다.</td><td><a href="./api-detail-doc.html#admin-auth-password-reset-confirm">상세 보기</a></td></tr><tr id="admin-auth-password-reset-request"><td><code>POST /admin/auth/password-reset/request</code></td><td>관리자가 비밀번호 재설정 이메일 발송을 요청합니다.</td><td><a href="./api-detail-doc.html#admin-auth-password-reset-request">상세 보기</a></td></tr><tr id="admin-auth-logout"><td><code>POST /admin/auth/logout</code></td><td>관리자가 현재 어드민 콘솔 로그인 세션을 종료하고 refreshToken을 폐기합니다.</td><td><a href="./api-detail-doc.html#admin-auth-logout">상세 보기</a></td></tr><tr id="admin-auth-refresh"><td><code>POST /admin/auth/refresh</code></td><td>만료된 관리자 액세스 토큰을 refreshToken 회전 방식으로 재발급합니다.</td><td><a href="./api-detail-doc.html#admin-auth-refresh">상세 보기</a></td></tr><tr id="admin-auth-me"><td><code>GET /admin/auth/me</code></td><td>어드민 콘솔이 현재 로그인한 관리자 계정, 역할, 권한을 확인합니다.</td><td><a href="./api-detail-doc.html#admin-auth-me">상세 보기</a></td></tr><tr id="admin-auth-login"><td><code>POST /admin/auth/login</code></td><td>관리자가 이메일과 비밀번호를 제출하면 SMTP로 일회용 로그인 링크를 발송합니다.</td><td><a href="./api-detail-doc.html#admin-auth-login">상세 보기</a></td></tr><tr id="admin-auth-login-confirm"><td><code>POST /admin/auth/login/confirm</code></td><td>이메일 로그인 링크의 일회용 토큰을 확정하고 관리자 전용 토큰을 발급합니다.</td><td><a href="./api-detail-doc.html#admin-auth-login-confirm">상세 보기</a></td></tr></tbody>
   </table></div>
 </section><section id="admin">
   <h2>관리자 API</h2>

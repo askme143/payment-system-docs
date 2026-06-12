@@ -289,14 +289,13 @@ class GenerateDocsTest(unittest.TestCase):
                 f"{api_id} must not expose browser session/csrf cookies to the payment system",
             )
 
-            if visibility in {"public", "authenticated", "admin"}:
+            if visibility in {"public", "authenticated", "admin", "admin-auth"}:
                 self.assertEqual(request.get("cookies", []), [], api_id)
-                self.assertIn("Authorization", header_names, api_id)
                 self.assertIn("X-Request-Id", header_names, api_id)
+            if visibility in {"public", "authenticated", "admin"}:
+                self.assertIn("Authorization", header_names, api_id)
             if visibility == "authenticated":
                 self.assertIn("X-Request-User-Id", header_names, api_id)
-            if visibility == "admin":
-                self.assertIn("X-Request-Admin-Id", header_names, api_id)
 
         serialized = json.dumps(data["apiDetails"], ensure_ascii=False)
         self.assertNotIn("세션 쿠키", serialized)

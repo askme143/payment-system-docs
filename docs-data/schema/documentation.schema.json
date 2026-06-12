@@ -194,7 +194,7 @@
         "visibility": {
           "type": "string",
           "description": "End-user access level shown in the API catalog. It is not the transport authentication between the backend server/BFF and the payment system; public APIs can still require an internal service Authorization header.",
-          "enum": ["public", "authenticated", "webhook", "internal", "admin"],
+          "enum": ["public", "authenticated", "webhook", "internal", "admin", "admin-auth"],
           "default": "authenticated"
         },
         "detailStatus": {

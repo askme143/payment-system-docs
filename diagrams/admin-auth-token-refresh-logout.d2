@@ -1,0 +1,59 @@
+diagram: {
+  shape: sequence_diagram
+  label: "토큰 갱신과 로그아웃"
+
+  admin: "관리자"
+  admin.style.fill: "#f1f5f9"
+  admin.style.stroke: "#334155"
+  server: "우리 서버"
+  server.style.fill: "#eaf8f3"
+  server.style.stroke: "#1c7c66"
+
+  admin -> server: |md
+관리자 토큰 갱신 요청
+
+**POST /admin/auth/refresh**
+
+adminRefreshToken
+| {
+    style.stroke: "#1c7c66"
+    style.font-color: "#334155"
+    style.font-size: 18
+    style.italic: false
+  }
+  server.note_2: "refreshToken 해시와 상태 검증\ntoken_type=refresh_token, status=active, expiresAt > now\n폐기된 토큰 재사용 감지 시 해당 계정의 활성 refreshToken 전체 revoke"
+  server.note_3: "refreshToken 회전\nold=rotated, new=active\n새 adminAccessToken은 현재 권한 기준으로 발급"
+  server -> admin: |md
+갱신된 토큰 반환
+
+adminAccessToken, adminRefreshToken, expiresInSeconds
+| {
+    style.stroke: "#334155"
+    style.font-color: "#334155"
+    style.font-size: 18
+    style.italic: false
+  }
+  admin -> server: |md
+관리자 로그아웃 요청
+
+**POST /admin/auth/logout**
+
+Authorization + 선택적 adminRefreshToken
+| {
+    style.stroke: "#1c7c66"
+    style.font-color: "#334155"
+    style.font-size: 18
+    style.italic: false
+  }
+  server.note_6: "refreshToken 폐기\nstatus=revoked\n이미 폐기된 토큰도 204로 멱등 처리"
+  server -> admin: |md
+로그아웃 완료
+
+204 No Content
+| {
+    style.stroke: "#334155"
+    style.font-color: "#334155"
+    style.font-size: 18
+    style.italic: false
+  }
+}
