@@ -1,0 +1,59 @@
+diagram: {
+  shape: sequence_diagram
+  label: "스케쥴러 실행 이력 조회"
+
+  admin: "관리자"
+  admin.style.fill: "#f1f5f9"
+  admin.style.stroke: "#334155"
+  server: "우리 서버"
+  server.style.fill: "#eaf8f3"
+  server.style.stroke: "#1c7c66"
+
+  admin -> server: |md
+스케쥴러 실행 이력 목록 조회
+
+**GET /admin/scheduler-runs**
+
+jobType, status, triggerSource, workerId, 기간 필터
+| {
+    style.stroke: "#1c7c66"
+    style.font-color: "#334155"
+    style.font-size: 18
+    style.italic: false
+  }
+  server.note_2: "조회 권한과 필터 검증\npermission in scheduler_read/scheduler_run"
+  server.note_3: "실행 로그 페이지 조회\nscheduler_run_logs sorted by started_at desc"
+  server -> admin: |md
+실행 이력 목록 반환
+
+items[], page.nextCursor, hasMore
+| {
+    style.stroke: "#334155"
+    style.font-color: "#334155"
+    style.font-size: 18
+    style.italic: false
+  }
+  admin -> server: |md
+실행 상세 조회
+
+**GET /admin/scheduler-runs/{runId}**
+
+runId 선택
+| {
+    style.stroke: "#1c7c66"
+    style.font-color: "#334155"
+    style.font-size: 18
+    style.italic: false
+  }
+  server.note_6: "상세 로그와 오류 요약 조회\nsummary, error, operatorAuditId, exitCode"
+  server -> admin: |md
+실행 상세 반환
+
+run detail without secrets
+| {
+    style.stroke: "#334155"
+    style.font-color: "#334155"
+    style.font-size: 18
+    style.italic: false
+  }
+}

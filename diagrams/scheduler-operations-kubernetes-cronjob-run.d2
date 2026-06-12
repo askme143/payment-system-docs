@@ -1,0 +1,67 @@
+diagram: {
+  shape: sequence_diagram
+  label: "Kubernetes CronJob 스케쥴러 실행"
+
+  scheduler: "스케줄러"
+  scheduler.style.fill: "#fff8e6"
+  scheduler.style.stroke: "#9a5b00"
+  server: "우리 서버"
+  server.style.fill: "#eaf8f3"
+  server.style.stroke: "#1c7c66"
+  toss: "토스페이먼츠 서버"
+  toss.style.fill: "#f1edff"
+  toss.style.stroke: "#7b4bc4"
+  email: "이메일 발송 시스템"
+  email.style.fill: "#f8fafc"
+  email.style.stroke: "#65758a"
+
+  scheduler -> server: |md
+payments 이미지에서 scheduler runner 1회 실행
+
+python -m payments.scheduler.runner billing --batch-size 100
+
+Kubernetes CronJob은 HTTP API 호출이 아니라 같은 이미지의 별도 entrypoint를 실행
+| {
+    style.stroke: "#1c7c66"
+    style.font-color: "#334155"
+    style.font-size: 18
+    style.italic: false
+  }
+  server.note_2: "실행 시작 로그 저장\nscheduler_run_logs.status = running\ntriggerSource=kubernetes_cronjob, workerId=pod name, jobType, batchSize, billingDate"
+  server.note_3: "작업 잠금과 멱등성 기준 확보\noperation_locks + deterministic idempotency scope\n동일 jobType과 기준일의 중복 실행을 방지"
+  server -> toss: |md
+대상별 provider 결제 승인
+
+**POST /v1/billing/{billingKey}**
+
+billing 작업일 때만 대상별로 호출
+| {
+    style.stroke: "#7b4bc4"
+    style.font-color: "#334155"
+    style.font-size: 18
+    style.italic: false
+  }
+  server -> email: |md
+결제 성공/실패 또는 해지 만료 알림 큐 적재
+
+notification payload without secrets
+| {
+    style.stroke: "#65758a"
+    style.font-color: "#334155"
+    style.font-size: 18
+    style.italic: false
+  }
+  server.note_6: "실행 완료 로그 갱신\nscheduler_run_logs.status = succeeded/failed\nsummary, error, finishedAt, durationMs, exitCode 저장"
+  server -> scheduler: |md
+프로세스 종료 코드 반환
+
+success=0, fatal error=non-zero
+
+CronJob controller가 성공/실패와 재시도 정책을 판단
+| {
+    style.stroke: "#9a5b00"
+    style.font-color: "#334155"
+    style.font-size: 18
+    style.italic: false
+  }
+}

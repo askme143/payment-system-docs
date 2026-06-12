@@ -1,0 +1,65 @@
+diagram: {
+  shape: sequence_diagram
+  label: "어드민 수동 스케쥴러 실행"
+
+  admin: "관리자"
+  admin.style.fill: "#f1f5f9"
+  admin.style.stroke: "#334155"
+  server: "우리 서버"
+  server.style.fill: "#eaf8f3"
+  server.style.stroke: "#1c7c66"
+  toss: "토스페이먼츠 서버"
+  toss.style.fill: "#f1edff"
+  toss.style.stroke: "#7b4bc4"
+  email: "이메일 발송 시스템"
+  email.style.fill: "#f8fafc"
+  email.style.stroke: "#65758a"
+
+  admin -> server: |md
+수동 실행 요청
+
+**POST /admin/scheduler-runs**
+
+jobType, billingDate, limit, dryRun, reason, Idempotency-Key
+| {
+    style.stroke: "#1c7c66"
+    style.font-color: "#334155"
+    style.font-size: 18
+    style.italic: false
+  }
+  server.note_2: "관리자 권한 및 멱등 검증\npermission == scheduler_run\n같은 Idempotency-Key의 동일 payload는 기존 결과 반환"
+  server.note_3: "실행 시작 로그와 감사 로그 준비\nscheduler_run_logs.running + operator_audits.scheduler.run_manual\n수동 실행은 triggerSource=admin_manual로 구분"
+  server -> toss: |md
+필요한 경우 provider 결제 승인
+
+**POST /v1/billing/{billingKey}**
+
+dryRun=true이면 호출하지 않음
+| {
+    style.stroke: "#7b4bc4"
+    style.font-color: "#334155"
+    style.font-size: 18
+    style.italic: false
+  }
+  server -> email: |md
+알림 큐 적재
+
+success/failure/cancel expiration notification
+| {
+    style.stroke: "#65758a"
+    style.font-color: "#334155"
+    style.font-size: 18
+    style.italic: false
+  }
+  server.note_6: "실행 결과와 감사 로그 확정\nscheduler_run_logs.succeeded/failed, operatorAuditId\n실패해도 runId와 오류 요약을 남김"
+  server -> admin: |md
+수동 실행 결과 반환
+
+runId, status, summary, operatorAuditId
+| {
+    style.stroke: "#334155"
+    style.font-color: "#334155"
+    style.font-size: 18
+    style.italic: false
+  }
+}

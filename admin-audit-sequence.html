@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>결제 시스템 전체 API 목록</title>
+  <title>어드민 감사 로그 조회 플로우</title>
   <style>
     :root {
       --bg: #f5f7fb;
@@ -662,71 +662,98 @@
 <header>
   <div class="hero">
     <div class="wrap">
-    <p class="eyebrow">API Catalog</p>
-    <h1>결제 시스템 전체 API 목록</h1>
-    <p class="lead">API의 전체 목록과 역할만 정리하는 색인입니다. 상세 계약은 API 상세 설명 페이지에서 관리합니다.</p>
+    <p class="eyebrow">Sequence Diagram</p>
+    <h1>어드민 감사 로그 조회 플로우</h1>
+    <p class="lead">운영자가 결제 취소, 구독 보정, 상품 변경, 수동 배치 실행의 변경 전후 상태와 실행 주체를 조회하는 흐름입니다.</p>
     <div class="search-panel">
       <input type="search" data-doc-search aria-label="문서 검색" placeholder="API, 상태, 컬렉션, 플로우 검색">
     </div>
-    <p class="top-links"><a href="./sequence-index.html">전체 시퀀스 목록</a><a href="./api-detail-doc.html">API 상세 설명 단일 원본</a><a href="./database-doc.html">MongoDB 구조 문서</a><a href="./risk-register-doc.html">결제 시스템 잠재 위험 및 대응 문서</a></p>
+    <p class="top-links"><a href="./sequence-index.html">전체 시퀀스 목록</a><a href="./all-api-doc.html">전체 API 목록</a><a href="./api-detail-doc.html">API 상세 설명</a><a href="./database-doc.html">MongoDB 구조 문서</a><a href="./risk-register-doc.html">결제 시스템 잠재 위험 및 대응 문서</a></p>
     </div>
   </div>
 </header>
-<main class="wrap layout" id="content"><nav aria-label="문서 목차"><a href="#plans">상품/플랜 API</a><a href="#payments">일반결제 API</a><a href="#subscriptions">구독 API</a><a href="#billing">빌링키/결제수단 API</a><a href="#invoices">인보이스 API</a><a href="#webhooks">웹훅 API</a><a href="#internal">내부 배치 API</a><a href="#admin-auth">어드민 인증 API</a><a href="#admin">관리자 API</a></nav><div><section id="plans">
-  <h2>상품/플랜 API</h2>
-  <div class="table-scroll"><table>
-    <thead><tr><th>API</th><th>역할</th><th>상세</th></tr></thead>
-    <tbody><tr id="plans-list"><td><code>GET /plans</code></td><td>구매 가능한 상품과 구독 플랜 목록을 조회합니다.</td><td><a href="./api-detail-doc.html#plans-list">상세 보기</a></td></tr><tr id="plans-detail"><td><code>GET /plans/{planId}</code></td><td>단일 플랜의 가격, 주기, 판매 가능 상태를 조회합니다.</td><td><a href="./api-detail-doc.html#plans-detail">상세 보기</a></td></tr></tbody>
-  </table></div>
-</section><section id="payments">
-  <h2>일반결제 API</h2>
-  <div class="table-scroll"><table>
-    <thead><tr><th>API</th><th>역할</th><th>상세</th></tr></thead>
-    <tbody><tr id="payments-orders"><td><code>POST /payments/orders</code></td><td>일반결제 결제창 호출 전에 내부 주문을 생성합니다.</td><td><a href="./api-detail-doc.html#payments-orders">상세 보기</a></td></tr><tr id="payments-confirm"><td><code>POST /payments/confirm</code></td><td>토스 결제 인증 후 일반결제를 최종 승인합니다.</td><td><a href="./api-detail-doc.html#payments-confirm">상세 보기</a></td></tr><tr id="payments-detail"><td><code>GET /payments/{paymentId}</code></td><td>내부 결제 상태와 토스 승인 결과를 조회합니다.</td><td><a href="./api-detail-doc.html#payments-detail">상세 보기</a></td></tr><tr id="payments-auth-result"><td><code>POST /payments/{paymentId}/auth-result</code></td><td>프론트 실패 페이지 요청을 받은 백엔드 서버가 토스 결제창 인증 실패 또는 사용자 취소 결과를 기록합니다.</td><td><a href="./api-detail-doc.html#payments-auth-result">상세 보기</a></td></tr><tr id="payments-cancel"><td><code>POST /payments/{paymentId}/cancel</code></td><td>승인 완료된 일반결제를 전체 또는 부분 취소하고 내부 취소 이력을 저장합니다.</td><td><a href="./api-detail-doc.html#payments-cancel">상세 보기</a></td></tr></tbody>
-  </table></div>
-</section><section id="subscriptions">
-  <h2>구독 API</h2>
-  <div class="table-scroll"><table>
-    <thead><tr><th>API</th><th>역할</th><th>상세</th></tr></thead>
-    <tbody><tr id="subscriptions-checkout"><td><code>POST /subscriptions/checkout</code></td><td>구독 빌링 인증 전에 구독 대기 레코드와 토스 SDK 호출 데이터를 생성합니다.</td><td><a href="./api-detail-doc.html#checkout">상세 보기</a></td></tr><tr id="subscriptions-confirm"><td><code>POST /subscriptions/confirm</code></td><td>프론트 성공 페이지 요청을 받은 백엔드 서버가 호출하며, 빌링키 발급과 첫 결제로 구독을 활성화합니다.</td><td><a href="./api-detail-doc.html#confirm">상세 보기</a></td></tr><tr id="subscriptions-me"><td><code>GET /subscriptions/me</code></td><td>현재 회원의 상품별 구독 목록, 이용 기간, 다음 결제일, 공통 기본 결제수단 표시 정보를 조회합니다.</td><td><a href="./api-detail-doc.html#me">상세 보기</a></td></tr><tr id="subscriptions-cancel"><td><code>POST /subscriptions/{subscriptionId}/cancel</code></td><td>현재 이용 기간 종료 시 구독 해지를 예약하고 다음 정기 결제 대상에서 제외합니다.</td><td><a href="./api-detail-doc.html#cancel">상세 보기</a></td></tr><tr id="subscriptions-resume"><td><code>POST /subscriptions/{subscriptionId}/resume</code></td><td>해지 예약 또는 결제 실패 상태의 구독을 재개합니다.</td><td><a href="./api-detail-doc.html#resume">상세 보기</a></td></tr><tr id="subscriptions-change-preview"><td><code>POST /subscriptions/{subscriptionId}/change-preview</code></td><td>목표 플랜 변경이 업그레이드인지 다운그레이드인지 서버가 판정하고, 유저 확인에 필요한 결제 금액과 적용일을 계산합니다.</td><td><a href="./api-detail-doc.html#change-preview">상세 보기</a></td></tr><tr id="subscriptions-change"><td><code>PATCH /subscriptions/{subscriptionId}</code></td><td>플랜 변경 미리보기에서 발급한 확인 토큰으로 업그레이드는 즉시 변경하고 다운그레이드는 다음 결제일 반영으로 예약합니다.</td><td><a href="./api-detail-doc.html#change">상세 보기</a></td></tr></tbody>
-  </table></div>
-</section><section id="billing">
-  <h2>빌링키/결제수단 API</h2>
-  <div class="table-scroll"><table>
-    <thead><tr><th>API</th><th>역할</th><th>상세</th></tr></thead>
-    <tbody><tr id="billing-auth"><td><code>POST /billing/auth</code></td><td>기존 회원이 결제수단을 변경할 때 빌링 인증 시작 데이터를 생성합니다.</td><td><a href="./api-detail-doc.html#billing-auth">상세 보기</a></td></tr><tr id="billing-issue"><td><code>POST /billing/issue</code></td><td>빌링 인증 성공 후 새 빌링키를 발급받아 결제수단으로 저장합니다.</td><td><a href="./api-detail-doc.html#billing-issue">상세 보기</a></td></tr><tr id="billing-methods"><td><code>GET /billing/methods</code></td><td>회원이 등록한 표시용 결제수단 목록을 조회합니다.</td><td><a href="./api-detail-doc.html#billing-methods">상세 보기</a></td></tr><tr id="billing-method-default"><td><code>PATCH /billing/methods/{billingMethodId}/default</code></td><td>활성 결제수단 중 하나를 기본 결제수단으로 지정합니다.</td><td><a href="./api-detail-doc.html#billing-method-default">상세 보기</a></td></tr><tr id="billing-method-delete"><td><code>DELETE /billing/methods/{billingMethodId}</code></td><td>사용하지 않는 결제수단을 삭제 또는 비활성화합니다.</td><td><a href="./api-detail-doc.html#billing-method-delete">상세 보기</a></td></tr></tbody>
-  </table></div>
-</section><section id="invoices">
-  <h2>인보이스 API</h2>
-  <div class="table-scroll"><table>
-    <thead><tr><th>API</th><th>역할</th><th>상세</th></tr></thead>
-    <tbody><tr id="invoices-list"><td><code>GET /invoices</code></td><td>구독 회차별 청구 내역과 결제 성공/실패 상태를 조회합니다.</td><td><a href="./api-detail-doc.html#invoices-list">상세 보기</a></td></tr><tr id="invoices-detail"><td><code>GET /invoices/{invoiceId}</code></td><td>단일 인보이스의 금액, 결제 시도, 실패 사유, 영수증 정보를 조회합니다.</td><td><a href="./api-detail-doc.html#invoice-detail">상세 보기</a></td></tr></tbody>
-  </table></div>
-</section><section id="webhooks">
-  <h2>웹훅 API</h2>
-  <div class="table-scroll"><table>
-    <thead><tr><th>API</th><th>역할</th><th>상세</th></tr></thead>
-    <tbody><tr id="webhooks-toss-payments"><td><code>POST /webhooks/toss-payments</code></td><td>토스페이먼츠 결제 이벤트를 수신하고 내부 결제/인보이스/구독 상태를 보정합니다.</td><td><a href="./api-detail-doc.html#webhook">상세 보기</a></td></tr></tbody>
-  </table></div>
-</section><section id="internal">
-  <h2>내부 배치 API</h2>
-  <div class="table-scroll"><table>
-    <thead><tr><th>API</th><th>역할</th><th>상세</th></tr></thead>
-    <tbody><tr id="internal-billing-run"><td><code>POST /internal/subscription-billing/run</code></td><td>다음 결제일이 도래한 구독을 찾아 정기 자동결제를 실행합니다.</td><td><a href="./api-detail-doc.html#billing-run">상세 보기</a></td></tr><tr id="internal-billing-retry"><td><code>POST /internal/subscription-billing/{invoiceId}/retry</code></td><td>실패한 구독 결제를 수동 또는 배치로 재시도합니다.</td><td><a href="./api-detail-doc.html#billing-retry">상세 보기</a></td></tr></tbody>
-  </table></div>
-</section><section id="admin-auth">
-  <h2>어드민 인증 API</h2>
-  <div class="table-scroll"><table>
-    <thead><tr><th>API</th><th>역할</th><th>상세</th></tr></thead>
-    <tbody><tr id="admin-auth-password-reset-confirm"><td><code>POST /admin/auth/password-reset/confirm</code></td><td>이메일로 받은 일회용 토큰으로 관리자 비밀번호를 재설정합니다.</td><td><a href="./api-detail-doc.html#admin-auth-password-reset-confirm">상세 보기</a></td></tr><tr id="admin-auth-password-reset-request"><td><code>POST /admin/auth/password-reset/request</code></td><td>관리자가 비밀번호 재설정 이메일 발송을 요청합니다.</td><td><a href="./api-detail-doc.html#admin-auth-password-reset-request">상세 보기</a></td></tr><tr id="admin-auth-logout"><td><code>POST /admin/auth/logout</code></td><td>관리자가 현재 어드민 콘솔 로그인 세션을 종료하고 refreshToken을 폐기합니다.</td><td><a href="./api-detail-doc.html#admin-auth-logout">상세 보기</a></td></tr><tr id="admin-auth-refresh"><td><code>POST /admin/auth/refresh</code></td><td>만료된 관리자 액세스 토큰을 refreshToken 회전 방식으로 재발급합니다.</td><td><a href="./api-detail-doc.html#admin-auth-refresh">상세 보기</a></td></tr><tr id="admin-auth-me"><td><code>GET /admin/auth/me</code></td><td>어드민 콘솔이 현재 로그인한 관리자 계정, 역할, 권한을 확인합니다.</td><td><a href="./api-detail-doc.html#admin-auth-me">상세 보기</a></td></tr><tr id="admin-auth-login"><td><code>POST /admin/auth/login</code></td><td>관리자가 이메일과 비밀번호를 제출하면 SMTP로 일회용 로그인 링크를 발송합니다.</td><td><a href="./api-detail-doc.html#admin-auth-login">상세 보기</a></td></tr><tr id="admin-auth-login-confirm"><td><code>POST /admin/auth/login/confirm</code></td><td>이메일 로그인 링크의 일회용 토큰을 확정하고 관리자 전용 토큰을 발급합니다.</td><td><a href="./api-detail-doc.html#admin-auth-login-confirm">상세 보기</a></td></tr></tbody>
-  </table></div>
-</section><section id="admin">
-  <h2>관리자 API</h2>
-  <div class="table-scroll"><table>
-    <thead><tr><th>API</th><th>역할</th><th>상세</th></tr></thead>
-    <tbody><tr id="admin-payments"><td><code>GET /admin/payments</code></td><td>CS와 운영자가 결제 목록을 검색합니다.</td><td><a href="./api-detail-doc.html#admin-payments">상세 보기</a></td></tr><tr id="admin-subscriptions"><td><code>GET /admin/subscriptions</code></td><td>구독 목록, 상태, 다음 결제일, 결제 실패 여부를 검색합니다.</td><td><a href="./api-detail-doc.html#admin-subscriptions">상세 보기</a></td></tr><tr id="admin-payment-cancel"><td><code>POST /admin/payments/{paymentId}/cancel</code></td><td>관리자가 회원 요청, 중복 결제, 장애 보정 사유로 일반결제를 전체 또는 부분 취소합니다.</td><td><a href="./api-detail-doc.html#admin-payment-cancel">상세 보기</a></td></tr><tr id="admin-subscription-adjust"><td><code>POST /admin/subscriptions/{subscriptionId}/adjust</code></td><td>관리자가 구독 상태, 다음 결제일, 실패 상태를 수동 보정합니다.</td><td><a href="./api-detail-doc.html#admin-subscription-adjust">상세 보기</a></td></tr><tr id="admin-scheduler-runs-list"><td><code>GET /admin/scheduler-runs</code></td><td>운영자가 스케쥴러 실행 이력을 검색합니다.</td><td><a href="./api-detail-doc.html#admin-scheduler-runs-list">상세 보기</a></td></tr><tr id="admin-scheduler-runs-detail"><td><code>GET /admin/scheduler-runs/{runId}</code></td><td>운영자가 특정 스케쥴러 실행의 상세 결과와 오류 요약을 조회합니다.</td><td><a href="./api-detail-doc.html#admin-scheduler-runs-detail">상세 보기</a></td></tr><tr id="admin-scheduler-runs-create"><td><code>POST /admin/scheduler-runs</code></td><td>운영자가 어드민 콘솔에서 스케쥴러 작업을 수동 실행합니다.</td><td><a href="./api-detail-doc.html#admin-scheduler-runs-create">상세 보기</a></td></tr><tr id="admin-operator-audits-list"><td><code>GET /admin/operator-audits</code></td><td>운영자가 결제 운영 액션의 감사 로그를 검색합니다.</td><td><a href="./api-detail-doc.html#admin-operator-audits-list">상세 보기</a></td></tr><tr id="admin-operator-audits-detail"><td><code>GET /admin/operator-audits/{auditId}</code></td><td>운영자가 특정 감사 로그의 변경 전후 상태를 조회합니다.</td><td><a href="./api-detail-doc.html#admin-operator-audits-detail">상세 보기</a></td></tr><tr id="admin-products-list"><td><code>GET /admin/products</code></td><td>관리자가 상품, 구독 플랜, 일반 SKU의 운영 목록을 조회합니다.</td><td><a href="./api-detail-doc.html#admin-products-list">상세 보기</a></td></tr><tr id="admin-products-detail"><td><code>GET /admin/products/{productId}</code></td><td>관리자가 특정 상품의 플랜, SKU, 최근 변경 이력을 조회합니다.</td><td><a href="./api-detail-doc.html#admin-products-detail">상세 보기</a></td></tr><tr id="admin-products-create"><td><code>POST /admin/products</code></td><td>관리자가 공통 Product를 생성하고 구독상품 또는 일반상품 타입을 지정합니다.</td><td><a href="./api-detail-doc.html#admin-products-create">상세 보기</a></td></tr><tr id="admin-subscription-plans-create"><td><code>POST /admin/products/{productId}/subscription-plans</code></td><td>구독상품에 월간, 연간 같은 구독 플랜을 추가합니다.</td><td><a href="./api-detail-doc.html#admin-subscription-plans-create">상세 보기</a></td></tr><tr id="admin-subscription-plans-update"><td><code>PATCH /admin/products/{productId}/subscription-plans/{planId}</code></td><td>구독 플랜의 표시 정보, 판매 상태, 신규 가입 가격 정책을 수정합니다.</td><td><a href="./api-detail-doc.html#admin-subscription-plans-update">상세 보기</a></td></tr><tr id="admin-one-time-skus-create"><td><code>POST /admin/products/{productId}/one-time-skus</code></td><td>일반상품에 단건 구매용 SKU와 판매 가격, 재고 정책을 추가합니다.</td><td><a href="./api-detail-doc.html#admin-one-time-skus-create">상세 보기</a></td></tr><tr id="admin-one-time-skus-update"><td><code>PATCH /admin/products/{productId}/one-time-skus/{skuId}</code></td><td>일반상품 SKU의 가격, 재고 정책, 판매 상태를 수정합니다.</td><td><a href="./api-detail-doc.html#admin-one-time-skus-update">상세 보기</a></td></tr><tr id="admin-products-status"><td><code>PATCH /admin/products/{productId}/status</code></td><td>상품을 초안, 판매중, 판매중지, 아카이브 상태로 전환합니다.</td><td><a href="./api-detail-doc.html#admin-products-status">상세 보기</a></td></tr></tbody>
-  </table></div>
-</section></div></main>
+<main class="wrap" id="content">
+  <section>
+    <h2>사용 API</h2>
+    <div class="grid"><div class="box"><a href="./all-api-doc.html#admin-operator-audits-list"><code>GET /admin/operator-audits</code></a><p>운영자가 결제 운영 액션의 감사 로그를 검색합니다.</p></div><div class="box"><a href="./all-api-doc.html#admin-operator-audits-detail"><code>GET /admin/operator-audits/{auditId}</code></a><p>운영자가 특정 감사 로그의 변경 전후 상태를 조회합니다.</p></div></div>
+  </section>
+  <div class="note">
+  <strong>연관 잠재 위험</strong>
+  <ul><li><a href="./risk-register-doc.html#idempotency-store-missing"><code>idempotency-store-missing</code></a> 멱등키 저장소 부재</li></ul>
+</div>
+  <section id="audit-list-detail">
+  <h2>감사 로그 목록 및 상세 조회</h2>
+  
+  <div class="diagram"><div class="d2-diagram">
+  <div class="d2-toolbar"><a href="diagrams/admin-audit-log-audit-list-detail.d2">D2 원본</a></div>
+  <img class="d2-svg" src="diagrams/admin-audit-log-audit-list-detail.svg" alt="감사 로그 목록 및 상세 조회">
+  <details class="d2-details">
+    <summary>D2 원본 보기</summary>
+    <pre class="d2-source"><code>diagram: {
+  shape: sequence_diagram
+  label: &quot;감사 로그 목록 및 상세 조회&quot;
+
+  admin: &quot;관리자&quot;
+  admin.style.fill: &quot;#f1f5f9&quot;
+  admin.style.stroke: &quot;#334155&quot;
+  server: &quot;우리 서버&quot;
+  server.style.fill: &quot;#eaf8f3&quot;
+  server.style.stroke: &quot;#1c7c66&quot;
+
+  admin -&gt; server: |md
+감사 로그 목록 조회
+
+**GET /admin/operator-audits**
+
+operatorId, action, targetType, targetId, result, 기간 필터
+| {
+    style.stroke: &quot;#1c7c66&quot;
+    style.font-color: &quot;#334155&quot;
+    style.font-size: 18
+    style.italic: false
+  }
+  server.note_2: &quot;감사 로그 조회 권한 검증\npermission == audit_read\n결제 상태를 변경하지 않는 읽기 전용 API&quot;
+  server.note_3: &quot;감사 로그 페이지 조회\noperator_audits sorted by created_at desc&quot;
+  server -&gt; admin: |md
+감사 로그 목록 반환
+
+items[], page.nextCursor, hasMore
+| {
+    style.stroke: &quot;#334155&quot;
+    style.font-color: &quot;#334155&quot;
+    style.font-size: 18
+    style.italic: false
+  }
+  admin -&gt; server: |md
+감사 로그 상세 조회
+
+**GET /admin/operator-audits/{auditId}**
+
+auditId 선택
+| {
+    style.stroke: &quot;#1c7c66&quot;
+    style.font-color: &quot;#334155&quot;
+    style.font-size: 18
+    style.italic: false
+  }
+  server.note_6: &quot;변경 전후 상태 조회\nprevious_state, next_state, reason, request metadata\n민감한 provider 원문이나 secret은 포함하지 않음&quot;
+  server -&gt; admin: |md
+감사 로그 상세 반환
+
+audit detail
+| {
+    style.stroke: &quot;#334155&quot;
+    style.font-color: &quot;#334155&quot;
+    style.font-size: 18
+    style.italic: false
+  }
+}
+</code></pre>
+  </details>
+</div></div>
+</section>
+  
+</main>
 <script>
 (() => {
   const input = document.querySelector("[data-doc-search]");

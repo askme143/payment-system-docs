@@ -762,8 +762,8 @@
   <div class="grid"><article class="card">
   <span class="status status-available">available</span>
   <h4><a href="./admin-product-management-sequence.html">어드민 상품 관리 플로우</a></h4>
-  <p>관리자가 공통 Product를 만들고, 구독상품은 구독 플랜으로, 일반상품은 단건 구매 SKU로 분리해 판매 조건과 상태를 관리하는 흐름입니다.</p>
-  <ul><li><code>POST /admin/products</code></li><li><code>POST /admin/products/{productId}/subscription-plans</code></li><li><code>PATCH /admin/products/{productId}/subscription-plans/{planId}</code></li><li><code>POST /admin/products/{productId}/one-time-skus</code></li><li><code>PATCH /admin/products/{productId}/one-time-skus/{skuId}</code></li><li><code>PATCH /admin/products/{productId}/status</code></li></ul>
+  <p>관리자가 상품 목록과 상세를 조회하고, 공통 Product, 구독 플랜, 일반결제 SKU의 판매 조건과 상태를 관리하는 흐름입니다.</p>
+  <ul><li><code>GET /admin/products</code></li><li><code>GET /admin/products/{productId}</code></li><li><code>POST /admin/products</code></li><li><code>POST /admin/products/{productId}/subscription-plans</code></li><li><code>PATCH /admin/products/{productId}/subscription-plans/{planId}</code></li><li><code>POST /admin/products/{productId}/one-time-skus</code></li><li><code>PATCH /admin/products/{productId}/one-time-skus/{skuId}</code></li><li><code>PATCH /admin/products/{productId}/status</code></li></ul>
 </article><article class="card">
   <span class="status status-available">available</span>
   <h4><a href="./admin-auth-sequence.html">어드민 이메일 링크 인증 플로우</a></h4>
@@ -774,6 +774,16 @@
   <h4><a href="./admin-subscription-adjustment-sequence.html">운영자 구독 수동 보정</a></h4>
   <p>관리자가 토스 결제 성공 누락, 웹훅 처리 실패, CS 예외, 재시도 실패 후 별도 결제, 마이그레이션 오류를 감사 가능한 API로 보정하는 흐름입니다.</p>
   <ul><li><code>GET /admin/subscriptions</code></li><li><code>POST /admin/subscriptions/{subscriptionId}/adjust</code></li></ul>
+</article><article class="card">
+  <span class="status status-available">available</span>
+  <h4><a href="./scheduler-operations-sequence.html">스케쥴러 운영 플로우</a></h4>
+  <p>Kubernetes CronJob이 같은 payments 이미지를 1회 실행하고, 어드민 콘솔이 스케쥴러 실행 이력 조회와 수동 실행을 제공하는 흐름입니다.</p>
+  <ul><li><code>GET /admin/scheduler-runs</code></li><li><code>GET /admin/scheduler-runs/{runId}</code></li><li><code>POST /admin/scheduler-runs</code></li></ul>
+</article><article class="card">
+  <span class="status status-available">available</span>
+  <h4><a href="./admin-audit-sequence.html">어드민 감사 로그 조회 플로우</a></h4>
+  <p>운영자가 결제 취소, 구독 보정, 상품 변경, 수동 배치 실행의 변경 전후 상태와 실행 주체를 조회하는 흐름입니다.</p>
+  <ul><li><code>GET /admin/operator-audits</code></li><li><code>GET /admin/operator-audits/{auditId}</code></li></ul>
 </article></div>
 </div>
   </section>

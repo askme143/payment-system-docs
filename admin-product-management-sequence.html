@@ -664,7 +664,7 @@
     <div class="wrap">
     <p class="eyebrow">Sequence Diagram</p>
     <h1>어드민 상품 관리 플로우</h1>
-    <p class="lead">관리자가 공통 Product를 만들고, 구독상품은 구독 플랜으로, 일반상품은 단건 구매 SKU로 분리해 판매 조건과 상태를 관리하는 흐름입니다.</p>
+    <p class="lead">관리자가 상품 목록과 상세를 조회하고, 공통 Product, 구독 플랜, 일반결제 SKU의 판매 조건과 상태를 관리하는 흐름입니다.</p>
     <div class="search-panel">
       <input type="search" data-doc-search aria-label="문서 검색" placeholder="API, 상태, 컬렉션, 플로우 검색">
     </div>
@@ -675,10 +675,80 @@
 <main class="wrap" id="content">
   <section>
     <h2>사용 API</h2>
-    <div class="grid"><div class="box"><a href="./all-api-doc.html#admin-products-create"><code>POST /admin/products</code></a><p>관리자가 공통 Product를 생성하고 구독상품 또는 일반상품 타입을 지정합니다.</p></div><div class="box"><a href="./all-api-doc.html#admin-subscription-plans-create"><code>POST /admin/products/{productId}/subscription-plans</code></a><p>구독상품에 월간, 연간 같은 구독 플랜을 추가합니다.</p></div><div class="box"><a href="./all-api-doc.html#admin-subscription-plans-update"><code>PATCH /admin/products/{productId}/subscription-plans/{planId}</code></a><p>구독 플랜의 표시 정보, 판매 상태, 신규 가입 가격 정책을 수정합니다.</p></div><div class="box"><a href="./all-api-doc.html#admin-one-time-skus-create"><code>POST /admin/products/{productId}/one-time-skus</code></a><p>일반상품에 단건 구매용 SKU와 판매 가격, 재고 정책을 추가합니다.</p></div><div class="box"><a href="./all-api-doc.html#admin-one-time-skus-update"><code>PATCH /admin/products/{productId}/one-time-skus/{skuId}</code></a><p>일반상품 SKU의 가격, 재고 정책, 판매 상태를 수정합니다.</p></div><div class="box"><a href="./all-api-doc.html#admin-products-status"><code>PATCH /admin/products/{productId}/status</code></a><p>상품을 초안, 판매중, 판매중지, 아카이브 상태로 전환합니다.</p></div></div>
+    <div class="grid"><div class="box"><a href="./all-api-doc.html#admin-products-list"><code>GET /admin/products</code></a><p>관리자가 상품, 구독 플랜, 일반 SKU의 운영 목록을 조회합니다.</p></div><div class="box"><a href="./all-api-doc.html#admin-products-detail"><code>GET /admin/products/{productId}</code></a><p>관리자가 특정 상품의 플랜, SKU, 최근 변경 이력을 조회합니다.</p></div><div class="box"><a href="./all-api-doc.html#admin-products-create"><code>POST /admin/products</code></a><p>관리자가 공통 Product를 생성하고 구독상품 또는 일반상품 타입을 지정합니다.</p></div><div class="box"><a href="./all-api-doc.html#admin-subscription-plans-create"><code>POST /admin/products/{productId}/subscription-plans</code></a><p>구독상품에 월간, 연간 같은 구독 플랜을 추가합니다.</p></div><div class="box"><a href="./all-api-doc.html#admin-subscription-plans-update"><code>PATCH /admin/products/{productId}/subscription-plans/{planId}</code></a><p>구독 플랜의 표시 정보, 판매 상태, 신규 가입 가격 정책을 수정합니다.</p></div><div class="box"><a href="./all-api-doc.html#admin-one-time-skus-create"><code>POST /admin/products/{productId}/one-time-skus</code></a><p>일반상품에 단건 구매용 SKU와 판매 가격, 재고 정책을 추가합니다.</p></div><div class="box"><a href="./all-api-doc.html#admin-one-time-skus-update"><code>PATCH /admin/products/{productId}/one-time-skus/{skuId}</code></a><p>일반상품 SKU의 가격, 재고 정책, 판매 상태를 수정합니다.</p></div><div class="box"><a href="./all-api-doc.html#admin-products-status"><code>PATCH /admin/products/{productId}/status</code></a><p>상품을 초안, 판매중, 판매중지, 아카이브 상태로 전환합니다.</p></div></div>
   </section>
   
-  <section id="subscription-product">
+  <section id="product-list-detail">
+  <h2>상품 목록 및 상세 조회</h2>
+  
+  <div class="diagram"><div class="d2-diagram">
+  <div class="d2-toolbar"><a href="diagrams/admin-product-management-product-list-detail.d2">D2 원본</a></div>
+  <img class="d2-svg" src="diagrams/admin-product-management-product-list-detail.svg" alt="상품 목록 및 상세 조회">
+  <details class="d2-details">
+    <summary>D2 원본 보기</summary>
+    <pre class="d2-source"><code>diagram: {
+  shape: sequence_diagram
+  label: &quot;상품 목록 및 상세 조회&quot;
+
+  admin: &quot;관리자&quot;
+  admin.style.fill: &quot;#f1f5f9&quot;
+  admin.style.stroke: &quot;#334155&quot;
+  server: &quot;우리 서버&quot;
+  server.style.fill: &quot;#eaf8f3&quot;
+  server.style.stroke: &quot;#1c7c66&quot;
+
+  admin -&gt; server: |md
+상품 관리 목록 조회
+
+**GET /admin/products**
+
+productType, status, keyword, cursor, limit
+| {
+    style.stroke: &quot;#1c7c66&quot;
+    style.font-color: &quot;#334155&quot;
+    style.font-size: 18
+    style.italic: false
+  }
+  server.note_2: &quot;관리자 권한과 필터 검증\npermission in product_read/product_manage\n공개 GET /plans와 달리 draft, paused, archived도 조회 가능&quot;
+  server.note_3: &quot;상품과 하위 판매 단위 요약 집계\nproducts + subscription_plans + one_time_skus\n상품별 전체/active 플랜 및 SKU 개수 계산&quot;
+  server -&gt; admin: |md
+상품 목록 HTML 화면용 JSON 반환
+
+items[], page.nextCursor, hasMore
+| {
+    style.stroke: &quot;#334155&quot;
+    style.font-color: &quot;#334155&quot;
+    style.font-size: 18
+    style.italic: false
+  }
+  admin -&gt; server: |md
+상품 상세 조회
+
+**GET /admin/products/{productId}**
+
+productId 선택
+| {
+    style.stroke: &quot;#1c7c66&quot;
+    style.font-color: &quot;#334155&quot;
+    style.font-size: 18
+    style.italic: false
+  }
+  server.note_6: &quot;상품 상세와 최근 감사 로그 조회\nproduct, plans, skus, recentAudits\n운영자가 변경 전후 이력을 확인하고 수정 액션으로 진입&quot;
+  server -&gt; admin: |md
+상품 상세 JSON 반환
+
+product, subscriptionPlans, oneTimeSkus, recentAudits
+| {
+    style.stroke: &quot;#334155&quot;
+    style.font-color: &quot;#334155&quot;
+    style.font-size: 18
+    style.italic: false
+  }
+}
+</code></pre>
+  </details>
+</div></div>
+</section><section id="subscription-product">
   <h2>구독상품 생성 및 플랜 구성</h2>
   <p>공통 Product를 subscription 타입으로 만든 뒤 월간, 연간, Basic, Pro 같은 구독 플랜을 추가하고 판매 상태를 전환합니다.</p>
   <div class="diagram"><div class="d2-diagram">

@@ -470,6 +470,76 @@
       "detailAnchor": "admin-subscription-adjust"
     },
     {
+      "id": "admin-scheduler-runs-list",
+      "categoryId": "admin",
+      "method": "GET",
+      "path": "/admin/scheduler-runs",
+      "role": "운영자가 스케쥴러 실행 이력을 검색합니다.",
+      "visibility": "admin",
+      "detailStatus": "available",
+      "detailAnchor": "admin-scheduler-runs-list"
+    },
+    {
+      "id": "admin-scheduler-runs-detail",
+      "categoryId": "admin",
+      "method": "GET",
+      "path": "/admin/scheduler-runs/{runId}",
+      "role": "운영자가 특정 스케쥴러 실행의 상세 결과와 오류 요약을 조회합니다.",
+      "visibility": "admin",
+      "detailStatus": "available",
+      "detailAnchor": "admin-scheduler-runs-detail"
+    },
+    {
+      "id": "admin-scheduler-runs-create",
+      "categoryId": "admin",
+      "method": "POST",
+      "path": "/admin/scheduler-runs",
+      "role": "운영자가 어드민 콘솔에서 스케쥴러 작업을 수동 실행합니다.",
+      "visibility": "admin",
+      "detailStatus": "available",
+      "detailAnchor": "admin-scheduler-runs-create"
+    },
+    {
+      "id": "admin-operator-audits-list",
+      "categoryId": "admin",
+      "method": "GET",
+      "path": "/admin/operator-audits",
+      "role": "운영자가 결제 운영 액션의 감사 로그를 검색합니다.",
+      "visibility": "admin",
+      "detailStatus": "available",
+      "detailAnchor": "admin-operator-audits-list"
+    },
+    {
+      "id": "admin-operator-audits-detail",
+      "categoryId": "admin",
+      "method": "GET",
+      "path": "/admin/operator-audits/{auditId}",
+      "role": "운영자가 특정 감사 로그의 변경 전후 상태를 조회합니다.",
+      "visibility": "admin",
+      "detailStatus": "available",
+      "detailAnchor": "admin-operator-audits-detail"
+    },
+    {
+      "id": "admin-products-list",
+      "categoryId": "admin",
+      "method": "GET",
+      "path": "/admin/products",
+      "role": "관리자가 상품, 구독 플랜, 일반 SKU의 운영 목록을 조회합니다.",
+      "visibility": "admin",
+      "detailStatus": "available",
+      "detailAnchor": "admin-products-list"
+    },
+    {
+      "id": "admin-products-detail",
+      "categoryId": "admin",
+      "method": "GET",
+      "path": "/admin/products/{productId}",
+      "role": "관리자가 특정 상품의 플랜, SKU, 최근 변경 이력을 조회합니다.",
+      "visibility": "admin",
+      "detailStatus": "available",
+      "detailAnchor": "admin-products-detail"
+    },
+    {
       "id": "admin-products-create",
       "categoryId": "admin",
       "method": "POST",
@@ -2808,11 +2878,6 @@
             "name": "Idempotency-Key",
             "required": false,
             "description": "동일 날짜 배치가 중복 실행될 때 이미 처리한 invoice 또는 subscription을 재처리하지 않도록 사용합니다."
-          },
-          {
-            "name": "Idempotency-Key",
-            "required": false,
-            "description": "동일 날짜 배치가 중복 실행될 때 이미 처리한 invoice 또는 subscription을 재처리하지 않도록 사용합니다."
           }
         ],
         "cookies": [],
@@ -2882,7 +2947,8 @@
         "결제 성공 이메일에는 결제 금액, 결제일, invoiceId, receiptUrl을 포함해 발송 큐에 넣습니다.",
         "결제 실패 시 payment.status=failed, 실패 사유, 재시도 플로우가 읽을 수 있는 retry_scheduled_at을 저장합니다.",
         "결제 실패 이메일에는 재시도 일자, 결제수단 수정 링크, 해지 처리 안내 중 실제 분기에 맞는 값을 포함해 발송 큐에 넣습니다.",
-        "처리 건수, 성공, 실패, 제외 건수를 운영 로그와 모니터링 지표에 남깁니다."
+        "처리 건수, 성공, 실패, 제외 건수를 운영 로그와 모니터링 지표에 남깁니다.",
+        "실행 시작, 성공, 실패 요약을 scheduler_run_logs에 저장해 Kubernetes CronJob과 내부 수동 실행을 같은 기준으로 진단할 수 있게 합니다."
       ],
       "externalCalls": [
         {
@@ -2896,7 +2962,8 @@
         "이 API는 내부 API이므로 일반 회원 프론트에서 직접 호출하지 않습니다.",
         "한 회원이 여러 상품 구독을 동시에 보유해도 구독별 invoice와 payment를 분리해 생성하고, 결제수단은 회원 공통 기본 결제수단 하나를 사용합니다.",
         "해지 예약된 구독은 기간 종료 전까지 권한은 유지하지만 다음 결제 대상에서는 제외됩니다.",
-        "dryRun=true인 경우 토스 결제 승인과 이메일 발송 요청을 만들지 않고 대상 건수와 예상 payload만 반환합니다."
+        "dryRun=true인 경우 토스 결제 승인과 이메일 발송 요청을 만들지 않고 대상 건수와 예상 payload만 반환합니다.",
+        "Kubernetes CronJob은 이 HTTP API를 호출하지 않고 scheduler runner를 직접 실행하지만, 두 경로 모두 동일한 application job과 scheduler_run_logs 기록 규칙을 사용합니다."
       ],
       "riskIds": [
         "provider-paid-internal-unpaid",
@@ -2919,11 +2986,6 @@
             "name": "Internal-Job-Token",
             "required": true,
             "description": "스케줄러 또는 내부 운영 도구 호출을 인증하는 토큰입니다."
-          },
-          {
-            "name": "Idempotency-Key",
-            "required": true,
-            "description": "같은 인보이스 재시도 요청이 중복 승인되지 않도록 사용합니다."
           },
           {
             "name": "Idempotency-Key",
@@ -4590,6 +4652,680 @@
       "notes": [
         "링크 클릭만으로 서버 상태를 변경하지 않도록 어드민 콘솔이 토큰을 읽은 뒤 POST로 확정합니다.",
         "로그인 링크 토큰은 단일 사용이며 짧은 TTL을 둡니다."
+      ]
+    },
+    "admin-scheduler-runs-list": {
+      "summary": "어드민 콘솔의 스케쥴러 화면에서 Kubernetes CronJob, CLI, 내부 API, 운영자 수동 실행의 최근 실행 이력을 검색하는 관리자 API입니다.",
+      "request": {
+        "headers": [
+          {
+            "name": "Authorization",
+            "required": true,
+            "description": "어드민 로그인 API에서 발급한 관리자 액세스 토큰입니다. 서버는 토큰 subject, roles, permissions로 운영 권한을 검증합니다."
+          },
+          {
+            "name": "X-Request-Id",
+            "required": true,
+            "description": "어드민 콘솔 또는 서버가 생성하는 요청 추적 ID입니다."
+          }
+        ],
+        "cookies": []
+      },
+      "frontendInputs": [
+        {
+          "name": "jobType",
+          "source": "query",
+          "description": "billing, reminder, cancel_expiration 중 하나 이상으로 필터링합니다."
+        },
+        {
+          "name": "status",
+          "source": "query",
+          "description": "running, succeeded, failed, canceled 중 하나 이상으로 필터링합니다."
+        },
+        {
+          "name": "triggerSource",
+          "source": "query",
+          "description": "kubernetes_cronjob, admin_manual, internal_api, cli 중 실행 출처를 필터링합니다."
+        },
+        {
+          "name": "workerId",
+          "source": "query",
+          "description": "특정 CronJob pod 또는 실행자 식별자로 조회합니다."
+        },
+        {
+          "name": "from, to",
+          "source": "query",
+          "description": "startedAt 기준 조회 범위입니다."
+        },
+        {
+          "name": "cursor, limit",
+          "source": "query",
+          "description": "커서 기반 페이지네이션 값입니다. limit 기본값은 50, 최대값은 100입니다."
+        }
+      ],
+      "responses": [
+        {
+          "status": 200,
+          "description": "스케쥴러 실행 이력 조회 성공",
+          "bodyExample": {
+            "items": [
+              {
+                "runId": "srun_20260612_001",
+                "jobType": "billing",
+                "status": "succeeded",
+                "triggerSource": "kubernetes_cronjob",
+                "workerId": "payments-billing-28697120-x7m9d",
+                "batchSize": 100,
+                "billingDate": "2026-06-12",
+                "dryRun": false,
+                "startedAt": "2026-06-12T00:00:00+09:00",
+                "finishedAt": "2026-06-12T00:00:11+09:00",
+                "durationMs": 11025,
+                "summary": {
+                  "selected": 98,
+                  "processed": 98,
+                  "paid": 95,
+                  "failed": 2,
+                  "skipped": 1
+                },
+                "operatorAuditId": null
+              }
+            ],
+            "page": {
+              "nextCursor": null,
+              "hasMore": false
+            }
+          }
+        },
+        {
+          "status": 400,
+          "description": "필터, 기간, 페이지네이션 값이 유효하지 않은 요청"
+        },
+        {
+          "status": 401,
+          "description": "관리자 액세스 토큰이 없거나 만료 또는 위조된 요청"
+        },
+        {
+          "status": 403,
+          "description": "스케쥴러 실행 이력 조회 권한이 없는 관리자 계정"
+        }
+      ],
+      "logic": [
+        "관리자 액세스 토큰의 subject와 권한 클레임으로 scheduler_read 또는 scheduler_run 권한을 확인합니다.",
+        "jobType, status, triggerSource, workerId, 기간, cursor, limit 쿼리 파라미터를 검증합니다.",
+        "scheduler_run_logs를 started_at 내림차순, runId 내림차순으로 안정 정렬하고 커서 기반 페이지네이션을 적용합니다.",
+        "목록 응답에는 실행 요약, 실행 시간, 실패 건수, 운영자 수동 실행 여부와 operatorAuditId만 포함하고 상세 오류 payload는 상세 API에서 조회합니다.",
+        "조회 조건과 관리자 ID, 요청 IP를 접근 로그에 남기며 이 조회 자체는 결제 상태를 변경하지 않습니다."
+      ],
+      "notes": [
+        "스케쥴러 실행 이력은 운영 진단용 데이터이며 결제 원장이나 감사 로그를 대체하지 않습니다.",
+        "Kubernetes CronJob 실행은 HTTP API 호출 없이 scheduler runner가 직접 application job을 실행하지만, 실행 결과는 같은 scheduler_run_logs 컬렉션에 저장합니다."
+      ],
+      "riskIds": [
+        "recurring-billing-duplicate-run"
+      ]
+    },
+    "admin-scheduler-runs-detail": {
+      "summary": "특정 스케쥴러 실행의 입력 옵션, 실행 요약, 오류 요약, 연결된 operatorAuditId를 조회하는 관리자 API입니다.",
+      "request": {
+        "headers": [
+          {
+            "name": "Authorization",
+            "required": true,
+            "description": "어드민 로그인 API에서 발급한 관리자 액세스 토큰입니다. 서버는 토큰 subject, roles, permissions로 운영 권한을 검증합니다."
+          },
+          {
+            "name": "X-Request-Id",
+            "required": true,
+            "description": "어드민 콘솔 또는 서버가 생성하는 요청 추적 ID입니다."
+          }
+        ],
+        "cookies": []
+      },
+      "frontendInputs": [
+        {
+          "name": "runId",
+          "source": "path",
+          "description": "조회할 scheduler_run_logs 문서의 식별자입니다."
+        }
+      ],
+      "responses": [
+        {
+          "status": 200,
+          "description": "스케쥴러 실행 상세 조회 성공",
+          "bodyExample": {
+            "runId": "srun_20260612_001",
+            "jobType": "billing",
+            "status": "failed",
+            "triggerSource": "admin_manual",
+            "workerId": "admin_123:req_abc",
+            "batchSize": 100,
+            "billingDate": "2026-06-12",
+            "dryRun": false,
+            "startedAt": "2026-06-12T09:20:00+09:00",
+            "finishedAt": "2026-06-12T09:20:07+09:00",
+            "durationMs": 7021,
+            "summary": {
+              "selected": 10,
+              "processed": 8,
+              "paid": 7,
+              "failed": 1,
+              "skipped": 2
+            },
+            "error": {
+              "code": "PROVIDER_TIMEOUT",
+              "message": "일부 결제 승인 요청이 제한 시간 안에 완료되지 않았습니다.",
+              "retryable": true
+            },
+            "idempotencyKeyId": "idem_123",
+            "operatorAuditId": "audit_20260612_001",
+            "requestId": "req_admin_scheduler_run",
+            "exitCode": 1,
+            "metadata": {
+              "cronJobName": "payments-subscription-billing"
+            }
+          }
+        },
+        {
+          "status": 401,
+          "description": "관리자 액세스 토큰이 없거나 만료 또는 위조된 요청"
+        },
+        {
+          "status": 403,
+          "description": "스케쥴러 실행 이력 조회 권한이 없는 관리자 계정"
+        },
+        {
+          "status": 404,
+          "description": "존재하지 않는 스케쥴러 실행 이력"
+        }
+      ],
+      "logic": [
+        "관리자 액세스 토큰의 subject와 권한 클레임으로 scheduler_read 또는 scheduler_run 권한을 확인합니다.",
+        "runId로 scheduler_run_logs를 조회하고 없으면 404를 반환합니다.",
+        "실행 입력 옵션, startedAt/finishedAt, durationMs, summary, error, exitCode, operatorAuditId, requestId를 반환합니다.",
+        "provider credential, billingKey, 카드 전체 번호, 원본 provider 응답처럼 민감한 값은 metadata나 error에 포함하지 않습니다."
+      ],
+      "notes": [
+        "상세 응답의 error는 운영자가 재실행 여부를 판단할 수 있는 요약이며 원본 예외 stack trace를 그대로 반환하지 않습니다."
+      ],
+      "riskIds": [
+        "recurring-billing-duplicate-run"
+      ]
+    },
+    "admin-scheduler-runs-create": {
+      "summary": "운영자가 어드민 콘솔에서 정기결제, 사전 알림, 해지 예약 만료 작업을 수동 실행하는 관리자 API입니다. 실행 결과는 scheduler_run_logs에 남기고 운영자 수동 실행 사실은 operator_audits에 남깁니다.",
+      "request": {
+        "headers": [
+          {
+            "name": "Content-Type",
+            "required": true,
+            "description": "application/json"
+          },
+          {
+            "name": "Authorization",
+            "required": true,
+            "description": "어드민 로그인 API에서 발급한 관리자 액세스 토큰입니다. 서버는 토큰 subject, roles, permissions로 운영 권한을 검증합니다."
+          },
+          {
+            "name": "X-Request-Id",
+            "required": true,
+            "description": "어드민 콘솔 또는 서버가 생성하는 요청 추적 ID입니다."
+          },
+          {
+            "name": "Idempotency-Key",
+            "required": true,
+            "description": "같은 수동 실행 요청이 중복 처리되지 않도록 사용하는 멱등 키입니다."
+          }
+        ],
+        "cookies": [],
+        "bodyFields": [
+          {
+            "name": "jobType",
+            "required": true,
+            "description": "billing, reminder, cancel_expiration 중 하나입니다."
+          },
+          {
+            "name": "billingDate",
+            "required": false,
+            "description": "billing 또는 reminder 기준일입니다. 생략하면 서버의 오늘 날짜를 사용합니다."
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "description": "한 번에 처리할 최대 대상 수입니다. 기본값은 100, 최대값은 500입니다."
+          },
+          {
+            "name": "dryRun",
+            "required": false,
+            "description": "true이면 provider 승인과 상태 변경 없이 대상 선정과 검증만 수행합니다."
+          },
+          {
+            "name": "reason",
+            "required": true,
+            "description": "운영자가 수동 실행하는 사유입니다. operator_audits.reason_message에 저장합니다."
+          }
+        ],
+        "bodyExample": {
+          "jobType": "billing",
+          "billingDate": "2026-06-12",
+          "limit": 100,
+          "dryRun": false,
+          "reason": "CronJob 실패 후 운영자 재실행"
+        }
+      },
+      "responses": [
+        {
+          "status": 201,
+          "description": "수동 스케쥴러 실행 완료",
+          "bodyExample": {
+            "runId": "srun_20260612_manual_001",
+            "jobType": "billing",
+            "status": "succeeded",
+            "triggerSource": "admin_manual",
+            "summary": {
+              "selected": 12,
+              "processed": 12,
+              "paid": 11,
+              "failed": 1,
+              "skipped": 0
+            },
+            "operatorAuditId": "audit_20260612_001"
+          }
+        },
+        {
+          "status": 400,
+          "description": "jobType, 날짜, limit, reason이 유효하지 않은 요청"
+        },
+        {
+          "status": 401,
+          "description": "관리자 액세스 토큰이 없거나 만료 또는 위조된 요청"
+        },
+        {
+          "status": 403,
+          "description": "스케쥴러 수동 실행 권한이 없는 관리자 계정"
+        },
+        {
+          "status": 409,
+          "description": "동일 작업이 이미 실행 중이거나 같은 Idempotency-Key가 다른 payload에 사용된 요청"
+        }
+      ],
+      "logic": [
+        "관리자 액세스 토큰의 subject와 권한 클레임으로 scheduler_run 권한을 확인합니다.",
+        "Idempotency-Key와 요청 payload hash를 검증해 같은 수동 실행 요청을 멱등하게 처리합니다.",
+        "scheduler_run_logs에 status=running, trigger_source=admin_manual, worker_id=adminId:requestId로 시작 기록을 저장합니다.",
+        "jobType=billing 또는 reminder이면 기존 정기결제 application job을 호출하고, jobType=cancel_expiration이면 해지 예약 만료 job을 호출합니다.",
+        "job 실행은 operation_locks로 job 단위 중복 실행을 막고, 각 결제 회차는 application job의 기존 멱등성 규칙을 따릅니다.",
+        "성공 시 scheduler_run_logs를 succeeded로 갱신하고 summary, finished_at, duration_ms, exit_code=0을 저장합니다.",
+        "실패 시 scheduler_run_logs를 failed로 갱신하고 error.code, error.message, retryable, exit_code를 저장한 뒤 안정적인 오류 응답으로 변환합니다.",
+        "수동 실행 요청과 결과를 operator_audits에 action=scheduler.run_manual로 저장하고 runId를 next_state에 포함합니다."
+      ],
+      "failureRules": [
+        {
+          "code": "SCHEDULER_RUN_ALREADY_RUNNING",
+          "httpStatus": 409,
+          "description": "동일 jobType과 기준일의 실행 잠금이 이미 선점된 경우입니다.",
+          "retryable": true
+        },
+        {
+          "code": "SCHEDULER_RUN_IDEMPOTENCY_CONFLICT",
+          "httpStatus": 409,
+          "description": "같은 Idempotency-Key가 다른 수동 실행 payload에 사용된 경우입니다.",
+          "retryable": false
+        }
+      ],
+      "notes": [
+        "운영 메인 실행 경로는 Kubernetes CronJob runner이며 이 API는 운영자 수동 실행을 위한 보조 경로입니다.",
+        "dryRun=true 실행도 scheduler_run_logs와 operator_audits에 남겨 실제 변경이 없었다는 점을 추적합니다."
+      ],
+      "riskIds": [
+        "recurring-billing-duplicate-run",
+        "idempotency-store-missing",
+        "cancel-scheduled-billing-race"
+      ]
+    },
+    "admin-operator-audits-list": {
+      "summary": "운영자가 결제 취소, 구독 보정, 상품 변경, 스케쥴러 수동 실행 같은 운영 액션의 감사 로그를 검색하는 관리자 API입니다.",
+      "request": {
+        "headers": [
+          {
+            "name": "Authorization",
+            "required": true,
+            "description": "어드민 로그인 API에서 발급한 관리자 액세스 토큰입니다. 서버는 토큰 subject, roles, permissions로 운영 권한을 검증합니다."
+          },
+          {
+            "name": "X-Request-Id",
+            "required": true,
+            "description": "어드민 콘솔 또는 서버가 생성하는 요청 추적 ID입니다."
+          }
+        ],
+        "cookies": []
+      },
+      "frontendInputs": [
+        {
+          "name": "operatorId",
+          "source": "query",
+          "description": "특정 운영자 또는 system:* 실행 주체로 필터링합니다."
+        },
+        {
+          "name": "action",
+          "source": "query",
+          "description": "payment.cancel, subscription.adjust, product.status_change, scheduler.run_manual 같은 작업 코드입니다."
+        },
+        {
+          "name": "targetType",
+          "source": "query",
+          "description": "payment, subscription, product, scheduler_run 같은 대상 유형입니다."
+        },
+        {
+          "name": "targetId",
+          "source": "query",
+          "description": "변경 대상 리소스 식별자입니다."
+        },
+        {
+          "name": "result",
+          "source": "query",
+          "description": "succeeded, failed, rejected 중 하나 이상으로 필터링합니다."
+        },
+        {
+          "name": "from, to",
+          "source": "query",
+          "description": "createdAt 기준 조회 범위입니다."
+        },
+        {
+          "name": "cursor, limit",
+          "source": "query",
+          "description": "커서 기반 페이지네이션 값입니다. limit 기본값은 50, 최대값은 100입니다."
+        }
+      ],
+      "responses": [
+        {
+          "status": 200,
+          "description": "운영자 감사 로그 목록 조회 성공",
+          "bodyExample": {
+            "items": [
+              {
+                "auditId": "audit_20260612_001",
+                "operatorId": "admin_123",
+                "action": "scheduler.run_manual",
+                "targetType": "scheduler_run",
+                "targetId": "srun_20260612_manual_001",
+                "result": "succeeded",
+                "reasonCode": "manual_retry_after_cron_failure",
+                "createdAt": "2026-06-12T09:20:07+09:00"
+              }
+            ],
+            "page": {
+              "nextCursor": null,
+              "hasMore": false
+            }
+          }
+        },
+        {
+          "status": 400,
+          "description": "필터, 기간, 페이지네이션 값이 유효하지 않은 요청"
+        },
+        {
+          "status": 401,
+          "description": "관리자 액세스 토큰이 없거나 만료 또는 위조된 요청"
+        },
+        {
+          "status": 403,
+          "description": "감사 로그 조회 권한이 없는 관리자 계정"
+        }
+      ],
+      "logic": [
+        "관리자 액세스 토큰의 subject와 권한 클레임으로 audit_read 권한을 확인합니다.",
+        "operatorId, action, targetType, targetId, result, 기간, cursor, limit 쿼리 파라미터를 검증합니다.",
+        "operator_audits를 created_at 내림차순, auditId 내림차순으로 안정 정렬하고 커서 기반 페이지네이션을 적용합니다.",
+        "목록 응답에는 변경 전후 전체 state가 아니라 작업 코드, 대상, 결과, 사유 코드, 생성 시각 요약만 반환합니다.",
+        "감사 로그 조회 자체도 접근 로그에 남기며 operator_audits 문서를 수정하지 않습니다."
+      ],
+      "notes": [
+        "previousState와 nextState 전체 payload는 상세 API에서만 반환해 목록 화면의 과도한 민감 정보 노출을 줄입니다."
+      ]
+    },
+    "admin-operator-audits-detail": {
+      "summary": "특정 운영자 감사 로그의 변경 전 상태, 변경 후 상태, 사유, 요청 메타데이터를 조회하는 관리자 API입니다.",
+      "request": {
+        "headers": [
+          {
+            "name": "Authorization",
+            "required": true,
+            "description": "어드민 로그인 API에서 발급한 관리자 액세스 토큰입니다. 서버는 토큰 subject, roles, permissions로 운영 권한을 검증합니다."
+          },
+          {
+            "name": "X-Request-Id",
+            "required": true,
+            "description": "어드민 콘솔 또는 서버가 생성하는 요청 추적 ID입니다."
+          }
+        ],
+        "cookies": []
+      },
+      "frontendInputs": [
+        {
+          "name": "auditId",
+          "source": "path",
+          "description": "조회할 operator_audits 문서의 식별자입니다."
+        }
+      ],
+      "responses": [
+        {
+          "status": 200,
+          "description": "운영자 감사 로그 상세 조회 성공",
+          "bodyExample": {
+            "auditId": "audit_20260612_001",
+            "operatorId": "admin_123",
+            "action": "scheduler.run_manual",
+            "targetType": "scheduler_run",
+            "targetId": "srun_20260612_manual_001",
+            "previousState": {
+              "status": null
+            },
+            "nextState": {
+              "status": "succeeded",
+              "jobType": "billing",
+              "runId": "srun_20260612_manual_001"
+            },
+            "reasonCode": "manual_retry_after_cron_failure",
+            "reasonMessage": "CronJob 실패 후 운영자 재실행",
+            "result": "succeeded",
+            "requestIp": "203.0.113.10",
+            "idempotencyScope": "admin-scheduler-run",
+            "createdAt": "2026-06-12T09:20:07+09:00"
+          }
+        },
+        {
+          "status": 401,
+          "description": "관리자 액세스 토큰이 없거나 만료 또는 위조된 요청"
+        },
+        {
+          "status": 403,
+          "description": "감사 로그 조회 권한이 없는 관리자 계정"
+        },
+        {
+          "status": 404,
+          "description": "존재하지 않는 감사 로그"
+        }
+      ],
+      "logic": [
+        "관리자 액세스 토큰의 subject와 권한 클레임으로 audit_read 권한을 확인합니다.",
+        "auditId로 operator_audits를 조회하고 없으면 404를 반환합니다.",
+        "previous_state, next_state, reason_code, reason_message, result, request_ip, idempotency 스냅샷을 반환합니다.",
+        "감사 로그에 저장되지 않은 카드 전체 번호, billingKey, provider secret 같은 민감 정보는 추가 조회하지 않습니다."
+      ],
+      "notes": [
+        "감사 로그 상세는 운영 책임 추적용이며 결제 상태를 보정하는 기능을 포함하지 않습니다."
+      ]
+    },
+    "admin-products-list": {
+      "summary": "관리자가 상품 관리 화면에서 공통 Product와 하위 구독 플랜 또는 일반 SKU 요약을 검색하는 관리자 API입니다. 공개 GET /plans와 달리 draft, paused, archived 상태와 운영용 카운터를 포함합니다.",
+      "request": {
+        "headers": [
+          {
+            "name": "Authorization",
+            "required": true,
+            "description": "어드민 로그인 API에서 발급한 관리자 액세스 토큰입니다. 서버는 토큰 subject, roles, permissions로 운영 권한을 검증합니다."
+          },
+          {
+            "name": "X-Request-Id",
+            "required": true,
+            "description": "어드민 콘솔 또는 서버가 생성하는 요청 추적 ID입니다."
+          }
+        ],
+        "cookies": []
+      },
+      "frontendInputs": [
+        {
+          "name": "productType",
+          "source": "query",
+          "description": "subscription 또는 one_time 상품만 조회합니다."
+        },
+        {
+          "name": "status",
+          "source": "query",
+          "description": "draft, active, paused, archived 중 하나 이상으로 필터링합니다."
+        },
+        {
+          "name": "keyword",
+          "source": "query",
+          "description": "productCode 또는 name 부분 검색어입니다."
+        },
+        {
+          "name": "cursor, limit",
+          "source": "query",
+          "description": "커서 기반 페이지네이션 값입니다. limit 기본값은 50, 최대값은 100입니다."
+        }
+      ],
+      "responses": [
+        {
+          "status": 200,
+          "description": "관리자 상품 목록 조회 성공",
+          "bodyExample": {
+            "items": [
+              {
+                "productId": "prod_analytics",
+                "productCode": "ANALYTICS",
+                "productType": "subscription",
+                "name": "Analytics",
+                "status": "active",
+                "subscriptionPlanCount": 2,
+                "activeSubscriptionPlanCount": 1,
+                "oneTimeSkuCount": 0,
+                "activeOneTimeSkuCount": 0,
+                "detailUrl": "/admin/console/products/prod_analytics"
+              }
+            ],
+            "page": {
+              "nextCursor": null,
+              "hasMore": false
+            }
+          }
+        },
+        {
+          "status": 400,
+          "description": "필터, 검색어, 페이지네이션 값이 유효하지 않은 요청"
+        },
+        {
+          "status": 401,
+          "description": "관리자 액세스 토큰이 없거나 만료 또는 위조된 요청"
+        },
+        {
+          "status": 403,
+          "description": "상품 조회 권한이 없는 관리자 계정"
+        }
+      ],
+      "logic": [
+        "관리자 액세스 토큰의 subject와 권한 클레임으로 product_read 또는 product_manage 권한을 확인합니다.",
+        "productType, status, keyword, cursor, limit 쿼리 파라미터를 검증합니다.",
+        "products를 product_code 오름차순, productId 오름차순으로 안정 정렬하고 커서 기반 페이지네이션을 적용합니다.",
+        "각 상품별 subscription_plans와 one_time_skus의 전체/active 개수를 집계해 운영 목록 요약을 구성합니다.",
+        "공개 판매 목록이 아니므로 draft, paused, archived 상품도 권한이 있는 관리자에게 반환합니다.",
+        "가격 변경 이력이나 감사 로그 상세는 상품 상세 API 또는 감사 로그 API에서 별도로 조회합니다."
+      ],
+      "notes": [
+        "GET /plans는 고객 구매 화면용 공개 목록이고, 이 API는 운영자가 모든 판매 상태를 보는 관리자 목록입니다."
+      ]
+    },
+    "admin-products-detail": {
+      "summary": "관리자가 특정 Product의 공통 속성, 하위 구독 플랜, 일반 SKU, 최근 운영 감사 로그를 조회하는 관리자 API입니다.",
+      "request": {
+        "headers": [
+          {
+            "name": "Authorization",
+            "required": true,
+            "description": "어드민 로그인 API에서 발급한 관리자 액세스 토큰입니다. 서버는 토큰 subject, roles, permissions로 운영 권한을 검증합니다."
+          },
+          {
+            "name": "X-Request-Id",
+            "required": true,
+            "description": "어드민 콘솔 또는 서버가 생성하는 요청 추적 ID입니다."
+          }
+        ],
+        "cookies": []
+      },
+      "frontendInputs": [
+        {
+          "name": "productId",
+          "source": "path",
+          "description": "조회할 products 문서의 식별자입니다."
+        }
+      ],
+      "responses": [
+        {
+          "status": 200,
+          "description": "관리자 상품 상세 조회 성공",
+          "bodyExample": {
+            "product": {
+              "productId": "prod_analytics",
+              "productCode": "ANALYTICS",
+              "productType": "subscription",
+              "name": "Analytics",
+              "status": "active"
+            },
+            "subscriptionPlans": [
+              {
+                "planId": "plan_basic_monthly",
+                "planCode": "BASIC_MONTHLY",
+                "billingPeriod": "monthly",
+                "amount": 9900,
+                "currency": "KRW",
+                "status": "active"
+              }
+            ],
+            "oneTimeSkus": [],
+            "recentAudits": [
+              {
+                "auditId": "audit_20260608_0001",
+                "action": "product.status_change",
+                "operatorId": "admin_123",
+                "result": "succeeded",
+                "createdAt": "2026-06-08T10:00:00+09:00"
+              }
+            ]
+          }
+        },
+        {
+          "status": 401,
+          "description": "관리자 액세스 토큰이 없거나 만료 또는 위조된 요청"
+        },
+        {
+          "status": 403,
+          "description": "상품 조회 권한이 없는 관리자 계정"
+        },
+        {
+          "status": 404,
+          "description": "존재하지 않는 상품"
+        }
+      ],
+      "logic": [
+        "관리자 액세스 토큰의 subject와 권한 클레임으로 product_read 또는 product_manage 권한을 확인합니다.",
+        "productId로 products를 조회하고 없으면 404를 반환합니다.",
+        "상품 유형과 관계없이 subscription_plans와 one_time_skus를 product_id 기준으로 조회하되, 해당 타입이 아닌 목록은 빈 배열로 반환합니다.",
+        "operator_audits에서 target_type이 product, subscription_plan, one_time_sku이고 target_id가 상품 또는 하위 판매 단위에 연결된 최근 변경 이력을 조회합니다.",
+        "상세 화면에서 생성/수정/상태 변경 API를 호출할 수 있도록 하위 리소스 식별자와 현재 상태를 반환합니다."
+      ],
+      "notes": [
+        "하위 플랜과 SKU의 민감하지 않은 판매 조건만 반환하며 구매자별 가격, 결제수단, provider payload는 포함하지 않습니다."
       ]
     }
   },
@@ -7506,8 +8242,10 @@
       "status": "available",
       "kind": "admin",
       "groupId": "admin",
-      "summary": "관리자가 공통 Product를 만들고, 구독상품은 구독 플랜으로, 일반상품은 단건 구매 SKU로 분리해 판매 조건과 상태를 관리하는 흐름입니다.",
+      "summary": "관리자가 상품 목록과 상세를 조회하고, 공통 Product, 구독 플랜, 일반결제 SKU의 판매 조건과 상태를 관리하는 흐름입니다.",
       "apiIds": [
+        "admin-products-list",
+        "admin-products-detail",
         "admin-products-create",
         "admin-subscription-plans-create",
         "admin-subscription-plans-update",
@@ -7520,6 +8258,71 @@
         "server"
       ],
       "diagrams": [
+        {
+          "id": "product-list-detail",
+          "title": "상품 목록 및 상세 조회",
+          "actorIds": [
+            "admin",
+            "server"
+          ],
+          "relatedApiIds": [
+            "admin-products-list",
+            "admin-products-detail"
+          ],
+          "steps": [
+            {
+              "type": "message",
+              "from": "admin",
+              "to": "server",
+              "label": "상품 관리 목록 조회",
+              "apiId": "admin-products-list",
+              "note": "productType, status, keyword, cursor, limit"
+            },
+            {
+              "type": "self",
+              "from": "server",
+              "label": "관리자 권한과 필터 검증",
+              "code": "permission in product_read/product_manage",
+              "note": "공개 GET /plans와 달리 draft, paused, archived도 조회 가능"
+            },
+            {
+              "type": "self",
+              "from": "server",
+              "label": "상품과 하위 판매 단위 요약 집계",
+              "code": "products + subscription_plans + one_time_skus",
+              "note": "상품별 전체/active 플랜 및 SKU 개수 계산"
+            },
+            {
+              "type": "message",
+              "from": "server",
+              "to": "admin",
+              "label": "상품 목록 HTML 화면용 JSON 반환",
+              "code": "items[], page.nextCursor, hasMore"
+            },
+            {
+              "type": "message",
+              "from": "admin",
+              "to": "server",
+              "label": "상품 상세 조회",
+              "apiId": "admin-products-detail",
+              "note": "productId 선택"
+            },
+            {
+              "type": "self",
+              "from": "server",
+              "label": "상품 상세와 최근 감사 로그 조회",
+              "code": "product, plans, skus, recentAudits",
+              "note": "운영자가 변경 전후 이력을 확인하고 수정 액션으로 진입"
+            },
+            {
+              "type": "message",
+              "from": "server",
+              "to": "admin",
+              "label": "상품 상세 JSON 반환",
+              "code": "product, subscriptionPlans, oneTimeSkus, recentAudits"
+            }
+          ]
+        },
         {
           "id": "subscription-product",
           "title": "구독상품 생성 및 플랜 구성",
@@ -8531,6 +9334,321 @@
         "provider-paid-internal-unpaid",
         "idempotency-store-missing"
       ]
+    },
+    {
+      "id": "scheduler-operations",
+      "title": "스케쥴러 운영 플로우",
+      "file": "scheduler-operations-sequence.html",
+      "status": "available",
+      "kind": "admin",
+      "groupId": "admin",
+      "summary": "Kubernetes CronJob이 같은 payments 이미지를 1회 실행하고, 어드민 콘솔이 스케쥴러 실행 이력 조회와 수동 실행을 제공하는 흐름입니다.",
+      "apiIds": [
+        "admin-scheduler-runs-list",
+        "admin-scheduler-runs-detail",
+        "admin-scheduler-runs-create"
+      ],
+      "actorIds": [
+        "scheduler",
+        "admin",
+        "server",
+        "toss",
+        "email"
+      ],
+      "riskIds": [
+        "recurring-billing-duplicate-run",
+        "idempotency-store-missing",
+        "cancel-scheduled-billing-race"
+      ],
+      "diagrams": [
+        {
+          "id": "kubernetes-cronjob-run",
+          "title": "Kubernetes CronJob 스케쥴러 실행",
+          "actorIds": [
+            "scheduler",
+            "server",
+            "toss",
+            "email"
+          ],
+          "relatedApiIds": [],
+          "steps": [
+            {
+              "type": "message",
+              "from": "scheduler",
+              "to": "server",
+              "label": "payments 이미지에서 scheduler runner 1회 실행",
+              "code": "python -m payments.scheduler.runner billing --batch-size 100",
+              "note": "Kubernetes CronJob은 HTTP API 호출이 아니라 같은 이미지의 별도 entrypoint를 실행"
+            },
+            {
+              "type": "self",
+              "from": "server",
+              "label": "실행 시작 로그 저장",
+              "code": "scheduler_run_logs.status = running",
+              "note": "triggerSource=kubernetes_cronjob, workerId=pod name, jobType, batchSize, billingDate"
+            },
+            {
+              "type": "self",
+              "from": "server",
+              "label": "작업 잠금과 멱등성 기준 확보",
+              "code": "operation_locks + deterministic idempotency scope",
+              "note": "동일 jobType과 기준일의 중복 실행을 방지"
+            },
+            {
+              "type": "message",
+              "from": "server",
+              "to": "toss",
+              "label": "대상별 provider 결제 승인",
+              "externalCall": {
+                "provider": "tosspayments",
+                "method": "POST",
+                "path": "/v1/billing/{billingKey}"
+              },
+              "note": "billing 작업일 때만 대상별로 호출"
+            },
+            {
+              "type": "message",
+              "from": "server",
+              "to": "email",
+              "label": "결제 성공/실패 또는 해지 만료 알림 큐 적재",
+              "code": "notification payload without secrets"
+            },
+            {
+              "type": "self",
+              "from": "server",
+              "label": "실행 완료 로그 갱신",
+              "code": "scheduler_run_logs.status = succeeded/failed",
+              "note": "summary, error, finishedAt, durationMs, exitCode 저장"
+            },
+            {
+              "type": "message",
+              "from": "server",
+              "to": "scheduler",
+              "label": "프로세스 종료 코드 반환",
+              "code": "success=0, fatal error=non-zero",
+              "note": "CronJob controller가 성공/실패와 재시도 정책을 판단"
+            }
+          ]
+        },
+        {
+          "id": "admin-manual-run",
+          "title": "어드민 수동 스케쥴러 실행",
+          "actorIds": [
+            "admin",
+            "server",
+            "toss",
+            "email"
+          ],
+          "relatedApiIds": [
+            "admin-scheduler-runs-create"
+          ],
+          "steps": [
+            {
+              "type": "message",
+              "from": "admin",
+              "to": "server",
+              "label": "수동 실행 요청",
+              "apiId": "admin-scheduler-runs-create",
+              "note": "jobType, billingDate, limit, dryRun, reason, Idempotency-Key"
+            },
+            {
+              "type": "self",
+              "from": "server",
+              "label": "관리자 권한 및 멱등 검증",
+              "code": "permission == scheduler_run",
+              "note": "같은 Idempotency-Key의 동일 payload는 기존 결과 반환"
+            },
+            {
+              "type": "self",
+              "from": "server",
+              "label": "실행 시작 로그와 감사 로그 준비",
+              "code": "scheduler_run_logs.running + operator_audits.scheduler.run_manual",
+              "note": "수동 실행은 triggerSource=admin_manual로 구분"
+            },
+            {
+              "type": "message",
+              "from": "server",
+              "to": "toss",
+              "label": "필요한 경우 provider 결제 승인",
+              "externalCall": {
+                "provider": "tosspayments",
+                "method": "POST",
+                "path": "/v1/billing/{billingKey}"
+              },
+              "note": "dryRun=true이면 호출하지 않음"
+            },
+            {
+              "type": "message",
+              "from": "server",
+              "to": "email",
+              "label": "알림 큐 적재",
+              "code": "success/failure/cancel expiration notification"
+            },
+            {
+              "type": "self",
+              "from": "server",
+              "label": "실행 결과와 감사 로그 확정",
+              "code": "scheduler_run_logs.succeeded/failed, operatorAuditId",
+              "note": "실패해도 runId와 오류 요약을 남김"
+            },
+            {
+              "type": "message",
+              "from": "server",
+              "to": "admin",
+              "label": "수동 실행 결과 반환",
+              "code": "runId, status, summary, operatorAuditId"
+            }
+          ]
+        },
+        {
+          "id": "scheduler-run-history",
+          "title": "스케쥴러 실행 이력 조회",
+          "actorIds": [
+            "admin",
+            "server"
+          ],
+          "relatedApiIds": [
+            "admin-scheduler-runs-list",
+            "admin-scheduler-runs-detail"
+          ],
+          "steps": [
+            {
+              "type": "message",
+              "from": "admin",
+              "to": "server",
+              "label": "스케쥴러 실행 이력 목록 조회",
+              "apiId": "admin-scheduler-runs-list",
+              "note": "jobType, status, triggerSource, workerId, 기간 필터"
+            },
+            {
+              "type": "self",
+              "from": "server",
+              "label": "조회 권한과 필터 검증",
+              "code": "permission in scheduler_read/scheduler_run"
+            },
+            {
+              "type": "self",
+              "from": "server",
+              "label": "실행 로그 페이지 조회",
+              "code": "scheduler_run_logs sorted by started_at desc"
+            },
+            {
+              "type": "message",
+              "from": "server",
+              "to": "admin",
+              "label": "실행 이력 목록 반환",
+              "code": "items[], page.nextCursor, hasMore"
+            },
+            {
+              "type": "message",
+              "from": "admin",
+              "to": "server",
+              "label": "실행 상세 조회",
+              "apiId": "admin-scheduler-runs-detail",
+              "note": "runId 선택"
+            },
+            {
+              "type": "self",
+              "from": "server",
+              "label": "상세 로그와 오류 요약 조회",
+              "code": "summary, error, operatorAuditId, exitCode"
+            },
+            {
+              "type": "message",
+              "from": "server",
+              "to": "admin",
+              "label": "실행 상세 반환",
+              "code": "run detail without secrets"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "admin-audit-log",
+      "title": "어드민 감사 로그 조회 플로우",
+      "file": "admin-audit-sequence.html",
+      "status": "available",
+      "kind": "admin",
+      "groupId": "admin",
+      "summary": "운영자가 결제 취소, 구독 보정, 상품 변경, 수동 배치 실행의 변경 전후 상태와 실행 주체를 조회하는 흐름입니다.",
+      "apiIds": [
+        "admin-operator-audits-list",
+        "admin-operator-audits-detail"
+      ],
+      "actorIds": [
+        "admin",
+        "server"
+      ],
+      "riskIds": [
+        "idempotency-store-missing"
+      ],
+      "diagrams": [
+        {
+          "id": "audit-list-detail",
+          "title": "감사 로그 목록 및 상세 조회",
+          "actorIds": [
+            "admin",
+            "server"
+          ],
+          "relatedApiIds": [
+            "admin-operator-audits-list",
+            "admin-operator-audits-detail"
+          ],
+          "steps": [
+            {
+              "type": "message",
+              "from": "admin",
+              "to": "server",
+              "label": "감사 로그 목록 조회",
+              "apiId": "admin-operator-audits-list",
+              "note": "operatorId, action, targetType, targetId, result, 기간 필터"
+            },
+            {
+              "type": "self",
+              "from": "server",
+              "label": "감사 로그 조회 권한 검증",
+              "code": "permission == audit_read",
+              "note": "결제 상태를 변경하지 않는 읽기 전용 API"
+            },
+            {
+              "type": "self",
+              "from": "server",
+              "label": "감사 로그 페이지 조회",
+              "code": "operator_audits sorted by created_at desc"
+            },
+            {
+              "type": "message",
+              "from": "server",
+              "to": "admin",
+              "label": "감사 로그 목록 반환",
+              "code": "items[], page.nextCursor, hasMore"
+            },
+            {
+              "type": "message",
+              "from": "admin",
+              "to": "server",
+              "label": "감사 로그 상세 조회",
+              "apiId": "admin-operator-audits-detail",
+              "note": "auditId 선택"
+            },
+            {
+              "type": "self",
+              "from": "server",
+              "label": "변경 전후 상태 조회",
+              "code": "previous_state, next_state, reason, request metadata",
+              "note": "민감한 provider 원문이나 secret은 포함하지 않음"
+            },
+            {
+              "type": "message",
+              "from": "server",
+              "to": "admin",
+              "label": "감사 로그 상세 반환",
+              "code": "audit detail"
+            }
+          ]
+        }
+      ]
     }
   ],
   "database": {
@@ -8673,7 +9791,9 @@
           "plans-list",
           "plans-detail",
           "admin-products-create",
-          "admin-products-status"
+          "admin-products-status",
+          "admin-products-list",
+          "admin-products-detail"
         ]
       },
       {
@@ -8759,7 +9879,9 @@
           "admin-subscription-plans-create",
           "admin-subscription-plans-update",
           "subscriptions-change-preview",
-          "subscriptions-change"
+          "subscriptions-change",
+          "admin-products-list",
+          "admin-products-detail"
         ]
       },
       {
@@ -8861,7 +9983,9 @@
         "relatedApis": [
           "payments-orders",
           "admin-one-time-skus-create",
-          "admin-one-time-skus-update"
+          "admin-one-time-skus-update",
+          "admin-products-list",
+          "admin-products-detail"
         ]
       },
       {
@@ -10165,7 +11289,8 @@
           "internal-billing-retry",
           "payments-cancel",
           "admin-payment-cancel",
-          "admin-subscription-adjust"
+          "admin-subscription-adjust",
+          "admin-scheduler-runs-create"
         ],
         "riskIds": [
           "idempotency-store-missing",
@@ -10278,7 +11403,8 @@
           "internal-billing-retry",
           "subscriptions-change",
           "subscriptions-cancel",
-          "admin-subscription-adjust"
+          "admin-subscription-adjust",
+          "admin-scheduler-runs-create"
         ],
         "riskIds": [
           "recurring-billing-duplicate-run",
@@ -10426,12 +11552,293 @@
         "relatedApis": [
           "admin-payment-cancel",
           "admin-subscription-adjust",
-          "payments-cancel"
+          "payments-cancel",
+          "admin-operator-audits-list",
+          "admin-operator-audits-detail",
+          "admin-scheduler-runs-create",
+          "admin-scheduler-runs-detail"
         ],
         "riskIds": [
           "provider-paid-internal-unpaid",
           "cancel-refund-duplicate-or-mismatch",
           "idempotency-store-missing"
+        ]
+      },
+      {
+        "id": "scheduler-run-logs",
+        "name": "scheduler_run_logs",
+        "title": "스케쥴러 실행 로그",
+        "description": "Kubernetes CronJob, CLI, 내부 API, 어드민 수동 실행이 수행한 스케쥴러 job의 입력, 실행 상태, 요약 결과, 오류 요약을 저장합니다.",
+        "fields": [
+          {
+            "name": "_id",
+            "type": "UuidString",
+            "required": true,
+            "description": "스케쥴러 실행 로그의 MongoDB _id입니다. 애플리케이션이 자체 UUID 방식으로 생성해 문자열로 저장합니다."
+          },
+          {
+            "name": "job_type",
+            "type": "string",
+            "required": true,
+            "enum": [
+              "billing",
+              "reminder",
+              "cancel_expiration"
+            ],
+            "description": "실행한 스케쥴러 작업 유형입니다."
+          },
+          {
+            "name": "trigger_source",
+            "type": "string",
+            "required": true,
+            "enum": [
+              "kubernetes_cronjob",
+              "admin_manual",
+              "internal_api",
+              "cli"
+            ],
+            "description": "작업 실행을 시작한 런타임 또는 운영 경로입니다."
+          },
+          {
+            "name": "status",
+            "type": "string",
+            "required": true,
+            "enum": [
+              "running",
+              "succeeded",
+              "failed",
+              "canceled"
+            ],
+            "description": "스케쥴러 실행의 현재 또는 최종 상태입니다."
+          },
+          {
+            "name": "worker_id",
+            "type": "string",
+            "required": true,
+            "description": "CronJob pod 이름, CLI 실행자, 또는 adminId:requestId처럼 실행 주체를 식별하는 값입니다."
+          },
+          {
+            "name": "batch_size",
+            "type": "number",
+            "required": true,
+            "description": "이번 실행에서 한 번에 처리하도록 요청한 최대 대상 수입니다."
+          },
+          {
+            "name": "billing_date",
+            "type": "DateString",
+            "required": false,
+            "description": "billing 또는 reminder 작업의 기준 날짜입니다."
+          },
+          {
+            "name": "dry_run",
+            "type": "boolean",
+            "required": true,
+            "description": "true이면 provider 호출과 상태 변경 없이 검증 또는 대상 선정만 수행한 실행입니다."
+          },
+          {
+            "name": "idempotency_key_id",
+            "type": "UuidString",
+            "required": false,
+            "ref": "idempotency_keys._id",
+            "description": "수동 실행이나 내부 API 호출에 연결된 멱등키 문서입니다. TTL 만료 이후에는 없을 수 있습니다."
+          },
+          {
+            "name": "operator_audit_id",
+            "type": "UuidString",
+            "required": false,
+            "ref": "operator_audits._id",
+            "description": "운영자 수동 실행인 경우 연결되는 운영자 감사 로그 ID입니다."
+          },
+          {
+            "name": "request_id",
+            "type": "string",
+            "required": false,
+            "description": "어드민 수동 실행 또는 내부 API 요청의 추적 ID입니다."
+          },
+          {
+            "name": "lock_key",
+            "type": "string",
+            "required": false,
+            "description": "이번 실행이 획득한 operation_locks.lock_key 스냅샷입니다."
+          },
+          {
+            "name": "fencing_token",
+            "type": "number",
+            "required": false,
+            "description": "잠금 획득 시 발급된 fencing_token 스냅샷입니다."
+          },
+          {
+            "name": "started_at",
+            "type": "Date",
+            "required": true,
+            "description": "작업 실행을 시작한 시각입니다."
+          },
+          {
+            "name": "finished_at",
+            "type": "Date",
+            "required": false,
+            "description": "작업 실행이 성공, 실패, 취소로 끝난 시각입니다."
+          },
+          {
+            "name": "duration_ms",
+            "type": "number",
+            "required": false,
+            "description": "started_at부터 finished_at까지의 실행 시간입니다."
+          },
+          {
+            "name": "summary",
+            "type": "object",
+            "required": true,
+            "description": "선택, 처리, 성공, 실패, 건너뜀, 이메일 큐 적재 등 job별 실행 요약입니다.",
+            "properties": [
+              {
+                "name": "selected",
+                "type": "number",
+                "required": false,
+                "description": "실행 대상 후보로 선택된 건수입니다."
+              },
+              {
+                "name": "processed",
+                "type": "number",
+                "required": false,
+                "description": "실제로 처리한 건수입니다."
+              },
+              {
+                "name": "paid",
+                "type": "number",
+                "required": false,
+                "description": "정기결제 승인에 성공한 건수입니다."
+              },
+              {
+                "name": "failed",
+                "type": "number",
+                "required": false,
+                "description": "실패한 처리 건수입니다."
+              },
+              {
+                "name": "skipped",
+                "type": "number",
+                "required": false,
+                "description": "상태, 멱등성, 정책 때문에 건너뛴 건수입니다."
+              },
+              {
+                "name": "emails_queued",
+                "type": "number",
+                "required": false,
+                "description": "성공, 실패, 해지 만료 등 알림 큐에 적재한 이메일 수입니다."
+              }
+            ]
+          },
+          {
+            "name": "error",
+            "type": "object",
+            "required": false,
+            "description": "실패한 실행의 운영 진단용 오류 요약입니다. provider secret, billingKey, stack trace 원문은 저장하지 않습니다.",
+            "properties": [
+              {
+                "name": "code",
+                "type": "string",
+                "required": true,
+                "description": "표준화된 오류 코드입니다."
+              },
+              {
+                "name": "message",
+                "type": "string",
+                "required": true,
+                "description": "운영자에게 보여줄 오류 요약 메시지입니다."
+              },
+              {
+                "name": "retryable",
+                "type": "boolean",
+                "required": true,
+                "description": "같은 입력으로 재실행할 수 있는 실패인지 여부입니다."
+              }
+            ]
+          },
+          {
+            "name": "exit_code",
+            "type": "number",
+            "required": false,
+            "description": "scheduler runner가 프로세스 종료 시 반환한 exit code입니다. 성공은 0, 설정 오류나 치명 오류는 non-zero입니다."
+          },
+          {
+            "name": "metadata",
+            "type": "object",
+            "required": false,
+            "description": "CronJob 이름, 이미지 태그, namespace 같은 민감하지 않은 실행 환경 메타데이터입니다."
+          },
+          {
+            "name": "expires_at",
+            "type": "Date",
+            "required": false,
+            "description": "운영 진단 보존 기간이 지난 실행 로그를 정리하기 위한 TTL 기준 시각입니다."
+          },
+          {
+            "name": "created_at",
+            "type": "Date",
+            "required": true,
+            "description": "실행 로그 문서를 생성한 시각입니다."
+          },
+          {
+            "name": "updated_at",
+            "type": "Date",
+            "required": true,
+            "description": "실행 로그 상태 또는 요약을 마지막으로 갱신한 시각입니다."
+          }
+        ],
+        "indexes": [
+          {
+            "name": "idx_scheduler_run_logs_job_status_started",
+            "fields": [
+              "job_type",
+              "status",
+              "started_at"
+            ],
+            "description": "작업 유형과 상태별 최근 실행 이력을 조회합니다."
+          },
+          {
+            "name": "idx_scheduler_run_logs_trigger_started",
+            "fields": [
+              "trigger_source",
+              "started_at"
+            ],
+            "description": "Kubernetes CronJob, 운영자 수동 실행 등 실행 출처별 이력을 조회합니다."
+          },
+          {
+            "name": "idx_scheduler_run_logs_worker_started",
+            "fields": [
+              "worker_id",
+              "started_at"
+            ],
+            "description": "특정 worker 또는 CronJob pod가 수행한 실행을 조회합니다."
+          },
+          {
+            "name": "idx_scheduler_run_logs_operator_audit",
+            "fields": [
+              "operator_audit_id"
+            ],
+            "sparse": true,
+            "description": "운영자 수동 실행과 감사 로그를 연결해 조회합니다."
+          },
+          {
+            "name": "ttl_scheduler_run_logs_expires_at",
+            "fields": [
+              "expires_at"
+            ],
+            "expireAfterSeconds": 0,
+            "description": "보존 기간이 지난 스케쥴러 실행 로그를 자동 정리합니다."
+          }
+        ],
+        "relatedApis": [
+          "admin-scheduler-runs-list",
+          "admin-scheduler-runs-detail",
+          "admin-scheduler-runs-create",
+          "internal-billing-run"
+        ],
+        "riskIds": [
+          "recurring-billing-duplicate-run",
+          "idempotency-store-missing",
+          "cancel-scheduled-billing-race"
         ]
       },
       {
@@ -10799,6 +12206,18 @@
         "to": "admin_accounts._id",
         "type": "reference",
         "description": "관리자 refreshToken과 비밀번호 재설정 토큰은 관리자 계정에 속합니다."
+      },
+      {
+        "from": "scheduler_run_logs.operator_audit_id",
+        "to": "operator_audits._id",
+        "type": "reference",
+        "description": "어드민 수동 실행 로그는 해당 수동 실행의 운영자 감사 로그를 참조합니다."
+      },
+      {
+        "from": "scheduler_run_logs.idempotency_key_id",
+        "to": "idempotency_keys._id",
+        "type": "reference",
+        "description": "수동 실행 또는 내부 실행 로그는 중복 실행을 막은 멱등키 문서를 참조할 수 있습니다."
       }
     ],
     "apiAccess": [
@@ -11070,6 +12489,7 @@
       {
         "apiId": "payments-confirm",
         "reads": [
+          "checkouts",
           "payments",
           "one-time-skus",
           "idempotency-keys"
@@ -11080,7 +12500,7 @@
           "invoices",
           "one-time-skus"
         ],
-        "description": "일반결제 승인 결과를 결제와 인보이스에 반영하고 limited SKU 예약 재고를 판매 확정 또는 해제로 전환합니다."
+        "description": "체크아웃과 결제 시도를 조회하고 멱등성 키로 일반결제 승인 결과를 결제, 인보이스, SKU 재고에 반영합니다."
       },
       {
         "apiId": "invoices-list",
@@ -11145,9 +12565,10 @@
           "operation-locks",
           "payments",
           "invoices",
-          "subscriptions"
+          "subscriptions",
+          "scheduler-run-logs"
         ],
-        "description": "정기결제 대상 구독을 조회하고 결제 성공/실패 결과를 저장합니다."
+        "description": "정기결제 대상 구독을 조회하고 결제 성공/실패 결과와 스케쥴러 실행 로그를 저장합니다."
       },
       {
         "apiId": "internal-billing-retry",
@@ -11186,6 +12607,81 @@
           "operator-audits"
         ],
         "description": "운영자 구독 보정을 멱등성 키로 중복 방지하고 변경 전후 상태를 감사 로그로 남깁니다."
+      },
+      {
+        "apiId": "admin-scheduler-runs-list",
+        "reads": [
+          "scheduler-run-logs"
+        ],
+        "writes": [],
+        "description": "스케쥴러 실행 이력 목록을 조회합니다."
+      },
+      {
+        "apiId": "admin-scheduler-runs-detail",
+        "reads": [
+          "scheduler-run-logs",
+          "operator-audits"
+        ],
+        "writes": [],
+        "description": "단일 스케쥴러 실행 로그와 연결된 감사 로그 요약을 조회합니다."
+      },
+      {
+        "apiId": "admin-scheduler-runs-create",
+        "reads": [
+          "scheduler-run-logs",
+          "idempotency-keys",
+          "operation-locks",
+          "subscriptions",
+          "billing-methods",
+          "payment-instruments"
+        ],
+        "writes": [
+          "scheduler-run-logs",
+          "idempotency-keys",
+          "operation-locks",
+          "payments",
+          "invoices",
+          "subscriptions",
+          "operator-audits"
+        ],
+        "description": "운영자 수동 실행을 멱등하게 기록하고 기존 스케쥴러 job이 변경하는 결제/구독 상태와 감사 로그를 저장합니다."
+      },
+      {
+        "apiId": "admin-operator-audits-list",
+        "reads": [
+          "operator-audits"
+        ],
+        "writes": [],
+        "description": "운영자 감사 로그 목록을 조회합니다."
+      },
+      {
+        "apiId": "admin-operator-audits-detail",
+        "reads": [
+          "operator-audits"
+        ],
+        "writes": [],
+        "description": "단일 운영자 감사 로그의 변경 전후 상태와 요청 메타데이터를 조회합니다."
+      },
+      {
+        "apiId": "admin-products-list",
+        "reads": [
+          "products",
+          "subscription-plans",
+          "one-time-skus"
+        ],
+        "writes": [],
+        "description": "관리자 상품 목록과 하위 판매 단위 개수를 조회합니다."
+      },
+      {
+        "apiId": "admin-products-detail",
+        "reads": [
+          "products",
+          "subscription-plans",
+          "one-time-skus",
+          "operator-audits"
+        ],
+        "writes": [],
+        "description": "단일 상품의 하위 플랜, SKU, 최근 운영 변경 이력을 조회합니다."
       },
       {
         "apiId": "admin-payment-cancel",
@@ -11418,6 +12914,35 @@
             "from": "paid",
             "to": "partial_canceled",
             "event": "부분 취소가 완료됩니다."
+          }
+        ]
+      },
+      {
+        "id": "scheduler-run-log-status",
+        "title": "스케쥴러 실행 로그 상태 전이",
+        "collection": "scheduler-run-logs",
+        "field": "status",
+        "states": [
+          "running",
+          "succeeded",
+          "failed",
+          "canceled"
+        ],
+        "transitions": [
+          {
+            "from": "running",
+            "to": "succeeded",
+            "event": "job completed and summary persisted"
+          },
+          {
+            "from": "running",
+            "to": "failed",
+            "event": "job raised unrecoverable error or process exits non-zero"
+          },
+          {
+            "from": "running",
+            "to": "canceled",
+            "event": "operator or orchestrator cancellation recorded before completion"
           }
         ]
       }
