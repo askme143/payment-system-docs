@@ -1802,7 +1802,7 @@ def render_system_architecture_doc(data, rendered_d2_ids=None):
 
     body = header(
         page_ref["title"],
-        "System Architecture",
+        "Email Notification Architecture",
         architecture["summary"],
         [
             ("전체 시퀀스 목록", "./sequence-index.html"),

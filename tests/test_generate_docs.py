@@ -84,7 +84,9 @@ class GenerateDocsTest(unittest.TestCase):
                 "SMTP",
             ]:
                 self.assertIn(expected, architecture)
-            self.assertIn("시스템 아키텍처 문서", sequence_index)
+            self.assertIn("이메일 발송 시스템 아키텍처 문서", architecture)
+            self.assertIn("이메일 발송 시스템 아키텍처 문서", sequence_index)
+            self.assertNotIn("결제 시스템 아키텍처 문서", architecture)
 
     def test_system_architecture_d2_files_are_generated(self):
         with tempfile.TemporaryDirectory() as tmp:

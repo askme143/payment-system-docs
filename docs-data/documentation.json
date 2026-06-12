@@ -25,7 +25,7 @@
         "file": "risk-register-doc.html"
       },
       "systemArchitecture": {
-        "title": "결제 시스템 아키텍처 문서",
+        "title": "이메일 발송 시스템 아키텍처 문서",
         "file": "system-architecture-doc.html"
       }
     }
@@ -13420,7 +13420,7 @@
     }
   ],
   "systemArchitecture": {
-    "title": "결제 시스템 아키텍처",
+    "title": "이메일 발송 시스템 아키텍처",
     "summary": "이메일 알림 outbox가 결제/구독 상태 변경과 분리되어 큐 적재, 템플릿 해석, SMTP 발송, 재시도와 dead-letter 처리를 수행하는 구조입니다.",
     "diagrams": [
       {
