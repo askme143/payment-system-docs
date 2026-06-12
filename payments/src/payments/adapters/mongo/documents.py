@@ -11,7 +11,7 @@ class DataclassInstance(Protocol):
     __dataclass_fields__: ClassVar[dict[str, Field[object]]]
 
 
-def to_document(entity: object) -> MongoDocument:
+def to_document(entity: object, *, omit_none: bool = False) -> MongoDocument:
     if not _is_dataclass_instance(entity):
         raise TypeError("entity must be a dataclass instance")
     dataclass_entity = cast(DataclassInstance, entity)
@@ -20,7 +20,11 @@ def to_document(entity: object) -> MongoDocument:
         for field in fields(dataclass_entity)
     }
     data["_id"] = data.pop("id")
-    return {key: _to_mongo_value(value) for key, value in data.items()}
+    return {
+        key: _to_mongo_value(value)
+        for key, value in data.items()
+        if not (omit_none and value is None)
+    }
 
 
 def from_document[T](entity_type: type[T], document: MongoDocument | None) -> T | None:

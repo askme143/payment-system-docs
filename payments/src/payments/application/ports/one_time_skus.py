@@ -15,3 +15,24 @@ class OneTimeSkuRepository(Protocol):
         quantity: int,
     ) -> bool:
         raise NotImplementedError
+
+    async def release_reserved_one_time_sku_stock(
+        self,
+        sku_id: str,
+        quantity: int,
+    ) -> None:
+        raise NotImplementedError
+
+    async def capture_reserved_one_time_sku_stock(
+        self,
+        sku_id: str,
+        quantity: int,
+    ) -> None:
+        raise NotImplementedError
+
+    async def restore_sold_one_time_sku_stock(
+        self,
+        sku_id: str,
+        quantity: int,
+    ) -> None:
+        raise NotImplementedError

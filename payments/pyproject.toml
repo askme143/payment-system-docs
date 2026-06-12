@@ -5,6 +5,7 @@ description = "Payment system FastAPI service"
 readme = "README.md"
 requires-python = ">=3.14"
 dependencies = [
+    "cryptography>=42",
     "fastapi[standard]>=0.115.0",
     "motor>=3.6.0",
     "pydantic>=2.8.0",

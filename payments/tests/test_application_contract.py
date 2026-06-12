@@ -49,4 +49,10 @@ class TestApplicationContract:
     def test_catalog_signature_names_repository_explicitly(self) -> None:
         signature = inspect.signature(application.list_subscription_plans)
 
-        assert list(signature.parameters) == ["catalog_repository"]
+        assert list(signature.parameters) == [
+            "catalog_repository",
+            "product_code",
+            "billing_period",
+            "include_unavailable",
+            "user_id",
+        ]

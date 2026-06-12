@@ -18,6 +18,7 @@ class Payment:
     billing_cycle_key: str | None = None
     checkout_id: str | None = None
     payment_customer_id: str | None = None
+    billing_method_id: str | None = None
     payment_key: str | None = None
     approved_at: datetime | None = None
     receipt_url: str | None = None

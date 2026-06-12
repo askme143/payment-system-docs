@@ -12,6 +12,7 @@ class OneTimeSku:
     amount: int
     stock_policy: Literal["unlimited", "limited"]
     status: Literal["draft", "active", "paused", "archived"]
+    currency: str = "KRW"
     purchase_limit: dict | None = None
     total_stock: int | None = None
     reserved_stock: int | None = None

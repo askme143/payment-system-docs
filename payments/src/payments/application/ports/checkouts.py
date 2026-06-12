@@ -15,3 +15,14 @@ class CheckoutRepository(Protocol):
         user_id: str,
     ) -> Checkout | None:
         raise NotImplementedError
+
+    async def get_checkout(self, checkout_id: str) -> Checkout | None:
+        raise NotImplementedError
+
+    async def mark_checkout_paid_if_ready(
+        self,
+        checkout_id: str,
+        user_id: str,
+        last_payment_id: str,
+    ) -> bool:
+        raise NotImplementedError

@@ -27,10 +27,44 @@ class MongoIdempotencyKeyRepository(IdempotencyKeyRepository):
         )
         return from_document(IdempotencyKey, document)
 
+    async def find_idempotency_key_by_resource(
+        self,
+        scope: str,
+        resource_type: str,
+        resource_id: str,
+    ) -> IdempotencyKey | None:
+        document = await self._idempotency_keys.find_one(
+            {
+                "scope": scope,
+                "resource_type": resource_type,
+                "resource_id": resource_id,
+            },
+            session=self._session,
+        )
+        return from_document(IdempotencyKey, document)
+
+    async def find_succeeded_idempotency_key_by_resource(
+        self,
+        scope: str,
+        resource_type: str,
+        resource_id: str,
+    ) -> IdempotencyKey | None:
+        document = await self._idempotency_keys.find_one(
+            {
+                "scope": scope,
+                "resource_type": resource_type,
+                "resource_id": resource_id,
+                "status": "succeeded",
+                "response_status": 200,
+            },
+            session=self._session,
+        )
+        return from_document(IdempotencyKey, document)
+
     async def save_idempotency_key(self, key: IdempotencyKey) -> None:
         await self._idempotency_keys.replace_one(
             {"_id": key.id},
-            to_document(key),
+            to_document(key, omit_none=True),
             upsert=True,
             session=self._session,
         )

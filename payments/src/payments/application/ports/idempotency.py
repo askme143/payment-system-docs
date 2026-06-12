@@ -13,5 +13,21 @@ class IdempotencyKeyRepository(Protocol):
     ) -> IdempotencyKey | None:
         raise NotImplementedError
 
+    async def find_idempotency_key_by_resource(
+        self,
+        scope: str,
+        resource_type: str,
+        resource_id: str,
+    ) -> IdempotencyKey | None:
+        raise NotImplementedError
+
+    async def find_succeeded_idempotency_key_by_resource(
+        self,
+        scope: str,
+        resource_type: str,
+        resource_id: str,
+    ) -> IdempotencyKey | None:
+        raise NotImplementedError
+
     async def save_idempotency_key(self, key: IdempotencyKey) -> None:
         raise NotImplementedError

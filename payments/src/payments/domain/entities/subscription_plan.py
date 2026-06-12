@@ -13,6 +13,8 @@ class SubscriptionPlan:
     amount: int
     entitlements: dict
     status: Literal["draft", "active", "paused", "archived"]
+    currency: str = "KRW"
+    version: int = 1
 
     @classmethod
     def generate_id(cls) -> str:

@@ -4,6 +4,7 @@ from motor.motor_asyncio import AsyncIOMotorCollection
 
 from payments.adapters.mongo.documents import from_document
 from payments.domain.entities.product import Product
+from payments.domain.entities.subscription import Subscription
 from payments.domain.entities.subscription_plan import SubscriptionPlan
 
 
@@ -12,9 +13,11 @@ class MongoCatalogRepository:
         self,
         products: AsyncIOMotorCollection,
         subscription_plans: AsyncIOMotorCollection,
+        subscriptions: AsyncIOMotorCollection,
     ) -> None:
         self._products = products
         self._subscription_plans = subscription_plans
+        self._subscriptions = subscriptions
 
     async def list_active_subscription_catalog(
         self,
@@ -59,3 +62,22 @@ class MongoCatalogRepository:
         if product is None:
             return None
         return product, plan
+
+    async def list_user_active_product_subscriptions(
+        self,
+        user_id: str,
+    ) -> list[Subscription]:
+        rows: list[Subscription] = []
+        cursor = self._subscriptions.find(
+            {
+                "user_id": user_id,
+                "status": {
+                    "$in": ["pending", "active", "past_due", "cancel_scheduled"]
+                },
+            }
+        )
+        async for document in cursor:
+            subscription = from_document(Subscription, document)
+            if subscription is not None:
+                rows.append(subscription)
+        return rows

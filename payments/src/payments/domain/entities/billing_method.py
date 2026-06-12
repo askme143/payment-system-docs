@@ -1,4 +1,7 @@
+from __future__ import annotations
+
 from dataclasses import dataclass
+from datetime import datetime
 from typing import Literal
 
 from payments.domain.entities.ids import generate_uuid_id
@@ -14,6 +17,10 @@ class BillingMethod:
     provider: Literal["tosspayments"]
     is_default: bool
     status: Literal["active", "inactive", "deleted"]
+    method: str = "카드"
+    card_company: str = ""
+    billing_key_status: Literal["active", "revoked"] = "active"
+    created_at: datetime | None = None
     masked_number: str | None = None
 
     @classmethod
