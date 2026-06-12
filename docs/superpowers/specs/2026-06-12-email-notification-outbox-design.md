@@ -272,7 +272,8 @@ The worker must be a scheduler or queue-worker entrypoint, not a FastAPI backgro
 
 Failures are classified as transient or permanent.
 
-Transient failures include provider timeouts, rate limits, network failures, and provider 5xx responses. The item is updated to:
+Transient failures include SMTP timeouts, connection errors, temporary DNS or
+network failures, and SMTP 4xx transient responses. The item is updated to:
 
 - `status = retry_scheduled`
 - `attempt_count += 1`
@@ -291,8 +292,8 @@ After `max_attempts = 5`, the item moves to `dead_letter`.
 
 Permanent failures include invalid recipient email, template not found, template
 argument validation failure, Jinja2 render errors, encrypted value decryption
-failure, expired `expires_at`, and non-retryable provider 4xx responses. These
-move directly to `dead_letter`.
+failure, expired `expires_at`, and SMTP 5xx permanent responses such as invalid
+recipient or rejected sender. These move directly to `dead_letter`.
 
 Email failure never rolls back payment, invoice, subscription, or audit state. Operational visibility comes from outbox status, worker run summaries, logs, and later admin views.
 
@@ -406,6 +407,8 @@ Add ports under `payments/src/payments/application/ports/notifications.py`:
   - render subject, HTML body, and text body.
 - `EmailSender`
   - send a rendered email and return provider message metadata.
+  - keep the application contract provider-neutral, but implement SMTP as the
+    first real delivery adapter.
 
 Provider SDK types must not leak into application signatures.
 
@@ -422,6 +425,9 @@ Email provider adapters:
 
 - `payments/src/payments/adapters/email.py`
 - The first real delivery adapter is `SMTPEmailSender`, configured through environment variables.
+- Do not implement SES in the first slice. If SES is adopted later, add a
+  separate adapter behind the same `EmailSender` port without changing the
+  outbox schema or worker contract.
 - Tests and local development can use `RecordingEmailSender`.
 
 Worker entrypoints:
@@ -562,6 +568,8 @@ Contract tests:
 - Separate `expires_at` for send eligibility from `purge_after_at` for TTL
   deletion.
 - Implement `SMTPEmailSender` as the first real provider adapter.
+- Keep SES/API-based delivery out of the first slice. A later SES adapter must
+  reuse the same `EmailSender` port and preserve the outbox schema.
 - Keep `RecordingEmailSender` for tests and local development.
 - Include an internal worker/job entrypoint for sending due notifications.
 - Defer admin UI and admin API support for dead-letter replay to a later operations slice. The first implementation exposes dead-letter records through Mongo status, worker summaries, and logs.

@@ -14559,8 +14559,8 @@
       },
       {
         "name": "SMTPEmailSender",
-        "responsibility": "렌더링된 subject/html/text를 SMTP 서버에 전달하고 provider_message_id를 반환합니다.",
-        "failurePolicy": "timeout, 429, 5xx는 retryable 오류로, 잘못된 수신자나 4xx는 permanent 오류로 변환합니다."
+        "responsibility": "1차 실제 발송 adapter입니다. 렌더링된 subject/html/text를 SMTP 서버에 전달하고 provider_message_id를 반환합니다.",
+        "failurePolicy": "SMTP timeout, connection error, 임시 DNS/network 오류, SMTP 4xx transient response는 retryable 오류로 변환합니다. 잘못된 수신자, rejected sender, SMTP 5xx permanent response는 permanent 오류로 변환합니다. SES/API 기반 발송은 첫 구현 범위가 아니며, 나중에 필요하면 같은 EmailSender port 뒤에 별도 adapter로 추가합니다."
       }
     ],
     "dataStores": [
@@ -14663,13 +14663,13 @@
       "retryableFailures": [
         "SMTP timeout",
         "connection error",
-        "429",
-        "provider 5xx",
+        "SMTP 4xx transient response",
         "temporary DNS/network error"
       ],
       "permanentFailures": [
         "잘못된 이메일 주소",
-        "provider 4xx",
+        "SMTP 5xx permanent response",
+        "rejected sender",
         "template_key 없음",
         "required_template_args 누락",
         "Jinja2 render error",
@@ -14709,6 +14709,10 @@
       {
         "title": "Initial template catalog",
         "description": "첫 카탈로그는 admin_auth.login_link, admin_auth.password_reset, subscription_billing_reminder, subscription_payment_paid, subscription_payment_failed, subscription_canceled_payment_failed, subscription_canceled_after_period, subscription_plan_upgrade_receipt, payment_cancel_completed, subscription_adjustment_completed, one_time_payment_paid를 포함합니다."
+      },
+      {
+        "title": "Delivery provider decision",
+        "description": "1차 실제 발송 provider는 SMTPEmailSender로 고정합니다. EmailSender port는 provider-neutral하게 유지하지만, SES/API 기반 발송은 첫 구현 범위에 포함하지 않습니다. 나중에 SES를 도입하더라도 notification_outbox schema, worker claim/retry 계약, template rendering 계약은 유지하고 adapter만 교체하거나 추가합니다."
       },
       {
         "title": "Recipient resolution boundary",
