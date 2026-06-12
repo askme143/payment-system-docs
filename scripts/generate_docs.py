@@ -49,6 +49,14 @@ def d2_path(sequence, diagram):
     return f"diagrams/{diagram_asset_id(sequence, diagram)}.d2"
 
 
+def architecture_diagram_asset_id(diagram):
+    return f"system-architecture-{diagram['id']}"
+
+
+def architecture_d2_path(diagram):
+    return f"diagrams/{architecture_diagram_asset_id(diagram)}.d2"
+
+
 def d2_quote(value):
     return '"' + str(value).replace("\\", "\\\\").replace('"', '\\"').replace("\n", "\\n") + '"'
 
@@ -206,6 +214,23 @@ def validate_data(data):
         for model in data["database"].get("stateModels", []):
             if model["collection"] not in collection_ids:
                 raise ValueError(f"State model {model['id']} references missing collection {model['collection']}")
+
+    if data.get("systemArchitecture"):
+        architecture_diagram_ids = set()
+        for diagram in data["systemArchitecture"].get("diagrams", []):
+            if diagram["id"] in architecture_diagram_ids:
+                raise ValueError(f"Architecture diagram {diagram['id']} is duplicated")
+            architecture_diagram_ids.add(diagram["id"])
+            node_ids = {node["id"] for node in diagram.get("nodes", [])}
+            for edge in diagram.get("edges", []):
+                if edge["from"] not in node_ids:
+                    raise ValueError(
+                        f"Architecture diagram {diagram['id']} edge references missing node {edge['from']}"
+                    )
+                if edge["to"] not in node_ids:
+                    raise ValueError(
+                        f"Architecture diagram {diagram['id']} edge references missing node {edge['to']}"
+                    )
 
     sequence_ids = {sequence["id"] for sequence in data["sequences"]}
     collection_ids = {collection["id"] for collection in data.get("database", {}).get("collections", [])}
@@ -1035,8 +1060,11 @@ def api_maps(data):
     return apis, categories
 
 
-def database_links(data):
+def database_links(data, include_architecture=True):
     links = []
+    architecture_ref = data["site"]["pages"].get("systemArchitecture")
+    if include_architecture and architecture_ref and data.get("systemArchitecture"):
+        links.append((architecture_ref["title"], f"./{architecture_ref['file']}"))
     page_ref = data["site"]["pages"].get("database")
     if page_ref:
         links.append((page_ref["title"], f"./{page_ref['file']}"))
@@ -1620,15 +1648,57 @@ def render_diagram(diagram, actors_by_id, apis):
 render_diagram = render_d2_diagram
 
 
-def render_d2_block(sequence, diagram, actors_by_id, apis, rendered_d2_ids=None):
+ARCHITECTURE_KIND_STYLES = {
+    "client": ("#e8f3ff", THEME["client"]),
+    "server": ("#eaf8f3", THEME["server"]),
+    "scheduler": ("#fff8e6", THEME["scheduler"]),
+    "database": ("#f1f5f9", THEME["admin"]),
+    "queue": ("#fff5dd", THEME["scheduler"]),
+    "worker": ("#eaf8f3", THEME["server"]),
+    "provider": ("#f1edff", THEME["provider"]),
+    "external": ("#f8fafc", THEME["neutral"]),
+    "success": ("#e5f4ef", THEME["success"]),
+    "failure": ("#fff1f0", THEME["failure"]),
+}
+
+
+def architecture_node_id(node_id):
+    return re.sub(r"[^A-Za-z0-9_]", "_", node_id)
+
+
+def render_architecture_d2_diagram(diagram):
+    lines = [
+        "direction: right",
+        f"title: {d2_quote(diagram['title'])}",
+        "",
+    ]
+    for node in diagram["nodes"]:
+        node_id = architecture_node_id(node["id"])
+        fill, stroke = ARCHITECTURE_KIND_STYLES.get(
+            node["kind"],
+            ARCHITECTURE_KIND_STYLES["external"],
+        )
+        lines.append(f"{node_id}: {d2_quote(node['label'])} {{")
+        lines.append("  shape: rectangle")
+        lines.append(f"  tooltip: {d2_quote(node['description'])}")
+        lines.append(f"  style.fill: {d2_quote(fill)}")
+        lines.append(f"  style.stroke: {d2_quote(stroke)}")
+        lines.append("  style.border-radius: 6")
+        lines.append("}")
+    lines.append("")
+    for edge in diagram["edges"]:
+        from_id = architecture_node_id(edge["from"])
+        to_id = architecture_node_id(edge["to"])
+        lines.append(f"{from_id} -> {to_id}: {d2_quote(edge['label'])}")
+    return "\n".join(lines) + "\n"
+
+
+def render_d2_source_block(source_href, asset_id, title, source, rendered_d2_ids=None):
     rendered_d2_ids = rendered_d2_ids or set()
-    source = render_d2_diagram(diagram, actors_by_id, apis)
-    source_href = d2_path(sequence, diagram)
-    asset_id = diagram_asset_id(sequence, diagram)
     if asset_id in rendered_d2_ids:
         return f"""<div class="d2-diagram">
   <div class="d2-toolbar"><a href="{e(source_href)}">D2 원본</a></div>
-  <img class="d2-svg" src="diagrams/{e(asset_id)}.svg" alt="{e(diagram["title"])}">
+  <img class="d2-svg" src="diagrams/{e(asset_id)}.svg" alt="{e(title)}">
   <details class="d2-details">
     <summary>D2 원본 보기</summary>
     <pre class="d2-source"><code>{e(source)}</code></pre>
@@ -1638,6 +1708,111 @@ def render_d2_block(sequence, diagram, actors_by_id, apis, rendered_d2_ids=None)
   <div class="d2-toolbar"><a href="{e(source_href)}">D2 원본</a></div>
   <pre class="d2-source"><code>{e(source)}</code></pre>
 </div>"""
+
+
+def render_d2_block(sequence, diagram, actors_by_id, apis, rendered_d2_ids=None):
+    source = render_d2_diagram(diagram, actors_by_id, apis)
+    source_href = d2_path(sequence, diagram)
+    asset_id = diagram_asset_id(sequence, diagram)
+    return render_d2_source_block(
+        source_href,
+        asset_id,
+        diagram["title"],
+        source,
+        rendered_d2_ids,
+    )
+
+
+def render_architecture_d2_block(diagram, rendered_d2_ids=None):
+    source = render_architecture_d2_diagram(diagram)
+    source_href = architecture_d2_path(diagram)
+    asset_id = architecture_diagram_asset_id(diagram)
+    return render_d2_source_block(
+        source_href,
+        asset_id,
+        diagram["title"],
+        source,
+        rendered_d2_ids,
+    )
+
+
+def render_system_architecture_doc(data, rendered_d2_ids=None):
+    architecture = data["systemArchitecture"]
+    page_ref = data["site"]["pages"]["systemArchitecture"]
+    nav_items = [("overview", "개요")]
+    nav_items.extend((diagram["id"], diagram["title"]) for diagram in architecture["diagrams"])
+    nav_items.extend(
+        [
+            ("components", "컴포넌트 책임"),
+            ("data-stores", "데이터 소유권"),
+            ("operations", "운영과 실패 처리"),
+        ]
+    )
+    sections = [
+        f"""<section id="overview">
+  <h2>개요</h2>
+  <p>{e(architecture['summary'])}</p>
+  <div class="note">이메일 실패는 결제, 인보이스, 구독, 감사 로그 상태를 롤백하지 않습니다. 발송 실패는 outbox 상태와 worker summary로 추적합니다.</div>
+</section>"""
+    ]
+    for diagram in architecture["diagrams"]:
+        description = f"<p>{e(diagram['description'])}</p>" if diagram.get("description") else ""
+        sections.append(f"""<section id="{e(diagram['id'])}">
+  <h2>{e(diagram['title'])}</h2>
+  {description}
+  <div class="diagram">{render_architecture_d2_block(diagram, rendered_d2_ids)}</div>
+</section>""")
+
+    component_rows = "".join(
+        "<tr>"
+        f"<td>{e(component['name'])}</td>"
+        f"<td>{e(component['responsibility'])}</td>"
+        f"<td>{e(component['failurePolicy'])}</td>"
+        "</tr>"
+        for component in architecture["components"]
+    )
+    sections.append(f"""<section id="components">
+  <h2>컴포넌트 책임</h2>
+  {table("<table><thead><tr><th>컴포넌트</th><th>책임</th><th>실패 정책</th></tr></thead>"
+         f"<tbody>{component_rows}</tbody></table>", columns=3)}
+</section>""")
+
+    data_store_rows = "".join(
+        "<tr>"
+        f"<td><code>{e(store['name'])}</code></td>"
+        f"<td>{e(store['owner'])}</td>"
+        f"<td>{e(', '.join(store['keys']))}</td>"
+        f"<td>{e(store['notes'])}</td>"
+        "</tr>"
+        for store in architecture["dataStores"]
+    )
+    sections.append(f"""<section id="data-stores">
+  <h2>데이터 소유권</h2>
+  {table("<table><thead><tr><th>저장소</th><th>소유 포트</th><th>주요 키/인덱스</th><th>비고</th></tr></thead>"
+         f"<tbody>{data_store_rows}</tbody></table>", columns=4)}
+</section>""")
+
+    operation_items = "".join(
+        f"<article class=\"box\"><h3>{e(operation['title'])}</h3><p>{e(operation['description'])}</p></article>"
+        for operation in architecture["operations"]
+    )
+    sections.append(f"""<section id="operations">
+  <h2>운영과 실패 처리</h2>
+  <div class="grid">{operation_items}</div>
+</section>""")
+
+    body = header(
+        page_ref["title"],
+        "System Architecture",
+        architecture["summary"],
+        [
+            ("전체 시퀀스 목록", "./sequence-index.html"),
+            ("전체 API 목록", "./all-api-doc.html"),
+            ("API 상세 설명", "./api-detail-doc.html"),
+        ] + database_links(data, include_architecture=False),
+    )
+    body += f"<main class=\"wrap layout\" id=\"content\">{nav(nav_items)}<div>{''.join(sections)}</div></main>"
+    return page(page_ref["title"], body)
 
 
 def render_sequence_page(data, sequence, rendered_d2_ids=None):
@@ -1722,6 +1897,11 @@ def generate_docs(data_path, out_dir, render_d2=False, rendered_d2_ids=None):
                 d2_file = out_dir / d2_path(sequence, diagram)
                 d2_file.write_text(render_d2_diagram(diagram, actors_by_id, apis), encoding="utf-8")
                 d2_files.append(d2_file)
+    if data.get("systemArchitecture"):
+        for diagram in data["systemArchitecture"].get("diagrams", []):
+            d2_file = out_dir / architecture_d2_path(diagram)
+            d2_file.write_text(render_architecture_d2_diagram(diagram), encoding="utf-8")
+            d2_files.append(d2_file)
 
     rendered_ids = {path.stem for path in diagrams_dir.glob("*.svg")}
     rendered_ids |= set(rendered_d2_ids or [])
@@ -1737,6 +1917,8 @@ def generate_docs(data_path, out_dir, render_d2=False, rendered_d2_ids=None):
         rendered[pages["database"]["file"]] = render_database_doc(data)
     if data.get("risks") and pages.get("risks"):
         rendered[pages["risks"]["file"]] = render_risk_doc(data)
+    if data.get("systemArchitecture") and pages.get("systemArchitecture"):
+        rendered[pages["systemArchitecture"]["file"]] = render_system_architecture_doc(data, rendered_ids)
     for sequence in data["sequences"]:
         if sequence["status"] == "available":
             rendered[sequence["file"]] = render_sequence_page(data, sequence, rendered_ids)

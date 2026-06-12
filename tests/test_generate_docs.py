@@ -55,9 +55,51 @@ class GenerateDocsTest(unittest.TestCase):
             "sequenceGroups",
             "sequences",
             "database",
+            "systemArchitecture",
             "policies",
         ]:
             self.assertIn(key, schema["required"])
+
+    def test_system_architecture_page_is_generated(self):
+        data = json.loads(Path("docs-data/documentation.json").read_text(encoding="utf-8"))
+        self.assertIn("systemArchitecture", data["site"]["pages"])
+        self.assertIn("systemArchitecture", data)
+
+        with tempfile.TemporaryDirectory() as tmp:
+            out_dir = Path(tmp)
+
+            generated = generate_docs("docs-data/documentation.json", out_dir)
+
+            generated_names = {path.name for path in generated}
+            self.assertIn("system-architecture-doc.html", generated_names)
+            architecture = (out_dir / "system-architecture-doc.html").read_text(encoding="utf-8")
+            sequence_index = (out_dir / "sequence-index.html").read_text(encoding="utf-8")
+
+            for expected in [
+                "notification_outbox",
+                "notification_templates",
+                "Notification Worker",
+                "retry_scheduled",
+                "dead_letter",
+                "SMTP",
+            ]:
+                self.assertIn(expected, architecture)
+            self.assertIn("시스템 아키텍처 문서", sequence_index)
+
+    def test_system_architecture_d2_files_are_generated(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            out_dir = Path(tmp)
+
+            generate_docs("docs-data/documentation.json", out_dir)
+
+            diagram_dir = out_dir / "diagrams"
+            outbox_d2 = diagram_dir / "system-architecture-email-notification-outbox.d2"
+            lifecycle_d2 = diagram_dir / "system-architecture-email-delivery-lifecycle.d2"
+
+            self.assertTrue(outbox_d2.exists())
+            self.assertTrue(lifecycle_d2.exists())
+            self.assertIn("notification_outbox", outbox_d2.read_text(encoding="utf-8"))
+            self.assertIn("dead_letter", lifecycle_d2.read_text(encoding="utf-8"))
 
     def test_schema_allows_mongodb_index_safety_metadata(self):
         schema = json.loads(Path("docs-data/schema/documentation.schema.json").read_text(encoding="utf-8"))

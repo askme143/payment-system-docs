@@ -1,0 +1,231 @@
+<?xml version="1.0" encoding="utf-8"?><svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" data-d2-version="0.7.1" preserveAspectRatio="xMinYMin meet" viewBox="0 0 2298 772"><svg class="d2-807206352 d2-svg" width="2298" height="772" viewBox="-101 -101 2298 772"><rect x="-101.000000" y="-101.000000" width="2298.000000" height="772.000000" rx="0.000000" fill="#FFFFFF" class=" fill-N7" stroke-width="0" /><style type="text/css"><![CDATA[
+.appendix-icon {
+	filter: drop-shadow(0px 0px 32px rgba(31, 36, 58, 0.1));
+}
+.d2-807206352 .text-bold {
+	font-family: "d2-807206352-font-bold";
+}
+@font-face {
+	font-family: d2-807206352-font-bold;
+	src: url("data:application/font-woff;base64,d09GRgABAAAAABLsAAoAAAAAHFQAAguFAAAAAAAAAAAAAAAAAAAAAAAAAABPUy8yAAAA9AAAAGAAAABgXxHXrmNtYXAAAAFUAAAAtwAAAQIFMwatZ2x5ZgAAAgwAAAvsAAAQNMdDFTxoZWFkAAAN+AAAADYAAAA2G38e1GhoZWEAAA4wAAAAJAAAACQKfwX1aG10eAAADlQAAAC9AAAA2GhOB6tsb2NhAAAPFAAAAG4AAABucu5u6m1heHAAAA+EAAAAIAAAACAATgD3bmFtZQAAD6QAAAMoAAAIKgjwVkFwb3N0AAASzAAAAB0AAAAg/9EAMgADAioCvAAFAAACigJYAAAASwKKAlgAAAFeADIBKQAAAgsHAwMEAwICBGAAAvcAAAADAAAAAAAAAABBREJPACAAIP//Au7/BgAAA9gBESAAAZ8AAAAAAfAClAAAACAAA3icfM05SsVgHMXRk5foc3jO8xznOTF2lhYWCoKgYCluQnRN2oqIILgEl+AexPYvfJ2Nt7nNgR8yuQwdhR+USkX6XXsqtSPHTpy5cOXajTsPEX9Ek8Spc5dJ3LqPiC9tOVrxHR/xHm/xGi/xHJ/xFI+p+f8yh2qVxroNm7Zs20nNfS25QpdubT169enXcWDAoCHDRowaM27CpCnTZsyaM2/BoiWlZStWrfELAAD//wEAAP//s5IlzgB4nIRXa2wbV3Y+93LEkejRgxwOX+J7yBmSEkmRw5mRKEoUJYqyZFEvx7JiS5ZXSGLZsmU3liMlVpIFNg80oZsUShMlaZO0aLFpkRRJ3QLetGrRRdvUWBcBmk23KHaTtBuk6aLdaLdEu5tKw2KGlCwFBfqDnMHgzrnnfuf7vnMG6mACAC/gF0AHDdAMJmAABKPPGBR4niVlQZZZq07mkZGcwCbl936XDxPhMBHxbnoemZ9HxTP4hd2Lp4sLC/81392tvPad95Qb6Op7ALjyFQAewCVoACMATQo8x/GsXq+jBZrlWfLzlmebG1sbCcr+1Z137/xm6P0QGslkEstC6pLyJC7trrz6KgAAgiIA+hKX4IiWF+NjBIZlfEwRbSr/8/HHqBmX1r91/cX1vbXwKS6BTl0rGIsbaiBA0FIpo5u4BC0AVj/HyxaLkJREo2A06/X/MvKA/z5Thz0U3mifo7q7R3zeRA59WylmF3trMfHbuAQeLSZtsVgFSZJpwciKKUmSWZJkeZ51Y4Yp/vZ5g8lAGIyGc288RTboCHFuci5FEPUkLikfO3vd7l4n8u+ufOkdn/C8+stfvuqZGPd+ubfHKC4BXd3DKnCcKApGVsezFgvDFF/6gz6CaCqpl7pGXFL+7PnUN9Of766gwV+T1tP/CgAYYpUyfgxvQjO0AtT5OU5NT0haLIxZr+eTkpjiWL+eMVvQ9MyTx449OVP9HxgbGxgYG6OmXr6w9Bvj4y9euPDy1OMrCwvLywsLK2pcNbcOXAIKzFp2tYgsyxiFpBqULX569FqhsDI4eXStL5PHJX52fHQh/iM0tShEqjVkK2VswJsQ0TLbwz/F8XwM19K0klwtP6u1ugMy9z2evIedDsWiQtsJX4brPp/vvBI55u3juWhX5J7uQnqZ6ojd7+b8Lo/LFGiKF+LSTKo9Mmdv9TjdbqPfds+gNNsJCOwAmMYlINUTsKKPYY13bqKvbuKW9fXd7WqOTQA6Ly6BD0DQHajz3Tsdq6tymNQ9/fBLUX2TnjDQhsKjBQNtIMhGMnpj5Tt99Y11hL6xvgeXlA+Ec6nUOQEllA8Si6J4LokSuysoxBUDgSKn/CNgiFTK6PtoB+zAaswUU5KswUDyGiiMkVX3k5OSLOpVbP48P/HEBmbDnr6AGF9Kzz+wZiA8Q/X2ID2W8VAns2MzzT7exnzDFVh+UPlMcLIPWumThjaXzapxJFcpYwveArPKZrUSLMkaBYb8GlFYP8lYLGjQN+AiqKsbhCvvz8zEM/MznDTdHjaHKJ9XxFtvjTpcvb8yeuLh7Fph9Kno90xNGo6BShltoR1wHGKhlaxVV0hKslWvR/bBy7mjD+VjQ85B1itmsx22GJ0OTlM916aOr/S4rfOu0VxfkWk+620FLXe+UkY7eAto8O5hpQXmVaHso7RHop/PXu6eT4U77fqNNQPhKGAbb6LbzKwUp559ePJar9M2+vu7AwkHu2a2f8/UNDA0PAhYy/2f0Q7Yavgc1BDpU1mr5q4TNCkhz9CD/QMXu4fm4gRWfmAoJEQpwZ155Sbf7peo3pWpyZVsdilPBxskwXevw43SYTFe5ZoNAK3g2+pV5aP8NQ2oFmc81d8fmBjwpFpaGx1Uq/vee9Gjl+paxekUpb9YV+fj3FeVbwHowF+JYhLtQBy6YURDhhNTKhAqmcS9I1gFhq0J189rdVDpZdbrdQecga7es35OW/Lz9JnOIbrVa3OE02fEdt+fjJMNqRnZ5TH5wxOz38ivj7h43uXi+XCyjw8Kdh/V2vOho7M9EyIaQ57WZAthyrdlxkPU0hG/uWskYGi20KbuAWEyhm5Hwnw4FApHlI2A3dqi09nsTlcVm5xabI2jqtvUuMkYWaOWJWnMbZDOY8nJ4Q2X1xmy4a237rW3Lc0pd5BPCtmtyrtQqYAMAD/CH2IOBAAgIQXPAFQqlb+rZOAT7blYe17a39ONt4Cq9g1BFkia5Ukm9xzxW2/84Z++fiWLt5Tlv76j/PAvhx5R11fKyIS3oLnKRLWR7BH7b0e7N4wNdaTeRAWp08cwu/sDqwmhS3VkdR+dC+1oHmMUVFtRq37ohOT+Nadqu5AQc7RvJDFxbMPlDXaof3G03eeJtoX8ib1jdyjv1i57+KGdGn61PQ7it2YgvMV9ANF21h09hF9VBxqn/v9eYslezucvZ7PL+fxyNhqLRWPRaE3DPSvHp671rBb7cqOqlKv+cxRb0A7Q4Aaw3s1OoyXHWxn6rv2oebqG+VOLmXnJm3HUjXPSdFvEHLqF30w42F+9emIt22of/3UU2Dcf1SOOoh0tvhegTpS1sHviEmTBqDvoEei83t7vrxpFr+p0n+2bxK2XRm0ezShc3sTuDArcdYkaX9BzaAdMh+pYVW8V4dZRjnEabI32FmePGW2fTCbq6h4niHBS+RQQMJUyeh3tAH9oHklxXLUf7gdTu6EbM2b9h4lzXL8/6/G5XTGHuzt0/kTXSU+/I+Xo6uK8PeFFivPM2luttNFCG6hAV3hwmrfNmC28zd50hO2KDcxVtWWslNEyXgGrVlVRZEVZFrSB6q4xw+x4ftT4yOoq66LsBistUxemb1/SP/HE1fcjQT2xpKeqsTKVMvoF2lZ5dkgDxpod/8Pk8Ibb6+QsG2tHdJ4RamkOpZRPxLDDhY4qLYPBdkCq3lAFbUOj1nOttU4rC7qb336hT+2qDbQhd+N30PZPgkWeLwZ/orTs9WpURttqXxdo/sCLpJWtzZkk2bT53GvtBouBqDfV+zeff/m1DspKEQ3mBh7hn04wbQzTxkxUfjbFtDNMm2VKjUtVetEu2lZZf7cusnwotSa8ZvE1O0hTfTBkIP/ihaEjJgNRb2zI3HjL2jn+XT1xBdUFXA7044/8hSA7xH6kHOk9UZuDCgDon/B1zWfUtiVKkqyaXOGZ1dRR/8XVVXT5tMFp3t1Zra53A6DP8NPgVNf34qrsarOBphrVHQUmOPloIRH2y7aJ+EI+e0bsnk3ZMpZv3lN89Hw0nuAd40khebpHvHxZ0tWtq3EtlTL6BD8N4a/zjxX3xL03gZj1qhjVvf6zeInNuwqheKdzZHC6L8T5ZfdI+0J64WFZkIdyS1QyNOcM8AFn2LIY53xBt+MU13b6eKJgIVqKvd3H26p9nAZAv8DXoUFlDi2oXUotFy36RFrFgmXeeKoOEZSjKan8xxd/PDyM6s95Jt0OqVVZ3rwfPabcuLKpnsFaKaNP8XW1Ux86g5Y77WNYch+l/x67yPW78qFEurPdGXT1m9Divx3xcfLpztwFKhWccwSTiY5kkymCcuurzZGT+cJ9KS3XcKWM/h0/DUcgBID8enJvE92hyUbdU0/uWxmi7YLZ0OnzxePunuXB4WsD2Vl3sUV2smlWZx92TS2l51HQ5T/WlZCSEeWD3LOXVzeHo54ZU2vw5IiXnb+/fz6l1b8dAH2Or2v66MWyT/QxTTrydb2/kFF+jN6TB4ItxIU3Xzm+fmrgoevPqyLXaTPlFxpneEjtu/fdSeBgSXVf7/0cr42ZiMzel85Ggx2p2e6TF5K+WF/n/U4+HHBFMlSww58JMc401T4upEdshPNoUhqPzI/HhiyEfSybnIihx6IdwWggyLcrH/EhZ9BlpEVXJA4Y/JUy+lzDMwxAV/1CQ4/er6BUNe1DHefNjoBdoA2y39vRk51zj7VIzkBXANuHXdKJZPpsV68KMvqjZETDVKFi7iqUnkDk5ED/WSH3zJWHXh4GBD2VMnwJb6vfktUJsgrHi5wgcJwgUCIfEsUQL6rYxyq9COBt1eOtvCTxfj974JVRd2caYQKzksQlU7PfHTPngm0hLjaSm1qrapeqrKAvKu+r36JW0cdQ6Iel48cBQWPlLJLw32jPaUHXePvs7Td0D+y8or7jhzPop1hS85NFVhTEqjn//TvvXHznnTO3Fm/dWrxV6z/wfbS9952b20DbSgugytu4C47jD9X3jQeSDcZiwWAshrsiLBtRf6rtqrPQR2j7//wmDnjCzQ4DbXBZN7zFv6rXX9QRfBj9TKGlUzL8LwAAAP//AQAA//+a0l35AAEAAAACC4U59DIJXw889QABA+gAAAAA2F2ghAAAAADdZi82/jf+xAhtA/EAAQADAAIAAAAAAAAAAQAAA9j+7wAACJj+N/43CG0AAQAAAAAAAAAAAAAAAAAAADZ4nByNMUoDURgG5/8CgrjGX4yrNiniAzG+pFUwr/gbuweCWngab2DvHbSx9QI2Vl7FakE27LbDDKNP7vkGlb5TotqKav+4OqreqHpnrUeqMufKnE1WTHXAUoWwX5IKF9oh2ROnalnolrAZ19b2P0qEzYnJM6ENoavRj6GxV8K+OLYXDnXDRns0ElPt0si5kzOX08o5knMi51JOlrOUs7BMscza/mjsgf2RzQjoP4b3FgAA//8BAAD//xb/HkwAAAAAAAAsACwAUABmAHIAkADCAOQBEAEyAXIBhAG+AfYCKAJUAoYCugLgA0gDagN2A4IDmgO2A+gECgQ2BGYEmgS6BPYFHAU+BVoFhgW2Bc4F+gY4BlwGjgbOBugHNgd2B4wHrAe4B8YH2gfmB/wIGgAAAAEAAAA2AJAADABjAAcAAQAAAAAAAAAAAAAAAAAEAAN4nJyUz24bVRTGf05s0wrBAkVVuonugkWR6NhUSdU2K4fUikUUB48LQkJIE8/4jzKeGXkmDuEJWPMWvEVXPATPgVij+Xzs2AXRJoqSfHfu+fOdc75zgR3+ZptK9SHwRz0xXGGvfm54iwf1E8PbtOtbhqs8qf1puEZYmxuu83mtZ/gj3lZ/M/yA/epPhh+yW20b/phn1R3Dn2w7/jL8Kfu8XeAKvOBXwxV2yQxvscOPhrd5hMWsVHlE03CNz9gzXGcP6DOhIGZCwgjHkAkjrpgRkeMTMWPCkIgQR4cWMYW+JgRCjtF/fg3wKZgRKOKYAkeMT0xAztgi/iKvlHNlHOo0s7sWBWMCLuRxSUCCI2VESkLEpeIUFGS8okGDnIH4ZhTkeORMiPFImTGiQZc2p/QZMyHH0VakkplPypCCawLld2ZRdmZAREJurK5ICMXTiV8k7w6nOLpksl2PfLoR4Usc38m75JbK9is8/bo1Zpt5l2wC5upnrK7EurnWBMe6LfO2+Fa44BXuXv3ZZPL+HoX6XyjyBVeaf6hJJWKS4NwuLXwpyHePcRzp3MFXR76nQ58Turyhr3OLHj1anNGnw2v5dunh+JouZxzLoyO8uGtLMWf8gOMbOrIpY0fWn8XEIn4mM3Xn4jhTHVMy9bxk7qnWSBXefcLlDqUb6sjlM9AelZZO80u0ZwEjU0UmhlP1cqmN3PoXmiKmqqWc7e19uQ1z273lFt+QaodLtS44lZNbMHrfVL13NHOtH4+AkJQLWQxImdKg4Ea8zwm4IsZxrO6daEsKWiufMs+NVBIxFYMOieLMyPQ3MN34xn2woXtnb0ko/5Lp5aqq+2Rx6tXtjN6oe8s737ocrU2gYVNN19Q0ENfEtB9pp9b5+/LN9bqlPOWIlJjwXy/AMzya7HPAIWNlGOhmbq9DUy9Ek5ccqvpLIlkNpefIIhzg8ZwDDnjJ83f6uGTijItbcVnP3eKYI7ocflAVC/suR7xeffv/rL+LaVO1OJ6uTi/uPcUnd1DrF9qz2/eyp4mVk5hbtNutOCNgWnJxu+s1ucd4/wAAAP//AQAA///0t09ReJxiYGYAg//nGIwYsAAAAAAA//8BAAD//y8BAgMAAAA=");
+}
+.d2-807206352 .text-italic {
+	font-family: "d2-807206352-font-italic";
+}
+@font-face {
+	font-family: d2-807206352-font-italic;
+	src: url("data:application/font-woff;base64,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");
+}]]></style><style type="text/css"><![CDATA[.shape {
+  shape-rendering: geometricPrecision;
+  stroke-linejoin: round;
+}
+.connection {
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.blend {
+  mix-blend-mode: multiply;
+  opacity: 0.5;
+}
+
+		.d2-807206352 .fill-N1{fill:#0A0F25;}
+		.d2-807206352 .fill-N2{fill:#676C7E;}
+		.d2-807206352 .fill-N3{fill:#9499AB;}
+		.d2-807206352 .fill-N4{fill:#CFD2DD;}
+		.d2-807206352 .fill-N5{fill:#DEE1EB;}
+		.d2-807206352 .fill-N6{fill:#EEF1F8;}
+		.d2-807206352 .fill-N7{fill:#FFFFFF;}
+		.d2-807206352 .fill-B1{fill:#000536;}
+		.d2-807206352 .fill-B2{fill:#0F66B7;}
+		.d2-807206352 .fill-B3{fill:#4393DD;}
+		.d2-807206352 .fill-B4{fill:#87BFF3;}
+		.d2-807206352 .fill-B5{fill:#BCDDFB;}
+		.d2-807206352 .fill-B6{fill:#E5F3FF;}
+		.d2-807206352 .fill-AA2{fill:#076F6F;}
+		.d2-807206352 .fill-AA4{fill:#77DEDE;}
+		.d2-807206352 .fill-AA5{fill:#C3F8F8;}
+		.d2-807206352 .fill-AB4{fill:#C1A2F3;}
+		.d2-807206352 .fill-AB5{fill:#DACEFB;}
+		.d2-807206352 .stroke-N1{stroke:#0A0F25;}
+		.d2-807206352 .stroke-N2{stroke:#676C7E;}
+		.d2-807206352 .stroke-N3{stroke:#9499AB;}
+		.d2-807206352 .stroke-N4{stroke:#CFD2DD;}
+		.d2-807206352 .stroke-N5{stroke:#DEE1EB;}
+		.d2-807206352 .stroke-N6{stroke:#EEF1F8;}
+		.d2-807206352 .stroke-N7{stroke:#FFFFFF;}
+		.d2-807206352 .stroke-B1{stroke:#000536;}
+		.d2-807206352 .stroke-B2{stroke:#0F66B7;}
+		.d2-807206352 .stroke-B3{stroke:#4393DD;}
+		.d2-807206352 .stroke-B4{stroke:#87BFF3;}
+		.d2-807206352 .stroke-B5{stroke:#BCDDFB;}
+		.d2-807206352 .stroke-B6{stroke:#E5F3FF;}
+		.d2-807206352 .stroke-AA2{stroke:#076F6F;}
+		.d2-807206352 .stroke-AA4{stroke:#77DEDE;}
+		.d2-807206352 .stroke-AA5{stroke:#C3F8F8;}
+		.d2-807206352 .stroke-AB4{stroke:#C1A2F3;}
+		.d2-807206352 .stroke-AB5{stroke:#DACEFB;}
+		.d2-807206352 .background-color-N1{background-color:#0A0F25;}
+		.d2-807206352 .background-color-N2{background-color:#676C7E;}
+		.d2-807206352 .background-color-N3{background-color:#9499AB;}
+		.d2-807206352 .background-color-N4{background-color:#CFD2DD;}
+		.d2-807206352 .background-color-N5{background-color:#DEE1EB;}
+		.d2-807206352 .background-color-N6{background-color:#EEF1F8;}
+		.d2-807206352 .background-color-N7{background-color:#FFFFFF;}
+		.d2-807206352 .background-color-B1{background-color:#000536;}
+		.d2-807206352 .background-color-B2{background-color:#0F66B7;}
+		.d2-807206352 .background-color-B3{background-color:#4393DD;}
+		.d2-807206352 .background-color-B4{background-color:#87BFF3;}
+		.d2-807206352 .background-color-B5{background-color:#BCDDFB;}
+		.d2-807206352 .background-color-B6{background-color:#E5F3FF;}
+		.d2-807206352 .background-color-AA2{background-color:#076F6F;}
+		.d2-807206352 .background-color-AA4{background-color:#77DEDE;}
+		.d2-807206352 .background-color-AA5{background-color:#C3F8F8;}
+		.d2-807206352 .background-color-AB4{background-color:#C1A2F3;}
+		.d2-807206352 .background-color-AB5{background-color:#DACEFB;}
+		.d2-807206352 .color-N1{color:#0A0F25;}
+		.d2-807206352 .color-N2{color:#676C7E;}
+		.d2-807206352 .color-N3{color:#9499AB;}
+		.d2-807206352 .color-N4{color:#CFD2DD;}
+		.d2-807206352 .color-N5{color:#DEE1EB;}
+		.d2-807206352 .color-N6{color:#EEF1F8;}
+		.d2-807206352 .color-N7{color:#FFFFFF;}
+		.d2-807206352 .color-B1{color:#000536;}
+		.d2-807206352 .color-B2{color:#0F66B7;}
+		.d2-807206352 .color-B3{color:#4393DD;}
+		.d2-807206352 .color-B4{color:#87BFF3;}
+		.d2-807206352 .color-B5{color:#BCDDFB;}
+		.d2-807206352 .color-B6{color:#E5F3FF;}
+		.d2-807206352 .color-AA2{color:#076F6F;}
+		.d2-807206352 .color-AA4{color:#77DEDE;}
+		.d2-807206352 .color-AA5{color:#C3F8F8;}
+		.d2-807206352 .color-AB4{color:#C1A2F3;}
+		.d2-807206352 .color-AB5{color:#DACEFB;}.appendix text.text{fill:#0A0F25}.md{--color-fg-default:#0A0F25;--color-fg-muted:#676C7E;--color-fg-subtle:#9499AB;--color-canvas-default:#FFFFFF;--color-canvas-subtle:#EEF1F8;--color-border-default:#000536;--color-border-muted:#0F66B7;--color-neutral-muted:#EEF1F8;--color-accent-fg:#0F66B7;--color-accent-emphasis:#0F66B7;--color-attention-subtle:#676C7E;--color-danger-fg:red;}.sketch-overlay-B1{fill:url(#streaks-darker-d2-807206352);mix-blend-mode:lighten}.sketch-overlay-B2{fill:url(#streaks-dark-d2-807206352);mix-blend-mode:overlay}.sketch-overlay-B3{fill:url(#streaks-dark-d2-807206352);mix-blend-mode:overlay}.sketch-overlay-B4{fill:url(#streaks-normal-d2-807206352);mix-blend-mode:color-burn}.sketch-overlay-B5{fill:url(#streaks-normal-d2-807206352);mix-blend-mode:color-burn}.sketch-overlay-B6{fill:url(#streaks-bright-d2-807206352);mix-blend-mode:darken}.sketch-overlay-AA2{fill:url(#streaks-dark-d2-807206352);mix-blend-mode:overlay}.sketch-overlay-AA4{fill:url(#streaks-normal-d2-807206352);mix-blend-mode:color-burn}.sketch-overlay-AA5{fill:url(#streaks-bright-d2-807206352);mix-blend-mode:darken}.sketch-overlay-AB4{fill:url(#streaks-normal-d2-807206352);mix-blend-mode:color-burn}.sketch-overlay-AB5{fill:url(#streaks-normal-d2-807206352);mix-blend-mode:color-burn}.sketch-overlay-N1{fill:url(#streaks-darker-d2-807206352);mix-blend-mode:lighten}.sketch-overlay-N2{fill:url(#streaks-dark-d2-807206352);mix-blend-mode:overlay}.sketch-overlay-N3{fill:url(#streaks-normal-d2-807206352);mix-blend-mode:color-burn}.sketch-overlay-N4{fill:url(#streaks-normal-d2-807206352);mix-blend-mode:color-burn}.sketch-overlay-N5{fill:url(#streaks-bright-d2-807206352);mix-blend-mode:darken}.sketch-overlay-N6{fill:url(#streaks-bright-d2-807206352);mix-blend-mode:darken}.sketch-overlay-N7{fill:url(#streaks-bright-d2-807206352);mix-blend-mode:darken}.light-code{display: block}.dark-code{display: none}]]></style><g class="dGl0bGU="><g class="shape" ><rect x="0.000000" y="0.000000" width="288.000000" height="66.000000" stroke="#000536" fill="#E5F3FF" class=" stroke-B1 fill-B6" style="stroke-width:2;" /></g><text x="144.000000" y="38.500000" fill="#0A0F25" class="text-bold fill-N1" style="text-anchor:middle;font-size:16px">이메일 알림 Outbox 아키텍처</text></g><g class="Y2xpZW50"><g class="shape" ><rect x="60.000000" y="126.000000" width="168.000000" height="66.000000" rx="6.000000" stroke="#2457a6" fill="#e8f3ff" style="stroke-width:2;" /></g><text x="144.000000" y="164.500000" fill="#0A0F25" class="text-bold fill-N1" style="text-anchor:middle;font-size:16px">웹 클라이언트</text><title>결제와 구독 화면을 호출합니다.</title></g><g class="cGF5bWVudF9hcGk="><g class="shape" ><rect x="729.000000" y="132.000000" width="134.000000" height="66.000000" rx="6.000000" stroke="#1c7c66" fill="#eaf8f3" style="stroke-width:2;" /></g><text x="796.000000" y="170.500000" fill="#0A0F25" class="text-bold fill-N1" style="text-anchor:middle;font-size:16px">Payment API</text><title>일반결제, 구독, 청구 API를 처리합니다.</title></g><g class="c3Vic2NyaXB0aW9uX2pvYnM="><g class="shape" ><rect x="58.000000" y="252.000000" width="172.000000" height="66.000000" rx="6.000000" stroke="#9a5b00" fill="#fff8e6" style="stroke-width:2;" /></g><text x="144.000000" y="290.500000" fill="#0A0F25" class="text-bold fill-N1" style="text-anchor:middle;font-size:16px">Subscription Jobs</text><title>정기 결제, 재시도, 해지 만료 배치를 실행합니다.</title></g><g class="YnVzaW5lc3Nfc3RhdGU="><g class="shape" ><rect x="1314.000000" y="126.000000" width="292.000000" height="66.000000" rx="6.000000" stroke="#334155" fill="#f1f5f9" style="stroke-width:2;" /></g><text x="1460.000000" y="164.500000" fill="#0A0F25" class="text-bold fill-N1" style="text-anchor:middle;font-size:16px">payments / invoices / subscriptions</text><title>결제, 인보이스, 구독의 최종 업무 상태입니다.</title></g><g class="bm90aWZpY2F0aW9uX291dGJveA=="><g class="shape" ><rect x="1367.000000" y="252.000000" width="186.000000" height="66.000000" rx="6.000000" stroke="#9a5b00" fill="#fff5dd" style="stroke-width:2;" /></g><text x="1460.000000" y="290.500000" fill="#0A0F25" class="text-bold fill-N1" style="text-anchor:middle;font-size:16px">notification_outbox</text><title>메일 발송 요청, status, lock, retry 정보를 저장하는 내구성 큐입니다.</title></g><g class="bm90aWZpY2F0aW9uX3RlbXBsYXRlcw=="><g class="shape" ><rect x="1357.000000" y="378.000000" width="207.000000" height="66.000000" rx="6.000000" stroke="#334155" fill="#f1f5f9" style="stroke-width:2;" /></g><text x="1460.500000" y="416.500000" fill="#0A0F25" class="text-bold fill-N1" style="text-anchor:middle;font-size:16px">notification_templates</text><title>상품별 template_key, version, subject/html/text 본문을 저장합니다.</title></g><g class="bm90aWZpY2F0aW9uX3dvcmtlcg=="><g class="shape" ><rect x="704.000000" y="404.000000" width="184.000000" height="66.000000" rx="6.000000" stroke="#1c7c66" fill="#eaf8f3" style="stroke-width:2;" /></g><text x="796.000000" y="442.500000" fill="#0A0F25" class="text-bold fill-N1" style="text-anchor:middle;font-size:16px">Notification Worker</text><title>available_at이 지난 outbox item을 claim하고 렌더링 후 발송합니다.</title></g><g class="c210cF9hZGFwdGVy"><g class="shape" ><rect x="1372.000000" y="504.000000" width="176.000000" height="66.000000" rx="6.000000" stroke="#7b4bc4" fill="#f1edff" style="stroke-width:2;" /></g><text x="1460.000000" y="542.500000" fill="#0A0F25" class="text-bold fill-N1" style="text-anchor:middle;font-size:16px">SMTPEmailSender</text><title>SMTP 서버로 렌더링된 이메일을 전송합니다.</title></g><g class="bWFpbGJveA=="><g class="shape" ><rect x="1931.000000" y="504.000000" width="148.000000" height="66.000000" rx="6.000000" stroke="#65758a" fill="#f8fafc" style="stroke-width:2;" /></g><text x="2005.000000" y="542.500000" fill="#0A0F25" class="text-bold fill-N1" style="text-anchor:middle;font-size:16px">회원 메일함</text><title>결제 예정, 성공, 실패, 해지 안내 메일을 받습니다.</title></g><g class="KGNsaWVudCAtJmd0OyBwYXltZW50X2FwaSlbMF0="><marker id="mk-d2-807206352-3488378134" markerWidth="10.000000" markerHeight="12.000000" refX="7.000000" refY="6.000000" viewBox="0.000000 0.000000 10.000000 12.000000" orient="auto" markerUnits="userSpaceOnUse"> <polygon points="0.000000,0.000000 10.000000,6.000000 0.000000,12.000000" fill="#000536" class="connection fill-B1" stroke-width="2" /> </marker><path d="M 230.000000 159.000000 C 442.399994 159.000000 542.599976 160.000000 725.000921 163.914183" stroke="#000536" fill="none" class="connection stroke-B1" style="stroke-width:2;" marker-end="url(#mk-d2-807206352-3488378134)" mask="url(#d2-807206352)" /><text x="479.000000" y="165.000000" fill="#676C7E" class="text-italic fill-N2" style="text-anchor:middle;font-size:16px">결제/구독 요청</text></g><g class="KHN1YnNjcmlwdGlvbl9qb2JzIC0mZ3Q7IHBheW1lbnRfYXBpKVswXQ=="><path d="M 231.985683 274.261121 C 442.799988 248.899994 542.599976 230.500000 725.126372 183.497501" stroke="#000536" fill="none" class="connection stroke-B1" style="stroke-width:2;" marker-end="url(#mk-d2-807206352-3488378134)" mask="url(#d2-807206352)" /><text x="481.500000" y="247.000000" fill="#676C7E" class="text-italic fill-N2" style="text-anchor:middle;font-size:16px">내부 배치 진입점 호출</text></g><g class="KHBheW1lbnRfYXBpIC0mZ3Q7IGJ1c2luZXNzX3N0YXRlKVswXQ=="><path d="M 864.999559 163.957992 C 1053.400024 160.000000 1143.599976 159.000000 1310.000000 159.000000" stroke="#000536" fill="none" class="connection stroke-B1" style="stroke-width:2;" marker-end="url(#mk-d2-807206352-3488378134)" mask="url(#d2-807206352)" /><text x="1088.000000" y="165.000000" fill="#676C7E" class="text-italic fill-N2" style="text-anchor:middle;font-size:16px">업무 상태 저장</text></g><g class="KHBheW1lbnRfYXBpIC0mZ3Q7IG5vdGlmaWNhdGlvbl9vdXRib3gpWzBd"><path d="M 864.939323 182.988905 C 1053.400024 230.500000 1154.199951 248.699997 1363.026890 273.036968" stroke="#000536" fill="none" class="connection stroke-B1" style="stroke-width:2;" marker-end="url(#mk-d2-807206352-3488378134)" mask="url(#d2-807206352)" /><text x="1112.500000" y="247.000000" fill="#676C7E" class="text-italic fill-N2" style="text-anchor:middle;font-size:16px">알림 intent enqueue</text></g><g class="KHN1YnNjcmlwdGlvbl9qb2JzIC0mZ3Q7IG5vdGlmaWNhdGlvbl9vdXRib3gpWzBd"><path d="M 231.997968 288.340134 C 442.799988 297.850006 556.000000 300.250000 646.000000 300.250000 C 736.000000 300.250000 1154.199951 298.049988 1363.003416 289.415272" stroke="#000536" fill="none" class="connection stroke-B1" style="stroke-width:2;" marker-end="url(#mk-d2-807206352-3488378134)" mask="url(#d2-807206352)" /><text x="798.500000" y="305.000000" fill="#676C7E" class="text-italic fill-N2" style="text-anchor:middle;font-size:16px">배치 알림 enqueue</text></g><g class="KG5vdGlmaWNhdGlvbl93b3JrZXIgLSZndDsgbm90aWZpY2F0aW9uX291dGJveClbMF0="><path d="M 889.912912 407.166248 C 1058.400024 355.750000 1154.199951 334.149994 1363.051262 300.388330" stroke="#000536" fill="none" class="connection stroke-B1" style="stroke-width:2;" marker-end="url(#mk-d2-807206352-3488378134)" mask="url(#d2-807206352)" /><text x="1124.500000" y="346.000000" fill="#676C7E" class="text-italic fill-N2" style="text-anchor:middle;font-size:16px">claim / status update</text></g><g class="KG5vdGlmaWNhdGlvbl93b3JrZXIgLSZndDsgbm90aWZpY2F0aW9uX3RlbXBsYXRlcylbMF0="><path d="M 889.992897 428.831586 C 1058.400024 414.600006 1152.099976 411.000000 1352.500000 411.000000" stroke="#000536" fill="none" class="connection stroke-B1" style="stroke-width:2;" marker-end="url(#mk-d2-807206352-3488378134)" mask="url(#d2-807206352)" /><text x="1121.500000" y="418.000000" fill="#676C7E" class="text-italic fill-N2" style="text-anchor:middle;font-size:16px">template_key + version 조회</text></g><g class="KG5vdGlmaWNhdGlvbl93b3JrZXIgLSZndDsgc210cF9hZGFwdGVyKVswXQ=="><path d="M 889.958647 455.904603 C 1058.400024 490.700012 1155.199951 505.100006 1368.021181 527.088905" stroke="#000536" fill="none" class="connection stroke-B1" style="stroke-width:2;" marker-end="url(#mk-d2-807206352-3488378134)" mask="url(#d2-807206352)" /><text x="1128.500000" y="507.000000" fill="#676C7E" class="text-italic fill-N2" style="text-anchor:middle;font-size:16px">rendered email send</text></g><g class="KHNtdHBfYWRhcHRlciAtJmd0OyBtYWlsYm94KVswXQ=="><path d="M 1549.500000 537.000000 C 1724.300049 537.000000 1801.099976 537.000000 1927.500000 537.000000" stroke="#000536" fill="none" class="connection stroke-B1" style="stroke-width:2;" marker-end="url(#mk-d2-807206352-3488378134)" mask="url(#d2-807206352)" /><text x="1740.000000" y="543.000000" fill="#676C7E" class="text-italic fill-N2" style="text-anchor:middle;font-size:16px">SMTP delivery</text></g><g class="KHNtdHBfYWRhcHRlciAtJmd0OyBub3RpZmljYXRpb25fd29ya2VyKVswXQ=="><path d="M 1370.007164 544.669134 C 1155.199951 562.900024 1055.800049 547.900024 878.669827 471.091341" stroke="#000536" fill="none" class="connection stroke-B1" style="stroke-width:2;" marker-end="url(#mk-d2-807206352-3488378134)" mask="url(#d2-807206352)" /><text x="1116.000000" y="562.000000" fill="#676C7E" class="text-italic fill-N2" style="text-anchor:middle;font-size:16px">provider_message_id / error</text></g><g transform="translate(212 110)" class="appendix-icon"><title>결제와 구독 화면을 호출합니다.</title><svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+<g clip-path="url(#clip0_3427_35082111-d2-807206352-MNWGSZLOOQ)">
+<path d="M16 31.1109C24.3456 31.1109 31.1111 24.3454 31.1111 15.9998C31.1111 7.65415 24.3456 0.888672 16 0.888672C7.65436 0.888672 0.888885 7.65415 0.888885 15.9998C0.888885 24.3454 7.65436 31.1109 16 31.1109Z" fill="white" stroke="#DEE1EB"/>
+<path d="M16 26C21.5228 26 26 21.5228 26 16C26 10.4772 21.5228 6 16 6C10.4772 6 6 10.4772 6 16C6 21.5228 10.4772 26 16 26Z" stroke="#2E3346" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M16 19.998V15.998" stroke="#2E3346" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M16 12H16.0098" stroke="#2E3346" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+</g>
+<defs>
+<clipPath id="clip0_3427_35082111-d2-807206352-MNWGSZLOOQ">
+<rect width="32" height="32" fill="white"/>
+</clipPath>
+</defs>
+</svg>
+</g><g transform="translate(847 116)" class="appendix-icon"><title>일반결제, 구독, 청구 API를 처리합니다.</title><svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+<g clip-path="url(#clip0_3427_35082111-d2-807206352-OBQXS3LFNZ2F6YLQNE)">
+<path d="M16 31.1109C24.3456 31.1109 31.1111 24.3454 31.1111 15.9998C31.1111 7.65415 24.3456 0.888672 16 0.888672C7.65436 0.888672 0.888885 7.65415 0.888885 15.9998C0.888885 24.3454 7.65436 31.1109 16 31.1109Z" fill="white" stroke="#DEE1EB"/>
+<path d="M16 26C21.5228 26 26 21.5228 26 16C26 10.4772 21.5228 6 16 6C10.4772 6 6 10.4772 6 16C6 21.5228 10.4772 26 16 26Z" stroke="#2E3346" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M16 19.998V15.998" stroke="#2E3346" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M16 12H16.0098" stroke="#2E3346" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+</g>
+<defs>
+<clipPath id="clip0_3427_35082111-d2-807206352-OBQXS3LFNZ2F6YLQNE">
+<rect width="32" height="32" fill="white"/>
+</clipPath>
+</defs>
+</svg>
+</g><g transform="translate(214 236)" class="appendix-icon"><title>정기 결제, 재시도, 해지 만료 배치를 실행합니다.</title><svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+<g clip-path="url(#clip0_3427_35082111-d2-807206352-ON2WE43DOJUXA5DJN5XF62TPMJZQ)">
+<path d="M16 31.1109C24.3456 31.1109 31.1111 24.3454 31.1111 15.9998C31.1111 7.65415 24.3456 0.888672 16 0.888672C7.65436 0.888672 0.888885 7.65415 0.888885 15.9998C0.888885 24.3454 7.65436 31.1109 16 31.1109Z" fill="white" stroke="#DEE1EB"/>
+<path d="M16 26C21.5228 26 26 21.5228 26 16C26 10.4772 21.5228 6 16 6C10.4772 6 6 10.4772 6 16C6 21.5228 10.4772 26 16 26Z" stroke="#2E3346" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M16 19.998V15.998" stroke="#2E3346" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M16 12H16.0098" stroke="#2E3346" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+</g>
+<defs>
+<clipPath id="clip0_3427_35082111-d2-807206352-ON2WE43DOJUXA5DJN5XF62TPMJZQ">
+<rect width="32" height="32" fill="white"/>
+</clipPath>
+</defs>
+</svg>
+</g><g transform="translate(1590 110)" class="appendix-icon"><title>결제, 인보이스, 구독의 최종 업무 상태입니다.</title><svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+<g clip-path="url(#clip0_3427_35082111-d2-807206352-MJ2XG2LOMVZXGX3TORQXIZI)">
+<path d="M16 31.1109C24.3456 31.1109 31.1111 24.3454 31.1111 15.9998C31.1111 7.65415 24.3456 0.888672 16 0.888672C7.65436 0.888672 0.888885 7.65415 0.888885 15.9998C0.888885 24.3454 7.65436 31.1109 16 31.1109Z" fill="white" stroke="#DEE1EB"/>
+<path d="M16 26C21.5228 26 26 21.5228 26 16C26 10.4772 21.5228 6 16 6C10.4772 6 6 10.4772 6 16C6 21.5228 10.4772 26 16 26Z" stroke="#2E3346" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M16 19.998V15.998" stroke="#2E3346" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M16 12H16.0098" stroke="#2E3346" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+</g>
+<defs>
+<clipPath id="clip0_3427_35082111-d2-807206352-MJ2XG2LOMVZXGX3TORQXIZI">
+<rect width="32" height="32" fill="white"/>
+</clipPath>
+</defs>
+</svg>
+</g><g transform="translate(1537 236)" class="appendix-icon"><title>메일 발송 요청, status, lock, retry 정보를 저장하는 내구성 큐입니다.</title><svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+<g clip-path="url(#clip0_3427_35082111-d2-807206352-NZXXI2LGNFRWC5DJN5XF633VORRG66A)">
+<path d="M16 31.1109C24.3456 31.1109 31.1111 24.3454 31.1111 15.9998C31.1111 7.65415 24.3456 0.888672 16 0.888672C7.65436 0.888672 0.888885 7.65415 0.888885 15.9998C0.888885 24.3454 7.65436 31.1109 16 31.1109Z" fill="white" stroke="#DEE1EB"/>
+<path d="M16 26C21.5228 26 26 21.5228 26 16C26 10.4772 21.5228 6 16 6C10.4772 6 6 10.4772 6 16C6 21.5228 10.4772 26 16 26Z" stroke="#2E3346" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M16 19.998V15.998" stroke="#2E3346" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M16 12H16.0098" stroke="#2E3346" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+</g>
+<defs>
+<clipPath id="clip0_3427_35082111-d2-807206352-NZXXI2LGNFRWC5DJN5XF633VORRG66A">
+<rect width="32" height="32" fill="white"/>
+</clipPath>
+</defs>
+</svg>
+</g><g transform="translate(1548 362)" class="appendix-icon"><title>상품별 template_key, version, subject/html/text 본문을 저장합니다.</title><svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+<g clip-path="url(#clip0_3427_35082111-d2-807206352-NZXXI2LGNFRWC5DJN5XF65DFNVYGYYLUMVZQ)">
+<path d="M16 31.1109C24.3456 31.1109 31.1111 24.3454 31.1111 15.9998C31.1111 7.65415 24.3456 0.888672 16 0.888672C7.65436 0.888672 0.888885 7.65415 0.888885 15.9998C0.888885 24.3454 7.65436 31.1109 16 31.1109Z" fill="white" stroke="#DEE1EB"/>
+<path d="M16 26C21.5228 26 26 21.5228 26 16C26 10.4772 21.5228 6 16 6C10.4772 6 6 10.4772 6 16C6 21.5228 10.4772 26 16 26Z" stroke="#2E3346" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M16 19.998V15.998" stroke="#2E3346" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M16 12H16.0098" stroke="#2E3346" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+</g>
+<defs>
+<clipPath id="clip0_3427_35082111-d2-807206352-NZXXI2LGNFRWC5DJN5XF65DFNVYGYYLUMVZQ">
+<rect width="32" height="32" fill="white"/>
+</clipPath>
+</defs>
+</svg>
+</g><g transform="translate(872 388)" class="appendix-icon"><title>available_at이 지난 outbox item을 claim하고 렌더링 후 발송합니다.</title><svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+<g clip-path="url(#clip0_3427_35082111-d2-807206352-NZXXI2LGNFRWC5DJN5XF653POJVWK4Q)">
+<path d="M16 31.1109C24.3456 31.1109 31.1111 24.3454 31.1111 15.9998C31.1111 7.65415 24.3456 0.888672 16 0.888672C7.65436 0.888672 0.888885 7.65415 0.888885 15.9998C0.888885 24.3454 7.65436 31.1109 16 31.1109Z" fill="white" stroke="#DEE1EB"/>
+<path d="M16 26C21.5228 26 26 21.5228 26 16C26 10.4772 21.5228 6 16 6C10.4772 6 6 10.4772 6 16C6 21.5228 10.4772 26 16 26Z" stroke="#2E3346" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M16 19.998V15.998" stroke="#2E3346" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M16 12H16.0098" stroke="#2E3346" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+</g>
+<defs>
+<clipPath id="clip0_3427_35082111-d2-807206352-NZXXI2LGNFRWC5DJN5XF653POJVWK4Q">
+<rect width="32" height="32" fill="white"/>
+</clipPath>
+</defs>
+</svg>
+</g><g transform="translate(1532 488)" class="appendix-icon"><title>SMTP 서버로 렌더링된 이메일을 전송합니다.</title><svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+<g clip-path="url(#clip0_3427_35082111-d2-807206352-ONWXI4C7MFSGC4DUMVZA)">
+<path d="M16 31.1109C24.3456 31.1109 31.1111 24.3454 31.1111 15.9998C31.1111 7.65415 24.3456 0.888672 16 0.888672C7.65436 0.888672 0.888885 7.65415 0.888885 15.9998C0.888885 24.3454 7.65436 31.1109 16 31.1109Z" fill="white" stroke="#DEE1EB"/>
+<path d="M16 26C21.5228 26 26 21.5228 26 16C26 10.4772 21.5228 6 16 6C10.4772 6 6 10.4772 6 16C6 21.5228 10.4772 26 16 26Z" stroke="#2E3346" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M16 19.998V15.998" stroke="#2E3346" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M16 12H16.0098" stroke="#2E3346" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+</g>
+<defs>
+<clipPath id="clip0_3427_35082111-d2-807206352-ONWXI4C7MFSGC4DUMVZA">
+<rect width="32" height="32" fill="white"/>
+</clipPath>
+</defs>
+</svg>
+</g><g transform="translate(2063 488)" class="appendix-icon"><title>결제 예정, 성공, 실패, 해지 안내 메일을 받습니다.</title><svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+<g clip-path="url(#clip0_3427_35082111-d2-807206352-NVQWS3DCN54A)">
+<path d="M16 31.1109C24.3456 31.1109 31.1111 24.3454 31.1111 15.9998C31.1111 7.65415 24.3456 0.888672 16 0.888672C7.65436 0.888672 0.888885 7.65415 0.888885 15.9998C0.888885 24.3454 7.65436 31.1109 16 31.1109Z" fill="white" stroke="#DEE1EB"/>
+<path d="M16 26C21.5228 26 26 21.5228 26 16C26 10.4772 21.5228 6 16 6C10.4772 6 6 10.4772 6 16C6 21.5228 10.4772 26 16 26Z" stroke="#2E3346" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M16 19.998V15.998" stroke="#2E3346" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M16 12H16.0098" stroke="#2E3346" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+</g>
+<defs>
+<clipPath id="clip0_3427_35082111-d2-807206352-NVQWS3DCN54A">
+<rect width="32" height="32" fill="white"/>
+</clipPath>
+</defs>
+</svg>
+</g><mask id="d2-807206352" maskUnits="userSpaceOnUse" x="-101" y="-101" width="2298" height="772">
+<rect x="-101" y="-101" width="2298" height="772" fill="white"></rect>
+<rect x="415.000000" y="149.000000" width="128" height="21" fill="black"></rect>
+<rect x="388.000000" y="231.000000" width="187" height="21" fill="black"></rect>
+<rect x="1025.000000" y="149.000000" width="126" height="21" fill="black"></rect>
+<rect x="1040.000000" y="231.000000" width="145" height="21" fill="black"></rect>
+<rect x="726.000000" y="289.000000" width="145" height="21" fill="black"></rect>
+<rect x="1053.000000" y="330.000000" width="143" height="21" fill="black"></rect>
+<rect x="1023.000000" y="402.000000" width="197" height="21" fill="black"></rect>
+<rect x="1059.000000" y="491.000000" width="139" height="21" fill="black"></rect>
+<rect x="1692.000000" y="527.000000" width="96" height="21" fill="black"></rect>
+<rect x="1020.000000" y="546.000000" width="192" height="21" fill="black"></rect>
+</mask></svg></svg>

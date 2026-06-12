@@ -4,7 +4,7 @@
   "title": "Payment System Documentation Data",
   "type": "object",
   "additionalProperties": false,
-  "required": ["version", "site", "actors", "apiCategories", "apis", "apiDetails", "sequenceGroups", "sequences", "database", "policies"],
+  "required": ["version", "site", "actors", "apiCategories", "apis", "apiDetails", "sequenceGroups", "sequences", "database", "systemArchitecture", "policies"],
   "properties": {
     "version": {
       "type": "string",
@@ -73,6 +73,9 @@
     },
     "database": {
       "$ref": "#/$defs/database"
+    },
+    "systemArchitecture": {
+      "$ref": "#/$defs/systemArchitecture"
     }
   },
   "$defs": {
@@ -105,6 +108,9 @@
               "$ref": "#/$defs/pageRef"
             },
             "risks": {
+              "$ref": "#/$defs/pageRef"
+            },
+            "systemArchitecture": {
               "$ref": "#/$defs/pageRef"
             }
           }
@@ -967,6 +973,165 @@
           "items": {
             "type": "string"
           }
+        }
+      }
+    },
+    "systemArchitecture": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["title", "summary", "diagrams", "components", "dataStores", "operations"],
+      "properties": {
+        "title": {
+          "type": "string"
+        },
+        "summary": {
+          "type": "string"
+        },
+        "diagrams": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/architectureDiagram"
+          }
+        },
+        "components": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/architectureComponent"
+          }
+        },
+        "dataStores": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/architectureDataStore"
+          }
+        },
+        "operations": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/architectureOperation"
+          }
+        }
+      }
+    },
+    "architectureDiagram": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "title", "nodes", "edges"],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/id"
+        },
+        "title": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        },
+        "nodes": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/architectureNode"
+          }
+        },
+        "edges": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/architectureEdge"
+          }
+        }
+      }
+    },
+    "architectureNode": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "label", "kind", "description"],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/id"
+        },
+        "label": {
+          "type": "string"
+        },
+        "kind": {
+          "type": "string",
+          "enum": ["client", "server", "scheduler", "database", "queue", "worker", "provider", "external", "success", "failure"]
+        },
+        "description": {
+          "type": "string"
+        }
+      }
+    },
+    "architectureEdge": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["from", "to", "label"],
+      "properties": {
+        "from": {
+          "$ref": "#/$defs/id"
+        },
+        "to": {
+          "$ref": "#/$defs/id"
+        },
+        "label": {
+          "type": "string"
+        }
+      }
+    },
+    "architectureComponent": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "responsibility", "failurePolicy"],
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "responsibility": {
+          "type": "string"
+        },
+        "failurePolicy": {
+          "type": "string"
+        }
+      }
+    },
+    "architectureDataStore": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "owner", "keys", "notes"],
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "owner": {
+          "type": "string"
+        },
+        "keys": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string"
+          }
+        },
+        "notes": {
+          "type": "string"
+        }
+      }
+    },
+    "architectureOperation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["title", "description"],
+      "properties": {
+        "title": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
         }
       }
     },

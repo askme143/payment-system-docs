@@ -23,6 +23,10 @@
       "risks": {
         "title": "결제 시스템 잠재 위험 및 대응 문서",
         "file": "risk-register-doc.html"
+      },
+      "systemArchitecture": {
+        "title": "결제 시스템 아키텍처 문서",
+        "file": "system-architecture-doc.html"
       }
     }
   },
@@ -13414,5 +13418,315 @@
         "webhook-events"
       ]
     }
-  ]
+  ],
+  "systemArchitecture": {
+    "title": "결제 시스템 아키텍처",
+    "summary": "이메일 알림 outbox가 결제/구독 상태 변경과 분리되어 큐 적재, 템플릿 해석, SMTP 발송, 재시도와 dead-letter 처리를 수행하는 구조입니다.",
+    "diagrams": [
+      {
+        "id": "email-notification-outbox",
+        "title": "이메일 알림 Outbox 아키텍처",
+        "description": "결제 API와 구독 배치가 메일을 직접 보내지 않고 MongoDB outbox에 발송 의도를 저장한 뒤 Notification Worker가 비동기로 발송합니다.",
+        "nodes": [
+          {
+            "id": "client",
+            "label": "웹 클라이언트",
+            "kind": "client",
+            "description": "결제와 구독 화면을 호출합니다."
+          },
+          {
+            "id": "payment-api",
+            "label": "Payment API",
+            "kind": "server",
+            "description": "일반결제, 구독, 청구 API를 처리합니다."
+          },
+          {
+            "id": "subscription-jobs",
+            "label": "Subscription Jobs",
+            "kind": "scheduler",
+            "description": "정기 결제, 재시도, 해지 만료 배치를 실행합니다."
+          },
+          {
+            "id": "business-state",
+            "label": "payments / invoices / subscriptions",
+            "kind": "database",
+            "description": "결제, 인보이스, 구독의 최종 업무 상태입니다."
+          },
+          {
+            "id": "notification-outbox",
+            "label": "notification_outbox",
+            "kind": "queue",
+            "description": "메일 발송 요청, status, lock, retry 정보를 저장하는 내구성 큐입니다."
+          },
+          {
+            "id": "notification-templates",
+            "label": "notification_templates",
+            "kind": "database",
+            "description": "상품별 template_key, version, subject/html/text 본문을 저장합니다."
+          },
+          {
+            "id": "notification-worker",
+            "label": "Notification Worker",
+            "kind": "worker",
+            "description": "available_at이 지난 outbox item을 claim하고 렌더링 후 발송합니다."
+          },
+          {
+            "id": "smtp-adapter",
+            "label": "SMTPEmailSender",
+            "kind": "provider",
+            "description": "SMTP 서버로 렌더링된 이메일을 전송합니다."
+          },
+          {
+            "id": "mailbox",
+            "label": "회원 메일함",
+            "kind": "external",
+            "description": "결제 예정, 성공, 실패, 해지 안내 메일을 받습니다."
+          }
+        ],
+        "edges": [
+          {
+            "from": "client",
+            "to": "payment-api",
+            "label": "결제/구독 요청"
+          },
+          {
+            "from": "subscription-jobs",
+            "to": "payment-api",
+            "label": "내부 배치 진입점 호출"
+          },
+          {
+            "from": "payment-api",
+            "to": "business-state",
+            "label": "업무 상태 저장"
+          },
+          {
+            "from": "payment-api",
+            "to": "notification-outbox",
+            "label": "알림 intent enqueue"
+          },
+          {
+            "from": "subscription-jobs",
+            "to": "notification-outbox",
+            "label": "배치 알림 enqueue"
+          },
+          {
+            "from": "notification-worker",
+            "to": "notification-outbox",
+            "label": "claim / status update"
+          },
+          {
+            "from": "notification-worker",
+            "to": "notification-templates",
+            "label": "template_key + version 조회"
+          },
+          {
+            "from": "notification-worker",
+            "to": "smtp-adapter",
+            "label": "rendered email send"
+          },
+          {
+            "from": "smtp-adapter",
+            "to": "mailbox",
+            "label": "SMTP delivery"
+          },
+          {
+            "from": "smtp-adapter",
+            "to": "notification-worker",
+            "label": "provider_message_id / error"
+          }
+        ]
+      },
+      {
+        "id": "email-delivery-lifecycle",
+        "title": "이메일 발송 생명주기",
+        "description": "outbox item은 pending에서 시작해 worker claim 후 sent, retry_scheduled, dead_letter 중 하나로 귀결됩니다.",
+        "nodes": [
+          {
+            "id": "enqueue",
+            "label": "enqueue\nstatus=pending",
+            "kind": "server",
+            "description": "업무 트랜잭션과 함께 outbox item을 저장합니다."
+          },
+          {
+            "id": "claim",
+            "label": "claim\nstatus=processing",
+            "kind": "worker",
+            "description": "worker_id와 locked_until_at으로 선점합니다."
+          },
+          {
+            "id": "render",
+            "label": "resolve + render\nproduct template",
+            "kind": "worker",
+            "description": "상품별 템플릿 fallback 순서로 본문을 생성합니다."
+          },
+          {
+            "id": "send",
+            "label": "SMTP send",
+            "kind": "provider",
+            "description": "SMTPEmailSender가 외부 메일 서버로 전송합니다."
+          },
+          {
+            "id": "sent",
+            "label": "sent",
+            "kind": "success",
+            "description": "provider_message_id와 sent_at을 저장합니다."
+          },
+          {
+            "id": "retry-scheduled",
+            "label": "retry_scheduled",
+            "kind": "scheduler",
+            "description": "일시 실패는 backoff 후 재시도합니다."
+          },
+          {
+            "id": "dead-letter",
+            "label": "dead_letter",
+            "kind": "failure",
+            "description": "영구 실패 또는 최대 재시도 초과 시 자동 발송을 멈춥니다."
+          },
+          {
+            "id": "business-state",
+            "label": "payment / invoice / subscription state",
+            "kind": "database",
+            "description": "메일 실패와 독립적으로 이미 커밋된 업무 상태입니다."
+          }
+        ],
+        "edges": [
+          {
+            "from": "enqueue",
+            "to": "claim",
+            "label": "available_at <= now"
+          },
+          {
+            "from": "claim",
+            "to": "render",
+            "label": "locked by worker"
+          },
+          {
+            "from": "render",
+            "to": "send",
+            "label": "subject/html/text"
+          },
+          {
+            "from": "send",
+            "to": "sent",
+            "label": "provider accepted"
+          },
+          {
+            "from": "send",
+            "to": "retry-scheduled",
+            "label": "timeout / 429 / 5xx"
+          },
+          {
+            "from": "send",
+            "to": "dead-letter",
+            "label": "invalid email / 4xx"
+          },
+          {
+            "from": "render",
+            "to": "dead-letter",
+            "label": "template validation failure"
+          },
+          {
+            "from": "retry-scheduled",
+            "to": "claim",
+            "label": "backoff elapsed"
+          },
+          {
+            "from": "business-state",
+            "to": "enqueue",
+            "label": "same transaction writes intent"
+          }
+        ]
+      }
+    ],
+    "components": [
+      {
+        "name": "Payment API / Subscription Use Cases",
+        "responsibility": "결제, 인보이스, 구독 상태를 변경하고 메일 발송 intent를 idempotency_key와 함께 저장합니다.",
+        "failurePolicy": "메일 provider 장애를 직접 처리하지 않고 outbox 저장 성공까지만 책임집니다."
+      },
+      {
+        "name": "notification_outbox",
+        "responsibility": "발송 대상, payload, template_key, status, attempt_count, available_at, locked_until_at을 보관합니다.",
+        "failurePolicy": "중복 enqueue는 deterministic idempotency_key unique index로 억제합니다."
+      },
+      {
+        "name": "notification_templates",
+        "responsibility": "상품별, 상품 유형별, 기본 event template과 version을 관리합니다.",
+        "failurePolicy": "템플릿 미존재 또는 payload 검증 실패는 dead_letter로 분류합니다."
+      },
+      {
+        "name": "Notification Worker",
+        "responsibility": "due item을 claim하고 템플릿을 렌더링한 뒤 SMTPEmailSender로 전송합니다.",
+        "failurePolicy": "일시 실패는 retry_scheduled, 영구 실패는 dead_letter로 상태를 기록합니다."
+      },
+      {
+        "name": "SMTPEmailSender",
+        "responsibility": "렌더링된 subject/html/text를 SMTP 서버에 전달하고 provider_message_id를 반환합니다.",
+        "failurePolicy": "timeout, 429, 5xx는 retryable 오류로, 잘못된 수신자나 4xx는 permanent 오류로 변환합니다."
+      }
+    ],
+    "dataStores": [
+      {
+        "name": "notification_outbox",
+        "owner": "NotificationOutboxRepository",
+        "keys": [
+          "_id",
+          "idempotency_key",
+          "status + available_at + locked_until_at"
+        ],
+        "notes": "pending, processing, sent, retry_scheduled, dead_letter 상태를 가진 내구성 큐입니다."
+      },
+      {
+        "name": "notification_templates",
+        "owner": "NotificationTemplateRepository",
+        "keys": [
+          "template_key + version",
+          "event_type + product_code + product_type + status"
+        ],
+        "notes": "product_code.event_type, product_type.event_type, default.event_type 순서로 해석됩니다."
+      },
+      {
+        "name": "payments / invoices / subscriptions",
+        "owner": "Payment and subscription repositories",
+        "keys": [
+          "domain ids",
+          "billing_cycle_key",
+          "payment_id"
+        ],
+        "notes": "메일 발송 실패로 롤백되지 않는 결제 업무 상태입니다."
+      },
+      {
+        "name": "operation_locks",
+        "owner": "OperationLockRepository",
+        "keys": [
+          "lock_key",
+          "fencing_token"
+        ],
+        "notes": "배치와 worker의 중복 실행을 막고 오래된 worker write를 탐지합니다."
+      }
+    ],
+    "operations": [
+      {
+        "title": "Worker run summary",
+        "description": "selected_count, claimed_count, sent_count, retry_scheduled_count, dead_letter_count, skipped_count, failed_count를 기록합니다."
+      },
+      {
+        "title": "Retry policy",
+        "description": "일시 실패는 1분, 5분, 30분, 2시간, 12시간 backoff 후 retry_scheduled 상태로 재시도합니다."
+      },
+      {
+        "title": "Dead-letter handling",
+        "description": "dead_letter는 자동 재시도하지 않고 Mongo 상태, worker summary, 로그로 운영자가 확인합니다."
+      },
+      {
+        "title": "Stale processing recovery",
+        "description": "locked_until_at이 지난 processing item은 다른 worker가 다시 claim할 수 있습니다."
+      },
+      {
+        "title": "Template failure visibility",
+        "description": "template_key 누락, required payload 누락, render 실패는 last_error와 함께 dead_letter로 남깁니다."
+      }
+    ]
+  }
 }

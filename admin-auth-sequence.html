@@ -655,7 +655,7 @@
       }
     }
   </style>
-
+  
 </head>
 <body>
 <a class="skip-link" href="#content">본문으로 건너뛰기</a>
@@ -668,7 +668,7 @@
     <div class="search-panel">
       <input type="search" data-doc-search aria-label="문서 검색" placeholder="API, 상태, 컬렉션, 플로우 검색">
     </div>
-    <p class="top-links"><a href="./sequence-index.html">전체 시퀀스 목록</a><a href="./all-api-doc.html">전체 API 목록</a><a href="./api-detail-doc.html">API 상세 설명</a><a href="./database-doc.html">MongoDB 구조 문서</a><a href="./risk-register-doc.html">결제 시스템 잠재 위험 및 대응 문서</a></p>
+    <p class="top-links"><a href="./sequence-index.html">전체 시퀀스 목록</a><a href="./all-api-doc.html">전체 API 목록</a><a href="./api-detail-doc.html">API 상세 설명</a><a href="./system-architecture-doc.html">결제 시스템 아키텍처 문서</a><a href="./database-doc.html">MongoDB 구조 문서</a><a href="./risk-register-doc.html">결제 시스템 잠재 위험 및 대응 문서</a></p>
     </div>
   </div>
 </header>
@@ -677,10 +677,10 @@
     <h2>사용 API</h2>
     <div class="grid"><div class="box"><a href="./all-api-doc.html#admin-auth-login"><code>POST /admin/auth/login</code></a><p>관리자가 이메일과 비밀번호를 제출하면 SMTP로 일회용 로그인 링크를 발송합니다.</p></div><div class="box"><a href="./all-api-doc.html#admin-auth-login-confirm"><code>POST /admin/auth/login/confirm</code></a><p>이메일 로그인 링크의 일회용 토큰을 확정하고 관리자 전용 토큰을 발급합니다.</p></div><div class="box"><a href="./all-api-doc.html#admin-auth-me"><code>GET /admin/auth/me</code></a><p>어드민 콘솔이 현재 로그인한 관리자 계정, 역할, 권한을 확인합니다.</p></div><div class="box"><a href="./all-api-doc.html#admin-auth-refresh"><code>POST /admin/auth/refresh</code></a><p>만료된 관리자 액세스 토큰을 refreshToken 회전 방식으로 재발급합니다.</p></div><div class="box"><a href="./all-api-doc.html#admin-auth-logout"><code>POST /admin/auth/logout</code></a><p>관리자가 현재 어드민 콘솔 로그인 세션을 종료하고 refreshToken을 폐기합니다.</p></div><div class="box"><a href="./all-api-doc.html#admin-auth-password-reset-request"><code>POST /admin/auth/password-reset/request</code></a><p>관리자가 비밀번호 재설정 이메일 발송을 요청합니다.</p></div><div class="box"><a href="./all-api-doc.html#admin-auth-password-reset-confirm"><code>POST /admin/auth/password-reset/confirm</code></a><p>이메일로 받은 일회용 토큰으로 관리자 비밀번호를 재설정합니다.</p></div></div>
   </section>
-
+  
   <section id="email-login">
   <h2>이메일 링크 로그인과 현재 권한 확인</h2>
-
+  
   <div class="diagram"><div class="d2-diagram">
   <div class="d2-toolbar"><a href="diagrams/admin-auth-email-login.d2">D2 원본</a></div>
   <img class="d2-svg" src="diagrams/admin-auth-email-login.svg" alt="이메일 링크 로그인과 현재 권한 확인">
@@ -791,7 +791,7 @@ adminId, roles, permissions, status
 </div></div>
 </section><section id="token-refresh-logout">
   <h2>토큰 갱신과 로그아웃</h2>
-
+  
   <div class="diagram"><div class="d2-diagram">
   <div class="d2-toolbar"><a href="diagrams/admin-auth-token-refresh-logout.d2">D2 원본</a></div>
   <img class="d2-svg" src="diagrams/admin-auth-token-refresh-logout.svg" alt="토큰 갱신과 로그아웃">
@@ -861,7 +861,7 @@ Authorization + 선택적 adminRefreshToken
 </div></div>
 </section><section id="password-reset">
   <h2>비밀번호 재설정 이메일 흐름</h2>
-
+  
   <div class="diagram"><div class="d2-diagram">
   <div class="d2-toolbar"><a href="diagrams/admin-auth-password-reset.d2">D2 원본</a></div>
   <img class="d2-svg" src="diagrams/admin-auth-password-reset.svg" alt="비밀번호 재설정 이메일 흐름">
@@ -935,7 +935,7 @@ resetToken, newPassword
   </details>
 </div></div>
 </section>
-
+  
 </main>
 <script>
 (() => {
