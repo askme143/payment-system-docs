@@ -1437,6 +1437,9 @@ class GenerateDocsTest(unittest.TestCase):
             self.assertIn('<img class="d2-svg" src="diagrams/payment-main.svg"', sequence)
             self.assertIn('data-diagram-open data-diagram-src="diagrams/payment-main.svg"', sequence)
             self.assertIn('data-diagram-modal hidden role="dialog"', sequence)
+            self.assertIn('data-diagram-zoom aria-label="확대 축소 비율"', sequence)
+            self.assertIn('data-diagram-zoom-in aria-label="확대"', sequence)
+            self.assertIn('data-diagram-zoom-reset', sequence)
 
     def test_sequence_page_uses_existing_svg_without_rerendering_d2(self):
         data = {
@@ -1508,6 +1511,7 @@ class GenerateDocsTest(unittest.TestCase):
 
             self.assertIn('<img class="d2-svg" src="diagrams/payment-main.svg"', sequence)
             self.assertIn('data-diagram-open data-diagram-src="diagrams/payment-main.svg"', sequence)
+            self.assertIn('data-diagram-zoom-out aria-label="축소"', sequence)
 
     def test_real_documentation_includes_subscription_cancel_flow(self):
         with tempfile.TemporaryDirectory() as tmp:

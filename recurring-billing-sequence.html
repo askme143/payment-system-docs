@@ -368,9 +368,9 @@
       box-shadow: 0 24px 80px rgba(0, 0, 0, 0.32);
     }
     .d2-modal__header {
-      display: flex;
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
       align-items: center;
-      justify-content: space-between;
       gap: 12px;
       padding: 12px 14px;
       border-bottom: 1px solid var(--line);
@@ -383,6 +383,15 @@
       line-height: 1.35;
       overflow-wrap: anywhere;
     }
+    .d2-modal__actions {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 8px;
+    }
+    .d2-zoom-button,
+    .d2-zoom-reset,
     .d2-modal__close {
       min-width: 44px;
       min-height: 38px;
@@ -396,8 +405,23 @@
       font-weight: 900;
       cursor: pointer;
     }
+    .d2-zoom-button:hover,
+    .d2-zoom-reset:hover,
     .d2-modal__close:hover {
       background: var(--soft);
+    }
+    .d2-zoom-slider {
+      width: min(220px, 24vw);
+      min-width: 120px;
+      accent-color: var(--blue);
+      cursor: pointer;
+    }
+    .d2-zoom-value {
+      min-width: 54px;
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 900;
+      text-align: right;
     }
     .d2-modal__viewport {
       min-height: 0;
@@ -744,6 +768,16 @@
         width: calc(100vw - 16px);
         max-height: calc(100vh - 16px);
       }
+      .d2-modal__header {
+        grid-template-columns: minmax(0, 1fr);
+      }
+      .d2-modal__actions {
+        justify-content: flex-start;
+      }
+      .d2-zoom-slider {
+        flex: 1 1 160px;
+        width: auto;
+      }
       .d2-modal__viewport {
         padding: 10px;
       }
@@ -990,9 +1024,16 @@ processed, paid, failed, skipped
   <div class="d2-modal__panel" role="document">
     <div class="d2-modal__header">
       <p class="d2-modal__title" id="diagram-modal-title">다이어그램 크게 보기</p>
-      <button type="button" class="d2-modal__close" data-diagram-close>닫기</button>
+      <div class="d2-modal__actions" aria-label="다이어그램 확대 축소">
+        <button type="button" class="d2-zoom-button" data-diagram-zoom-out aria-label="축소">-</button>
+        <input class="d2-zoom-slider" type="range" min="50" max="400" step="10" value="100" data-diagram-zoom aria-label="확대 축소 비율">
+        <span class="d2-zoom-value" data-diagram-zoom-value>100%</span>
+        <button type="button" class="d2-zoom-button" data-diagram-zoom-in aria-label="확대">+</button>
+        <button type="button" class="d2-zoom-reset" data-diagram-zoom-reset>초기화</button>
+        <button type="button" class="d2-modal__close" data-diagram-close>닫기</button>
+      </div>
     </div>
-    <div class="d2-modal__viewport">
+    <div class="d2-modal__viewport" data-diagram-viewport>
       <img class="d2-modal__image" data-diagram-modal-image alt="">
     </div>
   </div>
@@ -1005,7 +1046,18 @@ processed, paid, failed, skipped
   const modal = document.querySelector("[data-diagram-modal]");
   const modalImage = modal?.querySelector("[data-diagram-modal-image]");
   const modalTitle = modal?.querySelector("#diagram-modal-title");
+  const modalViewport = modal?.querySelector("[data-diagram-viewport]");
+  const zoomInput = modal?.querySelector("[data-diagram-zoom]");
+  const zoomValue = modal?.querySelector("[data-diagram-zoom-value]");
+  const zoomOutButton = modal?.querySelector("[data-diagram-zoom-out]");
+  const zoomInButton = modal?.querySelector("[data-diagram-zoom-in]");
+  const zoomResetButton = modal?.querySelector("[data-diagram-zoom-reset]");
   let lastDiagramButton = null;
+  let diagramZoom = 1;
+  let baseDiagramWidth = 1200;
+  const minDiagramZoom = 0.5;
+  const maxDiagramZoom = 4;
+  const diagramZoomStep = 0.1;
 
   if (input) {
     input.addEventListener("input", () => {
@@ -1038,12 +1090,45 @@ processed, paid, failed, skipped
     if (modalImage) {
       modalImage.removeAttribute("src");
       modalImage.alt = "";
+      modalImage.style.width = "";
     }
     if (lastDiagramButton) lastDiagramButton.focus();
   };
 
+  const clampDiagramZoom = (value) => Math.min(maxDiagramZoom, Math.max(minDiagramZoom, value));
+
+  const updateDiagramBaseWidth = () => {
+    if (!modalViewport) return;
+    const viewportWidth = Math.max(0, modalViewport.clientWidth - 32);
+    baseDiagramWidth = Math.max(window.matchMedia("(max-width: 480px)").matches ? 920 : 1200, viewportWidth);
+  };
+
+  const setDiagramZoom = (nextZoom, options = { preserveCenter: true }) => {
+    if (!modalImage || !modalViewport) return;
+    const previousWidth = modalImage.clientWidth || baseDiagramWidth;
+    const previousHeight = modalImage.clientHeight || 1;
+    const centerXRatio = (modalViewport.scrollLeft + modalViewport.clientWidth / 2) / previousWidth;
+    const centerYRatio = (modalViewport.scrollTop + modalViewport.clientHeight / 2) / previousHeight;
+
+    diagramZoom = clampDiagramZoom(nextZoom);
+    const percent = Math.round(diagramZoom * 100);
+    modalImage.style.width = `${Math.round(baseDiagramWidth * diagramZoom)}px`;
+    if (zoomInput) zoomInput.value = String(percent);
+    if (zoomValue) zoomValue.textContent = `${percent}%`;
+
+    if (options.preserveCenter) {
+      requestAnimationFrame(() => {
+        modalViewport.scrollLeft = Math.max(0, modalImage.clientWidth * centerXRatio - modalViewport.clientWidth / 2);
+        modalViewport.scrollTop = Math.max(0, modalImage.clientHeight * centerYRatio - modalViewport.clientHeight / 2);
+      });
+    } else {
+      modalViewport.scrollLeft = 0;
+      modalViewport.scrollTop = 0;
+    }
+  };
+
   const openDiagramModal = (button) => {
-    if (!modal || !modalImage || !modalTitle) return;
+    if (!modal || !modalImage || !modalTitle || !modalViewport) return;
     lastDiagramButton = button;
     const title = button.getAttribute("data-diagram-title") || "다이어그램";
     modalTitle.textContent = title;
@@ -1051,6 +1136,8 @@ processed, paid, failed, skipped
     modalImage.alt = title;
     modal.hidden = false;
     document.body.style.overflow = "hidden";
+    updateDiagramBaseWidth();
+    setDiagramZoom(1, { preserveCenter: false });
     modal.querySelector("[data-diagram-close]")?.focus();
   };
 
@@ -1058,12 +1145,36 @@ processed, paid, failed, skipped
     button.addEventListener("click", () => openDiagramModal(button));
   }
 
+  zoomInput?.addEventListener("input", () => setDiagramZoom(Number(zoomInput.value) / 100));
+  zoomOutButton?.addEventListener("click", () => setDiagramZoom(diagramZoom - diagramZoomStep));
+  zoomInButton?.addEventListener("click", () => setDiagramZoom(diagramZoom + diagramZoomStep));
+  zoomResetButton?.addEventListener("click", () => setDiagramZoom(1, { preserveCenter: false }));
+
+  modalViewport?.addEventListener("wheel", (event) => {
+    if (!event.ctrlKey && !event.metaKey) return;
+    event.preventDefault();
+    setDiagramZoom(diagramZoom + (event.deltaY < 0 ? diagramZoomStep : -diagramZoomStep));
+  }, { passive: false });
+
   modal?.addEventListener("click", (event) => {
     if (event.target === modal || event.target.closest("[data-diagram-close]")) closeDiagramModal();
   });
 
   document.addEventListener("keydown", (event) => {
     if (event.key === "Escape" && modal && !modal.hidden) closeDiagramModal();
+    if (!modal || modal.hidden) return;
+    if (event.key === "+" || event.key === "=") {
+      event.preventDefault();
+      setDiagramZoom(diagramZoom + diagramZoomStep);
+    }
+    if (event.key === "-") {
+      event.preventDefault();
+      setDiagramZoom(diagramZoom - diagramZoomStep);
+    }
+    if (event.key === "0") {
+      event.preventDefault();
+      setDiagramZoom(1, { preserveCenter: false });
+    }
   });
 })();
 </script>
