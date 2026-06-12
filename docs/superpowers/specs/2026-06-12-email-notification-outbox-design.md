@@ -89,13 +89,26 @@ Allowed statuses:
 
 Every enqueue operation must include a deterministic `idempotency_key`.
 
-Examples:
+All keys use `email:{event_type}:...`. The suffix must use stable business
+source IDs only. Do not include recipient email, recipient name, product code,
+product type, selected template, amount, failure text, or other display content
+in the key. If a needed source ID does not exist yet, create a stable event ID
+such as `cancel_id` or `operator_audit_id` before enqueueing; do not substitute
+timestamps or random values at enqueue time.
 
-- `email:subscription_billing_reminder:{subscription_id}:{billing_cycle_key}`
-- `email:subscription_payment_paid:{invoice_id}:{payment_id}`
-- `email:subscription_payment_failed:{invoice_id}:{payment_id}`
-- `email:subscription_canceled_payment_failed:{subscription_id}:{invoice_id}`
-- `email:subscription_canceled_after_period:{subscription_id}:{canceled_at_date}`
+| Event type | idempotency_key format | Source ID |
+| --- | --- | --- |
+| `admin_auth.login_link` | `email:admin_auth.login_link:{admin_auth_token_id}` | `admin_auth_tokens._id` |
+| `admin_auth.password_reset` | `email:admin_auth.password_reset:{admin_auth_token_id}` | `admin_auth_tokens._id` |
+| `subscription_billing_reminder` | `email:subscription_billing_reminder:{subscription_id}:{billing_cycle_key}` | `subscriptions._id + invoices.billing_cycle_key` |
+| `subscription_payment_paid` | `email:subscription_payment_paid:{invoice_id}:{payment_id}` | `invoices._id + payments._id` |
+| `subscription_payment_failed` | `email:subscription_payment_failed:{invoice_id}:{payment_id}` | `invoices._id + failed payments._id` |
+| `subscription_canceled_payment_failed` | `email:subscription_canceled_payment_failed:{subscription_id}:{invoice_id}` | `subscriptions._id + terminal failed invoices._id` |
+| `subscription_canceled_after_period` | `email:subscription_canceled_after_period:{subscription_id}:{period_end_at_date}` | `subscriptions._id + period_end_at YYYY-MM-DD` |
+| `subscription_plan_upgrade_receipt` | `email:subscription_plan_upgrade_receipt:{invoice_id}:{payment_id}` | `upgrade invoices._id + payments._id` |
+| `payment_cancel_completed` | `email:payment_cancel_completed:{payment_id}:{cancel_id}` | `payments._id + cancelHistory.cancelId` |
+| `subscription_adjustment_completed` | `email:subscription_adjustment_completed:{subscription_id}:{operator_audit_id}` | `subscriptions._id + operator_audits._id` |
+| `one_time_payment_paid` | `email:one_time_payment_paid:{checkout_id}:{payment_id}` | `checkouts._id + payments._id` |
 
 `notification_outbox.idempotency_key` gets a unique index.
 `idempotency_key` identifies the business event; `idempotency_payload_hash`
@@ -117,7 +130,7 @@ content, including:
 - `template_args`
 - `expires_at`
 
-The hash must not depend on randomized ciphertext. For sensitive template
+The hash must not depend on randomized encrypted output. For sensitive template
 arguments, calculate the hash before encryption or replace the raw sensitive
 value with a deterministic non-reversible digest in the canonical hash input.
 
@@ -145,24 +158,21 @@ class NotificationRecipientResolver(Protocol):
 ```
 
 `ResolvedNotificationRecipient` includes the `recipient_type`, source recipient
-id, `email`, and optional minimal profile fields:
+id, `email`, and optional display name only:
 
-- `display_name`
-- `locale`
-- `timezone`
-- `email_opt_out` or equivalent send-permission flag when the source supports it
+- `recipientName`
 
 The resolved email is copied into `notification_outbox.recipient_email` at
 enqueue time. `recipientName` is a common optional template argument for all
-templates. It is copied from the resolved recipient display name when available;
+templates. It is copied from the resolved recipient name when available;
 templates must fall back to generic copy such as "customer" or "administrator"
-when it is absent. `locale` and `timezone` may also be copied into
-`template_args` when the selected template uses them. The worker must not call
-the resolver again.
+when it is absent. `locale`, `timezone`, and email receive-preference fields are
+not part of the current payment email contract. The worker must not call the
+resolver again.
 
-The resolver must stay narrow. It may return email delivery and email
-personalisation data, but it must not return payment state, subscription state,
-billing keys, provider customer keys, phone numbers, addresses, or arbitrary
+The resolver must stay narrow. It may return `email` and `recipientName`, but it
+must not return locale, timezone, payment state, subscription state, billing
+keys, provider customer keys, phone numbers, addresses, or arbitrary
 template-specific business payload.
 
 Resolver implementation policy:
@@ -206,12 +216,23 @@ Encrypted value shape:
 
 ```json
 {
-  "encrypted": true,
-  "ciphertext": "...",
-  "keyId": "notification-template-args-v1",
-  "algorithm": "AES-GCM"
+  "_encrypted": true,
+  "value": "opaque-encrypted-value"
 }
 ```
+
+Field rules:
+
+- `_encrypted` is always `true`.
+- `value` is an opaque string produced by the encryption module.
+- The outbox document does not store crypto internals. Algorithm and key
+  selection are server configuration and encryption-module responsibilities.
+- If key rotation becomes necessary later, add a new optional field or envelope
+  version at that time; do not design that complexity into the first contract.
+
+If the envelope is malformed or decryption fails, the worker must not call the
+provider. Mark the item `dead_letter` with
+`last_error.code = template_arg_decrypt_failed`.
 
 Logs, worker summaries, `last_error`, and test assertion messages must not
 include decrypted sensitive values. They should use argument names, error codes,
@@ -221,6 +242,15 @@ or masked values only.
 
 Add an application job such as `send_due_notifications`.
 
+Worker constants:
+
+- `batch_size`: 100
+- `claim_limit_per_run`: 100
+- `poll_interval`: 10 seconds
+- `lock_duration`: 5 minutes
+- `max_attempts`: 5
+- `backoff_schedule`: 1 minute, 5 minutes, 30 minutes, 2 hours, 12 hours
+
 The worker flow is:
 
 1. Select a bounded batch of `pending` or `retry_scheduled` items where `available_at <= now`.
@@ -228,8 +258,8 @@ The worker flow is:
    - filter by eligible status and expired or missing lock.
    - set `status = processing`.
    - set `worker_id`.
-   - set `locked_until_at = now + processing_ttl`.
-   - increment or preserve worker claim metadata as needed.
+   - set `locked_until_at = now + 5 minutes`.
+   - increment `attempt_count`.
 3. Load the stored `template_key` and `template_version`.
 4. Validate `template_args` against the template contract.
 5. Render subject, HTML body, and text body.
@@ -249,7 +279,7 @@ Transient failures include provider timeouts, rate limits, network failures, and
 - `available_at = now + backoff`
 - `last_error` with a concise provider-safe summary
 
-Suggested backoff schedule:
+Backoff schedule:
 
 - attempt 1: 1 minute
 - attempt 2: 5 minutes
@@ -257,9 +287,12 @@ Suggested backoff schedule:
 - attempt 4: 2 hours
 - attempt 5: 12 hours
 
-After the maximum retry count, the item moves to `dead_letter`.
+After `max_attempts = 5`, the item moves to `dead_letter`.
 
-Permanent failures include invalid recipient email, template not found, template argument validation failure, and non-retryable provider 4xx responses. These move directly to `dead_letter`.
+Permanent failures include invalid recipient email, template not found, template
+argument validation failure, Jinja2 render errors, encrypted value decryption
+failure, expired `expires_at`, and non-retryable provider 4xx responses. These
+move directly to `dead_letter`.
 
 Email failure never rolls back payment, invoice, subscription, or audit state. Operational visibility comes from outbox status, worker run summaries, logs, and later admin views.
 
@@ -298,25 +331,57 @@ Template fields:
 
 The selected `template_key` and `template_version` are stored on the outbox item when it is enqueued. This preserves the meaning of already queued emails even if templates change later. The worker loads the stored key/version and does not re-resolve fallback candidates.
 
+## Template Rendering
+
+Templates use Jinja2.
+
+- `subject_template`, `html_template`, and `text_template` all use Jinja2
+  syntax.
+- Use `StrictUndefined` so missing values fail rendering instead of silently
+  becoming empty strings.
+- `html_template autoescape` is enabled.
+- `subject_template` and `text_template` do not use HTML autoescape.
+- Validate `required_template_args` and decrypt `encryptedArgs` before rendering.
+- Jinja2 syntax errors, `StrictUndefined` errors, and render errors move the
+  item to `dead_letter` with `last_error.code = template_render_failed`.
+- The rendering context is limited to `template_args` and explicit safe helpers.
+  Templates must not perform DB reads, provider calls, or arbitrary function
+  calls.
+
+## Initial Template Seed
+
+Initial notification templates are generated with simple default copy.
+
+- If `notification_templates` is empty, initialize every catalog event as
+  `default.{event_type}`, `version = 1`, `status = active`.
+- If at least one template already exists, startup/init must not automatically
+  overwrite existing templates.
+- Seed templates include `subject_template`, `html_template`, and
+  `text_template`.
+- Each seed template must reference its event's `required_template_args` so the
+  contract is exercised by rendering tests.
+- Product-specific `product_code` and `product_type` templates are not part of
+  the initial seed; add them later through operations tooling or migrations.
+
 ## Initial Template Catalog
 
-Use camelCase for `template_args`. `recipientName`, `locale`, `timezone`, and
-`supportUrl` are common optional arguments for every template. `recipientName`
-replaces event-specific names such as `adminName` or `userName`.
+Use camelCase for `template_args`. `recipientName` and `supportUrl` are common
+optional arguments for every template. `recipientName` replaces event-specific
+names such as `adminName` or `userName`.
 
 | Event type | Required template args | Optional template args | Encrypted args |
 | --- | --- | --- | --- |
-| `admin_auth.login_link` | `loginLink`, `expiresMinutes` | `recipientName`, `requestIp`, `userAgent`, `supportUrl`, `locale`, `timezone` | `loginLink` |
-| `admin_auth.password_reset` | `resetLink`, `expiresMinutes` | `recipientName`, `requestIp`, `supportUrl`, `locale`, `timezone` | `resetLink` |
-| `subscription_billing_reminder` | `subscriptionId`, `planName`, `amount`, `currency`, `billingDate`, `subscriptionManageUrl` | `recipientName`, `productName`, `billingMethodSummary`, `supportUrl`, `locale`, `timezone` | none |
-| `subscription_payment_paid` | `subscriptionId`, `invoiceId`, `amount`, `currency`, `billingDate`, `receiptUrl` | `recipientName`, `planName`, `productName`, `paidAt`, `paymentMethodSummary`, `supportUrl`, `locale`, `timezone` | none |
-| `subscription_payment_failed` | `subscriptionId`, `invoiceId`, `amount`, `currency`, `failureSummary`, `retryScheduledAt`, `billingMethodUpdateUrl` | `recipientName`, `planName`, `productName`, `providerCode`, `supportUrl`, `locale`, `timezone` | none |
-| `subscription_canceled_payment_failed` | `subscriptionId`, `invoiceId`, `canceledAt`, `failureSummary`, `cancelReason`, `subscriptionManageUrl`, `resubscribeUrl` | `recipientName`, `amount`, `currency`, `providerCode`, `planName`, `productName`, `supportUrl`, `locale`, `timezone` | none |
-| `subscription_canceled_after_period` | `subscriptionId`, `periodEndAt`, `canceledAt`, `accessUntil`, `resubscribeUrl` | `recipientName`, `planName`, `productName`, `subscriptionManageUrl`, `supportUrl`, `locale`, `timezone` | none |
-| `subscription_plan_upgrade_receipt` | `subscriptionId`, `invoiceId`, `paymentId`, `fromPlanName`, `toPlanName`, `amount`, `currency`, `changedAt`, `receiptUrl` | `recipientName`, `effectiveAt`, `paymentMethodSummary`, `supportUrl`, `locale`, `timezone` | none |
-| `payment_cancel_completed` | `paymentId`, `cancelAmount`, `currency`, `canceledAt` | `recipientName`, `invoiceId`, `orderName`, `cancelReason`, `receiptUrl`, `supportUrl`, `locale`, `timezone` | none |
-| `subscription_adjustment_completed` | `subscriptionId`, `adjustmentType`, `status`, `adjustedAt` | `recipientName`, `previousStatus`, `nextBillingAt`, `accessUntil`, `reasonSummary`, `subscriptionManageUrl`, `supportUrl`, `locale`, `timezone` | none |
-| `one_time_payment_paid` | `checkoutId`, `paymentId`, `orderName`, `amount`, `currency`, `paidAt`, `receiptUrl` | `recipientName`, `itemSummary`, `paymentMethodSummary`, `supportUrl`, `locale`, `timezone` | none |
+| `admin_auth.login_link` | `loginLink`, `expiresMinutes` | `recipientName`, `requestIp`, `userAgent`, `supportUrl` | `loginLink` |
+| `admin_auth.password_reset` | `resetLink`, `expiresMinutes` | `recipientName`, `requestIp`, `supportUrl` | `resetLink` |
+| `subscription_billing_reminder` | `subscriptionId`, `planName`, `amount`, `currency`, `billingDate`, `subscriptionManageUrl` | `recipientName`, `productName`, `billingMethodSummary`, `supportUrl` | none |
+| `subscription_payment_paid` | `subscriptionId`, `invoiceId`, `amount`, `currency`, `billingDate`, `receiptUrl` | `recipientName`, `planName`, `productName`, `paidAt`, `paymentMethodSummary`, `supportUrl` | none |
+| `subscription_payment_failed` | `subscriptionId`, `invoiceId`, `amount`, `currency`, `failureSummary`, `retryScheduledAt`, `billingMethodUpdateUrl` | `recipientName`, `planName`, `productName`, `providerCode`, `supportUrl` | none |
+| `subscription_canceled_payment_failed` | `subscriptionId`, `invoiceId`, `canceledAt`, `failureSummary`, `cancelReason`, `subscriptionManageUrl`, `resubscribeUrl` | `recipientName`, `amount`, `currency`, `providerCode`, `planName`, `productName`, `supportUrl` | none |
+| `subscription_canceled_after_period` | `subscriptionId`, `periodEndAt`, `canceledAt`, `accessUntil`, `resubscribeUrl` | `recipientName`, `planName`, `productName`, `subscriptionManageUrl`, `supportUrl` | none |
+| `subscription_plan_upgrade_receipt` | `subscriptionId`, `invoiceId`, `paymentId`, `fromPlanName`, `toPlanName`, `amount`, `currency`, `changedAt`, `receiptUrl` | `recipientName`, `effectiveAt`, `paymentMethodSummary`, `supportUrl` | none |
+| `payment_cancel_completed` | `paymentId`, `cancelAmount`, `currency`, `canceledAt` | `recipientName`, `invoiceId`, `orderName`, `cancelReason`, `receiptUrl`, `supportUrl` | none |
+| `subscription_adjustment_completed` | `subscriptionId`, `adjustmentType`, `status`, `adjustedAt` | `recipientName`, `previousStatus`, `nextBillingAt`, `accessUntil`, `reasonSummary`, `subscriptionManageUrl`, `supportUrl` | none |
+| `one_time_payment_paid` | `checkoutId`, `paymentId`, `orderName`, `amount`, `currency`, `paidAt`, `receiptUrl` | `recipientName`, `itemSummary`, `paymentMethodSummary`, `supportUrl` | none |
 
 Do not include `recipientEmail`, `recipientType`, `templateKey`, or
 `templateVersion` in `template_args`; those are outbox metadata. Do not include

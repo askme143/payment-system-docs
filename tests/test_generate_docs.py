@@ -88,10 +88,17 @@ class GenerateDocsTest(unittest.TestCase):
                 "retry_scheduled",
                 "dead_letter",
                 "SMTP",
+                "Worker claim and retry policy",
+                "batch_size",
+                "lock_duration",
+                "max_attempts",
+                "1분, 5분, 30분, 2시간, 12시간",
             ]:
                 self.assertIn(expected, architecture)
-            self.assertIn("이메일 발송 시스템 아키텍처 문서", architecture)
-            self.assertIn("이메일 발송 시스템 아키텍처 문서", sequence_index)
+            self.assertIn("notification-template-catalog-doc.html", architecture)
+            self.assertIn("이메일 발송 시스템 문서", architecture)
+            self.assertIn("이메일 발송 시스템 문서", sequence_index)
+            self.assertNotIn("이메일 발송 시스템 아키텍처 문서", architecture)
             self.assertNotIn("결제 시스템 아키텍처 문서", architecture)
 
     def test_system_architecture_d2_files_are_generated(self):
@@ -134,9 +141,33 @@ class GenerateDocsTest(unittest.TestCase):
                 "Encrypted args",
                 "billingMethodUpdateUrl",
                 "loginLink",
+                "_encrypted",
+                "opaque-encrypted-value",
+                "template_arg_decrypt_failed",
+                "Idempotency key formats",
+                "email:subscription_payment_failed:{invoice_id}:{payment_id}",
+                "email:admin_auth.login_link:{admin_auth_token_id}",
+                "email:payment_cancel_completed:{payment_id}:{cancel_id}",
+                "operator_audit_id",
+                "Jinja2",
+                "StrictUndefined",
+                "html_template autoescape",
+                "Initial template seed policy",
+                "notification_templates가 비어 있으면",
             ]:
                 self.assertIn(expected, catalog)
-            self.assertIn("notification-template-catalog-doc.html", database)
+            self.assertNotIn("locale", catalog)
+            self.assertNotIn("timezone", catalog)
+            self.assertNotIn("kid", catalog)
+            self.assertNotIn("nonce", catalog)
+            self.assertNotIn("ciphertext", catalog)
+            self.assertNotIn("tag", catalog)
+            self.assertNotIn("AAD", catalog)
+            self.assertNotIn("Worker claim and retry policy", catalog)
+            self.assertNotIn("batch_size", catalog)
+            self.assertNotIn("lock_duration", catalog)
+            self.assertNotIn("max_attempts", catalog)
+            self.assertNotIn("notification-template-catalog-doc.html", database)
             self.assertIn("notification-template-catalog-doc.html", architecture)
 
     def test_system_architecture_diagrams_do_not_render_tooltip_appendix(self):

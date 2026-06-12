@@ -245,6 +245,20 @@ def validate_data(data):
                     raise ValueError(
                         f"Notification template {event_type} encrypts undocumented template arg {arg}"
                     )
+        idempotency_formats = data["notificationTemplateCatalog"].get("idempotencyKeyPolicy", {}).get("formats", [])
+        idempotency_event_types = {item["eventType"] for item in idempotency_formats}
+        if template_event_types != idempotency_event_types:
+            missing = sorted(template_event_types - idempotency_event_types)
+            extra = sorted(idempotency_event_types - template_event_types)
+            raise ValueError(
+                "Notification template idempotency formats must match template events"
+                f" missing={missing} extra={extra}"
+            )
+        for item in idempotency_formats:
+            if not item["format"].startswith(f"email:{item['eventType']}:"):
+                raise ValueError(
+                    f"Notification template {item['eventType']} idempotency key must start with email:{item['eventType']}:"
+                )
 
     sequence_ids = {sequence["id"] for sequence in data["sequences"]}
     collection_ids = {collection["id"] for collection in data.get("database", {}).get("collections", [])}
@@ -1354,9 +1368,6 @@ def database_links(data, include_architecture=True):
     page_ref = data["site"]["pages"].get("database")
     if page_ref:
         links.append((page_ref["title"], f"./{page_ref['file']}"))
-    template_ref = data["site"]["pages"].get("notificationTemplateCatalog")
-    if template_ref and data.get("notificationTemplateCatalog"):
-        links.append((template_ref["title"], f"./{template_ref['file']}"))
     risk_ref = data["site"]["pages"].get("risks")
     if risk_ref and data.get("risks"):
         links.append((risk_ref["title"], f"./{risk_ref['file']}"))
@@ -1599,9 +1610,6 @@ def render_database_doc(data):
         ("전체 API 목록", "./all-api-doc.html"),
         ("API 상세 설명", "./api-detail-doc.html"),
     ]
-    template_ref = pages.get("notificationTemplateCatalog")
-    if template_ref and data.get("notificationTemplateCatalog"):
-        links.append((template_ref["title"], f"./{template_ref['file']}"))
     body = header(
         pages["database"]["title"],
         "MongoDB Data Model",
@@ -2038,6 +2046,10 @@ def render_notification_template_catalog_doc(data):
     nav_items = [
         ("overview", "개요"),
         ("rules", "작성 규칙"),
+        ("encrypted-value-object", "Encrypted value object"),
+        ("idempotency-key-formats", "Idempotency key"),
+        ("rendering-policy", "렌더링 정책"),
+        ("seed-policy", "초기 seed"),
         ("fallback-policy", "Fallback 정책"),
         ("template-args", "이벤트별 인자"),
     ]
@@ -2045,6 +2057,43 @@ def render_notification_template_catalog_doc(data):
     common_optional_args = code_list(catalog.get("commonOptionalArgs", []))
     rule_items = "".join(f"<li>{e(rule)}</li>" for rule in catalog.get("rules", []))
     fallback_items = "".join(f"<li>{e(rule)}</li>" for rule in catalog.get("fallbackPolicy", []))
+    encrypted_value = catalog["encryptedValueObject"]
+    encrypted_value_rows = "".join(
+        "<tr>"
+        f"<td><code>{e(field['name'])}</code></td>"
+        f"<td><code>{e(field['type'])}</code></td>"
+        f"<td>{'예' if field['required'] else '아니오'}</td>"
+        f"<td>{e(field.get('value', '-'))}</td>"
+        f"<td>{e(field['description'])}</td>"
+        "</tr>"
+        for field in encrypted_value["fields"]
+    )
+    encrypted_value_table = table(
+        "<table><thead><tr><th>필드</th><th>타입</th><th>필수</th><th>고정/예시 값</th><th>설명</th></tr></thead>"
+        f"<tbody>{encrypted_value_rows}</tbody></table>",
+        columns=5,
+    )
+    encrypted_value_example = e(json.dumps(encrypted_value["example"], ensure_ascii=False, indent=2))
+    idempotency_policy = catalog["idempotencyKeyPolicy"]
+    idempotency_rule_items = "".join(f"<li>{e(rule)}</li>" for rule in idempotency_policy.get("rules", []))
+    idempotency_rows = "".join(
+        "<tr>"
+        f"<td><code>{e(item['eventType'])}</code></td>"
+        f"<td><code>{e(item['format'])}</code></td>"
+        f"<td>{e(item['source'])}</td>"
+        f"<td>{e(item['notes'])}</td>"
+        "</tr>"
+        for item in idempotency_policy["formats"]
+    )
+    idempotency_table = table(
+        "<table><thead><tr><th>event_type</th><th>idempotency_key</th><th>원천 ID</th><th>비고</th></tr></thead>"
+        f"<tbody>{idempotency_rows}</tbody></table>",
+        columns=4,
+    )
+    rendering_policy = catalog["renderingPolicy"]
+    rendering_rule_items = "".join(f"<li>{e(rule)}</li>" for rule in rendering_policy.get("rules", []))
+    seed_policy = catalog["seedPolicy"]
+    seed_rule_items = "".join(f"<li>{e(rule)}</li>" for rule in seed_policy.get("rules", []))
     template_rows = "".join(
         "<tr>"
         f"<td><code>{e(template['eventType'])}</code></td>"
@@ -2084,6 +2133,29 @@ def render_notification_template_catalog_doc(data):
   <h2>작성 규칙</h2>
   <ul>{rule_items}</ul>
 </section>
+<section id="encrypted-value-object">
+  <h2>{e(encrypted_value['title'])}</h2>
+  <p>{e(encrypted_value['appliesTo'])}</p>
+  {encrypted_value_table}
+  <div class="note">{e(encrypted_value['description'])}</div>
+  <div class="note"><strong>실패 정책</strong>: {e(encrypted_value['failurePolicy'])}</div>
+  <pre><code>{encrypted_value_example}</code></pre>
+</section>
+<section id="idempotency-key-formats">
+  <h2>{e(idempotency_policy['title'])}</h2>
+  <p>{e(idempotency_policy['summary'])}</p>
+  <ul>{idempotency_rule_items}</ul>
+  {idempotency_table}
+</section>
+<section id="rendering-policy">
+  <h2>{e(rendering_policy['title'])}</h2>
+  <p><strong>Engine:</strong> {e(rendering_policy['engine'])}</p>
+  <ul>{rendering_rule_items}</ul>
+</section>
+<section id="seed-policy">
+  <h2>{e(seed_policy['title'])}</h2>
+  <ul>{seed_rule_items}</ul>
+</section>
 <section id="fallback-policy">
   <h2>Fallback 정책</h2>
   <ul>{fallback_items}</ul>
@@ -2104,6 +2176,35 @@ def render_notification_template_catalog_doc(data):
     return page(page_ref["title"], body)
 
 
+def render_notification_worker_policy_section(worker_policy):
+    worker_setting_rows = "".join(
+        "<tr>"
+        f"<td><code>{e(setting['name'])}</code></td>"
+        f"<td>{e(setting['value'])}</td>"
+        f"<td>{e(setting['description'])}</td>"
+        "</tr>"
+        for setting in worker_policy["settings"]
+    )
+    worker_setting_table = table(
+        "<table><thead><tr><th>설정</th><th>값</th><th>설명</th></tr></thead>"
+        f"<tbody>{worker_setting_rows}</tbody></table>",
+        columns=3,
+    )
+    state_transition_items = "".join(f"<li>{e(item)}</li>" for item in worker_policy.get("stateTransitions", []))
+    retryable_failure_items = "".join(f"<li>{e(item)}</li>" for item in worker_policy.get("retryableFailures", []))
+    permanent_failure_items = "".join(f"<li>{e(item)}</li>" for item in worker_policy.get("permanentFailures", []))
+    return f"""<section id="worker-policy">
+  <h2>{e(worker_policy['title'])}</h2>
+  {worker_setting_table}
+  <h3>상태 전이</h3>
+  <ul>{state_transition_items}</ul>
+  <div class="grid">
+    <article class="box"><h3>Retryable failures</h3><ul>{retryable_failure_items}</ul></article>
+    <article class="box"><h3>Permanent failures</h3><ul>{permanent_failure_items}</ul></article>
+  </div>
+</section>"""
+
+
 def render_system_architecture_doc(data, rendered_d2_ids=None):
     architecture = data["systemArchitecture"]
     page_ref = data["site"]["pages"]["systemArchitecture"]
@@ -2113,6 +2214,7 @@ def render_system_architecture_doc(data, rendered_d2_ids=None):
         [
             ("components", "컴포넌트 책임"),
             ("data-stores", "데이터 소유권"),
+            ("worker-policy", "Worker 정책"),
             ("operations", "운영과 실패 처리"),
         ]
     )
@@ -2160,6 +2262,8 @@ def render_system_architecture_doc(data, rendered_d2_ids=None):
          f"<tbody>{data_store_rows}</tbody></table>", columns=4)}
 </section>""")
 
+    sections.append(render_notification_worker_policy_section(architecture["workerPolicy"]))
+
     operation_items = "".join(
         f"<article class=\"box\"><h3>{e(operation['title'])}</h3><p>{e(operation['description'])}</p></article>"
         for operation in architecture["operations"]
@@ -2169,15 +2273,20 @@ def render_system_architecture_doc(data, rendered_d2_ids=None):
   <div class="grid">{operation_items}</div>
 </section>""")
 
+    links = [
+        ("전체 시퀀스 목록", "./sequence-index.html"),
+        ("전체 API 목록", "./all-api-doc.html"),
+        ("API 상세 설명", "./api-detail-doc.html"),
+    ] + database_links(data, include_architecture=False)
+    template_ref = data["site"]["pages"].get("notificationTemplateCatalog")
+    if template_ref and data.get("notificationTemplateCatalog"):
+        links.append((template_ref["title"], f"./{template_ref['file']}"))
+
     body = header(
         page_ref["title"],
         "Email Notification Architecture",
         architecture["summary"],
-        [
-            ("전체 시퀀스 목록", "./sequence-index.html"),
-            ("전체 API 목록", "./all-api-doc.html"),
-            ("API 상세 설명", "./api-detail-doc.html"),
-        ] + database_links(data, include_architecture=False),
+        links,
     )
     body += f"<main class=\"wrap layout\" id=\"content\">{nav(nav_items)}<div>{''.join(sections)}</div></main>"
     return page(page_ref["title"], body)
