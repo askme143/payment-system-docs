@@ -35,9 +35,11 @@ from payments.application.ports import (
     InvoiceRepository,
     OneTimePaymentUnitOfWorkFactory,
     OperationLockRepository,
+    OperatorAuditRepository,
     PaymentAttemptRepository,
     PaymentCustomerRepository,
     PaymentProvider,
+    SchedulerRunLogRepository,
     SubscriptionAccountRepository,
     SubscriptionBillingUnitOfWorkFactory,
     SubscriptionCancelUnitOfWorkFactory,
@@ -61,6 +63,8 @@ class HttpDependencies:
     admin_auth_email_sender: AdminAuthEmailSender
     admin_auth_rate_limiter: AdminAuthRateLimiter
     admin_operations: AdminOperationsRepository
+    operator_audits: OperatorAuditRepository
+    scheduler_runs: SchedulerRunLogRepository
     admin_subscription_adjust_uow_factory: AdminSubscriptionAdjustUnitOfWorkFactory
     billing_auths: BillingAuthRepository
     billing_auth_issue_uow_factory: BillingAuthIssueUnitOfWorkFactory

@@ -14,7 +14,11 @@ class PaymentSchedulerConfig:
     database_url: str
     database_name: str
     internal_service_token: str
+    toss_secret_key: str
+    toss_base_url: str
+    billing_key_encryption_secret: str
     notification_template_arg_encryption_secret: str
+    notification_recipient_api_base_url: str
     notification_worker_id: str
     notification_worker_policy: NotificationWorkerPolicy
     smtp: SMTPEmailSenderConfig
@@ -31,9 +35,22 @@ def payment_scheduler_config_from_env(
         database_url=_required_env(environ, "PAYMENTS_DATABASE_URL"),
         database_name=_required_env(environ, "PAYMENTS_DATABASE_NAME"),
         internal_service_token=internal_service_token,
+        toss_secret_key=environ.get("PAYMENTS_TOSS_SECRET_KEY", ""),
+        toss_base_url=environ.get(
+            "PAYMENTS_TOSS_BASE_URL",
+            "https://api.tosspayments.com",
+        ),
+        billing_key_encryption_secret=environ.get(
+            "PAYMENTS_BILLING_KEY_ENCRYPTION_SECRET",
+            internal_service_token,
+        ),
         notification_template_arg_encryption_secret=environ.get(
             "PAYMENTS_NOTIFICATION_TEMPLATE_ARG_ENCRYPTION_SECRET",
             internal_service_token,
+        ),
+        notification_recipient_api_base_url=environ.get(
+            "PAYMENTS_NOTIFICATION_RECIPIENT_API_BASE_URL",
+            "",
         ),
         notification_worker_id=environ.get(
             "PAYMENTS_NOTIFICATION_WORKER_ID",

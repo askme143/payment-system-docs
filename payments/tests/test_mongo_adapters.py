@@ -312,6 +312,7 @@ class FakeDatabase:
         self.billing_methods = FakeCollection()
         self.payment_instruments = FakeCollection()
         self.operator_audits = FakeCollection()
+        self.scheduler_run_logs = FakeCollection()
         self.webhook_events = FakeCollection()
         self.notification_outbox = FakeCollection()
         self.notification_templates = FakeCollection()

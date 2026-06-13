@@ -24,6 +24,8 @@ from payments.application.ports import (
     AdminCatalogRepository,
     AdminListQuery,
     AdminPaymentListRecord,
+    AdminProductListRecord,
+    AdminProductQuery,
     AdminSubscriptionAdjustUnitOfWork,
     AdminSubscriptionAdjustUnitOfWorkFactory,
     AdminSubscriptionListRecord,
@@ -48,6 +50,7 @@ from payments.application.ports import (
     OneTimePaymentUnitOfWorkFactory,
     OneTimeSkuRepository,
     OperationLockRepository,
+    OperatorAuditQuery,
     OperatorAuditRepository,
     PaymentAttemptRepository,
     PaymentCancelProviderResult,
@@ -57,6 +60,8 @@ from payments.application.ports import (
     PaymentLookupProviderResult,
     PaymentProvider,
     ResolvedNotificationRecipient,
+    SchedulerRunLogRepository,
+    SchedulerRunQuery,
     SubscriptionAccountRecord,
     SubscriptionAccountRepository,
     SubscriptionBillingUnitOfWork,
@@ -93,6 +98,7 @@ from payments.domain.entities.payment_cancel_request import PaymentCancelRequest
 from payments.domain.entities.payment_customer import PaymentCustomer
 from payments.domain.entities.payment_instrument import PaymentInstrument
 from payments.domain.entities.product import Product
+from payments.domain.entities.scheduler_run import SchedulerRunLog
 from payments.domain.entities.subscription import Subscription
 from payments.domain.entities.subscription_plan import SubscriptionPlan
 from payments.domain.entities.webhook_event import WebhookEvent
@@ -479,8 +485,126 @@ class FakeAdminCatalogRepository(AdminCatalogRepository):
         self.active_subscription_plan_counts: dict[str, int] = {}
         self.active_one_time_sku_counts: dict[str, int] = {}
 
+    async def list_products(
+        self,
+        query: AdminProductQuery,
+    ) -> list[AdminProductListRecord]:
+        products = list(self.products.values())
+        if query.product_type is not None:
+            products = [
+                product
+                for product in products
+                if product.product_type == query.product_type
+            ]
+        if query.status is not None:
+            products = [
+                product for product in products if product.status in query.status
+            ]
+        if query.keyword is not None:
+            keyword = query.keyword.casefold()
+            products = [
+                product
+                for product in products
+                if keyword in product.product_code.casefold()
+                or keyword in product.name.casefold()
+            ]
+        products = sorted(
+            products,
+            key=lambda product: (product.product_code, product.id),
+        )
+        if query.cursor is not None:
+            payload = decode_cursor(query.cursor)
+            product_code = str(payload["productCode"])
+            product_id = str(payload["productId"])
+            products = [
+                product
+                for product in products
+                if (product.product_code, product.id) > (product_code, product_id)
+            ]
+        return [
+            AdminProductListRecord(
+                product=product,
+                subscription_plan_count=sum(
+                    1
+                    for plan in self.subscription_plans.values()
+                    if plan.product_id == product.id
+                ),
+                active_subscription_plan_count=sum(
+                    1
+                    for plan in self.subscription_plans.values()
+                    if plan.product_id == product.id and plan.status == "active"
+                ),
+                one_time_sku_count=sum(
+                    1
+                    for sku in self.one_time_skus.values()
+                    if sku.product_id == product.id
+                ),
+                active_one_time_sku_count=sum(
+                    1
+                    for sku in self.one_time_skus.values()
+                    if sku.product_id == product.id and sku.status == "active"
+                ),
+            )
+            for product in products[: query.limit]
+        ]
+
     async def get_product(self, product_id: str) -> Product | None:
         return self.products.get(product_id)
+
+    async def list_subscription_plans(
+        self,
+        product_id: str,
+    ) -> list[SubscriptionPlan]:
+        return [
+            plan
+            for plan in sorted(
+                self.subscription_plans.values(),
+                key=lambda item: (item.plan_code, item.id),
+            )
+            if plan.product_id == product_id
+        ]
+
+    async def list_one_time_skus(
+        self,
+        product_id: str,
+    ) -> list[OneTimeSku]:
+        return [
+            sku
+            for sku in sorted(
+                self.one_time_skus.values(),
+                key=lambda item: (item.sku_code, item.id),
+            )
+            if sku.product_id == product_id
+        ]
+
+    async def list_product_audit_records(
+        self,
+        product_id: str,
+        child_ids: tuple[str, ...],
+        limit: int,
+    ) -> list[OperatorAudit]:
+        target_ids = {product_id, *child_ids}
+        audits = [
+            OperatorAudit(
+                id=str(record.get("request_id", "req")),
+                operator_id=str(record["admin_id"]),
+                action=str(record["action"]),
+                target_type="product",
+                target_id=str(record["product_id"]),
+                previous_state=_audit_state(record.get("previous")),
+                next_state=_audit_state(record.get("next")),
+                reason_code=str(record["action"]),
+                result="succeeded",
+                created_at=_audit_created_at(record.get("created_at")),
+            )
+            for record in self.audit_records
+            if record.get("product_id") in target_ids
+        ]
+        return sorted(
+            audits,
+            key=lambda item: (item.created_at, item.id),
+            reverse=True,
+        )[:limit]
 
     async def get_product_by_code(
         self,
@@ -598,6 +722,18 @@ class FakeAdminCatalogRepository(AdminCatalogRepository):
                 "created_at": created_at,
             }
         )
+
+
+def _audit_state(value: object) -> dict[str, object]:
+    if not isinstance(value, dict):
+        return {}
+    return {str(key): item for key, item in value.items()}
+
+
+def _audit_created_at(value: object) -> datetime:
+    if isinstance(value, datetime):
+        return value
+    return FixedClock().utc_now()
 
 
 class FakeAdminOperationsRepository:
@@ -2110,8 +2246,98 @@ class FakeOperatorAuditRepository(OperatorAuditRepository):
     def __init__(self) -> None:
         self.operator_audits: dict[str, OperatorAudit] = {}
 
+    async def list_operator_audits(
+        self,
+        query: OperatorAuditQuery,
+    ) -> list[OperatorAudit]:
+        audits = list(self.operator_audits.values())
+        if query.operator_id is not None:
+            audits = [
+                audit for audit in audits if audit.operator_id == query.operator_id
+            ]
+        if query.action is not None:
+            audits = [audit for audit in audits if audit.action == query.action]
+        if query.target_type is not None:
+            audits = [
+                audit for audit in audits if audit.target_type == query.target_type
+            ]
+        if query.target_id is not None:
+            audits = [audit for audit in audits if audit.target_id == query.target_id]
+        if query.result is not None:
+            audits = [audit for audit in audits if audit.result in query.result]
+        if query.from_at is not None:
+            audits = [
+                audit for audit in audits if audit.created_at >= query.from_at
+            ]
+        if query.to_at is not None:
+            audits = [audit for audit in audits if audit.created_at <= query.to_at]
+        audits = sorted(
+            audits,
+            key=lambda audit: (audit.created_at, audit.id),
+            reverse=True,
+        )
+        if query.cursor is not None:
+            payload = decode_cursor(query.cursor)
+            created_at = datetime.fromisoformat(
+                str(payload["createdAt"]).replace("Z", "+00:00")
+            )
+            audit_id = str(payload["auditId"])
+            audits = [
+                audit
+                for audit in audits
+                if (audit.created_at, audit.id) < (created_at, audit_id)
+            ]
+        return audits[: query.limit]
+
+    async def get_operator_audit(self, audit_id: str) -> OperatorAudit | None:
+        return self.operator_audits.get(audit_id)
+
     async def save_operator_audit(self, audit: OperatorAudit) -> None:
         self.operator_audits[audit.id] = audit
+
+
+class FakeSchedulerRunRepository(SchedulerRunLogRepository):
+    def __init__(self) -> None:
+        self.runs: dict[str, SchedulerRunLog] = {}
+
+    async def list_scheduler_runs(
+        self,
+        query: SchedulerRunQuery,
+    ) -> list[SchedulerRunLog]:
+        runs = list(self.runs.values())
+        if query.job_type is not None:
+            runs = [run for run in runs if run.job_type in query.job_type]
+        if query.status is not None:
+            runs = [run for run in runs if run.status in query.status]
+        if query.trigger_source is not None:
+            runs = [
+                run for run in runs if run.trigger_source in query.trigger_source
+            ]
+        if query.worker_id is not None:
+            runs = [run for run in runs if run.worker_id == query.worker_id]
+        if query.from_at is not None:
+            runs = [run for run in runs if run.started_at >= query.from_at]
+        if query.to_at is not None:
+            runs = [run for run in runs if run.started_at <= query.to_at]
+        runs = sorted(runs, key=lambda run: (run.started_at, run.id), reverse=True)
+        if query.cursor is not None:
+            payload = decode_cursor(query.cursor)
+            started_at = datetime.fromisoformat(
+                str(payload["startedAt"]).replace("Z", "+00:00")
+            )
+            run_id = str(payload["runId"])
+            runs = [
+                run
+                for run in runs
+                if (run.started_at, run.id) < (started_at, run_id)
+            ]
+        return runs[: query.limit]
+
+    async def get_scheduler_run(self, run_id: str) -> SchedulerRunLog | None:
+        return self.runs.get(run_id)
+
+    async def save_scheduler_run(self, run: SchedulerRunLog) -> None:
+        self.runs[run.id] = run
 
 
 class FakeOperationLockRepository(OperationLockRepository):
@@ -2612,6 +2838,7 @@ class TestDependencies:
     admin_auth_email_sender: FakeAdminAuthEmailSender
     admin_auth_rate_limiter: FakeAdminAuthRateLimiter
     admin_operations: FakeAdminOperationsRepository
+    scheduler_runs: FakeSchedulerRunRepository
     admin_subscription_adjust_uow_factory: (
         FakeAdminSubscriptionAdjustUnitOfWorkFactory
     )
@@ -2651,6 +2878,8 @@ class TestDependencies:
             admin_auth_email_sender=self.admin_auth_email_sender,
             admin_auth_rate_limiter=self.admin_auth_rate_limiter,
             admin_operations=self.admin_operations,
+            operator_audits=self.payment_stores.operator_audits,
+            scheduler_runs=self.scheduler_runs,
             admin_subscription_adjust_uow_factory=(
                 self.admin_subscription_adjust_uow_factory
             ),
@@ -2725,6 +2954,9 @@ def admin_headers(test_dependencies: TestDependencies) -> dict[str, str]:
             "payment_cancel",
             "subscription_read",
             "subscription_adjust",
+            "scheduler_read",
+            "scheduler_run",
+            "audit_read",
             "product_manage",
         ],
         permission_version=1,
@@ -2755,6 +2987,7 @@ def test_dependencies() -> TestDependencies:
     billing_retries = FakeBillingRetryRepository()
     admin_auth = FakeAdminAuthRepository()
     admin_operations = FakeAdminOperationsRepository()
+    scheduler_runs = FakeSchedulerRunRepository()
     payment_stores = FakePaymentStores(
         idempotency_keys=FakeIdempotencyKeyRepository(),
         checkouts=checkouts,
@@ -2773,6 +3006,7 @@ def test_dependencies() -> TestDependencies:
         admin_auth_email_sender=FakeAdminAuthEmailSender(),
         admin_auth_rate_limiter=FakeAdminAuthRateLimiter(),
         admin_operations=admin_operations,
+        scheduler_runs=scheduler_runs,
         admin_subscription_adjust_uow_factory=(
             FakeAdminSubscriptionAdjustUnitOfWorkFactory(
                 admin_operations=admin_operations,

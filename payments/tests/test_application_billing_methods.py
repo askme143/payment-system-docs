@@ -23,6 +23,7 @@ from payments.application.ports.billing_methods import (
     BillingKeyStatus,
     BillingMethodStatus,
 )
+from payments.application.ports.operator_audits import OperatorAuditQuery
 from payments.application.ports.unit_of_work import (
     BillingMethodDefaultUnitOfWork,
     BillingMethodDefaultUnitOfWorkFactory,
@@ -188,6 +189,19 @@ class FakeOperatorAuditRepository:
 
     async def save_operator_audit(self, audit: OperatorAudit) -> None:
         self.audits[audit.id] = audit
+
+    async def list_operator_audits(
+        self,
+        query: OperatorAuditQuery,
+    ) -> list[OperatorAudit]:
+        return sorted(
+            self.audits.values(),
+            key=lambda audit: (audit.created_at, audit.id),
+            reverse=True,
+        )[: query.limit]
+
+    async def get_operator_audit(self, audit_id: str) -> OperatorAudit | None:
+        return self.audits.get(audit_id)
 
 
 class FakeBillingMethodDefaultUnitOfWork(BillingMethodDefaultUnitOfWork):

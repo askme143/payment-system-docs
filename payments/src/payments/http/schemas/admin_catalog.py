@@ -7,6 +7,8 @@ from pydantic import BaseModel, Field
 
 from payments.application.admin_catalog import (
     AdminOneTimeSkuUpdateResult,
+    AdminProductDetailResult,
+    AdminProductListResult,
     AdminProductStatusChangeResult,
     AdminSubscriptionPlanUpdateResult,
 )
@@ -29,6 +31,54 @@ class AdminProductResponse(BaseModel):
     status: str
     subscription_plans: list[object] = Field(alias="subscriptionPlans")
     one_time_skus: list[object] = Field(alias="oneTimeSkus")
+
+
+class AdminProductPageResponse(BaseModel):
+    next_cursor: str | None = Field(alias="nextCursor")
+    has_more: bool = Field(alias="hasMore")
+
+
+class AdminProductListItemResponse(BaseModel):
+    product_id: str = Field(alias="productId")
+    product_code: str = Field(alias="productCode")
+    product_type: str = Field(alias="productType")
+    name: str
+    status: str
+    subscription_plan_count: int = Field(alias="subscriptionPlanCount")
+    active_subscription_plan_count: int = Field(alias="activeSubscriptionPlanCount")
+    one_time_sku_count: int = Field(alias="oneTimeSkuCount")
+    active_one_time_sku_count: int = Field(alias="activeOneTimeSkuCount")
+    detail_url: str = Field(alias="detailUrl")
+
+
+class AdminProductListResponse(BaseModel):
+    items: list[AdminProductListItemResponse]
+    page: AdminProductPageResponse
+
+
+class AdminProductSummaryResponse(BaseModel):
+    product_id: str = Field(alias="productId")
+    product_code: str = Field(alias="productCode")
+    product_type: str = Field(alias="productType")
+    name: str
+    status: str
+
+
+class AdminProductAuditSummaryResponse(BaseModel):
+    audit_id: str = Field(alias="auditId")
+    action: str
+    operator_id: str = Field(alias="operatorId")
+    result: str
+    created_at: datetime = Field(alias="createdAt")
+
+
+class AdminProductDetailResponse(BaseModel):
+    product: AdminProductSummaryResponse
+    subscription_plans: list[AdminSubscriptionPlanResponse] = Field(
+        alias="subscriptionPlans"
+    )
+    one_time_skus: list[AdminOneTimeSkuResponse] = Field(alias="oneTimeSkus")
+    recent_audits: list[AdminProductAuditSummaryResponse] = Field(alias="recentAudits")
 
 
 class AdminProductStatusChangeRequest(BaseModel):
@@ -153,6 +203,64 @@ def admin_product_response(product: Product) -> AdminProductResponse:
         status=product.status,
         subscriptionPlans=[],
         oneTimeSkus=[],
+    )
+
+
+def admin_product_list_response(
+    result: AdminProductListResult,
+) -> AdminProductListResponse:
+    return AdminProductListResponse(
+        items=[
+            AdminProductListItemResponse(
+                productId=item.product_id,
+                productCode=item.product_code,
+                productType=item.product_type,
+                name=item.name,
+                status=item.status,
+                subscriptionPlanCount=item.subscription_plan_count,
+                activeSubscriptionPlanCount=item.active_subscription_plan_count,
+                oneTimeSkuCount=item.one_time_sku_count,
+                activeOneTimeSkuCount=item.active_one_time_sku_count,
+                detailUrl=item.detail_url,
+            )
+            for item in result.items
+        ],
+        page=AdminProductPageResponse(
+            nextCursor=result.page.next_cursor,
+            hasMore=result.page.has_more,
+        ),
+    )
+
+
+def admin_product_detail_response(
+    result: AdminProductDetailResult,
+) -> AdminProductDetailResponse:
+    return AdminProductDetailResponse(
+        product=AdminProductSummaryResponse(
+            productId=result.product.id,
+            productCode=result.product.product_code,
+            productType=result.product.product_type,
+            name=result.product.name,
+            status=result.product.status,
+        ),
+        subscriptionPlans=[
+            admin_subscription_plan_response(plan, result.product.product_type)
+            for plan in result.subscription_plans
+        ],
+        oneTimeSkus=[
+            admin_one_time_sku_response(sku, result.product.product_type)
+            for sku in result.one_time_skus
+        ],
+        recentAudits=[
+            AdminProductAuditSummaryResponse(
+                auditId=audit.audit_id,
+                action=audit.action,
+                operatorId=audit.operator_id,
+                result=audit.result,
+                createdAt=audit.created_at,
+            )
+            for audit in result.recent_audits
+        ],
     )
 
 

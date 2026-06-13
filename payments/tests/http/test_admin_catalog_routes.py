@@ -7,6 +7,95 @@ from payments.domain.entities.product import Product
 from payments.domain.entities.subscription_plan import SubscriptionPlan
 
 
+def test_list_admin_products_returns_operational_counts(
+    client,
+    admin_headers,
+    test_dependencies,
+) -> None:
+    test_dependencies.admin_catalog.products["product_analytics"] = Product(
+        id="product_analytics",
+        product_code="ANALYTICS",
+        product_type="subscription",
+        name="Analytics",
+        status="active",
+    )
+    test_dependencies.admin_catalog.subscription_plans["plan_basic"] = (
+        SubscriptionPlan(
+            id="plan_basic",
+            product_id="product_analytics",
+            plan_code="BASIC_MONTHLY",
+            billing_period="monthly",
+            amount=9900,
+            entitlements={},
+            status="active",
+        )
+    )
+
+    response = client.get(
+        "/admin/products?productType=subscription",
+        headers=admin_headers,
+    )
+
+    assert response.status_code == 200
+    assert response.json() == {
+        "items": [
+            {
+                "productId": "product_analytics",
+                "productCode": "ANALYTICS",
+                "productType": "subscription",
+                "name": "Analytics",
+                "status": "active",
+                "subscriptionPlanCount": 1,
+                "activeSubscriptionPlanCount": 1,
+                "oneTimeSkuCount": 0,
+                "activeOneTimeSkuCount": 0,
+                "detailUrl": "/admin/console/products/product_analytics",
+            }
+        ],
+        "page": {"nextCursor": None, "hasMore": False},
+    }
+
+
+def test_get_admin_product_detail_returns_children_and_recent_audits(
+    client,
+    admin_headers,
+    test_dependencies,
+) -> None:
+    test_dependencies.admin_catalog.products["product_analytics"] = Product(
+        id="product_analytics",
+        product_code="ANALYTICS",
+        product_type="subscription",
+        name="Analytics",
+        status="active",
+    )
+    test_dependencies.admin_catalog.subscription_plans["plan_basic"] = (
+        SubscriptionPlan(
+            id="plan_basic",
+            product_id="product_analytics",
+            plan_code="BASIC_MONTHLY",
+            billing_period="monthly",
+            amount=9900,
+            entitlements={},
+            status="active",
+        )
+    )
+
+    response = client.get("/admin/products/product_analytics", headers=admin_headers)
+
+    assert response.status_code == 200
+    body = response.json()
+    assert body["product"] == {
+        "productId": "product_analytics",
+        "productCode": "ANALYTICS",
+        "productType": "subscription",
+        "name": "Analytics",
+        "status": "active",
+    }
+    assert body["subscriptionPlans"][0]["planId"] == "plan_basic"
+    assert body["oneTimeSkus"] == []
+    assert body["recentAudits"] == []
+
+
 def test_create_admin_product_requires_admin_context(client, auth_headers) -> None:
     response = client.post(
         "/admin/products",

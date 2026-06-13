@@ -5,12 +5,17 @@ from dataclasses import dataclass, replace
 from datetime import datetime
 from typing import Literal
 
+from payments.application.cursors import encode_cursor
 from payments.application.errors import (
     BadRequestError,
     InvalidStateTransitionError,
     ResourceNotFoundError,
 )
-from payments.application.ports.admin_catalog import AdminCatalogRepository
+from payments.application.ports.admin_catalog import (
+    AdminCatalogRepository,
+    AdminProductListRecord,
+    AdminProductQuery,
+)
 from payments.application.ports.clock import Clock
 from payments.domain.entities.one_time_sku import OneTimeSku
 from payments.domain.entities.product import Product
@@ -36,6 +41,49 @@ class AdminProductCreateCommand:
     product_type: ProductType
     name: str
     status: ProductStatus = "draft"
+
+
+@dataclass(frozen=True, slots=True)
+class AdminPage:
+    next_cursor: str | None
+    has_more: bool
+
+
+@dataclass(frozen=True, slots=True)
+class AdminProductListItem:
+    product_id: str
+    product_code: str
+    product_type: str
+    name: str
+    status: str
+    subscription_plan_count: int
+    active_subscription_plan_count: int
+    one_time_sku_count: int
+    active_one_time_sku_count: int
+    detail_url: str
+
+
+@dataclass(frozen=True, slots=True)
+class AdminProductListResult:
+    items: list[AdminProductListItem]
+    page: AdminPage
+
+
+@dataclass(frozen=True, slots=True)
+class AdminProductAuditSummary:
+    audit_id: str
+    action: str
+    operator_id: str
+    result: str
+    created_at: datetime
+
+
+@dataclass(frozen=True, slots=True)
+class AdminProductDetailResult:
+    product: Product
+    subscription_plans: list[SubscriptionPlan]
+    one_time_skus: list[OneTimeSku]
+    recent_audits: list[AdminProductAuditSummary]
 
 
 @dataclass(frozen=True, slots=True)
@@ -105,6 +153,68 @@ class AdminOneTimeSkuUpdateResult:
     sku: OneTimeSku
     product_type: ProductType
     effective_for: str
+
+
+async def list_admin_products(
+    query: AdminProductQuery,
+    repository: AdminCatalogRepository,
+) -> AdminProductListResult:
+    """관리자 상품 목록을 운영 상태까지 포함해 조회합니다.
+
+    Args:
+        query: 상품 유형, 상태, 검색어, 페이지 조건입니다.
+        repository: 관리자 상품 저장소입니다.
+
+    Returns:
+        상품 목록 요약과 커서 페이지 정보입니다.
+
+    Raises:
+        BadRequestError: 필터나 페이지 조건이 문서 계약과 맞지 않을 때 발생합니다.
+    """
+    _validate_product_query(query)
+    records = await repository.list_products(replace(query, limit=query.limit + 1))
+    page_records = records[: query.limit]
+    has_more = len(records) > query.limit
+    return AdminProductListResult(
+        items=[_product_list_item(record) for record in page_records],
+        page=AdminPage(
+            next_cursor=(
+                _product_next_cursor(page_records[-1].product)
+                if has_more and page_records
+                else None
+            ),
+            has_more=has_more,
+        ),
+    )
+
+
+async def get_admin_product_detail(
+    product_id: str,
+    repository: AdminCatalogRepository,
+) -> AdminProductDetailResult:
+    """관리자 상품 상세, 하위 판매 단위, 최근 변경 이력을 조회합니다."""
+    product = await repository.get_product(product_id)
+    if product is None:
+        raise ResourceNotFoundError("product not found")
+    plans = await repository.list_subscription_plans(product.id)
+    skus = await repository.list_one_time_skus(product.id)
+    child_ids = tuple([plan.id for plan in plans] + [sku.id for sku in skus])
+    audits = await repository.list_product_audit_records(product.id, child_ids, 10)
+    return AdminProductDetailResult(
+        product=product,
+        subscription_plans=plans,
+        one_time_skus=skus,
+        recent_audits=[
+            AdminProductAuditSummary(
+                audit_id=audit.id,
+                action=audit.action,
+                operator_id=audit.operator_id,
+                result=audit.result,
+                created_at=audit.created_at,
+            )
+            for audit in audits
+        ],
+    )
 
 
 async def create_admin_product(
@@ -470,6 +580,47 @@ def _validate_product_create(command: AdminProductCreateCommand) -> None:
         raise BadRequestError("name is required")
     if command.status != "draft":
         raise BadRequestError("product status must start as draft")
+
+
+def _validate_product_query(query: AdminProductQuery) -> None:
+    if query.limit < 1 or query.limit > 100:
+        raise BadRequestError("limit is invalid")
+    if query.product_type is not None and query.product_type not in {
+        "subscription",
+        "one_time",
+    }:
+        raise BadRequestError("productType is invalid")
+    if query.status is not None:
+        invalid = set(query.status) - {"draft", "active", "paused", "archived"}
+        if invalid:
+            raise BadRequestError("status is invalid")
+    if query.keyword is not None and not query.keyword.strip():
+        raise BadRequestError("keyword is invalid")
+
+
+def _product_list_item(record: AdminProductListRecord) -> AdminProductListItem:
+    product = record.product
+    return AdminProductListItem(
+        product_id=product.id,
+        product_code=product.product_code,
+        product_type=product.product_type,
+        name=product.name,
+        status=product.status,
+        subscription_plan_count=record.subscription_plan_count,
+        active_subscription_plan_count=record.active_subscription_plan_count,
+        one_time_sku_count=record.one_time_sku_count,
+        active_one_time_sku_count=record.active_one_time_sku_count,
+        detail_url=f"/admin/console/products/{product.id}",
+    )
+
+
+def _product_next_cursor(product: Product) -> str:
+    return encode_cursor(
+        {
+            "productCode": product.product_code,
+            "productId": product.id,
+        }
+    )
 
 
 def _validate_product_status_change(

@@ -24,7 +24,12 @@ from payments.application.errors import (
     InvalidStateTransitionError,
     ResourceNotFoundError,
 )
+from payments.application.ports.admin_catalog import (
+    AdminProductListRecord,
+    AdminProductQuery,
+)
 from payments.domain.entities.one_time_sku import OneTimeSku
+from payments.domain.entities.operator_audit import OperatorAudit
 from payments.domain.entities.product import Product
 from payments.domain.entities.subscription_plan import SubscriptionPlan
 
@@ -61,8 +66,95 @@ class FakeAdminCatalogRepository:
     async def save_product(self, product: Product) -> None:
         self.products[product.id] = product
 
+    async def list_products(
+        self,
+        query: AdminProductQuery,
+    ) -> list[AdminProductListRecord]:
+        products = list(self.products.values())
+        if query.product_type is not None:
+            products = [
+                product
+                for product in products
+                if product.product_type == query.product_type
+            ]
+        if query.status is not None:
+            products = [
+                product for product in products if product.status in query.status
+            ]
+        return [
+            AdminProductListRecord(
+                product=product,
+                subscription_plan_count=sum(
+                    1
+                    for plan in self.subscription_plans.values()
+                    if plan.product_id == product.id
+                ),
+                active_subscription_plan_count=sum(
+                    1
+                    for plan in self.subscription_plans.values()
+                    if plan.product_id == product.id and plan.status == "active"
+                ),
+                one_time_sku_count=sum(
+                    1
+                    for sku in self.one_time_skus.values()
+                    if sku.product_id == product.id
+                ),
+                active_one_time_sku_count=sum(
+                    1
+                    for sku in self.one_time_skus.values()
+                    if sku.product_id == product.id and sku.status == "active"
+                ),
+            )
+            for product in sorted(
+                products,
+                key=lambda item: (item.product_code, item.id),
+            )[: query.limit]
+        ]
+
     async def get_product(self, product_id: str) -> Product | None:
         return self.products.get(product_id)
+
+    async def list_subscription_plans(
+        self,
+        product_id: str,
+    ) -> list[SubscriptionPlan]:
+        return [
+            plan
+            for plan in self.subscription_plans.values()
+            if plan.product_id == product_id
+        ]
+
+    async def list_one_time_skus(
+        self,
+        product_id: str,
+    ) -> list[OneTimeSku]:
+        return [
+            sku for sku in self.one_time_skus.values() if sku.product_id == product_id
+        ]
+
+    async def list_product_audit_records(
+        self,
+        product_id: str,
+        child_ids: tuple[str, ...],
+        limit: int,
+    ) -> list[OperatorAudit]:
+        target_ids = {product_id, *child_ids}
+        return [
+            OperatorAudit(
+                id=str(record.get("request_id", "req")),
+                operator_id=str(record["admin_id"]),
+                action=str(record["action"]),
+                target_type="product",
+                target_id=str(record["product_id"]),
+                previous_state=_audit_state(record.get("previous")),
+                next_state=_audit_state(record.get("next")),
+                reason_code=str(record["action"]),
+                result="succeeded",
+                created_at=_audit_created_at(record.get("created_at")),
+            )
+            for record in self.audit_records
+            if record.get("product_id") in target_ids
+        ][:limit]
 
     async def count_active_subscription_plans(self, product_id: str) -> int:
         return self.active_subscription_plan_counts.get(
@@ -162,6 +254,18 @@ class FakeAdminCatalogRepository:
                 "created_at": created_at,
             }
         )
+
+
+def _audit_state(value: object) -> dict[str, object]:
+    if not isinstance(value, dict):
+        return {}
+    return {str(key): item for key, item in value.items()}
+
+
+def _audit_created_at(value: object) -> datetime:
+    if isinstance(value, datetime):
+        return value
+    return FixedClock().utc_now()
 
 
 async def test_create_admin_product_persists_draft_product_and_audit() -> None:

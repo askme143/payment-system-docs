@@ -1,15 +1,61 @@
 from __future__ import annotations
 
+from dataclasses import dataclass
 from datetime import datetime
 from typing import Protocol
 
 from payments.domain.entities.one_time_sku import OneTimeSku
+from payments.domain.entities.operator_audit import OperatorAudit
 from payments.domain.entities.product import Product
 from payments.domain.entities.subscription_plan import SubscriptionPlan
 
 
+@dataclass(frozen=True, slots=True)
+class AdminProductQuery:
+    product_type: str | None = None
+    status: tuple[str, ...] | None = None
+    keyword: str | None = None
+    cursor: str | None = None
+    limit: int = 50
+
+
+@dataclass(frozen=True, slots=True)
+class AdminProductListRecord:
+    product: Product
+    subscription_plan_count: int
+    active_subscription_plan_count: int
+    one_time_sku_count: int
+    active_one_time_sku_count: int
+
+
 class AdminCatalogRepository(Protocol):
+    async def list_products(
+        self,
+        query: AdminProductQuery,
+    ) -> list[AdminProductListRecord]:
+        raise NotImplementedError
+
     async def get_product(self, product_id: str) -> Product | None:
+        raise NotImplementedError
+
+    async def list_subscription_plans(
+        self,
+        product_id: str,
+    ) -> list[SubscriptionPlan]:
+        raise NotImplementedError
+
+    async def list_one_time_skus(
+        self,
+        product_id: str,
+    ) -> list[OneTimeSku]:
+        raise NotImplementedError
+
+    async def list_product_audit_records(
+        self,
+        product_id: str,
+        child_ids: tuple[str, ...],
+        limit: int,
+    ) -> list[OperatorAudit]:
         raise NotImplementedError
 
     async def get_product_by_code(

@@ -8,6 +8,7 @@ from payments.application.ports.admin_operations import (
 )
 from payments.application.ports.provider import PaymentLookupProviderResult
 from payments.domain.entities.invoice import Invoice
+from payments.domain.entities.operator_audit import OperatorAudit
 from payments.domain.entities.payment import Payment
 from payments.domain.entities.subscription import Subscription
 
@@ -17,6 +18,84 @@ def test_list_admin_payments_requires_admin_context(client, auth_headers) -> Non
 
     assert response.status_code == 401
     assert response.json()["error"]["code"] == "unauthorized"
+
+
+def test_list_admin_operator_audits_returns_summary_only(
+    client,
+    admin_headers,
+    test_dependencies,
+) -> None:
+    test_dependencies.payment_stores.operator_audits.operator_audits["oaudit_1"] = (
+        OperatorAudit(
+            id="oaudit_1",
+            operator_id="admin_1",
+            action="scheduler.run_manual",
+            target_type="scheduler_run",
+            target_id="srun_1",
+            previous_state={"status": None},
+            next_state={"status": "succeeded"},
+            reason_code="manual_retry_after_cron_failure",
+            reason_message="CronJob failed",
+            result="succeeded",
+            request_ip="203.0.113.10",
+            created_at=datetime(2026, 6, 10, tzinfo=UTC),
+        )
+    )
+
+    response = client.get(
+        "/admin/operator-audits?action=scheduler.run_manual",
+        headers=admin_headers,
+    )
+
+    assert response.status_code == 200
+    assert response.json() == {
+        "items": [
+            {
+                "auditId": "oaudit_1",
+                "operatorId": "admin_1",
+                "action": "scheduler.run_manual",
+                "targetType": "scheduler_run",
+                "targetId": "srun_1",
+                "result": "succeeded",
+                "reasonCode": "manual_retry_after_cron_failure",
+                "createdAt": "2026-06-10T00:00:00Z",
+            }
+        ],
+        "page": {"nextCursor": None, "hasMore": False},
+    }
+
+
+def test_get_admin_operator_audit_returns_detail(
+    client,
+    admin_headers,
+    test_dependencies,
+) -> None:
+    test_dependencies.payment_stores.operator_audits.operator_audits["oaudit_1"] = (
+        OperatorAudit(
+            id="oaudit_1",
+            operator_id="admin_1",
+            action="scheduler.run_manual",
+            target_type="scheduler_run",
+            target_id="srun_1",
+            previous_state={"status": None},
+            next_state={"status": "succeeded"},
+            reason_code="manual_retry_after_cron_failure",
+            reason_message="CronJob failed",
+            result="succeeded",
+            request_ip="203.0.113.10",
+            created_at=datetime(2026, 6, 10, tzinfo=UTC),
+            idempotency_scope="admin-scheduler-run",
+        )
+    )
+
+    response = client.get("/admin/operator-audits/oaudit_1", headers=admin_headers)
+
+    assert response.status_code == 200
+    body = response.json()
+    assert body["auditId"] == "oaudit_1"
+    assert body["previousState"] == {"status": None}
+    assert body["nextState"] == {"status": "succeeded"}
+    assert body["idempotencyScope"] == "admin-scheduler-run"
 
 
 def test_list_admin_payments_returns_items(client, admin_headers) -> None:

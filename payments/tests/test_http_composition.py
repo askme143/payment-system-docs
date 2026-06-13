@@ -73,6 +73,7 @@ class FakeDatabase:
     webhook_events = object()
     notification_outbox = object()
     notification_templates = object()
+    scheduler_run_logs = object()
 
 
 def motor_database_stub() -> AsyncIOMotorDatabase[TestMongoDocument]:

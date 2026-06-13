@@ -88,6 +88,18 @@ async def ensure_mongo_indexes(database: AsyncIOMotorDatabase) -> None:
         [("action", ASCENDING), ("created_at", ASCENDING)],
         name="idx_operator_audits_action",
     )
+    await database.scheduler_run_logs.create_index(
+        [("started_at", DESCENDING), ("_id", DESCENDING)],
+        name="idx_scheduler_run_logs_started",
+    )
+    await database.scheduler_run_logs.create_index(
+        [("job_type", ASCENDING), ("status", ASCENDING), ("started_at", DESCENDING)],
+        name="idx_scheduler_run_logs_job_status_started",
+    )
+    await database.scheduler_run_logs.create_index(
+        [("trigger_source", ASCENDING), ("started_at", DESCENDING)],
+        name="idx_scheduler_run_logs_trigger_started",
+    )
     await database.payments.create_index(
         [("order_id", ASCENDING)],
         unique=True,

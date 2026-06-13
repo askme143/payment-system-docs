@@ -24,8 +24,10 @@ from payments.adapters.mongo.notifications import (
     MongoNotificationTemplateRepository,
 )
 from payments.adapters.mongo.operation_locks import MongoOperationLockRepository
+from payments.adapters.mongo.operator_audits import MongoOperatorAuditRepository
 from payments.adapters.mongo.payment_attempts import MongoPaymentAttemptRepository
 from payments.adapters.mongo.payment_customers import MongoPaymentCustomerRepository
+from payments.adapters.mongo.scheduler_runs import MongoSchedulerRunLogRepository
 from payments.adapters.mongo.subscriptions import (
     MongoSubscriptionAccountRepository,
     MongoSubscriptionCheckoutRepository,
@@ -138,6 +140,8 @@ def build_http_dependencies(
             billing_methods=database.billing_methods,
             operator_audits=database.operator_audits,
         ),
+        operator_audits=MongoOperatorAuditRepository(database.operator_audits),
+        scheduler_runs=MongoSchedulerRunLogRepository(database.scheduler_run_logs),
         admin_subscription_adjust_uow_factory=(
             MongoAdminSubscriptionAdjustUnitOfWorkFactory(database)
         ),

@@ -5,7 +5,11 @@ from payments.application.ports.admin_auth import (
     AdminAuthRateLimiter,
     AdminAuthRepository,
 )
-from payments.application.ports.admin_catalog import AdminCatalogRepository
+from payments.application.ports.admin_catalog import (
+    AdminCatalogRepository,
+    AdminProductListRecord,
+    AdminProductQuery,
+)
 from payments.application.ports.admin_operations import (
     AdminListQuery,
     AdminOperationsRepository,
@@ -44,7 +48,10 @@ from payments.application.ports.notifications import (
 )
 from payments.application.ports.one_time_skus import OneTimeSkuRepository
 from payments.application.ports.operation_locks import OperationLockRepository
-from payments.application.ports.operator_audits import OperatorAuditRepository
+from payments.application.ports.operator_audits import (
+    OperatorAuditQuery,
+    OperatorAuditRepository,
+)
 from payments.application.ports.payment_attempts import PaymentAttemptRepository
 from payments.application.ports.payment_cancel_requests import (
     PaymentCancelRequestRepository,
@@ -57,6 +64,10 @@ from payments.application.ports.provider import (
     PaymentConfirmProviderResult,
     PaymentLookupProviderResult,
     PaymentProvider,
+)
+from payments.application.ports.scheduler_runs import (
+    SchedulerRunLogRepository,
+    SchedulerRunQuery,
 )
 from payments.application.ports.subscription_changes import (
     SubscriptionChangeTokenCodec,
@@ -108,6 +119,8 @@ __all__ = [
     "AdminListQuery",
     "AdminOperationsRepository",
     "AdminPaymentListRecord",
+    "AdminProductListRecord",
+    "AdminProductQuery",
     "AdminSubscriptionAdjustUnitOfWork",
     "AdminSubscriptionAdjustUnitOfWorkFactory",
     "AdminSubscriptionListRecord",
@@ -143,6 +156,7 @@ __all__ = [
     "OneTimePaymentUnitOfWorkFactory",
     "OneTimeSkuRepository",
     "OperationLockRepository",
+    "OperatorAuditQuery",
     "OperatorAuditRepository",
     "PaymentAttemptRepository",
     "PaymentCancelProviderResult",
@@ -153,6 +167,8 @@ __all__ = [
     "PaymentProvider",
     "RenderedEmail",
     "ResolvedNotificationRecipient",
+    "SchedulerRunLogRepository",
+    "SchedulerRunQuery",
     "SubscriptionAccountRecord",
     "SubscriptionAccountRepository",
     "SubscriptionBillingUnitOfWork",

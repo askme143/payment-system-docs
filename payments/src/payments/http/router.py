@@ -9,8 +9,17 @@ from payments.http.routes.admin_auth import (
 from payments.http.routes.admin_catalog import (
     create_router as create_admin_catalog_router,
 )
+from payments.http.routes.admin_console import (
+    create_router as create_admin_console_router,
+)
 from payments.http.routes.admin_operations import (
     create_router as create_admin_operations_router,
+)
+from payments.http.routes.admin_operator_audits import (
+    create_router as create_admin_operator_audits_router,
+)
+from payments.http.routes.admin_scheduler_runs import (
+    create_router as create_admin_scheduler_runs_router,
 )
 from payments.http.routes.billing_auth import (
     create_router as create_billing_auth_router,
@@ -32,7 +41,10 @@ def create_router(dependencies: HttpDependencies) -> APIRouter:
     router = APIRouter()
     router.include_router(create_admin_auth_router(dependencies))
     router.include_router(create_admin_catalog_router(dependencies))
+    router.include_router(create_admin_console_router(dependencies))
+    router.include_router(create_admin_operator_audits_router(dependencies))
     router.include_router(create_admin_operations_router(dependencies))
+    router.include_router(create_admin_scheduler_runs_router(dependencies))
     router.include_router(create_billing_auth_router(dependencies))
     router.include_router(create_billing_methods_router(dependencies))
     router.include_router(create_catalog_router(dependencies))

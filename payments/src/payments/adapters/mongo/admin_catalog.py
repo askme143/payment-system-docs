@@ -6,8 +6,14 @@ from motor.motor_asyncio import AsyncIOMotorCollection
 from pymongo.errors import DuplicateKeyError
 
 from payments.adapters.mongo.documents import from_document, to_document
+from payments.application.cursors import decode_cursor
 from payments.application.errors import InvalidStateTransitionError
+from payments.application.ports.admin_catalog import (
+    AdminProductListRecord,
+    AdminProductQuery,
+)
 from payments.domain.entities.one_time_sku import OneTimeSku
+from payments.domain.entities.operator_audit import OperatorAudit
 from payments.domain.entities.product import Product
 from payments.domain.entities.subscription_plan import SubscriptionPlan
 
@@ -25,9 +31,100 @@ class MongoAdminCatalogRepository:
         self._subscription_plans = subscription_plans
         self._one_time_skus = one_time_skus
 
+    async def list_products(
+        self,
+        query: AdminProductQuery,
+    ) -> list[AdminProductListRecord]:
+        filters = _product_query_filter(query)
+        cursor = self._products.find(filters).sort(
+            [("product_code", 1), ("_id", 1)]
+        ).limit(query.limit)
+        records: list[AdminProductListRecord] = []
+        async for document in cursor:
+            product = from_document(Product, document)
+            if product is None:
+                continue
+            records.append(
+                AdminProductListRecord(
+                    product=product,
+                    subscription_plan_count=(
+                        await self._subscription_plans.count_documents(
+                            {"product_id": product.id}
+                        )
+                    ),
+                    active_subscription_plan_count=(
+                        await self._subscription_plans.count_documents(
+                            {"product_id": product.id, "status": "active"}
+                        )
+                    ),
+                    one_time_sku_count=(
+                        await self._one_time_skus.count_documents(
+                            {"product_id": product.id}
+                        )
+                    ),
+                    active_one_time_sku_count=(
+                        await self._one_time_skus.count_documents(
+                            {"product_id": product.id, "status": "active"}
+                        )
+                    ),
+                )
+            )
+        return records
+
     async def get_product(self, product_id: str) -> Product | None:
         document = await self._products.find_one({"_id": product_id})
         return from_document(Product, document)
+
+    async def list_subscription_plans(
+        self,
+        product_id: str,
+    ) -> list[SubscriptionPlan]:
+        cursor = self._subscription_plans.find({"product_id": product_id}).sort(
+            [("plan_code", 1), ("_id", 1)]
+        )
+        return [
+            plan
+            for document in [document async for document in cursor]
+            if (plan := from_document(SubscriptionPlan, document)) is not None
+        ]
+
+    async def list_one_time_skus(
+        self,
+        product_id: str,
+    ) -> list[OneTimeSku]:
+        cursor = self._one_time_skus.find({"product_id": product_id}).sort(
+            [("sku_code", 1), ("_id", 1)]
+        )
+        return [
+            sku
+            for document in [document async for document in cursor]
+            if (sku := from_document(OneTimeSku, document)) is not None
+        ]
+
+    async def list_product_audit_records(
+        self,
+        product_id: str,
+        child_ids: tuple[str, ...],
+        limit: int,
+    ) -> list[OperatorAudit]:
+        target_ids = [product_id, *child_ids]
+        cursor = (
+            self._operator_audits.find(
+                {
+                    "target_type": {
+                        "$in": ["product", "subscription_plan", "one_time_sku"]
+                    },
+                    "target_id": {"$in": target_ids},
+                }
+            )
+            .sort([("created_at", -1), ("_id", -1)])
+            .limit(limit)
+        )
+        return [
+            audit
+            for document in [document async for document in cursor]
+            if (audit := from_document(OperatorAudit, document)) is not None
+        ]
 
     async def get_product_by_code(
         self,
@@ -183,3 +280,36 @@ def _audit_reason_message(next_value: dict[str, object]) -> str | None:
     if reason is None:
         return None
     return str(reason)
+
+
+def _product_query_filter(query: AdminProductQuery) -> dict[str, object]:
+    filters: dict[str, object] = {}
+    clauses: list[dict[str, object]] = []
+    if query.product_type is not None:
+        filters["product_type"] = query.product_type
+    if query.status is not None:
+        filters["status"] = {"$in": list(query.status)}
+    if query.keyword is not None:
+        clauses.append(
+            {
+                "$or": [
+                    {"product_code": {"$regex": query.keyword, "$options": "i"}},
+                    {"name": {"$regex": query.keyword, "$options": "i"}},
+                ]
+            }
+        )
+    if query.cursor is not None:
+        payload = decode_cursor(query.cursor)
+        product_code = str(payload["productCode"])
+        product_id = str(payload["productId"])
+        clauses.append(
+            {
+                "$or": [
+                    {"product_code": {"$gt": product_code}},
+                    {"product_code": product_code, "_id": {"$gt": product_id}},
+                ]
+            }
+        )
+    if clauses:
+        filters["$and"] = clauses
+    return filters

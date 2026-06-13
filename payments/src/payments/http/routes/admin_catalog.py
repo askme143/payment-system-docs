@@ -1,11 +1,14 @@
 from __future__ import annotations
 
-from fastapi import APIRouter, Depends, status
+from typing import Annotated
+
+from fastapi import APIRouter, Depends, Query, status
 
 from payments.application.admin_catalog import (
     AdminOneTimeSkuCreateCommand,
     AdminOneTimeSkuUpdateCommand,
     AdminProductCreateCommand,
+    AdminProductQuery,
     AdminProductStatusChangeCommand,
     AdminRequestContext,
     AdminSubscriptionPlanCreateCommand,
@@ -14,9 +17,12 @@ from payments.application.admin_catalog import (
     create_admin_one_time_sku,
     create_admin_product,
     create_admin_subscription_plan,
+    get_admin_product_detail,
+    list_admin_products,
     update_admin_one_time_sku,
     update_admin_subscription_plan,
 )
+from payments.application.errors import BadRequestError
 from payments.http.dependencies import HttpDependencies, admin_context_dependency
 from payments.http.schemas.admin_catalog import (
     AdminOneTimeSkuCreateRequest,
@@ -24,6 +30,8 @@ from payments.http.schemas.admin_catalog import (
     AdminOneTimeSkuUpdateRequest,
     AdminOneTimeSkuUpdateResponse,
     AdminProductCreateRequest,
+    AdminProductDetailResponse,
+    AdminProductListResponse,
     AdminProductResponse,
     AdminProductStatusChangeRequest,
     AdminProductStatusChangeResponse,
@@ -33,6 +41,8 @@ from payments.http.schemas.admin_catalog import (
     AdminSubscriptionPlanUpdateResponse,
     admin_one_time_sku_response,
     admin_one_time_sku_update_response,
+    admin_product_detail_response,
+    admin_product_list_response,
     admin_product_response,
     admin_product_status_change_response,
     admin_subscription_plan_response,
@@ -48,6 +58,40 @@ def create_router(dependencies: HttpDependencies) -> APIRouter:
         dependencies.internal_service_token,
         ("product_manage",),
     )
+
+    @router.get("/products", response_model=AdminProductListResponse)
+    async def list_products(
+        context: AdminRequestContext = Depends(require_admin_context),
+        productType: str | None = None,
+        status: Annotated[list[str] | None, Query()] = None,
+        keyword: str | None = None,
+        cursor: str | None = None,
+        limit: str = "50",
+    ) -> AdminProductListResponse:
+        _ = context
+        result = await list_admin_products(
+            AdminProductQuery(
+                product_type=productType,
+                status=tuple(status) if status is not None else None,
+                keyword=keyword,
+                cursor=cursor,
+                limit=_admin_catalog_limit(limit),
+            ),
+            dependencies.admin_catalog,
+        )
+        return admin_product_list_response(result)
+
+    @router.get(
+        "/products/{productId}",
+        response_model=AdminProductDetailResponse,
+    )
+    async def get_product_detail(
+        productId: str,
+        context: AdminRequestContext = Depends(require_admin_context),
+    ) -> AdminProductDetailResponse:
+        _ = context
+        result = await get_admin_product_detail(productId, dependencies.admin_catalog)
+        return admin_product_detail_response(result)
 
     @router.post(
         "/products",
@@ -196,3 +240,13 @@ def create_router(dependencies: HttpDependencies) -> APIRouter:
         return admin_one_time_sku_update_response(result)
 
     return router
+
+
+def _admin_catalog_limit(value: str) -> int:
+    try:
+        limit = int(value)
+    except ValueError as exc:
+        raise BadRequestError("limit is invalid") from exc
+    if limit < 1 or limit > 100:
+        raise BadRequestError("limit is invalid")
+    return limit
