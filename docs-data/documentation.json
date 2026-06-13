@@ -28,6 +28,10 @@
         "title": "이메일 발송 시스템 문서",
         "file": "system-architecture-doc.html"
       },
+      "deploymentOperationsGuide": {
+        "title": "배포 및 운영 가이드",
+        "file": "deployment-operations-guide.html"
+      },
       "notificationTemplateCatalog": {
         "title": "이메일 템플릿 카탈로그",
         "file": "notification-template-catalog-doc.html"
@@ -14258,6 +14262,538 @@
       ]
     }
   ],
+  "deploymentOperationsGuide": {
+    "title": "배포 및 운영 가이드",
+    "summary": "결제 시스템을 배포하고 운영하는 담당자가 API 서버, Kubernetes CronJob scheduler, Notification Worker, MongoDB, Toss 연동, 어드민 콘솔을 같은 기준으로 배포, 검증, 관측, 복구하기 위한 운영 런북입니다.",
+    "audience": [
+      "배포를 수행하는 백엔드 엔지니어와 플랫폼 운영자",
+      "결제 장애를 1차 확인하는 온콜 담당자",
+      "어드민 콘솔과 스케줄러 수동 실행을 운영하는 관리자"
+    ],
+    "scope": {
+      "included": [
+        "payments 이미지 빌드와 API 서버 배포",
+        "Kubernetes CronJob 기반 정기결제, 사전 알림, 해지 예약 만료 배치 배포",
+        "상시 실행 Notification Worker 배포와 dead-letter 확인",
+        "MongoDB 인덱스, 주요 컬렉션, 운영 관측 포인트",
+        "어드민 콘솔의 수동 실행과 감사 로그 확인 절차"
+      ],
+      "excluded": [
+        "Toss 대시보드 자체 설정 절차",
+        "회원/관리자 원본 서비스 배포 절차",
+        "클러스터, 네트워크, 인증서 같은 플랫폼 공통 인프라 구축"
+      ]
+    },
+    "runtimeTopology": {
+      "title": "런타임 구성",
+      "summary": "API 서버와 Notification Worker는 장기 실행 workload이고, scheduler batch는 같은 이미지를 Kubernetes CronJob에서 1회 실행 entrypoint로 호출합니다.",
+      "components": [
+        {
+          "name": "Payment API Server",
+          "workload": "Kubernetes Deployment",
+          "entrypoint": "uvicorn main:app --host 0.0.0.0 --port 8000",
+          "responsibility": "공개 결제 API, 내부 API, 어드민 JSON API, /admin/console SSR 페이지를 제공합니다.",
+          "operationalNotes": "startup에서 Mongo index를 보장하고 notification template seed를 수행합니다. 운영자 수동 스케줄러 실행은 이 API 서버 요청 처리 중 동기 실행되며 Kubernetes Job 또는 CronJob을 생성하지 않습니다."
+        },
+        {
+          "name": "Scheduler billing CronJob",
+          "workload": "Kubernetes CronJob",
+          "entrypoint": "python -m payments.scheduler.runner billing --batch-size 100",
+          "responsibility": "결제일이 도래한 구독을 정기 과금합니다.",
+          "operationalNotes": "성공한 실행은 scheduler_run_logs.status=succeeded로 저장됩니다. 일부 대상 결제 실패는 summary.failed에 집계하며 실행 자체 실패와 구분합니다."
+        },
+        {
+          "name": "Scheduler reminder CronJob",
+          "workload": "Kubernetes CronJob",
+          "entrypoint": "python -m payments.scheduler.runner reminder --batch-size 100",
+          "responsibility": "결제 예정 사전 알림 대상을 선택하고 notification_outbox에 발송 intent를 적재합니다.",
+          "operationalNotes": "dry-run 검증은 --dry-run으로 수행할 수 있으며 실제 발송은 Notification Worker가 처리합니다."
+        },
+        {
+          "name": "Scheduler cancel-expiration CronJob",
+          "workload": "Kubernetes CronJob",
+          "entrypoint": "python -m payments.scheduler.runner cancel-expiration --batch-size 100",
+          "responsibility": "cancel_scheduled 구독 중 cancelAt이 지난 대상을 canceled로 만료 처리합니다.",
+          "operationalNotes": "구독 상태 변경과 operator_audits 기록은 application job 함수가 담당합니다."
+        },
+        {
+          "name": "Notification Worker",
+          "workload": "Kubernetes Deployment",
+          "entrypoint": "python -m payments.scheduler.runner notification-worker",
+          "responsibility": "notification_outbox의 due item을 claim하고 템플릿 렌더링 후 SMTP로 발송합니다.",
+          "operationalNotes": "CronJob으로 실행하지 않습니다. poll_interval마다 반복 실행하며 retry_scheduled와 dead_letter 상태를 관리합니다."
+        },
+        {
+          "name": "MongoDB",
+          "workload": "Managed MongoDB 또는 Replica Set",
+          "entrypoint": "PAYMENTS_DATABASE_URL / PAYMENTS_DATABASE_NAME",
+          "responsibility": "결제 원장성 상태, 멱등성 키, 스케줄러 실행 로그, 운영 감사 로그, notification outbox를 저장합니다.",
+          "operationalNotes": "운영자가 직접 결제 상태 컬렉션을 수정하지 않습니다. 보정은 문서화된 admin API 또는 application job으로 수행합니다."
+        },
+        {
+          "name": "Toss Payments API",
+          "workload": "External provider",
+          "entrypoint": "PAYMENTS_TOSS_BASE_URL",
+          "responsibility": "결제 승인, 빌링키 결제, 결제 조회, 취소 처리를 수행하는 외부 provider입니다.",
+          "operationalNotes": "provider 장애는 내부 payments, invoices, subscriptions 상태와 operator_audits, scheduler_run_logs로 관측합니다."
+        }
+      ]
+    },
+    "configuration": {
+      "title": "런타임 설정",
+      "groups": [
+        {
+          "name": "공통 설정",
+          "appliesTo": "API 서버, scheduler CronJob, Notification Worker",
+          "settings": [
+            {
+              "name": "PAYMENTS_DATABASE_URL",
+              "required": true,
+              "default": "",
+              "secret": true,
+              "description": "MongoDB 연결 문자열입니다. 운영 문서나 로그에 실제 값을 남기지 않습니다."
+            },
+            {
+              "name": "PAYMENTS_DATABASE_NAME",
+              "required": true,
+              "default": "",
+              "secret": false,
+              "description": "결제 시스템이 사용할 MongoDB database 이름입니다."
+            },
+            {
+              "name": "PAYMENTS_INTERNAL_SERVICE_TOKEN",
+              "required": true,
+              "default": "",
+              "secret": true,
+              "description": "내부 API와 worker 설정의 공통 비밀 값입니다. 별도 암호화 secret이 없으면 일부 암호화 기본값으로도 사용됩니다."
+            },
+            {
+              "name": "PAYMENTS_BILLING_KEY_ENCRYPTION_SECRET",
+              "required": false,
+              "default": "PAYMENTS_INTERNAL_SERVICE_TOKEN",
+              "secret": true,
+              "description": "billingKey 암호화에 사용하는 secret입니다. 운영 환경에서는 internal token과 분리하는 것을 권장합니다."
+            },
+            {
+              "name": "PAYMENTS_NOTIFICATION_TEMPLATE_ARG_ENCRYPTION_SECRET",
+              "required": false,
+              "default": "PAYMENTS_INTERNAL_SERVICE_TOKEN",
+              "secret": true,
+              "description": "인증 링크, OTP 같은 민감 template_args envelope를 암복호화하는 secret입니다."
+            }
+          ]
+        },
+        {
+          "name": "API 서버 설정",
+          "appliesTo": "Payment API Server",
+          "settings": [
+            {
+              "name": "PAYMENTS_TOSS_CLIENT_KEY",
+              "required": false,
+              "default": "test_ck_local",
+              "secret": false,
+              "description": "클라이언트 SDK에 전달할 Toss client key입니다."
+            },
+            {
+              "name": "PAYMENTS_TOSS_SECRET_KEY",
+              "required": false,
+              "default": "",
+              "secret": true,
+              "description": "Toss API 서버 호출에 사용하는 secret key입니다. 운영 결제 기능을 켜기 전에 반드시 설정합니다."
+            },
+            {
+              "name": "PAYMENTS_TOSS_WEBHOOK_SECRET",
+              "required": true,
+              "default": "",
+              "secret": true,
+              "description": "Toss webhook 인증에 사용하는 secret입니다."
+            },
+            {
+              "name": "PAYMENTS_ADMIN_AUTH_LINK_BASE_URL",
+              "required": true,
+              "default": "",
+              "secret": false,
+              "description": "관리자 로그인 링크와 비밀번호 재설정 링크를 만들 때 사용하는 어드민 콘솔 base URL입니다."
+            },
+            {
+              "name": "PAYMENTS_NOTIFICATION_RECIPIENT_API_BASE_URL",
+              "required": true,
+              "default": "",
+              "secret": false,
+              "description": "수신자 이메일과 표시 이름을 조회하는 recipient resolver base URL입니다."
+            },
+            {
+              "name": "PAYMENTS_ALLOWED_REDIRECT_HOSTS",
+              "required": false,
+              "default": "example.com",
+              "secret": false,
+              "description": "결제와 빌링키 인증 redirect host allowlist입니다. 운영 도메인을 쉼표로 구분해 설정합니다."
+            }
+          ]
+        },
+        {
+          "name": "Scheduler와 Worker 설정",
+          "appliesTo": "Kubernetes CronJob, Notification Worker",
+          "settings": [
+            {
+              "name": "PAYMENTS_TOSS_BASE_URL",
+              "required": false,
+              "default": "https://api.tosspayments.com",
+              "secret": false,
+              "description": "Toss API base URL입니다."
+            },
+            {
+              "name": "PAYMENTS_NOTIFICATION_WORKER_BATCH_SIZE",
+              "required": false,
+              "default": "100",
+              "secret": false,
+              "description": "Notification Worker tick에서 선택할 최대 outbox item 수입니다."
+            },
+            {
+              "name": "PAYMENTS_NOTIFICATION_WORKER_POLL_INTERVAL_SECONDS",
+              "required": false,
+              "default": "10",
+              "secret": false,
+              "description": "Notification Worker 반복 실행 간격입니다."
+            },
+            {
+              "name": "PAYMENTS_SMTP_HOST",
+              "required": true,
+              "default": "",
+              "secret": false,
+              "description": "SMTP 서버 host입니다."
+            },
+            {
+              "name": "PAYMENTS_SMTP_FROM_EMAIL",
+              "required": true,
+              "default": "",
+              "secret": false,
+              "description": "발신자 이메일 주소입니다."
+            },
+            {
+              "name": "PAYMENTS_SMTP_PASSWORD",
+              "required": false,
+              "default": "",
+              "secret": true,
+              "description": "SMTP 인증 비밀번호입니다. SMTP 서버가 인증을 요구할 때만 설정합니다."
+            }
+          ]
+        }
+      ],
+      "rules": [
+        "운영 secret은 Kubernetes Secret 또는 동등한 secret manager로 주입하고 HTML 문서, ConfigMap, 로그에 실제 값을 남기지 않습니다.",
+        "staging과 production은 Toss key, Mongo database, admin auth link base URL을 분리합니다.",
+        "PAYMENTS_TOSS_SECRET_KEY가 비어 있으면 provider 호출이 필요한 결제/스케줄러 경로는 운영 준비가 된 상태로 보지 않습니다."
+      ]
+    },
+    "deploymentProcedure": {
+      "title": "배포 절차",
+      "steps": [
+        {
+          "title": "이미지 빌드",
+          "command": "docker build -f payments/Dockerfile payments -t <registry>/payments:<tag>",
+          "description": "API 서버, scheduler CronJob, Notification Worker가 같은 payments 이미지를 사용합니다.",
+          "verification": "빌드가 성공하고 이미지 digest가 배포 manifest의 tag 또는 digest와 일치해야 합니다."
+        },
+        {
+          "title": "API 서버 배포",
+          "command": "uvicorn main:app --host 0.0.0.0 --port 8000",
+          "description": "payments/Dockerfile의 기본 CMD입니다. Kubernetes Deployment는 기본 command를 그대로 사용할 수 있습니다.",
+          "verification": "health endpoint와 /admin/console 로그인 페이지가 응답해야 합니다."
+        },
+        {
+          "title": "Notification Worker 배포",
+          "command": "python -m payments.scheduler.runner notification-worker",
+          "description": "같은 이미지에서 command를 override해 상시 worker Deployment로 실행합니다.",
+          "verification": "worker log에 notification_worker_run_completed가 반복 기록되고 dead_letter 급증이 없어야 합니다."
+        },
+        {
+          "title": "정기결제 CronJob 배포",
+          "command": "python -m payments.scheduler.runner billing --batch-size 100",
+          "description": "결제일 자동결제 batch입니다. schedule은 운영 정책에 맞추되 동시에 같은 job이 겹치지 않도록 concurrency policy를 설정합니다.",
+          "verification": "scheduler_run_logs에 trigger_source=kubernetes_cronjob, job_type=billing 실행 로그가 생성됩니다."
+        },
+        {
+          "title": "사전 알림 CronJob 배포",
+          "command": "python -m payments.scheduler.runner reminder --batch-size 100",
+          "description": "결제 예정 사전 알림 batch입니다.",
+          "verification": "scheduler_run_logs와 notification_outbox pending 또는 sent 흐름을 함께 확인합니다."
+        },
+        {
+          "title": "해지 예약 만료 CronJob 배포",
+          "command": "python -m payments.scheduler.runner cancel-expiration --batch-size 100",
+          "description": "cancelAt이 지난 cancel_scheduled 구독을 canceled로 전환합니다.",
+          "verification": "scheduler_run_logs job_type=cancel_expiration과 관련 operator_audits를 확인합니다."
+        }
+      ]
+    },
+    "preDeploymentChecklist": [
+      "이미지 tag 또는 digest가 변경 승인된 revision을 가리키는지 확인합니다.",
+      "PAYMENTS_DATABASE_URL, PAYMENTS_DATABASE_NAME, PAYMENTS_INTERNAL_SERVICE_TOKEN이 API 서버와 worker 계열 workload에 모두 주입되어 있는지 확인합니다.",
+      "운영 Toss secret, webhook secret, client key가 staging 값과 섞이지 않았는지 확인합니다.",
+      "PAYMENTS_ADMIN_AUTH_LINK_BASE_URL이 실제 어드민 콘솔 도메인을 가리키는지 확인합니다.",
+      "MongoDB index 생성 권한이 있는 계정으로 API 서버 또는 worker가 시작되는지 확인합니다.",
+      "CronJob command가 billing, reminder, cancel-expiration 중 하나이며 --batch-size가 운영 한도 안에 있는지 확인합니다.",
+      "rollback에 사용할 직전 정상 이미지 tag 또는 digest를 기록합니다."
+    ],
+    "postDeploymentVerification": [
+      "API 서버 health endpoint가 200을 반환하는지 확인합니다.",
+      "/admin/console/login이 text/html로 렌더링되는지 확인합니다.",
+      "어드민 로그인 후 /admin/console/scheduler-runs, /admin/console/operator-audits, /admin/console/products에 접근할 수 있는지 확인합니다.",
+      "작은 batch 또는 --dry-run으로 scheduler runner를 실행해 scheduler_run_logs 생성 여부를 확인합니다.",
+      "scheduler_run_logs.status=succeeded이면서 summary.failed > 0인 실행은 일부 대상 실패로 분류하고, status=failed인 실행은 실행 자체 실패로 분류합니다.",
+      "notification_outbox의 pending, retry_scheduled, dead_letter 상태 분포를 확인합니다.",
+      "operator_audits에 운영자 수동 실행 또는 상품/결제/구독 운영 액션의 previousState와 nextState가 남는지 확인합니다."
+    ],
+    "observability": {
+      "title": "관측 포인트",
+      "collections": [
+        {
+          "name": "scheduler_run_logs",
+          "purpose": "CronJob, CLI, 내부 API, 어드민 수동 실행의 실행 단위와 summary, error, exit_code를 확인합니다.",
+          "healthySignal": "최근 정기 실행이 expected schedule 안에 있고 status=failed가 반복되지 않습니다.",
+          "alertCondition": "연속 status=failed, duration_ms 급증, summary.failed 급증, 특정 worker_id 반복 실패"
+        },
+        {
+          "name": "operator_audits",
+          "purpose": "운영자 결제 취소, 구독 보정, 상품 변경, scheduler.run_manual의 책임 추적과 변경 전후 상태를 확인합니다.",
+          "healthySignal": "운영 액션마다 operator_id, action, target, result, reason_code가 저장됩니다.",
+          "alertCondition": "result=failed 반복, 알 수 없는 action 문자열 증가, 운영 사유 누락"
+        },
+        {
+          "name": "idempotency_keys",
+          "purpose": "중복 요청, 재시도, processing lock, succeeded response replay 여부를 확인합니다.",
+          "healthySignal": "processing 상태가 짧게 유지되고 succeeded 또는 failed로 전환됩니다.",
+          "alertCondition": "locked_until_at이 지난 processing 누적, 같은 scope/key_hash conflict 증가"
+        },
+        {
+          "name": "notification_outbox",
+          "purpose": "이메일 발송 intent, retry_scheduled, dead_letter, provider_message_id를 확인합니다.",
+          "healthySignal": "pending이 worker 처리 속도 안에서 줄고 sent가 누적됩니다.",
+          "alertCondition": "dead_letter 증가, retry_scheduled 장기 누적, locked_until_at이 지난 processing 누적"
+        },
+        {
+          "name": "operation_locks",
+          "purpose": "배치와 worker의 중복 실행 방지 lock과 fencing token을 확인합니다.",
+          "healthySignal": "lock이 작업 시간 안에 해제되거나 만료됩니다.",
+          "alertCondition": "만료되지 않는 lock, 같은 lock_key의 반복 획득 실패"
+        },
+        {
+          "name": "webhook_events",
+          "purpose": "Toss webhook 수신, 처리 상태, replay-safe 처리 여부를 확인합니다.",
+          "healthySignal": "provider event가 processed 또는 ignored로 안정적으로 귀결됩니다.",
+          "alertCondition": "signature 실패, unfinished event 누적, 같은 paymentKey 충돌"
+        },
+        {
+          "name": "invoices",
+          "purpose": "구독 결제 실패 후 인보이스 상태, 실패 요약, 다음 재시도 판단 근거를 확인합니다.",
+          "healthySignal": "issued, paid, failed 상태가 결제 결과와 일치하고 오래된 실패 인보이스가 방치되지 않습니다.",
+          "alertCondition": "failed 또는 issued 상태 인보이스가 장시간 누적되거나 같은 구독 회차에서 실패가 반복됨"
+        },
+        {
+          "name": "subscriptions",
+          "purpose": "구독 상태, next_billing_at, cancel_scheduled/canceled 전환, 결제 실패 후 운영 보정 대상을 확인합니다.",
+          "healthySignal": "active 구독의 다음 결제일과 취소 예약 상태가 정책과 일치합니다.",
+          "alertCondition": "next_billing_at 누락, cancelAt 경과 후 미처리, 최종 실패 후 상태 불일치"
+        }
+      ],
+      "logs": [
+        {
+          "name": "structured application access log",
+          "purpose": "조회성 운영 API 접근, 검색 조건, 관리자 ID, request_id, 요청 IP를 추적합니다.",
+          "notes": "별도 Mongo 컬렉션이 아니라 애플리케이션 구조화 로그입니다. operator_audits는 상태 변경과 수동 실행 책임 추적에 사용합니다."
+        },
+        {
+          "name": "notification_worker_run_completed",
+          "purpose": "Notification Worker tick별 selected, claimed, sent, retry_scheduled, dead_letter, failed count를 확인합니다.",
+          "notes": "failed_count가 0보다 크면 worker process exit code와 함께 workload restart 여부를 확인합니다."
+        }
+      ]
+    },
+    "runbooks": [
+      {
+        "incident": "CronJob 실행 자체 실패",
+        "symptoms": [
+          "scheduler_run_logs.status=failed",
+          "exit_code=1",
+          "Kubernetes Job pod가 non-zero exit"
+        ],
+        "checks": [
+          "scheduler_run_logs.error.code와 request 시간대를 확인합니다.",
+          "Pod log에서 환경변수 누락, Mongo 연결 실패, Toss provider 오류를 확인합니다.",
+          "operation_locks에 같은 job lock이 stale 상태로 남았는지 확인합니다."
+        ],
+        "actions": [
+          "환경변수 또는 secret 누락이면 배포 manifest를 수정하고 새 Job을 실행합니다.",
+          "일시 provider 장애이면 재시도 가능 시간에 CronJob 재실행 또는 어드민 수동 실행을 사용합니다.",
+          "stale lock이 원인이면 locked_until_at 경과 여부를 확인한 뒤 application 경로로 재실행합니다."
+        ],
+        "doNot": [
+          "결제, 인보이스, 구독 컬렉션을 직접 수정하지 않습니다.",
+          "실패 원인을 확인하지 않은 채 batch_size를 크게 늘려 재실행하지 않습니다."
+        ]
+      },
+      {
+        "incident": "일부 대상 처리 실패",
+        "symptoms": [
+          "scheduler_run_logs.status=succeeded",
+          "summary.failed > 0"
+        ],
+        "checks": [
+          "status=succeeded는 실행 루프 자체가 완료되었다는 뜻인지 확인합니다.",
+          "invoices와 subscriptions에서 실패 대상의 다음 재시도 또는 최종 실패 처리 상태를 확인합니다.",
+          "providerCode와 failure summary가 반복되는지 확인합니다."
+        ],
+        "actions": [
+          "정책상 자동 재시도 대상이면 다음 retry schedule을 기다립니다.",
+          "운영자 보정이 필요한 대상만 admin subscription adjustment 또는 결제 취소 API로 처리합니다.",
+          "대량 provider 장애이면 Toss 장애 상태를 확인하고 같은 대상 중복 승인 위험을 검토합니다."
+        ],
+        "doNot": [
+          "summary.failed가 있다는 이유만으로 scheduler_run_logs.status를 failed로 수정하지 않습니다.",
+          "같은 invoice 또는 billing cycle을 멱등성 없이 수동 승인하지 않습니다."
+        ]
+      },
+      {
+        "incident": "어드민 수동 스케줄러 실행 필요",
+        "symptoms": [
+          "CronJob 누락 또는 일시 실패 후 운영자가 즉시 보정 실행해야 함",
+          "scheduler_run_logs에서 특정 jobType의 실행 공백 확인"
+        ],
+        "checks": [
+          "수동 실행은 POST /admin/scheduler-runs가 API 서버에서 동기 실행한다는 점을 확인합니다.",
+          "Kubernetes Job 또는 CronJob을 생성하는 API가 아님을 확인합니다.",
+          "Idempotency-Key와 reason을 준비합니다."
+        ],
+        "actions": [
+          "어드민 콘솔 /admin/console/scheduler-runs에서 jobType, billingDate, limit, dryRun, reason을 입력해 실행합니다.",
+          "실행 완료 응답의 runId와 operatorAuditId를 확인합니다.",
+          "같은 요청 재시도는 같은 Idempotency-Key를 사용하고, 다른 payload에는 새 key를 사용합니다."
+        ],
+        "doNot": [
+          "브라우저를 닫아도 서버 실행이 이미 시작된 요청을 임의로 취소됐다고 판단하지 않습니다.",
+          "운영 사유 없이 수동 실행하지 않습니다."
+        ]
+      },
+      {
+        "incident": "Notification dead_letter 증가",
+        "symptoms": [
+          "notification_outbox.status=dead_letter 증가",
+          "notification_worker_run_completed.dead_letter_count 증가"
+        ],
+        "checks": [
+          "last_error가 template 누락, required args 누락, SMTP permanent error, expires_at 경과 중 무엇인지 분류합니다.",
+          "notification_templates의 template_key와 required_template_args를 확인합니다.",
+          "SMTP 설정과 발신자 정책 변경 여부를 확인합니다."
+        ],
+        "actions": [
+          "템플릿 계약 오류이면 template 또는 enqueue args를 수정하고 새 알림 intent를 application 경로로 생성합니다.",
+          "SMTP permanent 오류이면 수신자 주소 또는 발신자 정책을 수정합니다.",
+          "일시 장애는 retry_scheduled 상태와 backoff를 확인합니다."
+        ],
+        "doNot": [
+          "dead_letter 문서를 직접 pending으로 되돌리지 않습니다.",
+          "만료된 인증 메일을 재발송하지 않습니다."
+        ]
+      },
+      {
+        "incident": "Webhook 지연 또는 누락",
+        "symptoms": [
+          "Toss 결제 상태와 내부 payment/invoice 상태 불일치",
+          "webhook_events 처리 공백 또는 unfinished event 누적"
+        ],
+        "checks": [
+          "Toss-Signature 또는 webhook secret 검증 실패가 있었는지 확인합니다.",
+          "paymentKey 기준으로 Toss 조회 결과와 내부 payment status를 대조합니다.",
+          "webhook_events에서 같은 provider event 중복 처리 여부를 확인합니다."
+        ],
+        "actions": [
+          "서명 설정 오류이면 secret을 수정하고 재배포합니다.",
+          "provider_payment_sync 같은 문서화된 운영 보정 경로로 내부 상태를 맞춥니다.",
+          "중복 event는 replay-safe 처리 결과를 확인하고 결제 원장을 직접 수정하지 않습니다."
+        ],
+        "doNot": [
+          "서명 검증을 끄고 webhook payload를 처리하지 않습니다.",
+          "Toss 조회 없이 운영자 입력만으로 외부 결제 성공을 확정하지 않습니다."
+        ]
+      },
+      {
+        "incident": "Operation lock stale 의심",
+        "symptoms": [
+          "같은 구독, invoice, payment cancel 작업이 반복적으로 lock 획득 실패",
+          "operation_locks.locked_until_at이 지났는데 processing 로그가 남음"
+        ],
+        "checks": [
+          "locked_until_at, fencing_token, worker_id를 확인합니다.",
+          "해당 작업의 scheduler_run_logs 또는 API request_id를 추적합니다.",
+          "실제 Pod가 아직 실행 중인지 Kubernetes 상태를 확인합니다."
+        ],
+        "actions": [
+          "locked_until_at이 지나고 Pod가 종료되었으면 application job을 재실행합니다.",
+          "반복 stale이면 lock_duration과 작업 duration_ms를 함께 조정합니다.",
+          "fencing token 불일치 write는 stale worker write로 보고 무시합니다."
+        ],
+        "doNot": [
+          "살아 있는 Pod가 소유한 lock을 수동 삭제하지 않습니다.",
+          "lock 우회를 위해 같은 paymentKey 또는 invoice를 직접 provider 호출하지 않습니다."
+        ]
+      }
+    ],
+    "rollbackAndReplayPolicy": {
+      "title": "롤백과 재실행 정책",
+      "rules": [
+        "API 서버 rollback은 직전 정상 이미지 tag 또는 digest로 Deployment를 되돌리고 health와 admin console을 확인합니다.",
+        "CronJob rollback은 CronJob template image를 직전 정상 digest로 되돌린 뒤 다음 schedule 또는 수동 Job으로 검증합니다.",
+        "Notification Worker rollback은 Deployment image를 되돌린 뒤 retry_scheduled와 processing stale 여부를 확인합니다.",
+        "scheduler_run_logs는 운영 진단용 실행 이력이며 결제 원장이나 operator_audits를 대체하지 않습니다.",
+        "동일 수동 실행 요청은 같은 Idempotency-Key로 재시도하고, payload가 바뀌면 새 key를 사용합니다.",
+        "provider 호출이 포함된 재실행은 billing_cycle_key, invoiceId, paymentKey 기준 멱등성 상태를 확인한 뒤 수행합니다."
+      ]
+    },
+    "securityAndAccessControl": {
+      "title": "보안과 접근 제어",
+      "rules": [
+        "어드민 콘솔과 JSON API는 관리자 access token의 roles와 permissions로 권한을 확인합니다.",
+        "scheduler_read, scheduler_run, audit_read, product_manage 같은 권한은 최소 권한으로 부여합니다.",
+        "PAYMENTS_INTERNAL_SERVICE_TOKEN, Toss secret, webhook secret, 암호화 secret은 로그와 HTML 문서에 실제 값을 남기지 않습니다.",
+        "operator_audits는 운영 변경과 수동 실행의 책임 추적 로그입니다. 조회성 access log는 structured application log로 남깁니다.",
+        "scheduler_run_logs.error에는 운영자가 재실행 여부를 판단할 수 있는 요약만 저장하고 stack trace, billingKey, provider secret 원문은 저장하지 않습니다.",
+        "운영자는 MongoDB에서 결제, 인보이스, 구독 상태를 직접 수정하지 않고 문서화된 admin API와 application job을 사용합니다."
+      ]
+    },
+    "relatedDocuments": [
+      {
+        "title": "시스템 아키텍처",
+        "pageKey": "systemArchitecture",
+        "anchor": "overview",
+        "description": "Notification Worker, scheduler batch, admin console SSR 라우트의 구조를 확인합니다."
+      },
+      {
+        "title": "MongoDB 구조 문서",
+        "pageKey": "database",
+        "anchor": "scheduler-run-logs",
+        "description": "scheduler_run_logs, operator_audits, notification_outbox 등 운영 관측 컬렉션의 필드와 인덱스를 확인합니다."
+      },
+      {
+        "title": "스케쥴러 운영 플로우",
+        "pageKey": "sequenceIndex",
+        "anchor": "available",
+        "description": "정기결제, 사전 알림, 해지 예약 만료, 운영자 수동 실행 흐름을 찾는 진입점입니다."
+      },
+      {
+        "title": "전체 API 상세",
+        "pageKey": "apiDetails",
+        "anchor": "admin-scheduler-runs-create",
+        "description": "POST /admin/scheduler-runs가 동기 실행 API라는 계약과 요청/응답 필드를 확인합니다."
+      },
+      {
+        "title": "잠재 위험 및 대응 문서",
+        "pageKey": "risks",
+        "anchor": "duplicate-subscription-billing",
+        "description": "중복 실행, provider 장애, webhook 불일치 같은 운영 위험과 대응 원칙을 확인합니다."
+      }
+    ]
+  },
   "systemArchitecture": {
     "title": "이메일 발송 시스템 아키텍처",
     "summary": "이메일 알림 outbox가 인증, 결제, 구독 상태 변경과 분리되어 큐 적재, 템플릿 인자 검증, SMTP 발송, 재시도와 dead-letter 처리를 수행하는 구조입니다.",

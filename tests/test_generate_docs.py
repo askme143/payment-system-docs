@@ -56,6 +56,7 @@ class GenerateDocsTest(unittest.TestCase):
             "sequences",
             "database",
             "notificationTemplateCatalog",
+            "deploymentOperationsGuide",
             "systemArchitecture",
             "policies",
         ]:
@@ -104,6 +105,59 @@ class GenerateDocsTest(unittest.TestCase):
             self.assertIn("이메일 발송 시스템 문서", sequence_index)
             self.assertNotIn("이메일 발송 시스템 아키텍처 문서", architecture)
             self.assertNotIn("결제 시스템 아키텍처 문서", architecture)
+
+    def test_deployment_operations_guide_page_is_generated(self):
+        data = json.loads(Path("docs-data/documentation.json").read_text(encoding="utf-8"))
+        self.assertIn("deploymentOperationsGuide", data["site"]["pages"])
+        self.assertIn("deploymentOperationsGuide", data)
+
+        with tempfile.TemporaryDirectory() as tmp:
+            out_dir = Path(tmp)
+
+            generated = generate_docs("docs-data/documentation.json", out_dir)
+
+            generated_names = {path.name for path in generated}
+            self.assertIn("deployment-operations-guide.html", generated_names)
+            guide = (out_dir / "deployment-operations-guide.html").read_text(
+                encoding="utf-8"
+            )
+            sequence_index = (out_dir / "sequence-index.html").read_text(
+                encoding="utf-8"
+            )
+
+            for expected in [
+                "배포 및 운영 가이드",
+                "docker build -f payments/Dockerfile payments",
+                "uvicorn main:app --host 0.0.0.0 --port 8000",
+                "python -m payments.scheduler.runner billing --batch-size 100",
+                "python -m payments.scheduler.runner reminder --batch-size 100",
+                "python -m payments.scheduler.runner cancel-expiration --batch-size 100",
+                "python -m payments.scheduler.runner notification-worker",
+                "Kubernetes Job 또는 CronJob을 생성하지 않습니다",
+                "scheduler_run_logs.status=succeeded",
+                "summary.failed &gt; 0",
+                "일부 대상 실패",
+                "실행 자체 실패",
+                "structured application access log",
+                "별도 Mongo 컬렉션이 아니라 애플리케이션 구조화 로그",
+                "scheduler_run_logs",
+                "operator_audits",
+                "idempotency_keys",
+                "notification_outbox",
+                "operation_locks",
+                "webhook_events",
+                "invoices",
+                "subscriptions",
+                "CronJob 실행 자체 실패",
+                "일부 대상 처리 실패",
+                "Notification dead_letter 증가",
+                "MongoDB 구조 문서",
+                "POST /admin/scheduler-runs",
+            ]:
+                self.assertIn(expected, guide)
+
+            self.assertIn("deployment-operations-guide.html", sequence_index)
+            self.assertNotIn("수동 실행 API가 Kubernetes Job을 생성", guide)
 
     def test_system_architecture_d2_files_are_generated(self):
         with tempfile.TemporaryDirectory() as tmp:

@@ -1,0 +1,1080 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>배포 및 운영 가이드</title>
+  <style>
+    :root {
+      --bg: #f5f7fb;
+      --surface: #ffffff;
+      --surface-2: #fbfcfe;
+      --ink: #17202a;
+      --muted: #526174;
+      --line: #d8e0ea;
+      --accent: #1c7c66;
+      --blue: #2457a6;
+      --blue-soft: #e8f3ff;
+      --danger: #b42318;
+      --soft: #e5f4ef;
+      --warning: #9a5b00;
+      --warning-soft: #fff5dd;
+      --shadow: 0 12px 28px rgba(20, 35, 55, 0.07);
+      --code-bg: #111827;
+      --code-ink: #e5e7eb;
+      --focus: #8b5cf6;
+    }
+    * { box-sizing: border-box; }
+    html {
+      max-width: 100%;
+      scroll-behavior: smooth;
+      -webkit-text-size-adjust: 100%;
+      text-size-adjust: 100%;
+      overflow-x: clip;
+    }
+    body {
+      width: 100%;
+      max-width: 100%;
+      margin: 0;
+      color: var(--ink);
+      background: var(--bg);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      line-height: 1.58;
+      -webkit-text-size-adjust: 100%;
+      text-size-adjust: 100%;
+      overflow-x: clip;
+    }
+    .skip-link {
+      position: absolute;
+      left: 16px;
+      top: 12px;
+      z-index: 10;
+      transform: translateY(-140%);
+      padding: 10px 12px;
+      color: #ffffff;
+      background: var(--ink);
+      border-radius: 6px;
+      transition: transform 160ms ease;
+    }
+    .skip-link:focus { transform: translateY(0); }
+    header {
+      background:
+        linear-gradient(135deg, rgba(232, 243, 255, 0.9), rgba(229, 244, 239, 0.76)),
+        var(--surface);
+      border-bottom: 1px solid var(--line);
+    }
+    .wrap {
+      width: min(1180px, calc(100% - 36px));
+      margin: 0 auto;
+    }
+    .hero { padding: 46px 0 30px; }
+    .eyebrow {
+      margin: 0 0 10px;
+      color: var(--accent);
+      font-size: 14px;
+      font-weight: 800;
+    }
+    h1 {
+      margin: 0;
+      font-size: clamp(30px, 5vw, 48px);
+      line-height: 1.14;
+      letter-spacing: 0;
+    }
+    .lead {
+      max-width: 900px;
+      margin: 16px 0 0;
+      color: var(--muted);
+      font-size: 18px;
+    }
+    .search-panel {
+      max-width: 760px;
+      margin-top: 22px;
+    }
+    .search-panel input {
+      width: 100%;
+      min-height: 48px;
+      padding: 0 16px;
+      color: var(--ink);
+      background: rgba(255, 255, 255, 0.92);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      box-shadow: var(--shadow);
+      font: inherit;
+    }
+    .search-panel input::placeholder { color: #718096; }
+    .search-panel input:focus {
+      border-color: color-mix(in srgb, var(--accent), var(--line) 35%);
+      box-shadow: 0 0 0 4px color-mix(in srgb, var(--accent), transparent 86%), var(--shadow);
+    }
+    main { padding: 28px 0 54px; }
+    .layout {
+      display: grid;
+      grid-template-columns: 260px 1fr;
+      gap: 24px;
+    }
+    nav {
+      position: sticky;
+      top: 18px;
+      align-self: start;
+      max-height: calc(100vh - 36px);
+      padding: 14px;
+      overflow-y: auto;
+      overscroll-behavior: contain;
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      box-shadow: var(--shadow);
+    }
+    nav a {
+      display: block;
+      padding: 8px 10px;
+      color: var(--muted);
+      text-decoration: none;
+      border-radius: 6px;
+      font-size: 14px;
+      font-weight: 700;
+      line-height: 1.35;
+      overflow-wrap: anywhere;
+      word-break: break-word;
+      cursor: pointer;
+      transition: color 160ms ease, background-color 160ms ease;
+    }
+    nav a:hover { color: var(--ink); background: var(--soft); }
+    nav a[aria-current="true"] {
+      color: var(--accent);
+      background: var(--soft);
+    }
+    a:focus-visible,
+    button:focus-visible,
+    input:focus-visible,
+    summary:focus-visible {
+      outline: 3px solid var(--focus);
+      outline: 3px solid color-mix(in srgb, var(--focus), transparent 45%);
+      outline-offset: 2px;
+    }
+    section {
+      margin-bottom: 24px;
+      padding: 24px;
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      box-shadow: var(--shadow);
+      scroll-margin-top: 18px;
+    }
+    h2 { margin: 0 0 16px; font-size: 24px; letter-spacing: 0; }
+    h3 { margin: 22px 0 8px; font-size: 18px; letter-spacing: 0; }
+    h4 { margin: 14px 0 8px; font-size: 16px; letter-spacing: 0; }
+    p { margin: 0 0 14px; }
+    a { color: var(--blue); font-weight: 800; text-decoration: none; text-underline-offset: 3px; }
+    a:hover { text-decoration: underline; }
+    code { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 0.95em; }
+    pre {
+      margin: 10px 0 0;
+      padding: 14px;
+      overflow-x: auto;
+      color: var(--code-ink);
+      background: var(--code-bg);
+      border-radius: 8px;
+      font-size: 13px;
+      line-height: 1.5;
+    }
+    .table-scroll {
+      width: 100%;
+      overflow-x: auto;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+    }
+    table { width: 100%; min-width: 680px; border-collapse: collapse; font-size: 14px; }
+    th, td { padding: 11px 12px; text-align: left; vertical-align: top; border-bottom: 1px solid var(--line); }
+    th { color: var(--muted); background: var(--surface-2); font-weight: 800; }
+    tr:last-child td { border-bottom: 0; }
+    .nested-schema-row > td {
+      padding: 0;
+      background: var(--surface-2);
+    }
+    .nested-schema {
+      padding: 12px;
+      border-top: 1px solid var(--line);
+    }
+    .nested-schema-title {
+      margin: 0 0 8px;
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 900;
+    }
+    .nested-schema-table {
+      min-width: 560px;
+      font-size: 13px;
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      overflow: clip;
+    }
+    .nested-schema-table th,
+    .nested-schema-table td {
+      padding: 8px 10px;
+      border-bottom: 1px solid var(--line);
+    }
+    .nested-schema-table tr:last-child td {
+      border-bottom: 0;
+    }
+    .top-links { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 16px; }
+    .top-links a {
+      display: inline-flex;
+      align-items: center;
+      min-height: 38px;
+      padding: 7px 12px;
+      color: var(--ink);
+      background: rgba(255, 255, 255, 0.82);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      cursor: pointer;
+      transition: border-color 160ms ease, background-color 160ms ease;
+    }
+    .top-links a:hover {
+      background: #ffffff;
+      border-color: color-mix(in srgb, var(--blue), var(--line) 55%);
+      text-decoration: none;
+    }
+    .top-links a:active,
+    nav a:active {
+      transform: translateY(1px);
+    }
+    .grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+    .sequence-group { margin-top: 20px; }
+    .sequence-group:first-of-type { margin-top: 0; }
+    .sequence-group > p { color: var(--muted); }
+    .card, .box {
+      padding: 16px;
+      background: var(--surface-2);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+    }
+    .card {
+      transition: border-color 160ms ease, box-shadow 160ms ease, background-color 160ms ease;
+    }
+    .card:has(a):hover {
+      background: #ffffff;
+      border-color: color-mix(in srgb, var(--blue), var(--line) 56%);
+      box-shadow: 0 10px 22px rgba(20, 35, 55, 0.08);
+    }
+    .status {
+      display: inline-flex;
+      align-items: center;
+      min-height: 24px;
+      padding: 2px 8px;
+      border-radius: 999px;
+      color: var(--accent);
+      background: var(--soft);
+      font-size: 12px;
+      font-weight: 900;
+    }
+    .status-planned {
+      color: var(--warning);
+      background: var(--warning-soft);
+    }
+    .note {
+      margin-top: 14px;
+      padding: 13px 15px;
+      color: #7a4a00;
+      background: var(--warning-soft);
+      border: 1px solid #eed39a;
+      border-radius: 8px;
+    }
+    .diagram { overflow-x: auto; padding-bottom: 4px; }
+    .d2-diagram {
+      overflow-x: auto;
+      padding: 0;
+      background: #ffffff;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+    }
+    .d2-toolbar {
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+      padding: 10px 12px;
+      border-bottom: 1px solid var(--line);
+      background: var(--surface-2);
+    }
+    .d2-toolbar a,
+    .d2-open-button {
+      min-height: 34px;
+      display: inline-flex;
+      align-items: center;
+      padding: 6px 10px;
+      color: var(--blue);
+      background: #ffffff;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 800;
+      line-height: 1.2;
+      cursor: pointer;
+      transition: border-color 160ms ease, background-color 160ms ease, color 160ms ease;
+    }
+    .d2-toolbar a:hover,
+    .d2-open-button:hover {
+      color: var(--ink);
+      background: var(--blue-soft);
+      border-color: color-mix(in srgb, var(--blue), var(--line) 55%);
+      text-decoration: none;
+    }
+    .d2-source {
+      margin: 0;
+      border-radius: 0 0 8px 8px;
+    }
+    .d2-svg {
+      display: block;
+      max-width: 100%;
+      height: auto;
+      margin: 0 auto;
+      background: #ffffff;
+    }
+    .d2-details {
+      border-top: 1px solid var(--line);
+      background: var(--surface-2);
+    }
+    .d2-details summary {
+      cursor: pointer;
+      padding: 10px 12px;
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 800;
+    }
+    .d2-modal[hidden] {
+      display: none;
+    }
+    .d2-modal {
+      position: fixed;
+      inset: 0;
+      z-index: 50;
+      display: grid;
+      place-items: center;
+      padding: 22px;
+      background: rgba(9, 18, 28, 0.72);
+    }
+    .d2-modal__panel {
+      width: min(1500px, 96vw);
+      max-height: 94vh;
+      min-width: 0;
+      min-height: 0;
+      display: grid;
+      grid-template-rows: auto minmax(0, 1fr);
+      overflow: clip;
+      background: #ffffff;
+      border: 1px solid rgba(255, 255, 255, 0.28);
+      border-radius: 8px;
+      box-shadow: 0 24px 80px rgba(0, 0, 0, 0.32);
+    }
+    .d2-modal__header {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 14px;
+      border-bottom: 1px solid var(--line);
+      background: var(--surface-2);
+    }
+    .d2-modal__title {
+      margin: 0;
+      font-size: 15px;
+      font-weight: 900;
+      line-height: 1.35;
+      overflow-wrap: anywhere;
+    }
+    .d2-modal__actions {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 8px;
+    }
+    .d2-zoom-button,
+    .d2-zoom-reset,
+    .d2-modal__close {
+      min-width: 44px;
+      min-height: 38px;
+      padding: 7px 11px;
+      color: var(--ink);
+      background: #ffffff;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      font: inherit;
+      font-size: 13px;
+      font-weight: 900;
+      cursor: pointer;
+    }
+    .d2-zoom-button:hover,
+    .d2-zoom-reset:hover,
+    .d2-modal__close:hover {
+      background: var(--soft);
+    }
+    .d2-zoom-slider {
+      width: min(220px, 24vw);
+      min-width: 120px;
+      accent-color: var(--blue);
+      cursor: pointer;
+    }
+    .d2-zoom-value {
+      min-width: 54px;
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 900;
+      text-align: right;
+    }
+    .d2-modal__viewport {
+      min-height: 0;
+      overflow: auto;
+      padding: 16px;
+      background: #ffffff;
+    }
+    .d2-modal__image {
+      display: block;
+      width: max(1200px, 100%);
+      max-width: none;
+      height: auto;
+      margin: 0 auto;
+      background: #ffffff;
+    }
+    @media (min-width: 901px) {
+      .wrap {
+        width: min(1440px, calc(100% - 64px));
+      }
+      .hero {
+        padding: 34px 0 26px;
+      }
+      .hero .wrap {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) minmax(330px, 420px);
+        gap: 16px 36px;
+        align-items: center;
+      }
+      .hero .eyebrow,
+      .hero h1,
+      .hero .lead {
+        grid-column: 1;
+      }
+      .hero .search-panel,
+      .hero .top-links {
+        grid-column: 2;
+      }
+      .search-panel {
+        max-width: none;
+        margin-top: 0;
+      }
+      .top-links {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        margin-top: 0;
+        gap: 8px;
+      }
+      .top-links a {
+        justify-content: center;
+        min-height: 38px;
+        padding-inline: 10px;
+        text-align: center;
+      }
+      .layout {
+        grid-template-columns: 300px minmax(0, 1fr);
+        gap: 28px;
+      }
+      .layout > div {
+        min-width: 0;
+      }
+      nav {
+        padding: 16px;
+      }
+      nav a {
+        padding: 9px 10px;
+      }
+      section {
+        padding: 28px;
+      }
+      section > p,
+      section > ol,
+      section > ul {
+        max-width: 96ch;
+      }
+      table {
+        font-size: 13.5px;
+      }
+      th, td {
+        padding: 10px 11px;
+      }
+      .card,
+      .box {
+        padding: 18px;
+      }
+      .grid {
+        gap: 16px;
+      }
+    }
+    @media (min-width: 481px) and (max-width: 900px) {
+      .wrap {
+        width: min(100% - 24px, 1180px);
+      }
+      .hero {
+        padding: 28px 0 22px;
+      }
+      h1 { font-size: clamp(30px, 5.8vw, 40px); }
+      .lead {
+        max-width: 78ch;
+        font-size: 16px;
+      }
+      .search-panel {
+        max-width: 640px;
+        margin-top: 18px;
+      }
+      .top-links {
+        gap: 8px;
+      }
+      .top-links a {
+        min-height: 36px;
+        padding: 6px 10px;
+        font-size: 14px;
+      }
+      main { padding: 20px 0 42px; }
+      .layout {
+        grid-template-columns: minmax(170px, 210px) minmax(0, 1fr);
+        gap: 16px;
+      }
+      .layout > div {
+        min-width: 0;
+      }
+      nav {
+        top: 12px;
+        max-height: calc(100vh - 24px);
+        padding: 10px;
+      }
+      nav a {
+        padding: 7px 8px;
+        font-size: 13px;
+      }
+      section {
+        padding: 20px;
+      }
+      h2 { font-size: 22px; }
+      h3 { font-size: 17px; }
+      table {
+        font-size: 13px;
+      }
+      th, td {
+        padding: 9px 10px;
+      }
+    }
+    @media (max-width: 480px) {
+      header {
+        width: 100%;
+      }
+      .layout {
+        grid-template-columns: minmax(0, 1fr);
+      }
+      .layout > nav,
+      .layout > div {
+        min-width: 0;
+        max-width: 100%;
+      }
+      nav {
+        position: sticky;
+        top: 0;
+        z-index: 4;
+        display: flex;
+        gap: 8px;
+        width: 100%;
+        max-width: 100%;
+        max-height: none;
+        margin-inline: 0;
+        padding: 10px 0;
+        overflow-x: auto;
+        overflow-y: hidden;
+        border-radius: 0;
+        box-shadow: 0 8px 18px rgba(20, 35, 55, 0.08);
+        scrollbar-width: thin;
+      }
+      nav a {
+        flex: 0 0 auto;
+        min-height: 44px;
+        max-width: min(72vw, 280px);
+        display: inline-flex;
+        align-items: center;
+        padding: 8px 12px;
+        background: var(--surface-2);
+        border: 1px solid var(--line);
+        white-space: normal;
+      }
+      .grid { grid-template-columns: 1fr; }
+      .wrap {
+        width: calc(100% - 16px);
+        max-width: 1180px;
+      }
+      .hero {
+        width: 100%;
+        padding: 34px 0 24px;
+      }
+      h1 { font-size: clamp(27px, 7.4vw, 34px); }
+      h2 { font-size: 22px; }
+      h3 { font-size: 17px; }
+      h4 { font-size: 16px; }
+      p,
+      li {
+        font-size: 16px;
+        overflow-wrap: anywhere;
+      }
+      .lead {
+        font-size: 16px;
+        line-height: 1.56;
+      }
+      .search-panel {
+        width: 100%;
+        max-width: none;
+        margin-top: 18px;
+      }
+      .search-panel input { min-height: 46px; }
+      .top-links {
+        width: 100%;
+        gap: 8px;
+      }
+      .top-links a {
+        min-height: 44px;
+        flex: 1 1 100%;
+        min-width: 0;
+        justify-content: center;
+        text-align: center;
+      }
+      main { padding: 18px 0 38px; }
+      section {
+        max-width: 100%;
+        padding: 18px;
+      }
+      section,
+      .card,
+      .box,
+      .d2-diagram,
+      .table-scroll {
+        border-radius: 8px;
+      }
+      .card,
+      .box { padding: 14px; }
+      .card ul,
+      .box ul { padding-left: 20px; }
+      code {
+        overflow-wrap: anywhere;
+        word-break: break-word;
+      }
+      .table-scroll {
+        max-width: 100%;
+        overflow-x: visible;
+        border: 0;
+        -webkit-overflow-scrolling: touch;
+      }
+      table,
+      table.has-many-columns {
+        width: 100%;
+        min-width: 0;
+        border-collapse: separate;
+        border-spacing: 0;
+        font-size: 13px;
+      }
+      thead { display: none; }
+      tr,
+      td {
+        display: block;
+      }
+      tbody {
+        display: grid;
+        gap: 8px;
+      }
+      tr {
+        overflow: clip;
+        border-radius: 8px;
+        background: var(--surface);
+        box-shadow: inset 0 0 0 1px var(--line);
+      }
+      td {
+        display: grid;
+        grid-template-columns: minmax(82px, 32%) minmax(0, 1fr);
+        gap: 10px;
+        align-items: start;
+        padding: 9px 10px;
+        border-bottom: 0;
+        overflow-wrap: anywhere;
+      }
+      td:not(:last-child) { border-bottom: 1px solid var(--line); }
+      td::before {
+        content: attr(data-label);
+        color: var(--muted);
+        font-size: 12px;
+        font-weight: 800;
+        line-height: 1.45;
+      }
+      pre {
+        font-size: 12px;
+        -webkit-overflow-scrolling: touch;
+      }
+      .diagram {
+        margin-inline: -2px;
+        -webkit-overflow-scrolling: touch;
+      }
+      .d2-toolbar {
+        position: sticky;
+        left: 0;
+        justify-content: flex-start;
+      }
+      .d2-toolbar a,
+      .d2-open-button,
+      .d2-details summary {
+        min-height: 44px;
+        display: inline-flex;
+        align-items: center;
+      }
+      .d2-svg {
+        width: 900px;
+        max-width: none;
+      }
+      .d2-source { min-width: 760px; }
+    }
+    @media (max-width: 480px) {
+      body { line-height: 1.54; }
+      .wrap { width: calc(100% - 12px); }
+      .hero {
+        width: 100%;
+        padding: 28px 0 20px;
+      }
+      .eyebrow { font-size: 13px; }
+      h1 { font-size: clamp(25px, 8vw, 31px); }
+      h2 { font-size: 20px; }
+      h3 { font-size: 16px; }
+      p,
+      li { font-size: 15px; }
+      section {
+        padding: 16px;
+        margin-bottom: 16px;
+      }
+      nav {
+        padding-inline: 0;
+      }
+      nav a { max-width: 78vw; }
+      td {
+        grid-template-columns: minmax(72px, 30%) minmax(0, 1fr);
+        gap: 8px;
+        padding: 8px 9px;
+      }
+      .d2-svg { width: 820px; }
+      .d2-modal {
+        padding: 8px;
+      }
+      .d2-modal__panel {
+        width: calc(100vw - 16px);
+        max-height: calc(100vh - 16px);
+      }
+      .d2-modal__header {
+        grid-template-columns: minmax(0, 1fr);
+      }
+      .d2-modal__actions {
+        justify-content: flex-start;
+      }
+      .d2-zoom-slider {
+        flex: 1 1 160px;
+        width: auto;
+      }
+      .d2-modal__viewport {
+        padding: 10px;
+      }
+      .d2-modal__image {
+        width: 920px;
+      }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      html { scroll-behavior: auto; }
+      *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+      }
+    }
+  </style>
+  
+</head>
+<body>
+<a class="skip-link" href="#content">본문으로 건너뛰기</a>
+<header>
+  <div class="hero">
+    <div class="wrap">
+    <p class="eyebrow">Deployment &amp; Operations Runbook</p>
+    <h1>배포 및 운영 가이드</h1>
+    <p class="lead">결제 시스템을 배포하고 운영하는 담당자가 API 서버, Kubernetes CronJob scheduler, Notification Worker, MongoDB, Toss 연동, 어드민 콘솔을 같은 기준으로 배포, 검증, 관측, 복구하기 위한 운영 런북입니다.</p>
+    <div class="search-panel">
+      <input type="search" data-doc-search aria-label="문서 검색" placeholder="API, 상태, 컬렉션, 플로우 검색">
+    </div>
+    <p class="top-links"><a href="./sequence-index.html">전체 시퀀스 목록</a><a href="./all-api-doc.html">전체 API 목록</a><a href="./api-detail-doc.html">API 상세 설명</a><a href="./system-architecture-doc.html">이메일 발송 시스템 문서</a><a href="./database-doc.html">MongoDB 구조 문서</a><a href="./risk-register-doc.html">결제 시스템 잠재 위험 및 대응 문서</a></p>
+    </div>
+  </div>
+</header>
+<main class="wrap layout" id="content"><nav aria-label="문서 목차"><a href="#overview">개요</a><a href="#runtime-topology">런타임 구성</a><a href="#configuration">런타임 설정</a><a href="#deployment-procedure">배포 절차</a><a href="#pre-deployment-checklist">배포 전 체크리스트</a><a href="#post-deployment-verification">배포 후 검증</a><a href="#observability">관측 포인트</a><a href="#runbooks">운영 런북</a><a href="#rollback-replay">롤백과 재실행</a><a href="#security">보안과 접근 제어</a><a href="#related-documents">관련 문서</a></nav><div><section id="overview">
+  <h2>개요</h2>
+  <p>결제 시스템을 배포하고 운영하는 담당자가 API 서버, Kubernetes CronJob scheduler, Notification Worker, MongoDB, Toss 연동, 어드민 콘솔을 같은 기준으로 배포, 검증, 관측, 복구하기 위한 운영 런북입니다.</p>
+  <div class="grid">
+    <article class="box"><h3>대상 독자</h3><ul><li>배포를 수행하는 백엔드 엔지니어와 플랫폼 운영자</li><li>결제 장애를 1차 확인하는 온콜 담당자</li><li>어드민 콘솔과 스케줄러 수동 실행을 운영하는 관리자</li></ul></article>
+    <article class="box"><h3>포함 범위</h3><ul><li>payments 이미지 빌드와 API 서버 배포</li><li>Kubernetes CronJob 기반 정기결제, 사전 알림, 해지 예약 만료 배치 배포</li><li>상시 실행 Notification Worker 배포와 dead-letter 확인</li><li>MongoDB 인덱스, 주요 컬렉션, 운영 관측 포인트</li><li>어드민 콘솔의 수동 실행과 감사 로그 확인 절차</li></ul></article>
+    <article class="box"><h3>제외 범위</h3><ul><li>Toss 대시보드 자체 설정 절차</li><li>회원/관리자 원본 서비스 배포 절차</li><li>클러스터, 네트워크, 인증서 같은 플랫폼 공통 인프라 구축</li></ul></article>
+  </div>
+</section><section id="runtime-topology">
+  <h2>런타임 구성</h2>
+  <p>API 서버와 Notification Worker는 장기 실행 workload이고, scheduler batch는 같은 이미지를 Kubernetes CronJob에서 1회 실행 entrypoint로 호출합니다.</p>
+  <div class="table-scroll"><table class="has-many-columns"><thead><tr><th>컴포넌트</th><th>Workload</th><th>Entrypoint</th><th>책임</th><th>운영 메모</th></tr></thead><tbody><tr><td data-label="컴포넌트">Payment API Server</td><td data-label="Workload">Kubernetes Deployment</td><td data-label="Entrypoint"><code>uvicorn main:app --host 0.0.0.0 --port 8000</code></td><td data-label="책임">공개 결제 API, 내부 API, 어드민 JSON API, /admin/console SSR 페이지를 제공합니다.</td><td data-label="운영 메모">startup에서 Mongo index를 보장하고 notification template seed를 수행합니다. 운영자 수동 스케줄러 실행은 이 API 서버 요청 처리 중 동기 실행되며 Kubernetes Job 또는 CronJob을 생성하지 않습니다.</td></tr><tr><td data-label="컴포넌트">Scheduler billing CronJob</td><td data-label="Workload">Kubernetes CronJob</td><td data-label="Entrypoint"><code>python -m payments.scheduler.runner billing --batch-size 100</code></td><td data-label="책임">결제일이 도래한 구독을 정기 과금합니다.</td><td data-label="운영 메모">성공한 실행은 scheduler_run_logs.status=succeeded로 저장됩니다. 일부 대상 결제 실패는 summary.failed에 집계하며 실행 자체 실패와 구분합니다.</td></tr><tr><td data-label="컴포넌트">Scheduler reminder CronJob</td><td data-label="Workload">Kubernetes CronJob</td><td data-label="Entrypoint"><code>python -m payments.scheduler.runner reminder --batch-size 100</code></td><td data-label="책임">결제 예정 사전 알림 대상을 선택하고 notification_outbox에 발송 intent를 적재합니다.</td><td data-label="운영 메모">dry-run 검증은 --dry-run으로 수행할 수 있으며 실제 발송은 Notification Worker가 처리합니다.</td></tr><tr><td data-label="컴포넌트">Scheduler cancel-expiration CronJob</td><td data-label="Workload">Kubernetes CronJob</td><td data-label="Entrypoint"><code>python -m payments.scheduler.runner cancel-expiration --batch-size 100</code></td><td data-label="책임">cancel_scheduled 구독 중 cancelAt이 지난 대상을 canceled로 만료 처리합니다.</td><td data-label="운영 메모">구독 상태 변경과 operator_audits 기록은 application job 함수가 담당합니다.</td></tr><tr><td data-label="컴포넌트">Notification Worker</td><td data-label="Workload">Kubernetes Deployment</td><td data-label="Entrypoint"><code>python -m payments.scheduler.runner notification-worker</code></td><td data-label="책임">notification_outbox의 due item을 claim하고 템플릿 렌더링 후 SMTP로 발송합니다.</td><td data-label="운영 메모">CronJob으로 실행하지 않습니다. poll_interval마다 반복 실행하며 retry_scheduled와 dead_letter 상태를 관리합니다.</td></tr><tr><td data-label="컴포넌트">MongoDB</td><td data-label="Workload">Managed MongoDB 또는 Replica Set</td><td data-label="Entrypoint"><code>PAYMENTS_DATABASE_URL / PAYMENTS_DATABASE_NAME</code></td><td data-label="책임">결제 원장성 상태, 멱등성 키, 스케줄러 실행 로그, 운영 감사 로그, notification outbox를 저장합니다.</td><td data-label="운영 메모">운영자가 직접 결제 상태 컬렉션을 수정하지 않습니다. 보정은 문서화된 admin API 또는 application job으로 수행합니다.</td></tr><tr><td data-label="컴포넌트">Toss Payments API</td><td data-label="Workload">External provider</td><td data-label="Entrypoint"><code>PAYMENTS_TOSS_BASE_URL</code></td><td data-label="책임">결제 승인, 빌링키 결제, 결제 조회, 취소 처리를 수행하는 외부 provider입니다.</td><td data-label="운영 메모">provider 장애는 내부 payments, invoices, subscriptions 상태와 operator_audits, scheduler_run_logs로 관측합니다.</td></tr></tbody></table></div>
+</section><section id="configuration">
+  <h2>런타임 설정</h2>
+  <article class="box">
+  <h3>공통 설정</h3>
+  <p>API 서버, scheduler CronJob, Notification Worker</p>
+  <div class="table-scroll"><table class="has-many-columns"><thead><tr><th>환경변수</th><th>필수</th><th>기본값</th><th>Secret</th><th>설명</th></tr></thead><tbody><tr><td data-label="환경변수"><code>PAYMENTS_DATABASE_URL</code></td><td data-label="필수">예</td><td data-label="기본값"><code></code></td><td data-label="Secret">예</td><td data-label="설명">MongoDB 연결 문자열입니다. 운영 문서나 로그에 실제 값을 남기지 않습니다.</td></tr><tr><td data-label="환경변수"><code>PAYMENTS_DATABASE_NAME</code></td><td data-label="필수">예</td><td data-label="기본값"><code></code></td><td data-label="Secret">아니오</td><td data-label="설명">결제 시스템이 사용할 MongoDB database 이름입니다.</td></tr><tr><td data-label="환경변수"><code>PAYMENTS_INTERNAL_SERVICE_TOKEN</code></td><td data-label="필수">예</td><td data-label="기본값"><code></code></td><td data-label="Secret">예</td><td data-label="설명">내부 API와 worker 설정의 공통 비밀 값입니다. 별도 암호화 secret이 없으면 일부 암호화 기본값으로도 사용됩니다.</td></tr><tr><td data-label="환경변수"><code>PAYMENTS_BILLING_KEY_ENCRYPTION_SECRET</code></td><td data-label="필수">아니오</td><td data-label="기본값"><code>PAYMENTS_INTERNAL_SERVICE_TOKEN</code></td><td data-label="Secret">예</td><td data-label="설명">billingKey 암호화에 사용하는 secret입니다. 운영 환경에서는 internal token과 분리하는 것을 권장합니다.</td></tr><tr><td data-label="환경변수"><code>PAYMENTS_NOTIFICATION_TEMPLATE_ARG_ENCRYPTION_SECRET</code></td><td data-label="필수">아니오</td><td data-label="기본값"><code>PAYMENTS_INTERNAL_SERVICE_TOKEN</code></td><td data-label="Secret">예</td><td data-label="설명">인증 링크, OTP 같은 민감 template_args envelope를 암복호화하는 secret입니다.</td></tr></tbody></table></div>
+</article><article class="box">
+  <h3>API 서버 설정</h3>
+  <p>Payment API Server</p>
+  <div class="table-scroll"><table class="has-many-columns"><thead><tr><th>환경변수</th><th>필수</th><th>기본값</th><th>Secret</th><th>설명</th></tr></thead><tbody><tr><td data-label="환경변수"><code>PAYMENTS_TOSS_CLIENT_KEY</code></td><td data-label="필수">아니오</td><td data-label="기본값"><code>test_ck_local</code></td><td data-label="Secret">아니오</td><td data-label="설명">클라이언트 SDK에 전달할 Toss client key입니다.</td></tr><tr><td data-label="환경변수"><code>PAYMENTS_TOSS_SECRET_KEY</code></td><td data-label="필수">아니오</td><td data-label="기본값"><code></code></td><td data-label="Secret">예</td><td data-label="설명">Toss API 서버 호출에 사용하는 secret key입니다. 운영 결제 기능을 켜기 전에 반드시 설정합니다.</td></tr><tr><td data-label="환경변수"><code>PAYMENTS_TOSS_WEBHOOK_SECRET</code></td><td data-label="필수">예</td><td data-label="기본값"><code></code></td><td data-label="Secret">예</td><td data-label="설명">Toss webhook 인증에 사용하는 secret입니다.</td></tr><tr><td data-label="환경변수"><code>PAYMENTS_ADMIN_AUTH_LINK_BASE_URL</code></td><td data-label="필수">예</td><td data-label="기본값"><code></code></td><td data-label="Secret">아니오</td><td data-label="설명">관리자 로그인 링크와 비밀번호 재설정 링크를 만들 때 사용하는 어드민 콘솔 base URL입니다.</td></tr><tr><td data-label="환경변수"><code>PAYMENTS_NOTIFICATION_RECIPIENT_API_BASE_URL</code></td><td data-label="필수">예</td><td data-label="기본값"><code></code></td><td data-label="Secret">아니오</td><td data-label="설명">수신자 이메일과 표시 이름을 조회하는 recipient resolver base URL입니다.</td></tr><tr><td data-label="환경변수"><code>PAYMENTS_ALLOWED_REDIRECT_HOSTS</code></td><td data-label="필수">아니오</td><td data-label="기본값"><code>example.com</code></td><td data-label="Secret">아니오</td><td data-label="설명">결제와 빌링키 인증 redirect host allowlist입니다. 운영 도메인을 쉼표로 구분해 설정합니다.</td></tr></tbody></table></div>
+</article><article class="box">
+  <h3>Scheduler와 Worker 설정</h3>
+  <p>Kubernetes CronJob, Notification Worker</p>
+  <div class="table-scroll"><table class="has-many-columns"><thead><tr><th>환경변수</th><th>필수</th><th>기본값</th><th>Secret</th><th>설명</th></tr></thead><tbody><tr><td data-label="환경변수"><code>PAYMENTS_TOSS_BASE_URL</code></td><td data-label="필수">아니오</td><td data-label="기본값"><code>https://api.tosspayments.com</code></td><td data-label="Secret">아니오</td><td data-label="설명">Toss API base URL입니다.</td></tr><tr><td data-label="환경변수"><code>PAYMENTS_NOTIFICATION_WORKER_BATCH_SIZE</code></td><td data-label="필수">아니오</td><td data-label="기본값"><code>100</code></td><td data-label="Secret">아니오</td><td data-label="설명">Notification Worker tick에서 선택할 최대 outbox item 수입니다.</td></tr><tr><td data-label="환경변수"><code>PAYMENTS_NOTIFICATION_WORKER_POLL_INTERVAL_SECONDS</code></td><td data-label="필수">아니오</td><td data-label="기본값"><code>10</code></td><td data-label="Secret">아니오</td><td data-label="설명">Notification Worker 반복 실행 간격입니다.</td></tr><tr><td data-label="환경변수"><code>PAYMENTS_SMTP_HOST</code></td><td data-label="필수">예</td><td data-label="기본값"><code></code></td><td data-label="Secret">아니오</td><td data-label="설명">SMTP 서버 host입니다.</td></tr><tr><td data-label="환경변수"><code>PAYMENTS_SMTP_FROM_EMAIL</code></td><td data-label="필수">예</td><td data-label="기본값"><code></code></td><td data-label="Secret">아니오</td><td data-label="설명">발신자 이메일 주소입니다.</td></tr><tr><td data-label="환경변수"><code>PAYMENTS_SMTP_PASSWORD</code></td><td data-label="필수">아니오</td><td data-label="기본값"><code></code></td><td data-label="Secret">예</td><td data-label="설명">SMTP 인증 비밀번호입니다. SMTP 서버가 인증을 요구할 때만 설정합니다.</td></tr></tbody></table></div>
+</article>
+  <div class="note"><strong>설정 원칙</strong><ul><li>운영 secret은 Kubernetes Secret 또는 동등한 secret manager로 주입하고 HTML 문서, ConfigMap, 로그에 실제 값을 남기지 않습니다.</li><li>staging과 production은 Toss key, Mongo database, admin auth link base URL을 분리합니다.</li><li>PAYMENTS_TOSS_SECRET_KEY가 비어 있으면 provider 호출이 필요한 결제/스케줄러 경로는 운영 준비가 된 상태로 보지 않습니다.</li></ul></div>
+</section><section id="deployment-procedure">
+  <h2>배포 절차</h2>
+  <div class="table-scroll"><table class="has-many-columns"><thead><tr><th>단계</th><th>명령/Entrypoint</th><th>설명</th><th>검증</th></tr></thead><tbody><tr><td data-label="단계">이미지 빌드</td><td data-label="명령/Entrypoint"><code>docker build -f payments/Dockerfile payments -t &lt;registry&gt;/payments:&lt;tag&gt;</code></td><td data-label="설명">API 서버, scheduler CronJob, Notification Worker가 같은 payments 이미지를 사용합니다.</td><td data-label="검증">빌드가 성공하고 이미지 digest가 배포 manifest의 tag 또는 digest와 일치해야 합니다.</td></tr><tr><td data-label="단계">API 서버 배포</td><td data-label="명령/Entrypoint"><code>uvicorn main:app --host 0.0.0.0 --port 8000</code></td><td data-label="설명">payments/Dockerfile의 기본 CMD입니다. Kubernetes Deployment는 기본 command를 그대로 사용할 수 있습니다.</td><td data-label="검증">health endpoint와 /admin/console 로그인 페이지가 응답해야 합니다.</td></tr><tr><td data-label="단계">Notification Worker 배포</td><td data-label="명령/Entrypoint"><code>python -m payments.scheduler.runner notification-worker</code></td><td data-label="설명">같은 이미지에서 command를 override해 상시 worker Deployment로 실행합니다.</td><td data-label="검증">worker log에 notification_worker_run_completed가 반복 기록되고 dead_letter 급증이 없어야 합니다.</td></tr><tr><td data-label="단계">정기결제 CronJob 배포</td><td data-label="명령/Entrypoint"><code>python -m payments.scheduler.runner billing --batch-size 100</code></td><td data-label="설명">결제일 자동결제 batch입니다. schedule은 운영 정책에 맞추되 동시에 같은 job이 겹치지 않도록 concurrency policy를 설정합니다.</td><td data-label="검증">scheduler_run_logs에 trigger_source=kubernetes_cronjob, job_type=billing 실행 로그가 생성됩니다.</td></tr><tr><td data-label="단계">사전 알림 CronJob 배포</td><td data-label="명령/Entrypoint"><code>python -m payments.scheduler.runner reminder --batch-size 100</code></td><td data-label="설명">결제 예정 사전 알림 batch입니다.</td><td data-label="검증">scheduler_run_logs와 notification_outbox pending 또는 sent 흐름을 함께 확인합니다.</td></tr><tr><td data-label="단계">해지 예약 만료 CronJob 배포</td><td data-label="명령/Entrypoint"><code>python -m payments.scheduler.runner cancel-expiration --batch-size 100</code></td><td data-label="설명">cancelAt이 지난 cancel_scheduled 구독을 canceled로 전환합니다.</td><td data-label="검증">scheduler_run_logs job_type=cancel_expiration과 관련 operator_audits를 확인합니다.</td></tr></tbody></table></div>
+</section><section id="pre-deployment-checklist">
+  <h2>배포 전 체크리스트</h2>
+  <ul><li>이미지 tag 또는 digest가 변경 승인된 revision을 가리키는지 확인합니다.</li><li>PAYMENTS_DATABASE_URL, PAYMENTS_DATABASE_NAME, PAYMENTS_INTERNAL_SERVICE_TOKEN이 API 서버와 worker 계열 workload에 모두 주입되어 있는지 확인합니다.</li><li>운영 Toss secret, webhook secret, client key가 staging 값과 섞이지 않았는지 확인합니다.</li><li>PAYMENTS_ADMIN_AUTH_LINK_BASE_URL이 실제 어드민 콘솔 도메인을 가리키는지 확인합니다.</li><li>MongoDB index 생성 권한이 있는 계정으로 API 서버 또는 worker가 시작되는지 확인합니다.</li><li>CronJob command가 billing, reminder, cancel-expiration 중 하나이며 --batch-size가 운영 한도 안에 있는지 확인합니다.</li><li>rollback에 사용할 직전 정상 이미지 tag 또는 digest를 기록합니다.</li></ul>
+</section><section id="post-deployment-verification">
+  <h2>배포 후 검증</h2>
+  <ul><li>API 서버 health endpoint가 200을 반환하는지 확인합니다.</li><li>/admin/console/login이 text/html로 렌더링되는지 확인합니다.</li><li>어드민 로그인 후 /admin/console/scheduler-runs, /admin/console/operator-audits, /admin/console/products에 접근할 수 있는지 확인합니다.</li><li>작은 batch 또는 --dry-run으로 scheduler runner를 실행해 scheduler_run_logs 생성 여부를 확인합니다.</li><li>scheduler_run_logs.status=succeeded이면서 summary.failed &gt; 0인 실행은 일부 대상 실패로 분류하고, status=failed인 실행은 실행 자체 실패로 분류합니다.</li><li>notification_outbox의 pending, retry_scheduled, dead_letter 상태 분포를 확인합니다.</li><li>operator_audits에 운영자 수동 실행 또는 상품/결제/구독 운영 액션의 previousState와 nextState가 남는지 확인합니다.</li></ul>
+</section><section id="observability">
+  <h2>관측 포인트</h2>
+  <h3>MongoDB 컬렉션</h3>
+  <div class="table-scroll"><table class="has-many-columns"><thead><tr><th>컬렉션</th><th>목적</th><th>정상 신호</th><th>경보 조건</th></tr></thead><tbody><tr><td data-label="컬렉션"><code>scheduler_run_logs</code></td><td data-label="목적">CronJob, CLI, 내부 API, 어드민 수동 실행의 실행 단위와 summary, error, exit_code를 확인합니다.</td><td data-label="정상 신호">최근 정기 실행이 expected schedule 안에 있고 status=failed가 반복되지 않습니다.</td><td data-label="경보 조건">연속 status=failed, duration_ms 급증, summary.failed 급증, 특정 worker_id 반복 실패</td></tr><tr><td data-label="컬렉션"><code>operator_audits</code></td><td data-label="목적">운영자 결제 취소, 구독 보정, 상품 변경, scheduler.run_manual의 책임 추적과 변경 전후 상태를 확인합니다.</td><td data-label="정상 신호">운영 액션마다 operator_id, action, target, result, reason_code가 저장됩니다.</td><td data-label="경보 조건">result=failed 반복, 알 수 없는 action 문자열 증가, 운영 사유 누락</td></tr><tr><td data-label="컬렉션"><code>idempotency_keys</code></td><td data-label="목적">중복 요청, 재시도, processing lock, succeeded response replay 여부를 확인합니다.</td><td data-label="정상 신호">processing 상태가 짧게 유지되고 succeeded 또는 failed로 전환됩니다.</td><td data-label="경보 조건">locked_until_at이 지난 processing 누적, 같은 scope/key_hash conflict 증가</td></tr><tr><td data-label="컬렉션"><code>notification_outbox</code></td><td data-label="목적">이메일 발송 intent, retry_scheduled, dead_letter, provider_message_id를 확인합니다.</td><td data-label="정상 신호">pending이 worker 처리 속도 안에서 줄고 sent가 누적됩니다.</td><td data-label="경보 조건">dead_letter 증가, retry_scheduled 장기 누적, locked_until_at이 지난 processing 누적</td></tr><tr><td data-label="컬렉션"><code>operation_locks</code></td><td data-label="목적">배치와 worker의 중복 실행 방지 lock과 fencing token을 확인합니다.</td><td data-label="정상 신호">lock이 작업 시간 안에 해제되거나 만료됩니다.</td><td data-label="경보 조건">만료되지 않는 lock, 같은 lock_key의 반복 획득 실패</td></tr><tr><td data-label="컬렉션"><code>webhook_events</code></td><td data-label="목적">Toss webhook 수신, 처리 상태, replay-safe 처리 여부를 확인합니다.</td><td data-label="정상 신호">provider event가 processed 또는 ignored로 안정적으로 귀결됩니다.</td><td data-label="경보 조건">signature 실패, unfinished event 누적, 같은 paymentKey 충돌</td></tr><tr><td data-label="컬렉션"><code>invoices</code></td><td data-label="목적">구독 결제 실패 후 인보이스 상태, 실패 요약, 다음 재시도 판단 근거를 확인합니다.</td><td data-label="정상 신호">issued, paid, failed 상태가 결제 결과와 일치하고 오래된 실패 인보이스가 방치되지 않습니다.</td><td data-label="경보 조건">failed 또는 issued 상태 인보이스가 장시간 누적되거나 같은 구독 회차에서 실패가 반복됨</td></tr><tr><td data-label="컬렉션"><code>subscriptions</code></td><td data-label="목적">구독 상태, next_billing_at, cancel_scheduled/canceled 전환, 결제 실패 후 운영 보정 대상을 확인합니다.</td><td data-label="정상 신호">active 구독의 다음 결제일과 취소 예약 상태가 정책과 일치합니다.</td><td data-label="경보 조건">next_billing_at 누락, cancelAt 경과 후 미처리, 최종 실패 후 상태 불일치</td></tr></tbody></table></div>
+  <h3>애플리케이션 로그</h3>
+  <div class="table-scroll"><table><thead><tr><th>로그</th><th>목적</th><th>비고</th></tr></thead><tbody><tr><td data-label="로그"><code>structured application access log</code></td><td data-label="목적">조회성 운영 API 접근, 검색 조건, 관리자 ID, request_id, 요청 IP를 추적합니다.</td><td data-label="비고">별도 Mongo 컬렉션이 아니라 애플리케이션 구조화 로그입니다. operator_audits는 상태 변경과 수동 실행 책임 추적에 사용합니다.</td></tr><tr><td data-label="로그"><code>notification_worker_run_completed</code></td><td data-label="목적">Notification Worker tick별 selected, claimed, sent, retry_scheduled, dead_letter, failed count를 확인합니다.</td><td data-label="비고">failed_count가 0보다 크면 worker process exit code와 함께 workload restart 여부를 확인합니다.</td></tr></tbody></table></div>
+</section><section id="runbooks">
+  <h2>운영 런북</h2>
+  <div class="grid"><article class="box">
+  <h3>CronJob 실행 자체 실패</h3>
+  <h4>증상</h4><ul><li>scheduler_run_logs.status=failed</li><li>exit_code=1</li><li>Kubernetes Job pod가 non-zero exit</li></ul>
+  <h4>확인</h4><ul><li>scheduler_run_logs.error.code와 request 시간대를 확인합니다.</li><li>Pod log에서 환경변수 누락, Mongo 연결 실패, Toss provider 오류를 확인합니다.</li><li>operation_locks에 같은 job lock이 stale 상태로 남았는지 확인합니다.</li></ul>
+  <h4>조치</h4><ul><li>환경변수 또는 secret 누락이면 배포 manifest를 수정하고 새 Job을 실행합니다.</li><li>일시 provider 장애이면 재시도 가능 시간에 CronJob 재실행 또는 어드민 수동 실행을 사용합니다.</li><li>stale lock이 원인이면 locked_until_at 경과 여부를 확인한 뒤 application 경로로 재실행합니다.</li></ul>
+  <h4>금지</h4><ul><li>결제, 인보이스, 구독 컬렉션을 직접 수정하지 않습니다.</li><li>실패 원인을 확인하지 않은 채 batch_size를 크게 늘려 재실행하지 않습니다.</li></ul>
+</article><article class="box">
+  <h3>일부 대상 처리 실패</h3>
+  <h4>증상</h4><ul><li>scheduler_run_logs.status=succeeded</li><li>summary.failed &gt; 0</li></ul>
+  <h4>확인</h4><ul><li>status=succeeded는 실행 루프 자체가 완료되었다는 뜻인지 확인합니다.</li><li>invoices와 subscriptions에서 실패 대상의 다음 재시도 또는 최종 실패 처리 상태를 확인합니다.</li><li>providerCode와 failure summary가 반복되는지 확인합니다.</li></ul>
+  <h4>조치</h4><ul><li>정책상 자동 재시도 대상이면 다음 retry schedule을 기다립니다.</li><li>운영자 보정이 필요한 대상만 admin subscription adjustment 또는 결제 취소 API로 처리합니다.</li><li>대량 provider 장애이면 Toss 장애 상태를 확인하고 같은 대상 중복 승인 위험을 검토합니다.</li></ul>
+  <h4>금지</h4><ul><li>summary.failed가 있다는 이유만으로 scheduler_run_logs.status를 failed로 수정하지 않습니다.</li><li>같은 invoice 또는 billing cycle을 멱등성 없이 수동 승인하지 않습니다.</li></ul>
+</article><article class="box">
+  <h3>어드민 수동 스케줄러 실행 필요</h3>
+  <h4>증상</h4><ul><li>CronJob 누락 또는 일시 실패 후 운영자가 즉시 보정 실행해야 함</li><li>scheduler_run_logs에서 특정 jobType의 실행 공백 확인</li></ul>
+  <h4>확인</h4><ul><li>수동 실행은 POST /admin/scheduler-runs가 API 서버에서 동기 실행한다는 점을 확인합니다.</li><li>Kubernetes Job 또는 CronJob을 생성하는 API가 아님을 확인합니다.</li><li>Idempotency-Key와 reason을 준비합니다.</li></ul>
+  <h4>조치</h4><ul><li>어드민 콘솔 /admin/console/scheduler-runs에서 jobType, billingDate, limit, dryRun, reason을 입력해 실행합니다.</li><li>실행 완료 응답의 runId와 operatorAuditId를 확인합니다.</li><li>같은 요청 재시도는 같은 Idempotency-Key를 사용하고, 다른 payload에는 새 key를 사용합니다.</li></ul>
+  <h4>금지</h4><ul><li>브라우저를 닫아도 서버 실행이 이미 시작된 요청을 임의로 취소됐다고 판단하지 않습니다.</li><li>운영 사유 없이 수동 실행하지 않습니다.</li></ul>
+</article><article class="box">
+  <h3>Notification dead_letter 증가</h3>
+  <h4>증상</h4><ul><li>notification_outbox.status=dead_letter 증가</li><li>notification_worker_run_completed.dead_letter_count 증가</li></ul>
+  <h4>확인</h4><ul><li>last_error가 template 누락, required args 누락, SMTP permanent error, expires_at 경과 중 무엇인지 분류합니다.</li><li>notification_templates의 template_key와 required_template_args를 확인합니다.</li><li>SMTP 설정과 발신자 정책 변경 여부를 확인합니다.</li></ul>
+  <h4>조치</h4><ul><li>템플릿 계약 오류이면 template 또는 enqueue args를 수정하고 새 알림 intent를 application 경로로 생성합니다.</li><li>SMTP permanent 오류이면 수신자 주소 또는 발신자 정책을 수정합니다.</li><li>일시 장애는 retry_scheduled 상태와 backoff를 확인합니다.</li></ul>
+  <h4>금지</h4><ul><li>dead_letter 문서를 직접 pending으로 되돌리지 않습니다.</li><li>만료된 인증 메일을 재발송하지 않습니다.</li></ul>
+</article><article class="box">
+  <h3>Webhook 지연 또는 누락</h3>
+  <h4>증상</h4><ul><li>Toss 결제 상태와 내부 payment/invoice 상태 불일치</li><li>webhook_events 처리 공백 또는 unfinished event 누적</li></ul>
+  <h4>확인</h4><ul><li>Toss-Signature 또는 webhook secret 검증 실패가 있었는지 확인합니다.</li><li>paymentKey 기준으로 Toss 조회 결과와 내부 payment status를 대조합니다.</li><li>webhook_events에서 같은 provider event 중복 처리 여부를 확인합니다.</li></ul>
+  <h4>조치</h4><ul><li>서명 설정 오류이면 secret을 수정하고 재배포합니다.</li><li>provider_payment_sync 같은 문서화된 운영 보정 경로로 내부 상태를 맞춥니다.</li><li>중복 event는 replay-safe 처리 결과를 확인하고 결제 원장을 직접 수정하지 않습니다.</li></ul>
+  <h4>금지</h4><ul><li>서명 검증을 끄고 webhook payload를 처리하지 않습니다.</li><li>Toss 조회 없이 운영자 입력만으로 외부 결제 성공을 확정하지 않습니다.</li></ul>
+</article><article class="box">
+  <h3>Operation lock stale 의심</h3>
+  <h4>증상</h4><ul><li>같은 구독, invoice, payment cancel 작업이 반복적으로 lock 획득 실패</li><li>operation_locks.locked_until_at이 지났는데 processing 로그가 남음</li></ul>
+  <h4>확인</h4><ul><li>locked_until_at, fencing_token, worker_id를 확인합니다.</li><li>해당 작업의 scheduler_run_logs 또는 API request_id를 추적합니다.</li><li>실제 Pod가 아직 실행 중인지 Kubernetes 상태를 확인합니다.</li></ul>
+  <h4>조치</h4><ul><li>locked_until_at이 지나고 Pod가 종료되었으면 application job을 재실행합니다.</li><li>반복 stale이면 lock_duration과 작업 duration_ms를 함께 조정합니다.</li><li>fencing token 불일치 write는 stale worker write로 보고 무시합니다.</li></ul>
+  <h4>금지</h4><ul><li>살아 있는 Pod가 소유한 lock을 수동 삭제하지 않습니다.</li><li>lock 우회를 위해 같은 paymentKey 또는 invoice를 직접 provider 호출하지 않습니다.</li></ul>
+</article></div>
+</section><section id="rollback-replay">
+  <h2>롤백과 재실행 정책</h2>
+  <ul><li>API 서버 rollback은 직전 정상 이미지 tag 또는 digest로 Deployment를 되돌리고 health와 admin console을 확인합니다.</li><li>CronJob rollback은 CronJob template image를 직전 정상 digest로 되돌린 뒤 다음 schedule 또는 수동 Job으로 검증합니다.</li><li>Notification Worker rollback은 Deployment image를 되돌린 뒤 retry_scheduled와 processing stale 여부를 확인합니다.</li><li>scheduler_run_logs는 운영 진단용 실행 이력이며 결제 원장이나 operator_audits를 대체하지 않습니다.</li><li>동일 수동 실행 요청은 같은 Idempotency-Key로 재시도하고, payload가 바뀌면 새 key를 사용합니다.</li><li>provider 호출이 포함된 재실행은 billing_cycle_key, invoiceId, paymentKey 기준 멱등성 상태를 확인한 뒤 수행합니다.</li></ul>
+</section><section id="security">
+  <h2>보안과 접근 제어</h2>
+  <ul><li>어드민 콘솔과 JSON API는 관리자 access token의 roles와 permissions로 권한을 확인합니다.</li><li>scheduler_read, scheduler_run, audit_read, product_manage 같은 권한은 최소 권한으로 부여합니다.</li><li>PAYMENTS_INTERNAL_SERVICE_TOKEN, Toss secret, webhook secret, 암호화 secret은 로그와 HTML 문서에 실제 값을 남기지 않습니다.</li><li>operator_audits는 운영 변경과 수동 실행의 책임 추적 로그입니다. 조회성 access log는 structured application log로 남깁니다.</li><li>scheduler_run_logs.error에는 운영자가 재실행 여부를 판단할 수 있는 요약만 저장하고 stack trace, billingKey, provider secret 원문은 저장하지 않습니다.</li><li>운영자는 MongoDB에서 결제, 인보이스, 구독 상태를 직접 수정하지 않고 문서화된 admin API와 application job을 사용합니다.</li></ul>
+</section><section id="related-documents">
+  <h2>관련 문서</h2>
+  <div class="grid"><article class="card">
+  <h4><a href="./system-architecture-doc.html#overview">시스템 아키텍처</a></h4>
+  <p>Notification Worker, scheduler batch, admin console SSR 라우트의 구조를 확인합니다.</p>
+</article><article class="card">
+  <h4><a href="./database-doc.html#scheduler-run-logs">MongoDB 구조 문서</a></h4>
+  <p>scheduler_run_logs, operator_audits, notification_outbox 등 운영 관측 컬렉션의 필드와 인덱스를 확인합니다.</p>
+</article><article class="card">
+  <h4><a href="./sequence-index.html#available">스케쥴러 운영 플로우</a></h4>
+  <p>정기결제, 사전 알림, 해지 예약 만료, 운영자 수동 실행 흐름을 찾는 진입점입니다.</p>
+</article><article class="card">
+  <h4><a href="./api-detail-doc.html#admin-scheduler-runs-create">전체 API 상세</a></h4>
+  <p>POST /admin/scheduler-runs가 동기 실행 API라는 계약과 요청/응답 필드를 확인합니다.</p>
+</article><article class="card">
+  <h4><a href="./risk-register-doc.html#duplicate-subscription-billing">잠재 위험 및 대응 문서</a></h4>
+  <p>중복 실행, provider 장애, webhook 불일치 같은 운영 위험과 대응 원칙을 확인합니다.</p>
+</article></div>
+</section></div></main>
+<div class="d2-modal" data-diagram-modal hidden role="dialog" aria-modal="true" aria-labelledby="diagram-modal-title">
+  <div class="d2-modal__panel" role="document">
+    <div class="d2-modal__header">
+      <p class="d2-modal__title" id="diagram-modal-title">다이어그램 크게 보기</p>
+      <div class="d2-modal__actions" aria-label="다이어그램 확대 축소">
+        <button type="button" class="d2-zoom-button" data-diagram-zoom-out aria-label="축소">-</button>
+        <input class="d2-zoom-slider" type="range" min="50" max="400" step="10" value="100" data-diagram-zoom aria-label="확대 축소 비율">
+        <span class="d2-zoom-value" data-diagram-zoom-value>100%</span>
+        <button type="button" class="d2-zoom-button" data-diagram-zoom-in aria-label="확대">+</button>
+        <button type="button" class="d2-zoom-reset" data-diagram-zoom-reset>초기화</button>
+        <button type="button" class="d2-modal__close" data-diagram-close>닫기</button>
+      </div>
+    </div>
+    <div class="d2-modal__viewport" data-diagram-viewport>
+      <img class="d2-modal__image" data-diagram-modal-image alt="">
+    </div>
+  </div>
+</div>
+<script>
+(() => {
+  const input = document.querySelector("[data-doc-search]");
+  const targets = Array.from(document.querySelectorAll("main section, article.card, article.box"));
+  const navLinks = Array.from(document.querySelectorAll("nav a[href^='#']"));
+  const modal = document.querySelector("[data-diagram-modal]");
+  const modalImage = modal?.querySelector("[data-diagram-modal-image]");
+  const modalTitle = modal?.querySelector("#diagram-modal-title");
+  const modalViewport = modal?.querySelector("[data-diagram-viewport]");
+  const zoomInput = modal?.querySelector("[data-diagram-zoom]");
+  const zoomValue = modal?.querySelector("[data-diagram-zoom-value]");
+  const zoomOutButton = modal?.querySelector("[data-diagram-zoom-out]");
+  const zoomInButton = modal?.querySelector("[data-diagram-zoom-in]");
+  const zoomResetButton = modal?.querySelector("[data-diagram-zoom-reset]");
+  let lastDiagramButton = null;
+  let diagramZoom = 1;
+  let baseDiagramWidth = 1200;
+  const minDiagramZoom = 0.5;
+  const maxDiagramZoom = 4;
+  const diagramZoomStep = 0.1;
+
+  if (input) {
+    input.addEventListener("input", () => {
+      const query = input.value.trim().toLowerCase();
+      for (const target of targets) {
+        const text = target.textContent.toLowerCase();
+        target.hidden = Boolean(query) && !text.includes(query);
+      }
+    });
+  }
+
+  if ("IntersectionObserver" in window && navLinks.length) {
+    const linksById = new Map(navLinks.map((link) => [decodeURIComponent(link.hash.slice(1)), link]));
+    const observer = new IntersectionObserver((entries) => {
+      const visible = entries
+        .filter((entry) => entry.isIntersecting && !entry.target.hidden)
+        .sort((a, b) => b.intersectionRatio - a.intersectionRatio)[0];
+      if (!visible) return;
+      for (const link of navLinks) link.removeAttribute("aria-current");
+      const active = linksById.get(visible.target.id);
+      if (active) active.setAttribute("aria-current", "true");
+    }, { rootMargin: "-18% 0px -68% 0px", threshold: [0.01, 0.18, 0.36] });
+    for (const section of document.querySelectorAll("main section[id]")) observer.observe(section);
+  }
+
+  const closeDiagramModal = () => {
+    if (!modal) return;
+    modal.hidden = true;
+    document.body.style.overflow = "";
+    if (modalImage) {
+      modalImage.removeAttribute("src");
+      modalImage.alt = "";
+      modalImage.style.width = "";
+    }
+    if (lastDiagramButton) lastDiagramButton.focus();
+  };
+
+  const clampDiagramZoom = (value) => Math.min(maxDiagramZoom, Math.max(minDiagramZoom, value));
+
+  const updateDiagramBaseWidth = () => {
+    if (!modalViewport) return;
+    const viewportWidth = Math.max(0, modalViewport.clientWidth - 32);
+    baseDiagramWidth = Math.max(window.matchMedia("(max-width: 480px)").matches ? 920 : 1200, viewportWidth);
+  };
+
+  const setDiagramZoom = (nextZoom, options = { preserveCenter: true }) => {
+    if (!modalImage || !modalViewport) return;
+    const previousWidth = modalImage.clientWidth || baseDiagramWidth;
+    const previousHeight = modalImage.clientHeight || 1;
+    const centerXRatio = (modalViewport.scrollLeft + modalViewport.clientWidth / 2) / previousWidth;
+    const centerYRatio = (modalViewport.scrollTop + modalViewport.clientHeight / 2) / previousHeight;
+
+    diagramZoom = clampDiagramZoom(nextZoom);
+    const percent = Math.round(diagramZoom * 100);
+    modalImage.style.width = `${Math.round(baseDiagramWidth * diagramZoom)}px`;
+    if (zoomInput) zoomInput.value = String(percent);
+    if (zoomValue) zoomValue.textContent = `${percent}%`;
+
+    if (options.preserveCenter) {
+      requestAnimationFrame(() => {
+        modalViewport.scrollLeft = Math.max(0, modalImage.clientWidth * centerXRatio - modalViewport.clientWidth / 2);
+        modalViewport.scrollTop = Math.max(0, modalImage.clientHeight * centerYRatio - modalViewport.clientHeight / 2);
+      });
+    } else {
+      modalViewport.scrollLeft = 0;
+      modalViewport.scrollTop = 0;
+    }
+  };
+
+  const openDiagramModal = (button) => {
+    if (!modal || !modalImage || !modalTitle || !modalViewport) return;
+    lastDiagramButton = button;
+    const title = button.getAttribute("data-diagram-title") || "다이어그램";
+    modalTitle.textContent = title;
+    modalImage.src = button.getAttribute("data-diagram-src");
+    modalImage.alt = title;
+    modal.hidden = false;
+    document.body.style.overflow = "hidden";
+    updateDiagramBaseWidth();
+    setDiagramZoom(1, { preserveCenter: false });
+    modal.querySelector("[data-diagram-close]")?.focus();
+  };
+
+  for (const button of document.querySelectorAll("[data-diagram-open]")) {
+    button.addEventListener("click", () => openDiagramModal(button));
+  }
+
+  zoomInput?.addEventListener("input", () => setDiagramZoom(Number(zoomInput.value) / 100));
+  zoomOutButton?.addEventListener("click", () => setDiagramZoom(diagramZoom - diagramZoomStep));
+  zoomInButton?.addEventListener("click", () => setDiagramZoom(diagramZoom + diagramZoomStep));
+  zoomResetButton?.addEventListener("click", () => setDiagramZoom(1, { preserveCenter: false }));
+
+  modalViewport?.addEventListener("wheel", (event) => {
+    if (!event.ctrlKey && !event.metaKey) return;
+    event.preventDefault();
+    setDiagramZoom(diagramZoom + (event.deltaY < 0 ? diagramZoomStep : -diagramZoomStep));
+  }, { passive: false });
+
+  modal?.addEventListener("click", (event) => {
+    if (event.target === modal || event.target.closest("[data-diagram-close]")) closeDiagramModal();
+  });
+
+  document.addEventListener("keydown", (event) => {
+    if (event.key === "Escape" && modal && !modal.hidden) closeDiagramModal();
+    if (!modal || modal.hidden) return;
+    if (event.key === "+" || event.key === "=") {
+      event.preventDefault();
+      setDiagramZoom(diagramZoom + diagramZoomStep);
+    }
+    if (event.key === "-") {
+      event.preventDefault();
+      setDiagramZoom(diagramZoom - diagramZoomStep);
+    }
+    if (event.key === "0") {
+      event.preventDefault();
+      setDiagramZoom(1, { preserveCenter: false });
+    }
+  });
+})();
+</script>
+</body>
+</html>

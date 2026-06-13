@@ -4,7 +4,7 @@
   "title": "Payment System Documentation Data",
   "type": "object",
   "additionalProperties": false,
-  "required": ["version", "site", "actors", "apiCategories", "apis", "apiDetails", "sequenceGroups", "sequences", "database", "notificationTemplateCatalog", "systemArchitecture", "policies"],
+  "required": ["version", "site", "actors", "apiCategories", "apis", "apiDetails", "sequenceGroups", "sequences", "database", "notificationTemplateCatalog", "deploymentOperationsGuide", "systemArchitecture", "policies"],
   "properties": {
     "version": {
       "type": "string",
@@ -77,6 +77,343 @@
     "notificationTemplateCatalog": {
       "$ref": "#/$defs/notificationTemplateCatalog"
     },
+    "deploymentOperationsGuide": {
+      "$ref": "#/$defs/deploymentOperationsGuide"
+    },
+    "deploymentOperationsGuide": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["title", "summary", "audience", "scope", "runtimeTopology", "configuration", "deploymentProcedure", "preDeploymentChecklist", "postDeploymentVerification", "observability", "runbooks", "rollbackAndReplayPolicy", "securityAndAccessControl", "relatedDocuments"],
+      "properties": {
+        "title": {
+          "type": "string"
+        },
+        "summary": {
+          "type": "string"
+        },
+        "audience": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string"
+          }
+        },
+        "scope": {
+          "$ref": "#/$defs/deploymentScope"
+        },
+        "runtimeTopology": {
+          "$ref": "#/$defs/deploymentRuntimeTopology"
+        },
+        "configuration": {
+          "$ref": "#/$defs/deploymentConfiguration"
+        },
+        "deploymentProcedure": {
+          "$ref": "#/$defs/deploymentProcedure"
+        },
+        "preDeploymentChecklist": {
+          "$ref": "#/$defs/stringList"
+        },
+        "postDeploymentVerification": {
+          "$ref": "#/$defs/stringList"
+        },
+        "observability": {
+          "$ref": "#/$defs/deploymentObservability"
+        },
+        "runbooks": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/deploymentRunbook"
+          }
+        },
+        "rollbackAndReplayPolicy": {
+          "$ref": "#/$defs/titledRules"
+        },
+        "securityAndAccessControl": {
+          "$ref": "#/$defs/titledRules"
+        },
+        "relatedDocuments": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/relatedDocument"
+          }
+        }
+      }
+    },
+    "deploymentScope": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["included", "excluded"],
+      "properties": {
+        "included": {
+          "$ref": "#/$defs/stringList"
+        },
+        "excluded": {
+          "$ref": "#/$defs/stringList"
+        }
+      }
+    },
+    "deploymentRuntimeTopology": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["title", "summary", "components"],
+      "properties": {
+        "title": {
+          "type": "string"
+        },
+        "summary": {
+          "type": "string"
+        },
+        "components": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/runtimeComponent"
+          }
+        }
+      }
+    },
+    "runtimeComponent": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "workload", "entrypoint", "responsibility", "operationalNotes"],
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "workload": {
+          "type": "string"
+        },
+        "entrypoint": {
+          "type": "string"
+        },
+        "responsibility": {
+          "type": "string"
+        },
+        "operationalNotes": {
+          "type": "string"
+        }
+      }
+    },
+    "deploymentConfiguration": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["title", "groups", "rules"],
+      "properties": {
+        "title": {
+          "type": "string"
+        },
+        "groups": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/configurationGroup"
+          }
+        },
+        "rules": {
+          "$ref": "#/$defs/stringList"
+        }
+      }
+    },
+    "configurationGroup": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "appliesTo", "settings"],
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "appliesTo": {
+          "type": "string"
+        },
+        "settings": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/configurationSetting"
+          }
+        }
+      }
+    },
+    "configurationSetting": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "required", "default", "secret", "description"],
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "required": {
+          "type": "boolean"
+        },
+        "default": {
+          "type": "string"
+        },
+        "secret": {
+          "type": "boolean"
+        },
+        "description": {
+          "type": "string"
+        }
+      }
+    },
+    "deploymentProcedure": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["title", "steps"],
+      "properties": {
+        "title": {
+          "type": "string"
+        },
+        "steps": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/deploymentStep"
+          }
+        }
+      }
+    },
+    "deploymentStep": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["title", "command", "description", "verification"],
+      "properties": {
+        "title": {
+          "type": "string"
+        },
+        "command": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        },
+        "verification": {
+          "type": "string"
+        }
+      }
+    },
+    "deploymentObservability": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["title", "collections", "logs"],
+      "properties": {
+        "title": {
+          "type": "string"
+        },
+        "collections": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/observabilityCollection"
+          }
+        },
+        "logs": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/observabilityLog"
+          }
+        }
+      }
+    },
+    "observabilityCollection": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "purpose", "healthySignal", "alertCondition"],
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "purpose": {
+          "type": "string"
+        },
+        "healthySignal": {
+          "type": "string"
+        },
+        "alertCondition": {
+          "type": "string"
+        }
+      }
+    },
+    "observabilityLog": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "purpose", "notes"],
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "purpose": {
+          "type": "string"
+        },
+        "notes": {
+          "type": "string"
+        }
+      }
+    },
+    "deploymentRunbook": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["incident", "symptoms", "checks", "actions", "doNot"],
+      "properties": {
+        "incident": {
+          "type": "string"
+        },
+        "symptoms": {
+          "$ref": "#/$defs/stringList"
+        },
+        "checks": {
+          "$ref": "#/$defs/stringList"
+        },
+        "actions": {
+          "$ref": "#/$defs/stringList"
+        },
+        "doNot": {
+          "$ref": "#/$defs/stringList"
+        }
+      }
+    },
+    "titledRules": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["title", "rules"],
+      "properties": {
+        "title": {
+          "type": "string"
+        },
+        "rules": {
+          "$ref": "#/$defs/stringList"
+        }
+      }
+    },
+    "relatedDocument": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["title", "pageKey", "anchor", "description"],
+      "properties": {
+        "title": {
+          "type": "string"
+        },
+        "pageKey": {
+          "type": "string"
+        },
+        "anchor": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        }
+      }
+    },
+    "stringList": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "string"
+      }
+    },
     "systemArchitecture": {
       "$ref": "#/$defs/systemArchitecture"
     }
@@ -96,7 +433,7 @@
         "pages": {
           "type": "object",
           "additionalProperties": false,
-          "required": ["sequenceIndex", "apiCatalog", "apiDetails", "notificationTemplateCatalog"],
+          "required": ["sequenceIndex", "apiCatalog", "apiDetails", "notificationTemplateCatalog", "deploymentOperationsGuide"],
           "properties": {
             "sequenceIndex": {
               "$ref": "#/$defs/pageRef"
@@ -114,6 +451,9 @@
               "$ref": "#/$defs/pageRef"
             },
             "systemArchitecture": {
+              "$ref": "#/$defs/pageRef"
+            },
+            "deploymentOperationsGuide": {
               "$ref": "#/$defs/pageRef"
             },
             "notificationTemplateCatalog": {

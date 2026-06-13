@@ -232,6 +232,25 @@ def validate_data(data):
                         f"Architecture diagram {diagram['id']} edge references missing node {edge['to']}"
                     )
 
+    if data.get("deploymentOperationsGuide"):
+        page_keys = set(data["site"]["pages"])
+        collection_names = {
+            collection["name"]
+            for collection in data.get("database", {}).get("collections", [])
+        }
+        for item in data["deploymentOperationsGuide"].get("relatedDocuments", []):
+            if item["pageKey"] not in page_keys:
+                raise ValueError(
+                    "Deployment operations guide references missing page "
+                    f"{item['pageKey']}"
+                )
+        for item in data["deploymentOperationsGuide"].get("observability", {}).get("collections", []):
+            if item["name"] not in collection_names:
+                raise ValueError(
+                    "Deployment operations guide references missing collection "
+                    f"{item['name']}"
+                )
+
     if data.get("notificationTemplateCatalog"):
         template_event_types = set()
         for template in data["notificationTemplateCatalog"].get("templates", []):
@@ -1360,7 +1379,7 @@ def api_maps(data):
     return apis, categories
 
 
-def database_links(data, include_architecture=True):
+def database_links(data, include_architecture=True, include_deployment=True):
     links = []
     architecture_ref = data["site"]["pages"].get("systemArchitecture")
     if include_architecture and architecture_ref and data.get("systemArchitecture"):
@@ -1371,6 +1390,9 @@ def database_links(data, include_architecture=True):
     risk_ref = data["site"]["pages"].get("risks")
     if risk_ref and data.get("risks"):
         links.append((risk_ref["title"], f"./{risk_ref['file']}"))
+    deployment_ref = data["site"]["pages"].get("deploymentOperationsGuide")
+    if include_deployment and deployment_ref and data.get("deploymentOperationsGuide"):
+        links.append((deployment_ref["title"], f"./{deployment_ref['file']}"))
     return links
 
 
@@ -2215,6 +2237,188 @@ def render_notification_worker_policy_section(worker_policy):
 </section>"""
 
 
+def html_list(items):
+    return "".join(f"<li>{e(item)}</li>" for item in items)
+
+
+def render_deployment_operations_guide_doc(data):
+    guide = data["deploymentOperationsGuide"]
+    page_ref = data["site"]["pages"]["deploymentOperationsGuide"]
+    nav_items = [
+        ("overview", "개요"),
+        ("runtime-topology", "런타임 구성"),
+        ("configuration", "런타임 설정"),
+        ("deployment-procedure", "배포 절차"),
+        ("pre-deployment-checklist", "배포 전 체크리스트"),
+        ("post-deployment-verification", "배포 후 검증"),
+        ("observability", "관측 포인트"),
+        ("runbooks", "운영 런북"),
+        ("rollback-replay", "롤백과 재실행"),
+        ("security", "보안과 접근 제어"),
+        ("related-documents", "관련 문서"),
+    ]
+
+    audience_items = html_list(guide["audience"])
+    included_items = html_list(guide["scope"]["included"])
+    excluded_items = html_list(guide["scope"]["excluded"])
+    sections = [f"""<section id="overview">
+  <h2>개요</h2>
+  <p>{e(guide['summary'])}</p>
+  <div class="grid">
+    <article class="box"><h3>대상 독자</h3><ul>{audience_items}</ul></article>
+    <article class="box"><h3>포함 범위</h3><ul>{included_items}</ul></article>
+    <article class="box"><h3>제외 범위</h3><ul>{excluded_items}</ul></article>
+  </div>
+</section>"""]
+
+    component_rows = "".join(
+        "<tr>"
+        f"<td>{e(component['name'])}</td>"
+        f"<td>{e(component['workload'])}</td>"
+        f"<td><code>{e(component['entrypoint'])}</code></td>"
+        f"<td>{e(component['responsibility'])}</td>"
+        f"<td>{e(component['operationalNotes'])}</td>"
+        "</tr>"
+        for component in guide["runtimeTopology"]["components"]
+    )
+    sections.append(f"""<section id="runtime-topology">
+  <h2>{e(guide['runtimeTopology']['title'])}</h2>
+  <p>{e(guide['runtimeTopology']['summary'])}</p>
+  {table("<table><thead><tr><th>컴포넌트</th><th>Workload</th><th>Entrypoint</th><th>책임</th><th>운영 메모</th></tr></thead>"
+         f"<tbody>{component_rows}</tbody></table>", columns=5)}
+</section>""")
+
+    config_sections = []
+    for group in guide["configuration"]["groups"]:
+        setting_rows = "".join(
+            "<tr>"
+            f"<td><code>{e(setting['name'])}</code></td>"
+            f"<td>{'예' if setting['required'] else '아니오'}</td>"
+            f"<td><code>{e(setting['default'])}</code></td>"
+            f"<td>{'예' if setting['secret'] else '아니오'}</td>"
+            f"<td>{e(setting['description'])}</td>"
+            "</tr>"
+            for setting in group["settings"]
+        )
+        config_sections.append(f"""<article class="box">
+  <h3>{e(group['name'])}</h3>
+  <p>{e(group['appliesTo'])}</p>
+  {table("<table><thead><tr><th>환경변수</th><th>필수</th><th>기본값</th><th>Secret</th><th>설명</th></tr></thead>"
+         f"<tbody>{setting_rows}</tbody></table>", columns=5)}
+</article>""")
+    config_rules = html_list(guide["configuration"]["rules"])
+    sections.append(f"""<section id="configuration">
+  <h2>{e(guide['configuration']['title'])}</h2>
+  {''.join(config_sections)}
+  <div class="note"><strong>설정 원칙</strong><ul>{config_rules}</ul></div>
+</section>""")
+
+    step_rows = "".join(
+        "<tr>"
+        f"<td>{e(step['title'])}</td>"
+        f"<td><code>{e(step['command'])}</code></td>"
+        f"<td>{e(step['description'])}</td>"
+        f"<td>{e(step['verification'])}</td>"
+        "</tr>"
+        for step in guide["deploymentProcedure"]["steps"]
+    )
+    sections.append(f"""<section id="deployment-procedure">
+  <h2>{e(guide['deploymentProcedure']['title'])}</h2>
+  {table("<table><thead><tr><th>단계</th><th>명령/Entrypoint</th><th>설명</th><th>검증</th></tr></thead>"
+         f"<tbody>{step_rows}</tbody></table>", columns=4)}
+</section>""")
+
+    sections.append(f"""<section id="pre-deployment-checklist">
+  <h2>배포 전 체크리스트</h2>
+  <ul>{html_list(guide['preDeploymentChecklist'])}</ul>
+</section>""")
+
+    sections.append(f"""<section id="post-deployment-verification">
+  <h2>배포 후 검증</h2>
+  <ul>{html_list(guide['postDeploymentVerification'])}</ul>
+</section>""")
+
+    collection_rows = "".join(
+        "<tr>"
+        f"<td><code>{e(item['name'])}</code></td>"
+        f"<td>{e(item['purpose'])}</td>"
+        f"<td>{e(item['healthySignal'])}</td>"
+        f"<td>{e(item['alertCondition'])}</td>"
+        "</tr>"
+        for item in guide["observability"]["collections"]
+    )
+    log_rows = "".join(
+        "<tr>"
+        f"<td><code>{e(item['name'])}</code></td>"
+        f"<td>{e(item['purpose'])}</td>"
+        f"<td>{e(item['notes'])}</td>"
+        "</tr>"
+        for item in guide["observability"]["logs"]
+    )
+    sections.append(f"""<section id="observability">
+  <h2>{e(guide['observability']['title'])}</h2>
+  <h3>MongoDB 컬렉션</h3>
+  {table("<table><thead><tr><th>컬렉션</th><th>목적</th><th>정상 신호</th><th>경보 조건</th></tr></thead>"
+         f"<tbody>{collection_rows}</tbody></table>", columns=4)}
+  <h3>애플리케이션 로그</h3>
+  {table("<table><thead><tr><th>로그</th><th>목적</th><th>비고</th></tr></thead>"
+         f"<tbody>{log_rows}</tbody></table>", columns=3)}
+</section>""")
+
+    runbook_cards = []
+    for runbook in guide["runbooks"]:
+        runbook_cards.append(f"""<article class="box">
+  <h3>{e(runbook['incident'])}</h3>
+  <h4>증상</h4><ul>{html_list(runbook['symptoms'])}</ul>
+  <h4>확인</h4><ul>{html_list(runbook['checks'])}</ul>
+  <h4>조치</h4><ul>{html_list(runbook['actions'])}</ul>
+  <h4>금지</h4><ul>{html_list(runbook['doNot'])}</ul>
+</article>""")
+    sections.append(f"""<section id="runbooks">
+  <h2>운영 런북</h2>
+  <div class="grid">{''.join(runbook_cards)}</div>
+</section>""")
+
+    sections.append(f"""<section id="rollback-replay">
+  <h2>{e(guide['rollbackAndReplayPolicy']['title'])}</h2>
+  <ul>{html_list(guide['rollbackAndReplayPolicy']['rules'])}</ul>
+</section>""")
+
+    sections.append(f"""<section id="security">
+  <h2>{e(guide['securityAndAccessControl']['title'])}</h2>
+  <ul>{html_list(guide['securityAndAccessControl']['rules'])}</ul>
+</section>""")
+
+    pages = data["site"]["pages"]
+    related_cards = []
+    for item in guide["relatedDocuments"]:
+        target = pages[item["pageKey"]]
+        href = f"./{target['file']}#{item['anchor']}"
+        related_cards.append(f"""<article class="card">
+  <h4><a href="{e(href)}">{e(item['title'])}</a></h4>
+  <p>{e(item['description'])}</p>
+</article>""")
+    sections.append(f"""<section id="related-documents">
+  <h2>관련 문서</h2>
+  <div class="grid">{''.join(related_cards)}</div>
+</section>""")
+
+    links = [
+        ("전체 시퀀스 목록", "./sequence-index.html"),
+        ("전체 API 목록", "./all-api-doc.html"),
+        ("API 상세 설명", "./api-detail-doc.html"),
+    ] + database_links(data, include_deployment=False)
+
+    body = header(
+        page_ref["title"],
+        "Deployment & Operations Runbook",
+        guide["summary"],
+        links,
+    )
+    body += f"<main class=\"wrap layout\" id=\"content\">{nav(nav_items)}<div>{''.join(sections)}</div></main>"
+    return page(page_ref["title"], body)
+
+
 def render_admin_console_routes_section(routes):
     route_rows = "".join(
         "<tr>"
@@ -2433,6 +2637,10 @@ def generate_docs(data_path, out_dir, render_d2=False, rendered_d2_ids=None):
         rendered[pages["risks"]["file"]] = render_risk_doc(data)
     if data.get("notificationTemplateCatalog") and pages.get("notificationTemplateCatalog"):
         rendered[pages["notificationTemplateCatalog"]["file"]] = render_notification_template_catalog_doc(data)
+    if data.get("deploymentOperationsGuide") and pages.get("deploymentOperationsGuide"):
+        rendered[pages["deploymentOperationsGuide"]["file"]] = (
+            render_deployment_operations_guide_doc(data)
+        )
     if data.get("systemArchitecture") and pages.get("systemArchitecture"):
         rendered[pages["systemArchitecture"]["file"]] = render_system_architecture_doc(data, rendered_ids)
     for sequence in data["sequences"]:
