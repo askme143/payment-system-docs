@@ -18,6 +18,10 @@ from payments.application.errors import (
     ProviderError,
     ResourceNotFoundError,
 )
+from payments.application.notifications import (
+    NotificationEnqueueDependencies,
+    enqueue_user_notification_if_available,
+)
 from payments.application.operation_locks import (
     acquire_required_operation_lock,
     release_operation_lock,
@@ -383,6 +387,7 @@ async def cancel_payment(
     clock: Clock,
     idempotency_key: str,
     operation_locks: OperationLockRepository | None = None,
+    notification_dependencies: NotificationEnqueueDependencies | None = None,
 ) -> PaymentCancelResult:
     """승인 완료된 일반결제를 전체 또는 부분 취소합니다.
 
@@ -711,6 +716,16 @@ async def cancel_payment(
                     response_body=_cancel_result_to_response_body(result),
                 )
             )
+            await _enqueue_payment_cancel_completed(
+                user_id=user_id,
+                payment=payment,
+                cancel_id=pending_cancel_request.id,
+                cancel_amount=cancel_amount,
+                cancel_reason=command.cancel_reason,
+                canceled_at=provider_result.canceled_at,
+                receipt_url=provider_result.receipt_url,
+                notification_dependencies=notification_dependencies,
+            )
             return result
     finally:
         await release_operation_lock(
@@ -728,6 +743,7 @@ async def confirm_payment(
     clock: Clock,
     idempotency_key: str,
     operation_locks: OperationLockRepository | None = None,
+    notification_dependencies: NotificationEnqueueDependencies | None = None,
 ) -> PaymentConfirmResult:
     """토스 결제창 인증 성공 후 일반결제를 최종 승인합니다.
 
@@ -1021,6 +1037,13 @@ async def confirm_payment(
                     resource_id=payment.id,
                     response_body=_confirm_result_to_response_body(result),
                 )
+            )
+            await _enqueue_one_time_payment_paid(
+                user_id=user_id,
+                checkout=checkout,
+                payment=payment,
+                invoice=invoice,
+                notification_dependencies=notification_dependencies,
             )
             return result
     finally:
@@ -1762,6 +1785,62 @@ def _payment_cancel_notification(*, cancel_amount: int) -> dict[str, object]:
             "cancelAmount": cancel_amount,
         },
     }
+
+
+async def _enqueue_one_time_payment_paid(
+    *,
+    user_id: str,
+    checkout: Checkout,
+    payment: Payment,
+    invoice: Invoice,
+    notification_dependencies: NotificationEnqueueDependencies | None,
+) -> bool:
+    if payment.approved_at is None:
+        return False
+    return await enqueue_user_notification_if_available(
+        dependencies=notification_dependencies,
+        event_type="one_time_payment_paid",
+        recipient_user_id=user_id,
+        template_args={
+            "checkoutId": checkout.id,
+            "paymentId": payment.id,
+            "orderName": _order_name_from_checkout(checkout),
+            "amount": payment.amount,
+            "currency": _currency_from_checkout(checkout),
+            "paidAt": payment.approved_at.isoformat(),
+            "receiptUrl": payment.receipt_url or "",
+            "itemSummary": _order_name_from_checkout(checkout),
+            "paymentMethodSummary": payment.method or "",
+        },
+        idempotency_key=f"email:one_time_payment_paid:{checkout.id}:{payment.id}",
+    )
+
+
+async def _enqueue_payment_cancel_completed(
+    *,
+    user_id: str,
+    payment: Payment,
+    cancel_id: str,
+    cancel_amount: int,
+    cancel_reason: str,
+    canceled_at: datetime,
+    receipt_url: str | None,
+    notification_dependencies: NotificationEnqueueDependencies | None,
+) -> bool:
+    return await enqueue_user_notification_if_available(
+        dependencies=notification_dependencies,
+        event_type="payment_cancel_completed",
+        recipient_user_id=user_id,
+        template_args={
+            "paymentId": payment.id,
+            "cancelAmount": cancel_amount,
+            "currency": "KRW",
+            "canceledAt": canceled_at.isoformat(),
+            "cancelReason": cancel_reason,
+            "receiptUrl": receipt_url or "",
+        },
+        idempotency_key=f"email:payment_cancel_completed:{payment.id}:{cancel_id}",
+    )
 
 
 def _payment_cancel_audit_state(payment: Payment) -> dict[str, object]:

@@ -13,6 +13,7 @@ from payments.application.errors import (
     AuthorizationError,
     ForbiddenError,
 )
+from payments.application.notifications import NotificationEnqueueDependencies
 from payments.application.ports import (
     AdminAuthEmailSender,
     AdminAuthRateLimiter,
@@ -85,6 +86,7 @@ class HttpDependencies:
     subscription_expirations: SubscriptionExpirationRepository
     subscription_expiration_uow_factory: SubscriptionExpirationUnitOfWorkFactory
     subscription_resume_uow_factory: SubscriptionResumeUnitOfWorkFactory
+    notification_enqueue: NotificationEnqueueDependencies
     webhooks: WebhookRepository
     webhook_uow_factory: WebhookUnitOfWorkFactory
     billing_key_cipher: BillingKeyCipher

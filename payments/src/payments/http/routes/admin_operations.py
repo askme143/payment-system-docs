@@ -126,6 +126,7 @@ def create_router(dependencies: HttpDependencies) -> APIRouter:
                 "Idempotency-Key",
             ),
             operation_locks=dependencies.operation_locks,
+            notification_dependencies=dependencies.notification_enqueue,
         )
         return admin_payment_cancel_response(result)
 
@@ -212,6 +213,7 @@ def create_router(dependencies: HttpDependencies) -> APIRouter:
             admin_subscription_adjust_uow_factory=(
                 dependencies.admin_subscription_adjust_uow_factory
             ),
+            notification_dependencies=dependencies.notification_enqueue,
         )
         return admin_subscription_adjust_response(result)
 

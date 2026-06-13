@@ -12,6 +12,10 @@ from payments.application.errors import (
     ProviderError,
     ResourceNotFoundError,
 )
+from payments.application.notifications import (
+    NotificationEnqueueDependencies,
+    enqueue_user_notification_if_available,
+)
 from payments.application.operation_locks import (
     acquire_required_operation_lock,
     release_operation_lock,
@@ -31,6 +35,7 @@ from payments.domain.entities.ids import generate_uuid_id
 from payments.domain.entities.invoice import Invoice
 from payments.domain.entities.payment import Payment
 from payments.domain.entities.subscription import Subscription
+from payments.domain.entities.subscription_plan import SubscriptionPlan
 
 INTERNAL_BILLING_RETRY_IDEMPOTENCY_SCOPE = "internal-billing-retry"
 MAX_BILLING_RETRY_FAILED_ATTEMPTS = 3
@@ -69,6 +74,7 @@ async def retry_subscription_billing(
     subscription_billing_uow_factory: (
         SubscriptionBillingUnitOfWorkFactory | None
     ) = None,
+    notification_dependencies: NotificationEnqueueDependencies | None = None,
 ) -> BillingRetryResult:
     payload = {
         "invoiceId": invoice_id,
@@ -117,6 +123,7 @@ async def retry_subscription_billing(
         )
     if subscription.status != "past_due":
         raise InvalidStateTransitionError("subscription cannot be retried")
+    plan = await repository.get_subscription_plan(subscription.plan_id)
     billing_method = await repository.get_default_billing_method(invoice.user_id)
     if billing_method is None:
         raise InvalidStateTransitionError("default billing method is required")
@@ -286,6 +293,13 @@ async def retry_subscription_billing(
                     now=clock.utc_now(),
                     result=result,
                 )
+                await _enqueue_subscription_canceled_payment_failed(
+                    subscription=subscription,
+                    plan=plan,
+                    payment=retry_payment,
+                    invoice=invoice,
+                    notification_dependencies=notification_dependencies,
+                )
                 return result
             assert next_retry_at is not None
             result = _result(
@@ -319,6 +333,13 @@ async def retry_subscription_billing(
                 request_hash=request_hash,
                 now=clock.utc_now(),
                 result=result,
+            )
+            await _enqueue_subscription_payment_failed(
+                subscription=subscription,
+                plan=plan,
+                payment=retry_payment,
+                invoice=invoice,
+                notification_dependencies=notification_dependencies,
             )
             return result
 
@@ -361,6 +382,13 @@ async def retry_subscription_billing(
             now=clock.utc_now(),
             result=result,
         )
+        await _enqueue_subscription_payment_paid(
+            subscription=subscription,
+            plan=plan,
+            payment=retry_payment,
+            invoice=invoice,
+            notification_dependencies=notification_dependencies,
+        )
         return result
     finally:
         await release_operation_lock(
@@ -368,6 +396,121 @@ async def retry_subscription_billing(
             operation_lock=operation_lock,
             released_at=clock.utc_now(),
         )
+
+
+async def _enqueue_subscription_payment_paid(
+    *,
+    subscription: Subscription,
+    plan: SubscriptionPlan | None,
+    payment: Payment,
+    invoice: Invoice,
+    notification_dependencies: NotificationEnqueueDependencies | None,
+) -> bool:
+    if notification_dependencies is None:
+        return True
+    if payment.approved_at is None:
+        return False
+    template_args = {
+        "subscriptionId": subscription.id,
+        "invoiceId": invoice.id,
+        "amount": payment.amount,
+        "currency": plan.currency if plan is not None else "KRW",
+        "billingDate": payment.approved_at.date().isoformat(),
+        "receiptUrl": payment.receipt_url or "",
+        "paidAt": payment.approved_at.isoformat(),
+    }
+    if plan is not None:
+        template_args["planName"] = _plan_display_name(plan)
+    return await enqueue_user_notification_if_available(
+        dependencies=notification_dependencies,
+        event_type="subscription_payment_paid",
+        recipient_user_id=subscription.user_id,
+        product_code=subscription.product_code,
+        template_args=template_args,
+        idempotency_key=f"email:subscription_payment_paid:{invoice.id}:{payment.id}",
+    )
+
+
+async def _enqueue_subscription_payment_failed(
+    *,
+    subscription: Subscription,
+    plan: SubscriptionPlan | None,
+    payment: Payment,
+    invoice: Invoice,
+    notification_dependencies: NotificationEnqueueDependencies | None,
+) -> bool:
+    if notification_dependencies is None:
+        return True
+    if payment.retry_scheduled_at is None:
+        return False
+    failure = payment.failure or {}
+    provider_code = failure.get("providerCode")
+    template_args = {
+        "subscriptionId": subscription.id,
+        "invoiceId": invoice.id,
+        "amount": payment.amount,
+        "currency": plan.currency if plan is not None else "KRW",
+        "failureSummary": str(failure.get("message") or "subscription retry failed"),
+        "retryScheduledAt": payment.retry_scheduled_at.date().isoformat(),
+        "billingMethodUpdateUrl": "/billing/methods",
+    }
+    if plan is not None:
+        template_args["planName"] = _plan_display_name(plan)
+    if isinstance(provider_code, str) and provider_code:
+        template_args["providerCode"] = provider_code
+    return await enqueue_user_notification_if_available(
+        dependencies=notification_dependencies,
+        event_type="subscription_payment_failed",
+        recipient_user_id=subscription.user_id,
+        product_code=subscription.product_code,
+        template_args=template_args,
+        idempotency_key=f"email:subscription_payment_failed:{invoice.id}:{payment.id}",
+    )
+
+
+async def _enqueue_subscription_canceled_payment_failed(
+    *,
+    subscription: Subscription,
+    plan: SubscriptionPlan | None,
+    payment: Payment,
+    invoice: Invoice,
+    notification_dependencies: NotificationEnqueueDependencies | None,
+) -> bool:
+    if notification_dependencies is None:
+        return True
+    failure = payment.failure or {}
+    provider_code = failure.get("providerCode")
+    canceled_at = (
+        subscription.canceled_at or subscription.cancel_at or payment.created_at
+    )
+    template_args = {
+        "subscriptionId": subscription.id,
+        "invoiceId": invoice.id,
+        "canceledAt": canceled_at.isoformat(),
+        "failureSummary": str(failure.get("message") or "subscription was canceled"),
+        "cancelReason": "payment_retry_exhausted",
+        "subscriptionManageUrl": "/subscriptions/me",
+        "resubscribeUrl": (
+            f"/subscriptions/checkout?productCode={subscription.product_code}"
+        ),
+        "amount": payment.amount,
+        "currency": plan.currency if plan is not None else "KRW",
+    }
+    if plan is not None:
+        template_args["planName"] = _plan_display_name(plan)
+    if isinstance(provider_code, str) and provider_code:
+        template_args["providerCode"] = provider_code
+    return await enqueue_user_notification_if_available(
+        dependencies=notification_dependencies,
+        event_type="subscription_canceled_payment_failed",
+        recipient_user_id=subscription.user_id,
+        product_code=subscription.product_code,
+        template_args=template_args,
+        idempotency_key=(
+            "email:subscription_canceled_payment_failed:"
+            f"{subscription.id}:{invoice.id}"
+        ),
+    )
 
 
 def _next_billing_at(current: datetime) -> datetime:
@@ -409,6 +552,15 @@ async def _latest_retry_payment(
 
 def _is_final_retry_failure(failed_attempt_count: int) -> bool:
     return failed_attempt_count >= MAX_BILLING_RETRY_FAILED_ATTEMPTS
+
+
+def _plan_display_name(plan: SubscriptionPlan) -> str:
+    period_label = "월간" if plan.billing_period == "monthly" else "연간"
+    parts = [part for part in plan.plan_code.split("_") if part]
+    if parts and parts[-1].casefold() == plan.billing_period.casefold():
+        parts = parts[:-1]
+    base = " ".join(part.capitalize() for part in parts)
+    return f"{base} {period_label}".strip()
 
 
 def _result(

@@ -4,6 +4,10 @@ import logging
 from dataclasses import dataclass
 from datetime import datetime, timedelta
 
+from payments.application.notifications import (
+    NotificationEnqueueDependencies,
+    enqueue_user_notification_if_available,
+)
 from payments.application.operation_locks import (
     acquire_required_operation_lock,
     release_operation_lock,
@@ -43,6 +47,7 @@ async def expire_cancel_scheduled_subscriptions(
         SubscriptionExpirationUnitOfWorkFactory | None
     ) = None,
     operator_audits: OperatorAuditRepository | None = None,
+    notification_dependencies: NotificationEnqueueDependencies | None = None,
 ) -> SubscriptionExpirationRunSummary:
     """해지 예약 기간이 지난 구독을 최종 종료 상태로 전환합니다.
 
@@ -94,6 +99,7 @@ async def expire_cancel_scheduled_subscriptions(
 
         processed_ids: list[str] = []
         skipped_count = 0
+        emails_queued = 0
         for target in targets:
             changed = await _expire_with_audit(
                 subscriptions=subscriptions,
@@ -106,6 +112,12 @@ async def expire_cancel_scheduled_subscriptions(
             )
             if changed:
                 processed_ids.append(target.id)
+                if await _enqueue_subscription_canceled_after_period(
+                    subscription=target,
+                    canceled_at=now,
+                    notification_dependencies=notification_dependencies,
+                ):
+                    emails_queued += 1
             else:
                 skipped_count += 1
 
@@ -114,7 +126,7 @@ async def expire_cancel_scheduled_subscriptions(
             processed_count=len(processed_ids),
             skipped_count=skipped_count,
             failed_count=0,
-            cancel_expiration_emails_queued=len(processed_ids),
+            cancel_expiration_emails_queued=emails_queued,
             expired_subscription_ids=processed_ids,
         )
         _log_subscription_expiration_run_summary(summary, now)
@@ -185,6 +197,38 @@ def _cancel_expiration_audit(
         reason_code="cancel_at_period_end_elapsed",
         result="succeeded",
         created_at=now,
+    )
+
+
+async def _enqueue_subscription_canceled_after_period(
+    *,
+    subscription: Subscription,
+    canceled_at: datetime,
+    notification_dependencies: NotificationEnqueueDependencies | None,
+) -> bool:
+    if notification_dependencies is None:
+        return True
+    period_end_at = subscription.current_period_end_at or canceled_at
+    access_until = subscription.access_until or period_end_at
+    return await enqueue_user_notification_if_available(
+        dependencies=notification_dependencies,
+        event_type="subscription_canceled_after_period",
+        recipient_user_id=subscription.user_id,
+        product_code=subscription.product_code,
+        template_args={
+            "subscriptionId": subscription.id,
+            "periodEndAt": period_end_at.isoformat(),
+            "canceledAt": canceled_at.isoformat(),
+            "accessUntil": access_until.isoformat(),
+            "resubscribeUrl": (
+                f"/subscriptions/checkout?productCode={subscription.product_code}"
+            ),
+            "subscriptionManageUrl": "/subscriptions/me",
+        },
+        idempotency_key=(
+            "email:subscription_canceled_after_period:"
+            f"{subscription.id}:{period_end_at.date().isoformat()}"
+        ),
     )
 
 

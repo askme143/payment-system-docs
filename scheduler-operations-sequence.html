@@ -803,7 +803,7 @@
     <div class="wrap">
     <p class="eyebrow">Sequence Diagram</p>
     <h1>스케쥴러 운영 플로우</h1>
-    <p class="lead">Kubernetes CronJob이 같은 payments 이미지를 1회 실행하고, 어드민 콘솔이 스케쥴러 실행 이력 조회와 수동 실행을 제공하는 흐름입니다.</p>
+    <p class="lead">Kubernetes CronJob이 같은 payments 이미지를 1회 실행하고, 어드민 콘솔이 스케쥴러 실행 이력 조회와 수동 실행을 제공하는 흐름입니다. 이 CronJob 경로는 정기결제, 사전 알림, 해지 예약 만료 같은 scheduler batch용이며, 이메일 Notification Worker는 Deployment로 상시 실행합니다.</p>
     <div class="search-panel">
       <input type="search" data-doc-search aria-label="문서 검색" placeholder="API, 상태, 컬렉션, 플로우 검색">
     </div>
@@ -853,7 +853,7 @@ payments 이미지에서 scheduler runner 1회 실행
 
 python -m payments.scheduler.runner billing --batch-size 100
 
-Kubernetes CronJob은 HTTP API 호출이 아니라 같은 이미지의 별도 entrypoint를 실행
+Kubernetes CronJob은 HTTP API 호출이 아니라 같은 이미지의 별도 entrypoint를 실행합니다. 이 경로는 scheduler batch용이며 이메일 Notification Worker는 Deployment 상시 실행입니다.
 | {
     style.stroke: &quot;#1c7c66&quot;
     style.font-color: &quot;#334155&quot;
@@ -934,7 +934,7 @@ CronJob controller가 성공/실패와 재시도 정책을 판단
 
 **POST /admin/scheduler-runs**
 
-jobType, billingDate, limit, dryRun, reason, Idempotency-Key
+jobType, billingDate, limit, dryRun, reason, Idempotency-Key. API 서버가 Kubernetes Job 또는 CronJob을 생성하지 않고 직접 동기 실행
 | {
     style.stroke: &quot;#1c7c66&quot;
     style.font-color: &quot;#334155&quot;
@@ -969,7 +969,7 @@ success/failure/cancel expiration notification
   server -&gt; admin: |md
 수동 실행 결과 반환
 
-runId, status, summary, operatorAuditId
+201 Created after completion: runId, status, summary, operatorAuditId
 | {
     style.stroke: &quot;#334155&quot;
     style.font-color: &quot;#334155&quot;

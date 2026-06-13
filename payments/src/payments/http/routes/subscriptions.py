@@ -192,6 +192,7 @@ def create_router(dependencies: HttpDependencies) -> APIRouter:
             subscription_change_uow_factory=(
                 dependencies.subscription_change_uow_factory
             ),
+            notification_dependencies=dependencies.notification_enqueue,
         )
         return subscription_change_response(result)
 

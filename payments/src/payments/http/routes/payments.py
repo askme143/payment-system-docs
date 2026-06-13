@@ -86,6 +86,7 @@ def create_router(dependencies: HttpDependencies) -> APIRouter:
             clock=dependencies.clock,
             idempotency_key=_required_header(idempotency_key, "Idempotency-Key"),
             operation_locks=dependencies.operation_locks,
+            notification_dependencies=dependencies.notification_enqueue,
         )
         return payment_confirm_response(result)
 
@@ -143,6 +144,7 @@ def create_router(dependencies: HttpDependencies) -> APIRouter:
             clock=dependencies.clock,
             idempotency_key=_required_header(idempotency_key, "Idempotency-Key"),
             operation_locks=dependencies.operation_locks,
+            notification_dependencies=dependencies.notification_enqueue,
         )
         return payment_cancel_response(result)
 

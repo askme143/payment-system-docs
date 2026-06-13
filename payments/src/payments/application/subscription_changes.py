@@ -18,6 +18,10 @@ from payments.application.errors import (
     ProviderError,
     ResourceNotFoundError,
 )
+from payments.application.notifications import (
+    NotificationEnqueueDependencies,
+    enqueue_user_notification_if_available,
+)
 from payments.application.operation_locks import (
     acquire_required_operation_lock,
     release_operation_lock,
@@ -39,6 +43,7 @@ from payments.application.ports.unit_of_work import SubscriptionChangeUnitOfWork
 from payments.domain.entities.idempotency_key import IdempotencyKey
 from payments.domain.entities.ids import generate_uuid_id
 from payments.domain.entities.invoice import Invoice
+from payments.domain.entities.notification import TemplateArgs
 from payments.domain.entities.operator_audit import OperatorAudit
 from payments.domain.entities.payment import Payment
 from payments.domain.entities.subscription import Subscription
@@ -257,6 +262,7 @@ async def execute_subscription_change(
     operation_locks: OperationLockRepository | None = None,
     operator_audits: OperatorAuditRepository | None = None,
     subscription_change_uow_factory: SubscriptionChangeUnitOfWorkFactory | None = None,
+    notification_dependencies: NotificationEnqueueDependencies | None = None,
 ) -> SubscriptionChangeResult:
     """미리보기 확인 토큰으로 구독 플랜 변경을 최종 실행합니다."""
     if requester.user_id is None:
@@ -556,6 +562,23 @@ async def execute_subscription_change(
             payment=charge_result.payment if charge_result is not None else None,
             invoice=charge_result.invoice if charge_result is not None else None,
         )
+        if charge_result is not None:
+            await _enqueue_subscription_plan_upgrade_receipt(
+                user_id=requester.user_id,
+                subscription=subscription,
+                from_plan_name=_plan_name(
+                    current_product.name,
+                    current_plan.billing_period,
+                ),
+                to_plan_name=_plan_name(
+                    target_product.name,
+                    target_plan.billing_period,
+                ),
+                changed_at=result.applied_at or clock.utc_now(),
+                currency=preview.currency,
+                charge_result=charge_result,
+                notification_dependencies=notification_dependencies,
+            )
         return result
     finally:
         await release_operation_lock(
@@ -734,6 +757,49 @@ def _plan_change_payment_failure(
         "phase": "charge",
         "reason": "provider_rejected" if provider_code else "provider_error",
     }
+
+
+async def _enqueue_subscription_plan_upgrade_receipt(
+    *,
+    user_id: str,
+    subscription: Subscription,
+    from_plan_name: str,
+    to_plan_name: str,
+    changed_at: datetime,
+    currency: str,
+    charge_result: PlanUpgradeChargeResult,
+    notification_dependencies: NotificationEnqueueDependencies | None,
+) -> bool:
+    if notification_dependencies is None:
+        return True
+    payment = charge_result.payment
+    invoice = charge_result.invoice
+    template_args: TemplateArgs = {
+        "subscriptionId": subscription.id,
+        "invoiceId": invoice.id,
+        "paymentId": payment.id,
+        "fromPlanName": from_plan_name,
+        "toPlanName": to_plan_name,
+        "amount": payment.amount,
+        "currency": currency,
+        "changedAt": changed_at.isoformat(),
+        "receiptUrl": payment.receipt_url or "",
+    }
+    if subscription.next_billing_at is not None:
+        template_args["effectiveAt"] = subscription.next_billing_at.isoformat()
+    if payment.method:
+        template_args["paymentMethodSummary"] = payment.method
+    return await enqueue_user_notification_if_available(
+        dependencies=notification_dependencies,
+        event_type="subscription_plan_upgrade_receipt",
+        recipient_user_id=user_id,
+        product_code=subscription.product_code,
+        template_args=template_args,
+        idempotency_key=(
+            "email:subscription_plan_upgrade_receipt:"
+            f"{invoice.id}:{payment.id}"
+        ),
+    )
 
 
 def _validate_change_preview_still_current(

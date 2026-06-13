@@ -135,7 +135,16 @@ async def start_admin_login(
             user_agent=user_agent,
         )
         await repository.save_auth_token(auth_token)
-        await email_sender.send_login_link(admin.email, login_token)
+        await email_sender.send_login_link(
+            admin_id=admin.id,
+            email=admin.email,
+            recipient_name=admin.display_name,
+            auth_token_id=auth_token.id,
+            login_token=login_token,
+            expires_at=auth_token.expires_at,
+            request_ip=request_ip,
+            user_agent=user_agent,
+        )
     except Exception:
         if auth_token is not None:
             auth_token.status = "revoked"
@@ -414,20 +423,33 @@ async def request_admin_password_reset(
     admin = await repository.get_admin_by_email_lower(email_lower)
     if admin is not None and admin.status == "active":
         reset_token = _new_token("apr")
-        await repository.save_auth_token(
-            AdminAuthToken(
-                id=AdminAuthToken.generate_id(),
-                admin_account_id=admin.id,
-                token_type="password_reset",
-                token_hash=_hash_token(reset_token),
-                status="active",
-                expires_at=now + timedelta(seconds=PASSWORD_RESET_TTL_SECONDS),
-                created_at=now,
-                request_ip=request_ip,
-                user_agent=user_agent,
-            )
+        auth_token = AdminAuthToken(
+            id=AdminAuthToken.generate_id(),
+            admin_account_id=admin.id,
+            token_type="password_reset",
+            token_hash=_hash_token(reset_token),
+            status="active",
+            expires_at=now + timedelta(seconds=PASSWORD_RESET_TTL_SECONDS),
+            created_at=now,
+            request_ip=request_ip,
+            user_agent=user_agent,
         )
-        await email_sender.send_password_reset_link(admin.email, reset_token)
+        await repository.save_auth_token(auth_token)
+        try:
+            await email_sender.send_password_reset_link(
+                admin_id=admin.id,
+                email=admin.email,
+                recipient_name=admin.display_name,
+                auth_token_id=auth_token.id,
+                reset_token=reset_token,
+                expires_at=auth_token.expires_at,
+                request_ip=request_ip,
+            )
+        except Exception:
+            auth_token.status = "revoked"
+            auth_token.consumed_at = auth_token.created_at
+            await repository.save_auth_token(auth_token)
+            raise
     return AdminLoginAccepted(delivery="password_reset", expires_in_seconds=0)
 
 

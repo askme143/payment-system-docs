@@ -20,7 +20,7 @@ diagram: {
 
 **POST /admin/scheduler-runs**
 
-jobType, billingDate, limit, dryRun, reason, Idempotency-Key
+jobType, billingDate, limit, dryRun, reason, Idempotency-Key. API 서버가 Kubernetes Job 또는 CronJob을 생성하지 않고 직접 동기 실행
 | {
     style.stroke: "#1c7c66"
     style.font-color: "#334155"
@@ -55,7 +55,7 @@ success/failure/cancel expiration notification
   server -> admin: |md
 수동 실행 결과 반환
 
-runId, status, summary, operatorAuditId
+201 Created after completion: runId, status, summary, operatorAuditId
 | {
     style.stroke: "#334155"
     style.font-color: "#334155"

@@ -20,7 +20,7 @@ payments 이미지에서 scheduler runner 1회 실행
 
 python -m payments.scheduler.runner billing --batch-size 100
 
-Kubernetes CronJob은 HTTP API 호출이 아니라 같은 이미지의 별도 entrypoint를 실행
+Kubernetes CronJob은 HTTP API 호출이 아니라 같은 이미지의 별도 entrypoint를 실행합니다. 이 경로는 scheduler batch용이며 이메일 Notification Worker는 Deployment 상시 실행입니다.
 | {
     style.stroke: "#1c7c66"
     style.font-color: "#334155"

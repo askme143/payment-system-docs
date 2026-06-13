@@ -39,10 +39,31 @@ class AdminAuthRepository(Protocol):
 
 
 class AdminAuthEmailSender(Protocol):
-    async def send_login_link(self, email: str, login_token: str) -> None:
+    async def send_login_link(
+        self,
+        *,
+        admin_id: str,
+        email: str,
+        recipient_name: str | None,
+        auth_token_id: str,
+        login_token: str,
+        expires_at: datetime,
+        request_ip: str | None,
+        user_agent: str | None,
+    ) -> None:
         raise NotImplementedError
 
-    async def send_password_reset_link(self, email: str, reset_token: str) -> None:
+    async def send_password_reset_link(
+        self,
+        *,
+        admin_id: str,
+        email: str,
+        recipient_name: str | None,
+        auth_token_id: str,
+        reset_token: str,
+        expires_at: datetime,
+        request_ip: str | None,
+    ) -> None:
         raise NotImplementedError
 
 

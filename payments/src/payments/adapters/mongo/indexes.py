@@ -244,3 +244,73 @@ async def ensure_mongo_indexes(database: AsyncIOMotorDatabase) -> None:
         unique=True,
         name="uniq_webhook_events_provider_event",
     )
+    await database.notification_outbox.create_index(
+        [("_id", ASCENDING)],
+        unique=True,
+        name="uniq_notification_outbox_id",
+    )
+    await database.notification_outbox.create_index(
+        [("idempotency_key", ASCENDING)],
+        unique=True,
+        name="uniq_notification_outbox_idempotency_key",
+    )
+    await database.notification_outbox.create_index(
+        [
+            ("status", ASCENDING),
+            ("available_at", ASCENDING),
+            ("locked_until_at", ASCENDING),
+            ("created_at", ASCENDING),
+        ],
+        name="idx_notification_outbox_due_claim",
+    )
+    await database.notification_outbox.create_index(
+        [
+            ("recipient_type", ASCENDING),
+            ("recipient_user_id", ASCENDING),
+            ("created_at", ASCENDING),
+        ],
+        name="idx_notification_outbox_user_recipient",
+    )
+    await database.notification_outbox.create_index(
+        [
+            ("recipient_type", ASCENDING),
+            ("recipient_admin_id", ASCENDING),
+            ("created_at", ASCENDING),
+        ],
+        name="idx_notification_outbox_admin_recipient",
+    )
+    await database.notification_outbox.create_index(
+        [("status", ASCENDING), ("updated_at", ASCENDING)],
+        name="idx_notification_outbox_dead_letter",
+    )
+    await database.notification_outbox.create_index(
+        [("event_type", ASCENDING), ("created_at", ASCENDING)],
+        name="idx_notification_outbox_event_created",
+    )
+    await database.notification_outbox.create_index(
+        [
+            ("template_key", ASCENDING),
+            ("template_version", ASCENDING),
+            ("created_at", ASCENDING),
+        ],
+        name="idx_notification_outbox_template_version",
+    )
+    await database.notification_outbox.create_index(
+        [("purge_after_at", ASCENDING)],
+        expireAfterSeconds=0,
+        name="ttl_notification_outbox_purge_after",
+    )
+    await database.notification_templates.create_index(
+        [("template_key", ASCENDING), ("version", ASCENDING)],
+        unique=True,
+        name="uniq_notification_templates_key_version",
+    )
+    await database.notification_templates.create_index(
+        [
+            ("event_type", ASCENDING),
+            ("product_code", ASCENDING),
+            ("product_type", ASCENDING),
+            ("status", ASCENDING),
+        ],
+        name="idx_notification_templates_resolution",
+    )

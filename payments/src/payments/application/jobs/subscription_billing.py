@@ -13,6 +13,10 @@ from payments.application.errors import (
     InvalidStateTransitionError,
     ProviderError,
 )
+from payments.application.notifications import (
+    NotificationEnqueueDependencies,
+    enqueue_user_notification_if_available,
+)
 from payments.application.operation_locks import (
     acquire_required_operation_lock,
     release_operation_lock,
@@ -29,6 +33,7 @@ from payments.application.ports.unit_of_work import (
 )
 from payments.domain.entities.idempotency_key import IdempotencyKey
 from payments.domain.entities.invoice import Invoice
+from payments.domain.entities.notification import TemplateArgs
 from payments.domain.entities.payment import Payment
 from payments.domain.entities.subscription import Subscription
 from payments.domain.entities.subscription_plan import SubscriptionPlan
@@ -73,6 +78,7 @@ async def run_subscription_billing(
     subscription_billing_uow_factory: (
         SubscriptionBillingUnitOfWorkFactory | None
     ) = None,
+    notification_dependencies: NotificationEnqueueDependencies | None = None,
 ) -> SubscriptionBillingRunResult:
     now = clock.utc_now()
     billing_date = command.billing_date or now.date()
@@ -137,6 +143,7 @@ async def run_subscription_billing(
                 idempotency_keys,
                 billing_date,
                 now,
+                notification_dependencies,
             )
         else:
             result = await _run_billing_job(
@@ -149,6 +156,7 @@ async def run_subscription_billing(
                 subscription_billing_uow_factory,
                 now,
                 billing_date,
+                notification_dependencies,
             )
 
         await _save_successful_idempotency_response(
@@ -175,6 +183,7 @@ async def _run_reminder_job(
     idempotency_keys: IdempotencyKeyRepository,
     billing_date: date,
     now: datetime,
+    notification_dependencies: NotificationEnqueueDependencies | None,
 ) -> SubscriptionBillingRunResult:
     target_date = billing_date + timedelta(days=7)
     targets = await repository.list_reminder_subscriptions(
@@ -196,6 +205,7 @@ async def _run_reminder_job(
                 billing_date=target_date,
                 idempotency_keys=idempotency_keys,
                 now=now,
+                notification_dependencies=notification_dependencies,
             ):
                 sent += 1
             else:
@@ -220,15 +230,36 @@ async def _queue_billing_reminder_once(
     billing_date: date,
     idempotency_keys: IdempotencyKeyRepository,
     now: datetime,
+    notification_dependencies: NotificationEnqueueDependencies | None,
 ) -> bool:
     payload = _billing_reminder_payload(subscription, plan, billing_date)
-    key_hash = _hash_text(f"{subscription.id}:{billing_date.isoformat()}")
+    billing_cycle_key = Payment.generate_billing_cycle_key(
+        subscription.id,
+        _day_start(billing_date),
+    )
+    if billing_cycle_key is None:
+        return False
+    key_hash = _hash_text(f"{subscription.id}:{billing_cycle_key}")
     existing_key = await idempotency_keys.find_idempotency_key(
         SUBSCRIPTION_BILLING_REMINDER_SCOPE,
         key_hash,
     )
     if existing_key is not None:
         return False
+    if notification_dependencies is not None:
+        queued = await enqueue_user_notification_if_available(
+            dependencies=notification_dependencies,
+            event_type="subscription_billing_reminder",
+            recipient_user_id=subscription.user_id,
+            product_code=subscription.product_code,
+            template_args=payload,
+            idempotency_key=(
+                "email:subscription_billing_reminder:"
+                f"{subscription.id}:{billing_cycle_key}"
+            ),
+        )
+        if not queued:
+            return False
     await idempotency_keys.save_idempotency_key(
         IdempotencyKey(
             id=IdempotencyKey.generate_id(),
@@ -258,7 +289,7 @@ def _billing_reminder_payload(
     subscription: Subscription,
     plan: SubscriptionPlan,
     billing_date: date,
-) -> dict[str, object]:
+) -> TemplateArgs:
     return {
         "subscriptionId": subscription.id,
         "userId": subscription.user_id,
@@ -280,6 +311,7 @@ async def _run_billing_job(
     subscription_billing_uow_factory: SubscriptionBillingUnitOfWorkFactory | None,
     now: datetime,
     billing_date: date,
+    notification_dependencies: NotificationEnqueueDependencies | None,
 ) -> SubscriptionBillingRunResult:
     billing_cutoff_at = _day_end(billing_date)
     targets = await repository.list_due_active_subscriptions(
@@ -401,7 +433,14 @@ async def _run_billing_job(
                     subscription_billing_uow_factory,
                 ):
                     failed += 1
-                    failure_emails += 1
+                    if await _enqueue_subscription_payment_failed(
+                        subscription=subscription,
+                        plan=plan,
+                        payment=payment,
+                        invoice=invoice,
+                        notification_dependencies=notification_dependencies,
+                    ):
+                        failure_emails += 1
                 else:
                     skipped += 1
                 continue
@@ -439,7 +478,14 @@ async def _run_billing_job(
                     subscription_billing_uow_factory,
                 ):
                     failed += 1
-                    failure_emails += 1
+                    if await _enqueue_subscription_payment_failed(
+                        subscription=subscription,
+                        plan=plan,
+                        payment=payment,
+                        invoice=invoice,
+                        notification_dependencies=notification_dependencies,
+                    ):
+                        failure_emails += 1
                 else:
                     skipped += 1
                 continue
@@ -463,7 +509,14 @@ async def _run_billing_job(
                     subscription_billing_uow_factory,
                 ):
                     failed += 1
-                    failure_emails += 1
+                    if await _enqueue_subscription_payment_failed(
+                        subscription=subscription,
+                        plan=plan,
+                        payment=payment,
+                        invoice=invoice,
+                        notification_dependencies=notification_dependencies,
+                    ):
+                        failure_emails += 1
                 else:
                     skipped += 1
                 continue
@@ -487,13 +540,20 @@ async def _run_billing_job(
             if await _save_billing_documents(
                 repository,
                 payment,
-                    invoice,
-                    subscription,
-                    expected_next_billing_at,
-                    subscription_billing_uow_factory,
-                ):
+                invoice,
+                subscription,
+                expected_next_billing_at,
+                subscription_billing_uow_factory,
+            ):
                 paid += 1
-                success_emails += 1
+                if await _enqueue_subscription_payment_paid(
+                    subscription=subscription,
+                    plan=plan,
+                    payment=payment,
+                    invoice=invoice,
+                    notification_dependencies=notification_dependencies,
+                ):
+                    success_emails += 1
             else:
                 skipped += 1
         finally:
@@ -597,6 +657,74 @@ def _mark_billing_failure(
     payment.retry_scheduled_at = now + timedelta(days=1) if retryable else None
     invoice.status = "issued"
     subscription.status = "past_due"
+
+
+async def _enqueue_subscription_payment_paid(
+    *,
+    subscription: Subscription,
+    plan: SubscriptionPlan,
+    payment: Payment,
+    invoice: Invoice,
+    notification_dependencies: NotificationEnqueueDependencies | None,
+) -> bool:
+    if notification_dependencies is None:
+        return True
+    if payment.approved_at is None:
+        return False
+    return await enqueue_user_notification_if_available(
+        dependencies=notification_dependencies,
+        event_type="subscription_payment_paid",
+        recipient_user_id=subscription.user_id,
+        product_code=subscription.product_code,
+        template_args={
+            "subscriptionId": subscription.id,
+            "invoiceId": invoice.id,
+            "amount": payment.amount,
+            "currency": plan.currency,
+            "billingDate": payment.approved_at.date().isoformat(),
+            "receiptUrl": payment.receipt_url or "",
+            "planName": _plan_display_name(plan),
+            "paidAt": payment.approved_at.isoformat(),
+        },
+        idempotency_key=f"email:subscription_payment_paid:{invoice.id}:{payment.id}",
+    )
+
+
+async def _enqueue_subscription_payment_failed(
+    *,
+    subscription: Subscription,
+    plan: SubscriptionPlan,
+    payment: Payment,
+    invoice: Invoice,
+    notification_dependencies: NotificationEnqueueDependencies | None,
+) -> bool:
+    if notification_dependencies is None:
+        return True
+    if payment.retry_scheduled_at is None:
+        return False
+    failure = payment.failure or {}
+    failure_summary = str(failure.get("message") or "subscription payment failed")
+    provider_code = failure.get("providerCode")
+    template_args = {
+        "subscriptionId": subscription.id,
+        "invoiceId": invoice.id,
+        "amount": payment.amount,
+        "currency": plan.currency,
+        "failureSummary": failure_summary,
+        "retryScheduledAt": payment.retry_scheduled_at.date().isoformat(),
+        "billingMethodUpdateUrl": "/billing/methods",
+        "planName": _plan_display_name(plan),
+    }
+    if isinstance(provider_code, str) and provider_code:
+        template_args["providerCode"] = provider_code
+    return await enqueue_user_notification_if_available(
+        dependencies=notification_dependencies,
+        event_type="subscription_payment_failed",
+        recipient_user_id=subscription.user_id,
+        product_code=subscription.product_code,
+        template_args=template_args,
+        idempotency_key=f"email:subscription_payment_failed:{invoice.id}:{payment.id}",
+    )
 
 
 async def _save_billing_documents(

@@ -16,6 +16,10 @@ from payments.application.errors import (
     ProviderError,
     ResourceNotFoundError,
 )
+from payments.application.notifications import (
+    NotificationEnqueueDependencies,
+    enqueue_user_notification_if_available,
+)
 from payments.application.operation_locks import (
     acquire_required_operation_lock,
     release_operation_lock,
@@ -43,6 +47,7 @@ from payments.domain.entities.checkout import Checkout
 from payments.domain.entities.idempotency_key import IdempotencyKey
 from payments.domain.entities.ids import generate_uuid_id
 from payments.domain.entities.invoice import Invoice
+from payments.domain.entities.notification import TemplateArgs
 from payments.domain.entities.operator_audit import OperatorAudit
 from payments.domain.entities.payment import Payment
 from payments.domain.entities.payment_cancel_request import PaymentCancelRequest
@@ -244,6 +249,7 @@ async def cancel_admin_payment(
     clock: Clock,
     idempotency_key: str,
     operation_locks: OperationLockRepository | None = None,
+    notification_dependencies: NotificationEnqueueDependencies | None = None,
 ) -> AdminPaymentCancelResult:
     """관리자가 회원 소유권 검증 없이 일반결제를 취소합니다.
 
@@ -288,6 +294,7 @@ async def cancel_admin_payment(
             provider=provider,
             clock=clock,
             idempotency_key=idempotency_key,
+            notification_dependencies=notification_dependencies,
         )
     finally:
         await release_operation_lock(
@@ -305,6 +312,7 @@ async def _cancel_admin_payment_locked(
     provider: PaymentProvider,
     clock: Clock,
     idempotency_key: str,
+    notification_dependencies: NotificationEnqueueDependencies | None,
 ) -> AdminPaymentCancelResult:
     payload = {
         "paymentId": payment_id,
@@ -530,6 +538,11 @@ async def _cancel_admin_payment_locked(
         payment.status = (
             "canceled" if payment.cancelable_amount == 0 else "partial_canceled"
         )
+        recipient_user_id: str | None = None
+        if payment.checkout_id is not None:
+            checkout = await uow.checkouts.get_checkout(payment.checkout_id)
+            if checkout is not None:
+                recipient_user_id = checkout.user_id
         if payment.status == "canceled" and payment.checkout_id is not None:
             checkout = await uow.checkouts.get_checkout(payment.checkout_id)
             if checkout is not None:
@@ -611,6 +624,17 @@ async def _cancel_admin_payment_locked(
                 response_body=_admin_payment_cancel_result_to_response_body(result),
             )
         )
+        if command.notify_customer and recipient_user_id is not None:
+            await _enqueue_admin_payment_cancel_completed(
+                user_id=recipient_user_id,
+                payment=payment,
+                cancel_id=succeeded_cancel_request.id,
+                cancel_amount=cancel_amount,
+                cancel_reason=command.cancel_reason,
+                canceled_at=provider_result.canceled_at,
+                receipt_url=provider_result.receipt_url,
+                notification_dependencies=notification_dependencies,
+            )
         return result
 
 
@@ -674,6 +698,7 @@ async def adjust_admin_subscription(
     admin_subscription_adjust_uow_factory: (
         AdminSubscriptionAdjustUnitOfWorkFactory | None
     ) = None,
+    notification_dependencies: NotificationEnqueueDependencies | None = None,
 ) -> AdminSubscriptionAdjustResult:
     """관리자가 구독의 결제일과 상태를 감사 가능하게 보정합니다."""
     _validate_admin_subscription_adjust_command(command)
@@ -837,6 +862,16 @@ async def adjust_admin_subscription(
             result=result,
             now=clock.utc_now(),
         )
+        if command.notify_customer:
+            await _enqueue_subscription_adjustment_completed(
+                subscription=subscription,
+                command=command,
+                previous_state=previous_state,
+                current_state=current_state,
+                adjusted_at=clock.utc_now(),
+                operator_audit_id=audit_id,
+                notification_dependencies=notification_dependencies,
+            )
         return result
     finally:
         await release_operation_lock(
@@ -1428,6 +1463,33 @@ def _payment_cancel_notification(
     }
 
 
+async def _enqueue_admin_payment_cancel_completed(
+    *,
+    user_id: str,
+    payment: Payment,
+    cancel_id: str,
+    cancel_amount: int,
+    cancel_reason: str,
+    canceled_at: datetime,
+    receipt_url: str | None,
+    notification_dependencies: NotificationEnqueueDependencies | None,
+) -> bool:
+    return await enqueue_user_notification_if_available(
+        dependencies=notification_dependencies,
+        event_type="payment_cancel_completed",
+        recipient_user_id=user_id,
+        template_args={
+            "paymentId": payment.id,
+            "cancelAmount": cancel_amount,
+            "currency": "KRW",
+            "canceledAt": canceled_at.isoformat(),
+            "cancelReason": cancel_reason,
+            "receiptUrl": receipt_url or "",
+        },
+        idempotency_key=f"email:payment_cancel_completed:{payment.id}:{cancel_id}",
+    )
+
+
 def _subscription_adjust_audit_state(
     current_state: dict[str, object],
     command: AdminSubscriptionAdjustCommand,
@@ -1453,6 +1515,44 @@ def _subscription_adjust_notification(
         "queued": command.notify_customer,
         "payload": payload,
     }
+
+
+async def _enqueue_subscription_adjustment_completed(
+    *,
+    subscription: Subscription,
+    command: AdminSubscriptionAdjustCommand,
+    previous_state: dict[str, object],
+    current_state: dict[str, object],
+    adjusted_at: datetime,
+    operator_audit_id: str,
+    notification_dependencies: NotificationEnqueueDependencies | None,
+) -> bool:
+    template_args: TemplateArgs = {
+        "subscriptionId": subscription.id,
+        "adjustmentType": command.adjustment_type,
+        "status": str(current_state.get("status") or subscription.status),
+        "adjustedAt": adjusted_at.isoformat(),
+        "previousStatus": str(previous_state.get("status") or ""),
+        "reasonSummary": command.reason_message,
+        "subscriptionManageUrl": "/subscriptions/me",
+    }
+    next_billing_at = current_state.get("nextBillingAt")
+    if isinstance(next_billing_at, datetime):
+        template_args["nextBillingAt"] = next_billing_at.isoformat()
+    access_until = current_state.get("accessUntil")
+    if isinstance(access_until, datetime):
+        template_args["accessUntil"] = access_until.isoformat()
+    return await enqueue_user_notification_if_available(
+        dependencies=notification_dependencies,
+        event_type="subscription_adjustment_completed",
+        recipient_user_id=subscription.user_id,
+        product_code=subscription.product_code,
+        template_args=template_args,
+        idempotency_key=(
+            "email:subscription_adjustment_completed:"
+            f"{subscription.id}:{operator_audit_id}"
+        ),
+    )
 
 
 async def _restore_checkout_sold_stock(

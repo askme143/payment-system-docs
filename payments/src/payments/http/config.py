@@ -15,6 +15,9 @@ class PaymentHttpConfig:
     toss_base_url: str = "https://api.tosspayments.com"
     toss_webhook_secret: str = ""
     billing_key_encryption_secret: str = ""
+    notification_template_arg_encryption_secret: str = ""
+    admin_auth_link_base_url: str = ""
+    notification_recipient_api_base_url: str = ""
     allowed_redirect_hosts: tuple[str, ...] = ("example.com",)
 
 
@@ -41,6 +44,18 @@ def payment_config_from_env(
         billing_key_encryption_secret=environ.get(
             "PAYMENTS_BILLING_KEY_ENCRYPTION_SECRET",
             internal_service_token,
+        ),
+        notification_template_arg_encryption_secret=environ.get(
+            "PAYMENTS_NOTIFICATION_TEMPLATE_ARG_ENCRYPTION_SECRET",
+            internal_service_token,
+        ),
+        admin_auth_link_base_url=_required_env(
+            environ,
+            "PAYMENTS_ADMIN_AUTH_LINK_BASE_URL",
+        ),
+        notification_recipient_api_base_url=_required_env(
+            environ,
+            "PAYMENTS_NOTIFICATION_RECIPIENT_API_BASE_URL",
         ),
         allowed_redirect_hosts=_csv_tuple(
             environ.get("PAYMENTS_ALLOWED_REDIRECT_HOSTS", "example.com")

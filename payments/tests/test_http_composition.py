@@ -21,6 +21,8 @@ from payments.adapters.mongo import (
     MongoCatalogRepository,
     MongoIdempotencyKeyRepository,
     MongoInvoiceRepository,
+    MongoNotificationOutboxRepository,
+    MongoNotificationTemplateRepository,
     MongoOneTimePaymentUnitOfWorkFactory,
     MongoOperationLockRepository,
     MongoPaymentAttemptRepository,
@@ -37,6 +39,7 @@ from payments.adapters.mongo import (
     MongoWebhookRepository,
     MongoWebhookUnitOfWorkFactory,
 )
+from payments.adapters.notifications import AdminAuthOutboxEmailSender
 from payments.adapters.rate_limit import InMemoryAdminAuthRateLimiter
 from payments.adapters.subscription_change_tokens import (
     HmacSubscriptionChangeTokenCodec,
@@ -68,6 +71,8 @@ class FakeDatabase:
     billing_auths = object()
     payment_customers = object()
     webhook_events = object()
+    notification_outbox = object()
+    notification_templates = object()
 
 
 def motor_database_stub() -> AsyncIOMotorDatabase[TestMongoDocument]:
@@ -83,6 +88,13 @@ class TestHttpComposition:
                 "PAYMENTS_INTERNAL_SERVICE_TOKEN": "secret",
                 "PAYMENTS_TOSS_WEBHOOK_SECRET": "webhook-secret",
                 "PAYMENTS_BILLING_KEY_ENCRYPTION_SECRET": "billing-key-secret",
+                "PAYMENTS_NOTIFICATION_TEMPLATE_ARG_ENCRYPTION_SECRET": (
+                    "notification-secret"
+                ),
+                "PAYMENTS_ADMIN_AUTH_LINK_BASE_URL": "https://admin.example.com",
+                "PAYMENTS_NOTIFICATION_RECIPIENT_API_BASE_URL": (
+                    "https://member.example.com"
+                ),
                 "PAYMENTS_ALLOWED_REDIRECT_HOSTS": "example.com,app.example.com",
             }
         )
@@ -92,6 +104,15 @@ class TestHttpComposition:
         assert config.internal_service_token == "secret"
         assert config.toss_webhook_secret == "webhook-secret"
         assert config.billing_key_encryption_secret == "billing-key-secret"
+        assert (
+            config.notification_template_arg_encryption_secret
+            == "notification-secret"
+        )
+        assert config.admin_auth_link_base_url == "https://admin.example.com"
+        assert (
+            config.notification_recipient_api_base_url
+            == "https://member.example.com"
+        )
         assert config.allowed_redirect_hosts == ("example.com", "app.example.com")
 
     def test_payment_config_from_env_rejects_missing_required_values(self) -> None:
@@ -103,6 +124,22 @@ class TestHttpComposition:
                     "PAYMENTS_DATABASE_URL": "mongodb://localhost:27017",
                     "PAYMENTS_DATABASE_NAME": "payments",
                     "PAYMENTS_INTERNAL_SERVICE_TOKEN": "secret",
+                    "PAYMENTS_ADMIN_AUTH_LINK_BASE_URL": "https://admin.example.com",
+                    "PAYMENTS_NOTIFICATION_RECIPIENT_API_BASE_URL": (
+                        "https://member.example.com"
+                    ),
+                }
+            )
+        with pytest.raises(ValueError, match="PAYMENTS_ADMIN_AUTH_LINK_BASE_URL"):
+            payment_config_from_env(
+                {
+                    "PAYMENTS_DATABASE_URL": "mongodb://localhost:27017",
+                    "PAYMENTS_DATABASE_NAME": "payments",
+                    "PAYMENTS_INTERNAL_SERVICE_TOKEN": "secret",
+                    "PAYMENTS_TOSS_WEBHOOK_SECRET": "webhook-secret",
+                    "PAYMENTS_NOTIFICATION_RECIPIENT_API_BASE_URL": (
+                        "https://member.example.com"
+                    ),
                 }
             )
 
@@ -114,6 +151,8 @@ class TestHttpComposition:
                 database_name="payments",
                 internal_service_token="secret",
                 toss_webhook_secret="webhook-secret",
+                admin_auth_link_base_url="https://admin.example.com",
+                notification_recipient_api_base_url="https://member.example.com",
             ),
         )
 
@@ -127,6 +166,18 @@ class TestHttpComposition:
         assert isinstance(
             dependencies.admin_auth_rate_limiter,
             InMemoryAdminAuthRateLimiter,
+        )
+        assert isinstance(
+            dependencies.admin_auth_email_sender,
+            AdminAuthOutboxEmailSender,
+        )
+        assert isinstance(
+            dependencies.admin_auth_email_sender.outbox_repository,
+            MongoNotificationOutboxRepository,
+        )
+        assert isinstance(
+            dependencies.admin_auth_email_sender.template_repository,
+            MongoNotificationTemplateRepository,
         )
         assert isinstance(
             dependencies.admin_operations,
@@ -223,6 +274,8 @@ class TestHttpComposition:
                 database_name="payments",
                 internal_service_token="secret",
                 toss_webhook_secret="webhook-secret",
+                admin_auth_link_base_url="https://admin.example.com",
+                notification_recipient_api_base_url="https://member.example.com",
             ),
         )
 

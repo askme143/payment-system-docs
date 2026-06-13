@@ -100,8 +100,38 @@ class RecordingAdminAuthEmailSender:
         self.login_links: list[tuple[str, str]] = []
         self.password_reset_links: list[tuple[str, str]] = []
 
-    async def send_login_link(self, email: str, login_token: str) -> None:
+    async def send_login_link(
+        self,
+        *,
+        admin_id: str,
+        email: str,
+        recipient_name: str | None,
+        auth_token_id: str,
+        login_token: str,
+        expires_at: datetime,
+        request_ip: str | None,
+        user_agent: str | None,
+    ) -> None:
+        _ = (
+            admin_id,
+            recipient_name,
+            auth_token_id,
+            expires_at,
+            request_ip,
+            user_agent,
+        )
         self.login_links.append((email, login_token))
 
-    async def send_password_reset_link(self, email: str, reset_token: str) -> None:
+    async def send_password_reset_link(
+        self,
+        *,
+        admin_id: str,
+        email: str,
+        recipient_name: str | None,
+        auth_token_id: str,
+        reset_token: str,
+        expires_at: datetime,
+        request_ip: str | None,
+    ) -> None:
+        _ = (admin_id, recipient_name, auth_token_id, expires_at, request_ip)
         self.password_reset_links.append((email, reset_token))

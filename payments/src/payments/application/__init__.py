@@ -21,6 +21,12 @@ from payments.application.billing_methods import (
 )
 from payments.application.catalog import get_subscription_plan, list_subscription_plans
 from payments.application.invoices import get_invoice_detail, list_user_invoices
+from payments.application.notifications import (
+    NotificationEnqueueDependencies,
+    enqueue_notification,
+    enqueue_user_notification_if_available,
+    seed_notification_templates_if_empty,
+)
 from payments.application.payment_orders import (
     cancel_payment,
     confirm_payment,
@@ -37,6 +43,7 @@ from payments.application.subscriptions import (
 )
 
 __all__ = [
+    "NotificationEnqueueDependencies",
     "cancel_admin_payment",
     "cancel_payment",
     "cancel_subscription_at_period_end",
@@ -49,6 +56,8 @@ __all__ = [
     "create_subscription_change_preview",
     "create_subscription_checkout",
     "delete_billing_method",
+    "enqueue_notification",
+    "enqueue_user_notification_if_available",
     "get_current_user_subscriptions",
     "get_invoice_detail",
     "get_payment_detail",
@@ -60,6 +69,7 @@ __all__ = [
     "list_user_invoices",
     "record_payment_auth_failure",
     "resume_subscription",
+    "seed_notification_templates_if_empty",
     "set_default_billing_method",
     "start_billing_auth",
     "update_admin_one_time_sku",

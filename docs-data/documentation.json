@@ -4763,10 +4763,11 @@
         "jobType, status, triggerSource, workerId, 기간, cursor, limit 쿼리 파라미터를 검증합니다.",
         "scheduler_run_logs를 started_at 내림차순, runId 내림차순으로 안정 정렬하고 커서 기반 페이지네이션을 적용합니다.",
         "목록 응답에는 실행 요약, 실행 시간, 실패 건수, 운영자 수동 실행 여부와 operatorAuditId만 포함하고 상세 오류 payload는 상세 API에서 조회합니다.",
-        "조회 조건과 관리자 ID, 요청 IP를 접근 로그에 남기며 이 조회 자체는 결제 상태를 변경하지 않습니다."
+        "조회 조건과 관리자 ID, 요청 IP를 구조화된 애플리케이션 접근 로그에 남기며 이 조회 자체는 결제 상태를 변경하지 않습니다."
       ],
       "notes": [
         "스케쥴러 실행 이력은 운영 진단용 데이터이며 결제 원장이나 감사 로그를 대체하지 않습니다.",
+        "scheduler_run_logs.status는 실행 단위 자체의 완료 여부를 나타냅니다. 일부 대상 처리 실패는 summary.failed에 집계하며, job 함수가 전체 대상 순회를 마치고 요약 저장까지 성공하면 status=succeeded로 기록합니다.",
         "Kubernetes CronJob 실행은 HTTP API 호출 없이 scheduler runner가 직접 application job을 실행하지만, 실행 결과는 같은 scheduler_run_logs 컬렉션에 저장합니다."
       ],
       "riskIds": [
@@ -4854,6 +4855,7 @@
         "provider credential, billingKey, 카드 전체 번호, 원본 provider 응답처럼 민감한 값은 metadata나 error에 포함하지 않습니다."
       ],
       "notes": [
+        "status=failed는 실행 단위가 치명 오류, 설정 오류, 잠금 실패, 요약 저장 실패, 프로세스 non-zero 종료처럼 정상적으로 완료되지 못한 경우에만 사용합니다. 개별 결제나 알림 대상의 실패는 summary.failed와 error 요약으로 진단합니다.",
         "상세 응답의 error는 운영자가 재실행 여부를 판단할 수 있는 요약이며 원본 예외 stack trace를 그대로 반환하지 않습니다."
       ],
       "riskIds": [
@@ -4861,7 +4863,7 @@
       ]
     },
     "admin-scheduler-runs-create": {
-      "summary": "운영자가 어드민 콘솔에서 정기결제, 사전 알림, 해지 예약 만료 작업을 수동 실행하는 관리자 API입니다. 실행 결과는 scheduler_run_logs에 남기고 운영자 수동 실행 사실은 operator_audits에 남깁니다.",
+      "summary": "운영자가 어드민 콘솔에서 정기결제, 사전 알림, 해지 예약 만료 작업을 수동 실행하는 관리자 API입니다. API 서버는 Kubernetes Job 또는 CronJob을 생성하지 않고 동일 application job 함수를 요청 처리 중 동기 실행합니다. 실행 결과는 scheduler_run_logs에 남기고 운영자 수동 실행 사실은 operator_audits에 남깁니다.",
       "request": {
         "headers": [
           {
@@ -4924,7 +4926,7 @@
       "responses": [
         {
           "status": 201,
-          "description": "수동 스케쥴러 실행 완료",
+          "description": "수동 스케쥴러 동기 실행 완료",
           "bodyExample": {
             "runId": "srun_20260612_manual_001",
             "jobType": "billing",
@@ -4961,6 +4963,7 @@
         "관리자 액세스 토큰의 subject와 권한 클레임으로 scheduler_run 권한을 확인합니다.",
         "Idempotency-Key와 요청 payload hash를 검증해 같은 수동 실행 요청을 멱등하게 처리합니다.",
         "scheduler_run_logs에 status=running, trigger_source=admin_manual, worker_id=adminId:requestId로 시작 기록을 저장합니다.",
+        "API 서버 프로세스가 Kubernetes Job 또는 CronJob을 생성하지 않고 동일 application job 함수를 동기 실행하며, 요청은 job 완료와 scheduler_run_logs 최종 갱신까지 대기합니다.",
         "jobType=billing 또는 reminder이면 기존 정기결제 application job을 호출하고, jobType=cancel_expiration이면 해지 예약 만료 job을 호출합니다.",
         "job 실행은 operation_locks로 job 단위 중복 실행을 막고, 각 결제 회차는 application job의 기존 멱등성 규칙을 따릅니다.",
         "성공 시 scheduler_run_logs를 succeeded로 갱신하고 summary, finished_at, duration_ms, exit_code=0을 저장합니다.",
@@ -4983,6 +4986,8 @@
       ],
       "notes": [
         "운영 메인 실행 경로는 Kubernetes CronJob runner이며 이 API는 운영자 수동 실행을 위한 보조 경로입니다.",
+        "어드민 수동 실행은 API 서버 런타임에서 수행하므로 limit, operation_locks, 요청 timeout 정책으로 실행 시간을 제한합니다. 오래 걸리는 대량 재처리는 Kubernetes CronJob runner 경로로 분리합니다.",
+        "어드민 수동 실행도 API 서버가 같은 application job 함수를 끝까지 실행하고 요약 저장에 성공하면 일부 대상 실패가 있어도 status=succeeded로 응답합니다. 실행 단위 자체가 실패한 경우에만 status=failed와 안정화된 error를 반환합니다.",
         "dryRun=true 실행도 scheduler_run_logs와 operator_audits에 남겨 실제 변경이 없었다는 점을 추적합니다."
       ],
       "riskIds": [
@@ -5017,7 +5022,7 @@
         {
           "name": "action",
           "source": "query",
-          "description": "payment.cancel, subscription.adjust, product.status_change, scheduler.run_manual 같은 작업 코드입니다."
+          "description": "표준 action registry의 작업 코드입니다. 예: payment.cancel, subscription.adjust, product.status_change, scheduler.run_manual."
         },
         {
           "name": "targetType",
@@ -5086,9 +5091,10 @@
         "operatorId, action, targetType, targetId, result, 기간, cursor, limit 쿼리 파라미터를 검증합니다.",
         "operator_audits를 created_at 내림차순, auditId 내림차순으로 안정 정렬하고 커서 기반 페이지네이션을 적용합니다.",
         "목록 응답에는 변경 전후 전체 state가 아니라 작업 코드, 대상, 결과, 사유 코드, 생성 시각 요약만 반환합니다.",
-        "감사 로그 조회 자체도 접근 로그에 남기며 operator_audits 문서를 수정하지 않습니다."
+        "감사 로그 조회 자체도 구조화된 애플리케이션 접근 로그에 남기며 operator_audits 문서를 수정하지 않습니다."
       ],
       "notes": [
+        "operator_audits.action은 MongoDB에는 string으로 저장하지만, 애플리케이션은 표준 action registry를 우선 사용합니다. 첫 구현 registry는 payment.cancel, subscription.adjust, product.create, product.status_change, subscription_plan.create, subscription_plan.update, one_time_sku.create, one_time_sku.update, scheduler.run_manual, subscription.cancel_expired, subscription.plan_change, subscription.cancel_scheduled, subscription.resume, billing_method.delete를 포함합니다.",
         "previousState와 nextState 전체 payload는 상세 API에서만 반환해 목록 화면의 과도한 민감 정보 노출을 줄입니다."
       ]
     },
@@ -9350,7 +9356,7 @@
       "status": "available",
       "kind": "admin",
       "groupId": "admin",
-      "summary": "Kubernetes CronJob이 같은 payments 이미지를 1회 실행하고, 어드민 콘솔이 스케쥴러 실행 이력 조회와 수동 실행을 제공하는 흐름입니다.",
+      "summary": "Kubernetes CronJob이 같은 payments 이미지를 1회 실행하고, 어드민 콘솔이 스케쥴러 실행 이력 조회와 수동 실행을 제공하는 흐름입니다. 이 CronJob 경로는 정기결제, 사전 알림, 해지 예약 만료 같은 scheduler batch용이며, 이메일 Notification Worker는 Deployment로 상시 실행합니다.",
       "apiIds": [
         "admin-scheduler-runs-list",
         "admin-scheduler-runs-detail",
@@ -9386,7 +9392,7 @@
               "to": "server",
               "label": "payments 이미지에서 scheduler runner 1회 실행",
               "code": "python -m payments.scheduler.runner billing --batch-size 100",
-              "note": "Kubernetes CronJob은 HTTP API 호출이 아니라 같은 이미지의 별도 entrypoint를 실행"
+              "note": "Kubernetes CronJob은 HTTP API 호출이 아니라 같은 이미지의 별도 entrypoint를 실행합니다. 이 경로는 scheduler batch용이며 이메일 Notification Worker는 Deployment 상시 실행입니다."
             },
             {
               "type": "self",
@@ -9457,7 +9463,7 @@
               "to": "server",
               "label": "수동 실행 요청",
               "apiId": "admin-scheduler-runs-create",
-              "note": "jobType, billingDate, limit, dryRun, reason, Idempotency-Key"
+              "note": "jobType, billingDate, limit, dryRun, reason, Idempotency-Key. API 서버가 Kubernetes Job 또는 CronJob을 생성하지 않고 직접 동기 실행"
             },
             {
               "type": "self",
@@ -9504,7 +9510,7 @@
               "from": "server",
               "to": "admin",
               "label": "수동 실행 결과 반환",
-              "code": "runId, status, summary, operatorAuditId"
+              "code": "201 Created after completion: runId, status, summary, operatorAuditId"
             }
           ]
         },
@@ -11443,7 +11449,7 @@
             "name": "action",
             "type": "string",
             "required": true,
-            "description": "수행한 운영 작업 코드입니다."
+            "description": "수행한 운영 작업 코드입니다. 저장 타입은 string이지만 애플리케이션은 표준 action registry를 우선 사용해 필터, 문서, 운영 대시보드의 표기를 안정화합니다."
           },
           {
             "name": "target_type",
@@ -11617,7 +11623,7 @@
               "failed",
               "canceled"
             ],
-            "description": "스케쥴러 실행의 현재 또는 최종 상태입니다."
+            "description": "스케쥴러 실행 단위 자체의 현재 또는 최종 상태입니다. 일부 대상 처리 실패는 summary.failed에 집계하며, job 함수가 끝까지 실행되고 요약 저장에 성공하면 failed 건수가 있어도 succeeded입니다. failed는 치명 오류, 설정 오류, 잠금 실패, 요약 저장 실패, 프로세스 non-zero 종료처럼 실행 단위가 정상 완료되지 못한 경우에만 사용합니다."
           },
           {
             "name": "worker_id",
@@ -11721,7 +11727,7 @@
                 "name": "failed",
                 "type": "number",
                 "required": false,
-                "description": "실패한 처리 건수입니다."
+                "description": "개별 대상 처리에 실패한 건수입니다. 이 값이 0보다 커도 실행 단위가 끝까지 완료되고 요약 저장에 성공하면 scheduler_run_logs.status는 succeeded일 수 있습니다."
               },
               {
                 "name": "skipped",
@@ -13345,12 +13351,12 @@
           {
             "from": "running",
             "to": "succeeded",
-            "event": "job completed and summary persisted"
+            "event": "job completed and summary persisted; per-target failures, if any, are recorded in summary.failed"
           },
           {
             "from": "running",
             "to": "failed",
-            "event": "job raised unrecoverable error or process exits non-zero"
+            "event": "run-level failure such as unrecoverable error, configuration error, lock failure, summary persistence failure, or non-zero process exit"
           },
           {
             "from": "running",
@@ -14619,6 +14625,20 @@
     ],
     "workerPolicy": {
       "title": "Worker claim and retry policy",
+      "runtimeModels": [
+        {
+          "name": "Notification Worker",
+          "kubernetesWorkload": "Deployment",
+          "entrypoint": "python -m payments.scheduler.runner notification-worker",
+          "description": "이메일 Notification Worker는 Kubernetes Deployment로 상시 실행합니다. poll_interval마다 due outbox item을 claim하며, 이메일 발송 지연을 줄이기 위한 전용 worker입니다. Kubernetes CronJob으로 매번 기동하지 않습니다."
+        },
+        {
+          "name": "Scheduler batch",
+          "kubernetesWorkload": "CronJob",
+          "entrypoint": "python -m payments.scheduler.runner billing ...",
+          "description": "정기결제, 사전 알림, 해지 예약 만료 같은 scheduler batch는 Kubernetes CronJob으로 매 실행마다 Pod이 1회 기동합니다. 같은 payments 이미지를 사용하되 1회 실행 entrypoint를 호출하고 종료 코드로 성공/실패를 판단합니다."
+        }
+      ],
       "settings": [
         {
           "name": "batch_size",

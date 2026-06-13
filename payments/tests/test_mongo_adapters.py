@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from datetime import UTC, date, datetime
+from datetime import UTC, date, datetime, timedelta
 from typing import cast
 
 import pytest
@@ -17,6 +17,10 @@ from payments.adapters.mongo.checkouts import MongoCheckoutRepository
 from payments.adapters.mongo.idempotency import MongoIdempotencyKeyRepository
 from payments.adapters.mongo.indexes import ensure_mongo_indexes
 from payments.adapters.mongo.invoices import MongoInvoiceRepository
+from payments.adapters.mongo.notifications import (
+    MongoNotificationOutboxRepository,
+    MongoNotificationTemplateRepository,
+)
 from payments.adapters.mongo.one_time_skus import MongoOneTimeSkuRepository
 from payments.adapters.mongo.operation_locks import MongoOperationLockRepository
 from payments.adapters.mongo.payment_attempts import MongoPaymentAttemptRepository
@@ -50,6 +54,7 @@ from payments.domain.entities.billing_method import BillingMethod
 from payments.domain.entities.checkout import Checkout
 from payments.domain.entities.idempotency_key import IdempotencyKey
 from payments.domain.entities.invoice import Invoice
+from payments.domain.entities.notification import NotificationLastError
 from payments.domain.entities.one_time_sku import OneTimeSku
 from payments.domain.entities.operator_audit import OperatorAudit
 from payments.domain.entities.payment import Payment
@@ -308,6 +313,8 @@ class FakeDatabase:
         self.payment_instruments = FakeCollection()
         self.operator_audits = FakeCollection()
         self.webhook_events = FakeCollection()
+        self.notification_outbox = FakeCollection()
+        self.notification_templates = FakeCollection()
 
 
 def motor_collection_stub(
@@ -519,6 +526,19 @@ async def test_ensure_mongo_indexes_requests_first_slice_indexes() -> None:
         for index in database.payments.indexes
     )
     assert any(
+        index[1]["name"] == "uniq_notification_outbox_idempotency_key"
+        for index in database.notification_outbox.indexes
+    )
+    assert any(
+        index[1]["name"] == "ttl_notification_outbox_purge_after"
+        and index[1]["expireAfterSeconds"] == 0
+        for index in database.notification_outbox.indexes
+    )
+    assert any(
+        index[1]["name"] == "uniq_notification_templates_key_version"
+        for index in database.notification_templates.indexes
+    )
+    assert any(
         index[1]["name"] == "idx_payments_ready_expires_at"
         and index[1]["partialFilterExpression"]
         == {"status": "ready", "expires_at": {"$type": "date"}}
@@ -665,6 +685,181 @@ async def test_ensure_mongo_indexes_requests_first_slice_indexes() -> None:
         index[1]["name"] == "uniq_webhook_events_provider_event"
         for index in database.webhook_events.indexes
     )
+
+
+async def test_mongo_notification_template_repository_resolves_fallback_order() -> None:
+    now = datetime(2026, 6, 10, tzinfo=UTC)
+    repository = MongoNotificationTemplateRepository(
+        motor_collection_stub(
+            FakeCollection(
+                [
+                    {
+                        "_id": "ntpl_default",
+                        "template_key": "default.subscription_payment_failed",
+                        "version": 1,
+                        "event_type": "subscription_payment_failed",
+                        "status": "active",
+                        "subject_template": "default",
+                        "html_template": "{{ invoiceId }}",
+                        "text_template": "{{ invoiceId }}",
+                        "required_template_args": ["invoiceId"],
+                        "created_at": now,
+                        "updated_at": now,
+                    },
+                    {
+                        "_id": "ntpl_type",
+                        "template_key": "subscription.subscription_payment_failed",
+                        "version": 1,
+                        "event_type": "subscription_payment_failed",
+                        "product_type": "subscription",
+                        "status": "active",
+                        "subject_template": "type",
+                        "html_template": "{{ invoiceId }}",
+                        "text_template": "{{ invoiceId }}",
+                        "required_template_args": ["invoiceId"],
+                        "created_at": now,
+                        "updated_at": now,
+                    },
+                    {
+                        "_id": "ntpl_product",
+                        "template_key": "basic.subscription_payment_failed",
+                        "version": 1,
+                        "event_type": "subscription_payment_failed",
+                        "product_code": "basic",
+                        "status": "active",
+                        "subject_template": "product",
+                        "html_template": "{{ invoiceId }}",
+                        "text_template": "{{ invoiceId }}",
+                        "required_template_args": ["invoiceId"],
+                        "created_at": now,
+                        "updated_at": now,
+                    },
+                ]
+            )
+        )
+    )
+
+    template = await repository.resolve_active_template(
+        event_type="subscription_payment_failed",
+        product_code="basic",
+        product_type="subscription",
+    )
+
+    assert template is not None
+    assert template.template_key == "basic.subscription_payment_failed"
+
+
+async def test_mongo_notification_outbox_claim_respects_locked_until() -> None:
+    now = datetime(2026, 6, 10, tzinfo=UTC)
+    collection = FakeCollection(
+        [
+            {
+                "_id": "nout_due",
+                "idempotency_key": "email:one_time_payment_paid:chk_1:pay_1",
+                "idempotency_payload_hash": "hash",
+                "event_type": "one_time_payment_paid",
+                "recipient_type": "user",
+                "recipient_user_id": "user_1",
+                "recipient_email": "user@example.com",
+                "template_key": "default.one_time_payment_paid",
+                "template_version": 1,
+                "template_args": {"checkoutId": "chk_1"},
+                "status": "pending",
+                "attempt_count": 0,
+                "available_at": now,
+                "created_at": now,
+                "updated_at": now,
+            },
+            {
+                "_id": "nout_locked",
+                "idempotency_key": "email:one_time_payment_paid:chk_2:pay_2",
+                "idempotency_payload_hash": "hash",
+                "event_type": "one_time_payment_paid",
+                "recipient_type": "user",
+                "recipient_user_id": "user_2",
+                "recipient_email": "user2@example.com",
+                "template_key": "default.one_time_payment_paid",
+                "template_version": 1,
+                "template_args": {"checkoutId": "chk_2"},
+                "status": "retry_scheduled",
+                "attempt_count": 1,
+                "available_at": now,
+                "locked_until_at": now + timedelta(minutes=1),
+                "created_at": now,
+                "updated_at": now,
+            },
+        ]
+    )
+    repository = MongoNotificationOutboxRepository(motor_collection_stub(collection))
+
+    claimed = await repository.claim_due_notifications(
+        now=now,
+        lock_until=now + timedelta(minutes=5),
+        worker_id="worker-1",
+        limit=100,
+    )
+
+    assert [item.id for item in claimed] == ["nout_due"]
+    assert collection.documents["nout_due"]["status"] == "processing"
+    assert collection.documents["nout_due"]["worker_id"] == "worker-1"
+    assert collection.documents["nout_due"]["attempt_count"] == 1
+    assert collection.documents["nout_locked"]["status"] == "retry_scheduled"
+
+
+async def test_mongo_notification_outbox_updates_retry_and_dead_letter() -> None:
+    now = datetime(2026, 6, 10, tzinfo=UTC)
+    collection = FakeCollection(
+        [
+            {
+                "_id": "nout_1",
+                "idempotency_key": "email:admin_auth.login_link:aatok_1",
+                "idempotency_payload_hash": "hash",
+                "event_type": "admin_auth.login_link",
+                "recipient_type": "admin",
+                "recipient_admin_id": "admin_1",
+                "recipient_email": "ops@example.com",
+                "template_key": "default.admin_auth.login_link",
+                "template_version": 1,
+                "template_args": {"expiresMinutes": 10},
+                "status": "processing",
+                "attempt_count": 1,
+                "available_at": now,
+                "locked_until_at": now + timedelta(minutes=5),
+                "worker_id": "worker-1",
+                "created_at": now,
+                "updated_at": now,
+            }
+        ]
+    )
+    repository = MongoNotificationOutboxRepository(motor_collection_stub(collection))
+    error = NotificationLastError(
+        code="smtp_timeout",
+        message="SMTP timeout",
+        retryable=True,
+        occurred_at=now,
+    )
+
+    await repository.schedule_retry(
+        "nout_1",
+        available_at=now + timedelta(minutes=1),
+        last_error=error,
+    )
+    await repository.mark_dead_letter(
+        "nout_1",
+        last_error=NotificationLastError(
+            code="template_render_failed",
+            message="template render failed",
+            retryable=False,
+            occurred_at=now + timedelta(seconds=1),
+        ),
+        purge_after_at=now + timedelta(days=180),
+    )
+
+    document = collection.documents["nout_1"]
+    assert document["status"] == "dead_letter"
+    assert document["last_error"]["code"] == "template_render_failed"
+    assert document["purge_after_at"] == now + timedelta(days=180)
+    assert "locked_until_at" not in document
 
 
 async def test_mongo_operation_lock_repository_acquires_and_releases_lock() -> None:

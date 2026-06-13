@@ -72,6 +72,7 @@ def create_router(dependencies: HttpDependencies) -> APIRouter:
                 subscription_billing_uow_factory=(
                     dependencies.subscription_billing_uow_factory
                 ),
+                notification_dependencies=dependencies.notification_enqueue,
             )
             return subscription_billing_response(result)
         summary = await expire_cancel_scheduled_subscriptions(
@@ -83,6 +84,7 @@ def create_router(dependencies: HttpDependencies) -> APIRouter:
             subscription_expiration_uow_factory=(
                 dependencies.subscription_expiration_uow_factory
             ),
+            notification_dependencies=dependencies.notification_enqueue,
         )
         return subscription_expiration_response(summary)
 
@@ -115,6 +117,7 @@ def create_router(dependencies: HttpDependencies) -> APIRouter:
             subscription_billing_uow_factory=(
                 dependencies.subscription_billing_uow_factory
             ),
+            notification_dependencies=dependencies.notification_enqueue,
         )
         return billing_retry_response(result)
 

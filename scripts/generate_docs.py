@@ -2177,6 +2177,15 @@ def render_notification_template_catalog_doc(data):
 
 
 def render_notification_worker_policy_section(worker_policy):
+    runtime_model_cards = "".join(
+        "<article class=\"box\">"
+        f"<h3>{e(model['name'])} 실행 형태</h3>"
+        f"<p><strong>{e(model['kubernetesWorkload'])}</strong>: {e(model['description'])}</p>"
+        f"<p><code>{e(model['entrypoint'])}</code></p>"
+        "</article>"
+        for model in worker_policy.get("runtimeModels", [])
+    )
+    runtime_models = f"<div class=\"grid\">{runtime_model_cards}</div>" if runtime_model_cards else ""
     worker_setting_rows = "".join(
         "<tr>"
         f"<td><code>{e(setting['name'])}</code></td>"
@@ -2195,6 +2204,7 @@ def render_notification_worker_policy_section(worker_policy):
     permanent_failure_items = "".join(f"<li>{e(item)}</li>" for item in worker_policy.get("permanentFailures", []))
     return f"""<section id="worker-policy">
   <h2>{e(worker_policy['title'])}</h2>
+  {runtime_models}
   {worker_setting_table}
   <h3>상태 전이</h3>
   <ul>{state_transition_items}</ul>

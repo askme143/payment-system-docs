@@ -45,6 +45,7 @@ from conftest import (
     FakeWebhookRepository,
     FakeWebhookUnitOfWorkFactory,
     FixedClock,
+    fake_notification_enqueue_dependencies,
 )
 from payments.adapters.crypto import FernetBillingKeyCipher
 from payments.http.composition import create_app
@@ -200,6 +201,7 @@ def test_first_slice_routes_match_documentation() -> None:
                 idempotency_keys=payment_stores.idempotency_keys,
                 operator_audits=payment_stores.operator_audits,
             ),
+            notification_enqueue=fake_notification_enqueue_dependencies(),
             webhooks=webhooks,
             webhook_uow_factory=FakeWebhookUnitOfWorkFactory(webhooks),
             billing_key_cipher=FernetBillingKeyCipher("test-billing-key-secret"),

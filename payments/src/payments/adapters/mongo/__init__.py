@@ -11,6 +11,10 @@ from payments.adapters.mongo.checkouts import MongoCheckoutRepository
 from payments.adapters.mongo.idempotency import MongoIdempotencyKeyRepository
 from payments.adapters.mongo.indexes import ensure_mongo_indexes
 from payments.adapters.mongo.invoices import MongoInvoiceRepository
+from payments.adapters.mongo.notifications import (
+    MongoNotificationOutboxRepository,
+    MongoNotificationTemplateRepository,
+)
 from payments.adapters.mongo.one_time_skus import MongoOneTimeSkuRepository
 from payments.adapters.mongo.operation_locks import MongoOperationLockRepository
 from payments.adapters.mongo.operator_audits import MongoOperatorAuditRepository
@@ -57,6 +61,8 @@ __all__ = [
     "MongoCheckoutRepository",
     "MongoIdempotencyKeyRepository",
     "MongoInvoiceRepository",
+    "MongoNotificationOutboxRepository",
+    "MongoNotificationTemplateRepository",
     "MongoOneTimePaymentUnitOfWorkFactory",
     "MongoOneTimeSkuRepository",
     "MongoOperationLockRepository",

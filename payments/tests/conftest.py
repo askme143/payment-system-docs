@@ -16,6 +16,7 @@ from payments.adapters.subscription_change_tokens import (
 from payments.application.admin_auth import _sign_access_token
 from payments.application.cursors import decode_cursor
 from payments.application.errors import ProviderError
+from payments.application.notifications import NotificationEnqueueDependencies
 from payments.application.ports import (
     AdminAuthRateLimiter,
     AdminAuthUnitOfWork,
@@ -55,6 +56,7 @@ from payments.application.ports import (
     PaymentCustomerRepository,
     PaymentLookupProviderResult,
     PaymentProvider,
+    ResolvedNotificationRecipient,
     SubscriptionAccountRecord,
     SubscriptionAccountRepository,
     SubscriptionBillingUnitOfWork,
@@ -78,6 +80,11 @@ from payments.domain.entities.billing_method import BillingMethod
 from payments.domain.entities.checkout import Checkout
 from payments.domain.entities.idempotency_key import IdempotencyKey
 from payments.domain.entities.invoice import Invoice
+from payments.domain.entities.notification import (
+    NotificationLastError,
+    NotificationOutboxItem,
+    NotificationTemplate,
+)
 from payments.domain.entities.one_time_sku import OneTimeSku
 from payments.domain.entities.operation_lock import OperationLock
 from payments.domain.entities.operator_audit import OperatorAudit
@@ -96,6 +103,143 @@ from payments.http.dependencies import HttpDependencies
 class FixedClock:
     def utc_now(self) -> datetime:
         return datetime(2026, 6, 10, 0, 0, tzinfo=UTC)
+
+
+class FakeNotificationOutboxRepository:
+    def __init__(self) -> None:
+        self.items: dict[str, NotificationOutboxItem] = {}
+
+    async def enqueue_idempotently(
+        self,
+        item: NotificationOutboxItem,
+    ) -> NotificationOutboxItem:
+        existing = self.items.get(item.idempotency_key)
+        if existing is not None:
+            return existing
+        self.items[item.idempotency_key] = item
+        return item
+
+    async def claim_due_notifications(
+        self,
+        *,
+        now: datetime,
+        lock_until: datetime,
+        worker_id: str,
+        limit: int,
+    ) -> list[NotificationOutboxItem]:
+        _ = now, lock_until, worker_id, limit
+        return []
+
+    async def mark_sent(
+        self,
+        item_id: str,
+        *,
+        provider_message_id: str,
+        sent_at: datetime,
+        purge_after_at: datetime,
+    ) -> None:
+        _ = item_id, provider_message_id, sent_at, purge_after_at
+
+    async def schedule_retry(
+        self,
+        item_id: str,
+        *,
+        available_at: datetime,
+        last_error: NotificationLastError,
+    ) -> None:
+        _ = item_id, available_at, last_error
+
+    async def mark_dead_letter(
+        self,
+        item_id: str,
+        *,
+        last_error: NotificationLastError,
+        purge_after_at: datetime,
+    ) -> None:
+        _ = item_id, last_error, purge_after_at
+
+
+class FakeNotificationTemplateRepository:
+    async def resolve_active_template(
+        self,
+        *,
+        event_type: str,
+        product_code: str | None,
+        product_type: str | None,
+    ) -> NotificationTemplate | None:
+        _ = product_code, product_type
+        return NotificationTemplate(
+            id=f"ntpl_{event_type}",
+            template_key=f"default.{event_type}",
+            version=1,
+            event_type=event_type,
+            product_code=None,
+            product_type=None,
+            status="active",
+            subject_template="{{ recipientName|default('고객님') }}",
+            html_template="{{ recipientName|default('고객님') }}",
+            text_template="{{ recipientName|default('고객님') }}",
+            required_template_args=[],
+            created_at=FixedClock().utc_now(),
+            updated_at=FixedClock().utc_now(),
+        )
+
+    async def get_template(
+        self,
+        *,
+        template_key: str,
+        version: int,
+    ) -> NotificationTemplate | None:
+        event_type = template_key.removeprefix("default.")
+        return await self.resolve_active_template(
+            event_type=event_type,
+            product_code=None,
+            product_type=None,
+        )
+
+    async def count_templates(self) -> int:
+        return 1
+
+    async def save_template(self, template: NotificationTemplate) -> None:
+        _ = template
+
+
+class FakeNotificationRecipientResolver:
+    async def resolve_user(self, user_id: str) -> ResolvedNotificationRecipient:
+        return ResolvedNotificationRecipient(
+            recipient_type="user",
+            email=f"{user_id}@example.com",
+            recipient_name="Test User",
+            recipient_user_id=user_id,
+            recipient_admin_id=None,
+        )
+
+    async def resolve_admin(self, admin_id: str) -> ResolvedNotificationRecipient:
+        return ResolvedNotificationRecipient(
+            recipient_type="admin",
+            email=f"{admin_id}@example.com",
+            recipient_name="Test Admin",
+            recipient_user_id=None,
+            recipient_admin_id=admin_id,
+        )
+
+
+class FakeTemplateArgCipher:
+    def encrypt(self, plaintext: str) -> str:
+        return f"encrypted:{plaintext}"
+
+    def decrypt(self, ciphertext: str) -> str:
+        return ciphertext.removeprefix("encrypted:")
+
+
+def fake_notification_enqueue_dependencies() -> NotificationEnqueueDependencies:
+    return NotificationEnqueueDependencies(
+        outbox_repository=FakeNotificationOutboxRepository(),
+        template_repository=FakeNotificationTemplateRepository(),
+        recipient_resolver=FakeNotificationRecipientResolver(),
+        template_arg_cipher=FakeTemplateArgCipher(),
+        clock=FixedClock(),
+    )
 
 
 class FakeCatalogRepository:
@@ -224,12 +368,42 @@ class FakeAdminAuthEmailSender:
         self.password_reset_links: list[tuple[str, str]] = []
         self.fail_login_link = False
 
-    async def send_login_link(self, email: str, login_token: str) -> None:
+    async def send_login_link(
+        self,
+        *,
+        admin_id: str,
+        email: str,
+        recipient_name: str | None,
+        auth_token_id: str,
+        login_token: str,
+        expires_at: datetime,
+        request_ip: str | None,
+        user_agent: str | None,
+    ) -> None:
+        _ = (
+            admin_id,
+            recipient_name,
+            auth_token_id,
+            expires_at,
+            request_ip,
+            user_agent,
+        )
         if self.fail_login_link:
             raise RuntimeError("SMTP unavailable")
         self.login_links.append((email, login_token))
 
-    async def send_password_reset_link(self, email: str, reset_token: str) -> None:
+    async def send_password_reset_link(
+        self,
+        *,
+        admin_id: str,
+        email: str,
+        recipient_name: str | None,
+        auth_token_id: str,
+        reset_token: str,
+        expires_at: datetime,
+        request_ip: str | None,
+    ) -> None:
+        _ = (admin_id, recipient_name, auth_token_id, expires_at, request_ip)
         self.password_reset_links.append((email, reset_token))
 
 
@@ -2510,6 +2684,7 @@ class TestDependencies:
                 self.subscription_expiration_uow_factory
             ),
             subscription_resume_uow_factory=self.subscription_resume_uow_factory,
+            notification_enqueue=fake_notification_enqueue_dependencies(),
             webhooks=self.webhooks,
             webhook_uow_factory=self.webhook_uow_factory,
             billing_key_cipher=self.billing_key_cipher,

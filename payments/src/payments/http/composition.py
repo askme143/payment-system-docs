@@ -9,11 +9,8 @@ from fastapi import FastAPI
 from fastapi.openapi.utils import get_openapi
 from motor.motor_asyncio import AsyncIOMotorClient, AsyncIOMotorDatabase
 
-from payments.adapters.crypto import FernetBillingKeyCipher
-from payments.adapters.mongo.admin_auth import (
-    MongoAdminAuthRepository,
-    RecordingAdminAuthEmailSender,
-)
+from payments.adapters.crypto import FernetBillingKeyCipher, FernetTemplateArgCipher
+from payments.adapters.mongo.admin_auth import MongoAdminAuthRepository
 from payments.adapters.mongo.admin_catalog import MongoAdminCatalogRepository
 from payments.adapters.mongo.admin_operations import MongoAdminOperationsRepository
 from payments.adapters.mongo.billing_auth import MongoBillingAuthRepository
@@ -22,6 +19,10 @@ from payments.adapters.mongo.billing_retry import MongoBillingRetryRepository
 from payments.adapters.mongo.catalog import MongoCatalogRepository
 from payments.adapters.mongo.idempotency import MongoIdempotencyKeyRepository
 from payments.adapters.mongo.invoices import MongoInvoiceRepository
+from payments.adapters.mongo.notifications import (
+    MongoNotificationOutboxRepository,
+    MongoNotificationTemplateRepository,
+)
 from payments.adapters.mongo.operation_locks import MongoOperationLockRepository
 from payments.adapters.mongo.payment_attempts import MongoPaymentAttemptRepository
 from payments.adapters.mongo.payment_customers import MongoPaymentCustomerRepository
@@ -46,12 +47,17 @@ from payments.adapters.mongo.unit_of_work import (
     MongoWebhookUnitOfWorkFactory,
 )
 from payments.adapters.mongo.webhooks import MongoWebhookRepository
+from payments.adapters.notifications import (
+    AdminAuthOutboxEmailSender,
+    HttpNotificationRecipientResolver,
+)
 from payments.adapters.rate_limit import InMemoryAdminAuthRateLimiter
 from payments.adapters.subscription_change_tokens import (
     HmacSubscriptionChangeTokenCodec,
 )
 from payments.adapters.time import SystemClock
 from payments.adapters.toss import TossPaymentProvider
+from payments.application.notifications import NotificationEnqueueDependencies
 from payments.http.config import PaymentHttpConfig
 from payments.http.dependencies import HttpDependencies
 from payments.http.errors import register_error_handlers
@@ -86,6 +92,21 @@ def build_http_dependencies(
     database: AsyncIOMotorDatabase,
     config: PaymentHttpConfig,
 ) -> HttpDependencies:
+    notification_outbox = MongoNotificationOutboxRepository(
+        database.notification_outbox
+    )
+    notification_templates = MongoNotificationTemplateRepository(
+        database.notification_templates
+    )
+    notification_recipient_resolver = HttpNotificationRecipientResolver(
+        recipient_api_base_url=config.notification_recipient_api_base_url,
+        admin_accounts=database.admin_accounts,
+    )
+    notification_template_arg_cipher = FernetTemplateArgCipher(
+        config.notification_template_arg_encryption_secret
+        or config.internal_service_token
+    )
+    clock = SystemClock()
     return HttpDependencies(
         admin_catalog=MongoAdminCatalogRepository(
             products=database.products,
@@ -98,7 +119,14 @@ def build_http_dependencies(
             admin_auth_tokens=database.admin_auth_tokens,
         ),
         admin_auth_uow_factory=MongoAdminAuthUnitOfWorkFactory(database),
-        admin_auth_email_sender=RecordingAdminAuthEmailSender(),
+        admin_auth_email_sender=AdminAuthOutboxEmailSender(
+            link_base_url=config.admin_auth_link_base_url,
+            outbox_repository=notification_outbox,
+            template_repository=notification_templates,
+            recipient_resolver=notification_recipient_resolver,
+            template_arg_cipher=notification_template_arg_cipher,
+            clock=clock,
+        ),
         admin_auth_rate_limiter=InMemoryAdminAuthRateLimiter(),
         admin_operations=MongoAdminOperationsRepository(
             payments=database.payments,
@@ -204,6 +232,13 @@ def build_http_dependencies(
         subscription_resume_uow_factory=MongoSubscriptionResumeUnitOfWorkFactory(
             database,
         ),
+        notification_enqueue=NotificationEnqueueDependencies(
+            outbox_repository=notification_outbox,
+            template_repository=notification_templates,
+            recipient_resolver=notification_recipient_resolver,
+            template_arg_cipher=notification_template_arg_cipher,
+            clock=clock,
+        ),
         webhooks=MongoWebhookRepository(
             webhook_events=database.webhook_events,
             payments=database.payments,
@@ -216,7 +251,7 @@ def build_http_dependencies(
         billing_key_cipher=FernetBillingKeyCipher(
             config.billing_key_encryption_secret or config.internal_service_token
         ),
-        clock=SystemClock(),
+        clock=clock,
         internal_service_token=config.internal_service_token,
         toss_client_key=config.toss_client_key,
         toss_webhook_secret=config.toss_webhook_secret,
