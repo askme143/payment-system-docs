@@ -1703,7 +1703,7 @@
         "첫 결제용 payment와 토스 승인용 orderId를 생성합니다.",
         "토스페이먼츠 자동결제 승인 API를 호출해 첫 결제를 실행합니다.",
         "결제 성공 시 결제 레코드와 인보이스를 paid로 저장하고 구독을 active로 변경합니다.",
-        "다음 결제일을 계산하고 정기 과금 배치가 읽을 수 있는 청구 예정 데이터를 생성합니다."
+        "첫 결제일의 일자를 billing_anchor_day로 저장하고, 다음 결제일은 이 앵커 일자를 기준으로 계산합니다. 대상 월에 해당 일자가 없으면 그 달의 가장 가까운 날짜인 말일로 보정합니다."
       ],
       "externalCalls": [
         {
@@ -2955,7 +2955,7 @@
         "cancel_scheduled 상태의 구독과 nextBillingDate가 null인 구독은 제외합니다.",
         "nextBillingDate가 null인 구독은 제외 대상 수로 집계하고 결제 승인 API를 호출하지 않습니다.",
         "대상 구독별로 별도의 인보이스와 payment 초안을 생성한 뒤 기본 결제수단이 참조하는 결제수단 토큰의 billingKey로 토스 자동결제 승인을 요청합니다.",
-        "결제 성공 시 invoice와 payment를 paid로 저장하고 nextBillingDate를 다음 주기로 갱신합니다.",
+        "결제 성공 시 invoice와 payment를 paid로 저장하고 nextBillingDate를 billing_anchor_day 기준 다음 주기로 갱신합니다. 예를 들어 1월 30일 결제는 2월 28일 후 3월 30일로, 1월 31일 결제는 2월 28일 후 3월 31일로 돌아갑니다.",
         "결제 성공 이메일에는 결제 금액, 결제일, invoiceId, receiptUrl을 포함해 발송 큐에 넣습니다.",
         "결제 실패 시 payment.status=failed, 실패 사유, 재시도 플로우가 읽을 수 있는 retry_scheduled_at을 저장합니다.",
         "결제 실패 이메일에는 재시도 일자, 결제수단 수정 링크, 해지 처리 안내 중 실제 분기에 맞는 값을 포함해 발송 큐에 넣습니다.",
@@ -6039,7 +6039,7 @@
               "type": "branch",
               "label": "승인 성공 처리",
               "code": "invoice.status=paid, payment.status=paid",
-              "note": "구독은 active 유지, nextBillingDate를 다음 주기로 갱신",
+              "note": "구독은 active 유지, nextBillingDate를 billing_anchor_day 기준 다음 주기로 갱신",
               "theme": "success"
             },
             {
@@ -10209,6 +10209,12 @@
             "type": "Date",
             "required": false,
             "description": "다음 정기결제 예정 시각입니다."
+          },
+          {
+            "name": "billing_anchor_day",
+            "type": "Number",
+            "required": false,
+            "description": "정기결제 기준 일자입니다. 월간/연간 결제일 계산 시 이 숫자를 유지하며, 대상 월에 해당 일자가 없으면 그 달의 말일로 보정합니다. 예: 1월 30일 결제는 2월 28일 후 3월 30일, 1월 31일 결제는 2월 28일 후 3월 31일."
           },
           {
             "name": "current_period_start_at",

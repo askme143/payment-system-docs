@@ -16,6 +16,7 @@ class Subscription:
     product_code: str
     status: Literal["pending", "active", "past_due", "cancel_scheduled", "canceled"]
     cancel_at_period_end: bool
+    billing_anchor_day: int | None = None
     next_billing_at: datetime | None = None
     current_period_start_at: datetime | None = None
     current_period_end_at: datetime | None = None

@@ -8,6 +8,10 @@ from dataclasses import dataclass, replace
 from datetime import UTC, date, datetime, time, timedelta
 from typing import Literal
 
+from payments.application.billing_cycles import (
+    billing_anchor_day_for,
+    next_billing_at,
+)
 from payments.application.errors import (
     IdempotencyConflictError,
     InvalidStateTransitionError,
@@ -532,9 +536,14 @@ async def _run_billing_job(
             invoice.receipt_url = charged.receipt_url
             subscription.status = "active"
             subscription.current_period_start_at = billing_at
-            subscription.current_period_end_at = _next_billing_at(
+            subscription.billing_anchor_day = billing_anchor_day_for(
+                subscription,
+                billing_at,
+            )
+            subscription.current_period_end_at = next_billing_at(
                 billing_at,
                 plan.billing_period,
+                subscription.billing_anchor_day,
             )
             subscription.next_billing_at = subscription.current_period_end_at
             if await _save_billing_documents(
@@ -779,12 +788,6 @@ def _apply_pending_plan_for_billing(
     subscription.plan_id = subscription.pending_plan_id
     subscription.pending_plan_id = None
     subscription.pending_plan_effective_at = None
-
-
-def _next_billing_at(current: datetime, billing_period: str) -> datetime:
-    days = 365 if billing_period == "yearly" else 30
-    return current + timedelta(days=days)
-
 
 def _plan_display_name(plan: SubscriptionPlan) -> str:
     period_label = "월간" if plan.billing_period == "monthly" else "연간"

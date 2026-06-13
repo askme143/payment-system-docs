@@ -960,7 +960,7 @@ paymentKey, status=DONE, approvedAt
     style.font-size: 18
     style.italic: false
   }
-  server.note_7: &quot;승인 성공 처리\ninvoice.status=paid, payment.status=paid\n구독은 active 유지, nextBillingDate를 다음 주기로 갱신&quot;
+  server.note_7: &quot;승인 성공 처리\ninvoice.status=paid, payment.status=paid\n구독은 active 유지, nextBillingDate를 billing_anchor_day 기준 다음 주기로 갱신&quot;
   server.note_8: &quot;영수증 링크와 결제 결과 구성\nreceiptUrl, paymentKey, approvedAt\n토스 영수증 링크 또는 내부 영수증 상세 링크를 결제 성공 알림에 포함&quot;
   server -&gt; email: |md
 결제 성공 이메일 발송 요청

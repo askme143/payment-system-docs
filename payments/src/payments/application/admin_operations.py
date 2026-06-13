@@ -8,6 +8,10 @@ from datetime import datetime, timedelta
 from typing import Literal
 
 from payments.application.admin_catalog import AdminRequestContext
+from payments.application.billing_cycles import (
+    billing_anchor_day_for,
+    next_billing_at,
+)
 from payments.application.cursors import encode_cursor
 from payments.application.errors import (
     BadRequestError,
@@ -1708,14 +1712,20 @@ def _apply_provider_done_sync(
     if invoice is not None:
         invoice.status = "paid"
         invoice.receipt_url = provider_payment.receipt_url or invoice.receipt_url
-    next_billing_at = provider_payment.approved_at + timedelta(
-        days=_billing_period_days(plan.billing_period)
+    subscription.billing_anchor_day = billing_anchor_day_for(
+        subscription,
+        provider_payment.approved_at,
+    )
+    next_billing_date = next_billing_at(
+        provider_payment.approved_at,
+        plan.billing_period,
+        subscription.billing_anchor_day,
     )
     subscription.status = "active"
     subscription.cancel_at_period_end = False
     subscription.current_period_start_at = provider_payment.approved_at
-    subscription.current_period_end_at = next_billing_at
-    subscription.next_billing_at = next_billing_at
+    subscription.current_period_end_at = next_billing_date
+    subscription.next_billing_at = next_billing_date
 
 
 def _apply_provider_cancel_sync(
@@ -1753,11 +1763,6 @@ def _provider_sync_state(
         state["invoiceId"] = invoice.id
         state["invoiceStatus"] = invoice.status
     return state
-
-
-def _billing_period_days(billing_period: str) -> int:
-    return 365 if billing_period == "yearly" else 30
-
 
 async def _apply_clear_payment_failure(
     *,

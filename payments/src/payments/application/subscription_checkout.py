@@ -9,6 +9,7 @@ from hashlib import sha256
 from typing import Literal
 from urllib.parse import parse_qsl, urlencode, urlsplit, urlunsplit
 
+from payments.application.billing_cycles import next_billing_at
 from payments.application.context import RequestContext
 from payments.application.errors import (
     AuthorizationError,
@@ -490,8 +491,13 @@ async def _confirm_subscription_checkout_locked(
         receipt_url=charged.receipt_url,
     )
     subscription.status = "active"
+    subscription.billing_anchor_day = now.day
     subscription.current_period_start_at = now
-    subscription.current_period_end_at = _next_billing_at(now, plan.billing_period)
+    subscription.current_period_end_at = next_billing_at(
+        now,
+        plan.billing_period,
+        subscription.billing_anchor_day,
+    )
     subscription.next_billing_at = subscription.current_period_end_at
 
     result = SubscriptionConfirmResult(
@@ -529,12 +535,6 @@ async def _confirm_subscription_checkout_locked(
             )
         )
     return result
-
-
-def _next_billing_at(start: datetime, billing_period: str) -> datetime:
-    days = 365 if billing_period == "yearly" else 30
-    return start + timedelta(days=days)
-
 
 async def _save_failed_subscription_confirm_idempotency_key(
     *,

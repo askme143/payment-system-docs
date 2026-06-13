@@ -221,6 +221,66 @@ def test_internal_billing_run_charges_due_subscription(
     assert record.payment_excluded_cancel_scheduled == 0
 
 
+def test_internal_billing_run_preserves_31st_billing_anchor_after_short_month(
+    client,
+    test_dependencies,
+) -> None:
+    _prepare_due_subscription_billing(
+        test_dependencies,
+        next_billing_at=datetime(2026, 2, 28, tzinfo=UTC),
+        current_period_start_at=datetime(2026, 1, 31, tzinfo=UTC),
+        billing_anchor_day=31,
+    )
+
+    response = client.post(
+        "/internal/subscription-billing/run",
+        headers={
+            "Internal-Job-Token": "secret",
+            "X-Request-Id": "req_job",
+            "Idempotency-Key": "billing-run-31st-anchor-key",
+        },
+        json={
+            "jobType": "billing",
+            "billingDate": "2026-02-28",
+            "limit": 100,
+        },
+    )
+
+    assert response.status_code == 200
+    subscription = test_dependencies.billing_retries.subscriptions["sub_due"]
+    assert subscription.next_billing_at == datetime(2026, 3, 31, tzinfo=UTC)
+
+
+def test_internal_billing_run_preserves_30th_billing_anchor_after_short_month(
+    client,
+    test_dependencies,
+) -> None:
+    _prepare_due_subscription_billing(
+        test_dependencies,
+        next_billing_at=datetime(2026, 2, 28, tzinfo=UTC),
+        current_period_start_at=datetime(2026, 1, 30, tzinfo=UTC),
+        billing_anchor_day=30,
+    )
+
+    response = client.post(
+        "/internal/subscription-billing/run",
+        headers={
+            "Internal-Job-Token": "secret",
+            "X-Request-Id": "req_job",
+            "Idempotency-Key": "billing-run-30th-anchor-key",
+        },
+        json={
+            "jobType": "billing",
+            "billingDate": "2026-02-28",
+            "limit": 100,
+        },
+    )
+
+    assert response.status_code == 200
+    subscription = test_dependencies.billing_retries.subscriptions["sub_due"]
+    assert subscription.next_billing_at == datetime(2026, 3, 30, tzinfo=UTC)
+
+
 def test_internal_billing_run_skips_locked_billing_cycle(
     client,
     test_dependencies,
@@ -1258,6 +1318,8 @@ def _prepare_due_subscription_billing(
     test_dependencies,
     *,
     next_billing_at: datetime = datetime(2026, 6, 10, tzinfo=UTC),
+    current_period_start_at: datetime = datetime(2026, 5, 10, tzinfo=UTC),
+    billing_anchor_day: int | None = None,
 ) -> None:
     repository = test_dependencies.billing_retries
     payment_customer = PaymentCustomer(
@@ -1270,6 +1332,9 @@ def _prepare_due_subscription_billing(
     test_dependencies.payment_stores.payment_customers.payment_customers[
         payment_customer.id
     ] = payment_customer
+    subscription_kwargs = {}
+    if billing_anchor_day is not None:
+        subscription_kwargs["billing_anchor_day"] = billing_anchor_day
     repository.subscriptions["sub_due"] = Subscription(
         id="sub_due",
         user_id="user_1",
@@ -1279,8 +1344,9 @@ def _prepare_due_subscription_billing(
         status="active",
         cancel_at_period_end=False,
         next_billing_at=next_billing_at,
-        current_period_start_at=datetime(2026, 5, 10, tzinfo=UTC),
+        current_period_start_at=current_period_start_at,
         current_period_end_at=next_billing_at,
+        **subscription_kwargs,
     )
     repository.subscription_plans["plan_due_monthly"] = SubscriptionPlan(
         id="plan_due_monthly",

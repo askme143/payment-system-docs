@@ -6,6 +6,10 @@ from collections.abc import Mapping
 from dataclasses import dataclass
 from datetime import datetime, timedelta
 
+from payments.application.billing_cycles import (
+    billing_anchor_day_for,
+    next_billing_at,
+)
 from payments.application.errors import (
     IdempotencyConflictError,
     InvalidStateTransitionError,
@@ -141,7 +145,13 @@ async def retry_subscription_billing(
     ):
         raise InvalidStateTransitionError("payment customer does not match")
 
-    next_billing_at = _next_billing_at(subscription.next_billing_at or now)
+    billing_at = subscription.next_billing_at or now
+    billing_anchor_day = billing_anchor_day_for(subscription, billing_at)
+    next_billing_date = next_billing_at(
+        billing_at,
+        plan.billing_period if plan is not None else "monthly",
+        billing_anchor_day,
+    )
     previous_failed_attempts = await _count_failed_billing_cycle_attempts(
         repository,
         subscription.id,
@@ -154,7 +164,7 @@ async def retry_subscription_billing(
             status="retryable",
             invoice_status=invoice.status,
             payment_status=payment.status,
-            next_billing_date=next_billing_at,
+            next_billing_date=next_billing_date,
             receipt_url=None,
             amount=payment.amount,
             billing_date=now,
@@ -355,7 +365,8 @@ async def retry_subscription_billing(
         invoice.receipt_url = charged.receipt_url
         invoice.payment_id = retry_payment.id
         subscription.status = "active"
-        subscription.next_billing_at = next_billing_at
+        subscription.billing_anchor_day = billing_anchor_day
+        subscription.next_billing_at = next_billing_date
 
         result = _result(
             invoice_id=invoice.id,
@@ -511,11 +522,6 @@ async def _enqueue_subscription_canceled_payment_failed(
             f"{subscription.id}:{invoice.id}"
         ),
     )
-
-
-def _next_billing_at(current: datetime) -> datetime:
-    return current + timedelta(days=30)
-
 
 def _next_retry_at(current: datetime) -> datetime:
     return current + timedelta(days=1)
