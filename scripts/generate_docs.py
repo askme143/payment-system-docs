@@ -2215,6 +2215,24 @@ def render_notification_worker_policy_section(worker_policy):
 </section>"""
 
 
+def render_admin_console_routes_section(routes):
+    route_rows = "".join(
+        "<tr>"
+        f"<td><code>{e(route['path'])}</code></td>"
+        f"<td>{e(route['page'])}</td>"
+        f"<td>{code_list(route.get('primaryApis', []))}</td>"
+        f"<td>{e(route['purpose'])}</td>"
+        f"<td>{'예' if route.get('mvp') else '아니오'}</td>"
+        "</tr>"
+        for route in routes
+    )
+    return f"""<section id="admin-console-routes">
+  <h2>어드민 콘솔 SSR 라우트</h2>
+  {table("<table><thead><tr><th>Route</th><th>Page</th><th>Primary API</th><th>Purpose</th><th>MVP</th></tr></thead>"
+         f"<tbody>{route_rows}</tbody></table>", columns=5)}
+</section>"""
+
+
 def render_system_architecture_doc(data, rendered_d2_ids=None):
     architecture = data["systemArchitecture"]
     page_ref = data["site"]["pages"]["systemArchitecture"]
@@ -2224,6 +2242,12 @@ def render_system_architecture_doc(data, rendered_d2_ids=None):
         [
             ("components", "컴포넌트 책임"),
             ("data-stores", "데이터 소유권"),
+        ]
+    )
+    if architecture.get("adminConsoleRoutes"):
+        nav_items.append(("admin-console-routes", "어드민 콘솔 SSR 라우트"))
+    nav_items.extend(
+        [
             ("worker-policy", "Worker 정책"),
             ("operations", "운영과 실패 처리"),
         ]
@@ -2271,6 +2295,9 @@ def render_system_architecture_doc(data, rendered_d2_ids=None):
   {table("<table><thead><tr><th>저장소</th><th>소유 포트</th><th>주요 키/인덱스</th><th>비고</th></tr></thead>"
          f"<tbody>{data_store_rows}</tbody></table>", columns=4)}
 </section>""")
+
+    if architecture.get("adminConsoleRoutes"):
+        sections.append(render_admin_console_routes_section(architecture["adminConsoleRoutes"]))
 
     sections.append(render_notification_worker_policy_section(architecture["workerPolicy"]))
 

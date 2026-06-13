@@ -1284,6 +1284,13 @@
             "$ref": "#/$defs/architectureDataStore"
           }
         },
+        "adminConsoleRoutes": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/adminConsoleRoute"
+          }
+        },
         "workerPolicy": {
           "$ref": "#/$defs/notificationWorkerPolicy"
         },
@@ -1398,6 +1405,31 @@
         },
         "notes": {
           "type": "string"
+        }
+      }
+    },
+    "adminConsoleRoute": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "page", "primaryApis", "purpose", "mvp"],
+      "properties": {
+        "path": {
+          "type": "string"
+        },
+        "page": {
+          "type": "string"
+        },
+        "primaryApis": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "purpose": {
+          "type": "string"
+        },
+        "mvp": {
+          "type": "boolean"
         }
       }
     },

@@ -93,6 +93,10 @@ class GenerateDocsTest(unittest.TestCase):
                 "lock_duration",
                 "max_attempts",
                 "1분, 5분, 30분, 2시간, 12시간",
+                "어드민 콘솔 SSR 라우트",
+                "/admin/console/scheduler-runs",
+                "POST /admin/scheduler-runs",
+                "/admin/console/products/{productId}",
             ]:
                 self.assertIn(expected, architecture)
             self.assertIn("notification-template-catalog-doc.html", architecture)
